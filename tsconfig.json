@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "allowJs": true,
+    "module": "esnext",
+    "target": "es5",
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "lib": [
+      "dom",
+      "es5",
+      "es6",
+      "es2015.promise"
+    ],
+    "sourceMap": true,
+    "pretty": true,
+    "types": [
+      "./src/types",
+      "./node_modules/@types/node",
+      "./node_modules/vue/types",
+      "./node_modules/vue-router/types",
+    ],
+  }, 
+  "include": [
+    "src",
+  ],
+  "exclude": [
+    "node_modules",
+  ],
+}
