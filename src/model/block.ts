@@ -3,6 +3,7 @@ import { Rect } from "./rect";
 import CommonUtils from "../utils/CommonUtils";
 import { BlockParameterPortRegData, BlockPortRegData, BlockRegData } from "./blockdef";
 import { BlockParameterPort, BlockBehaviorPort, BlockPortDirection, BlockPort } from "./port";
+import { EditorInterface } from "./editor";
 
 export class Block {
 
@@ -13,30 +14,39 @@ export class Block {
   public description = "This is a single block. Useage: unknow.";
   public guid = "0";
   public uid = "";
+  public mark = "";
+  public breakpoint : BlockBreakPoint = 'none';
 
   public logo = "";
   public logoRight = "";
   public logoBottom = "";
 
+  /**
+   * 自定义单元属性供代码使用（会保存至文件中）
+   */
+  public options = {
+
+  };
+
   public selected = false;
   public hover = false;
 
   private rect = new Rect();
-  private regData : BlockRegData = null
+  private regData : BlockRegData = null;
+  private editor : EditorInterface = null;
 
-  public constructor(regData ?: BlockRegData) {
+  public constructor(editor : EditorInterface, regData ?: BlockRegData) {
     this.uid = CommonUtils.genNonDuplicateID(3);
-    if(regData) {
+    this.editor = editor;
+    if(regData)
       this.regData = regData;
-    }
   }
 
   public portBehaviorIcon = 'icon-sanjiaoxing';
   public portBehaviorIconActive = 'icon-zuo';
   public portParamIcon = 'icon-yuan';
   public portParamIconActive = 'icon-yuan1';
-
-  
+  public portFailedIconActive = 'icon-close-';
 
   public getRect() { 
     this.rect.setPos(this.position);
@@ -58,7 +68,9 @@ export class Block {
   public elLogoRight : HTMLImageElement = null;
   public elLogoBottom : HTMLImageElement = null;
 
-  public create(host : HTMLElement) {
+  public create() {
+    let host = this.editor.getBlockHostElement();
+
     this.el = document.createElement('div');
     this.el.classList.add("flow-block");
     this.el.setAttribute("id", this.uid);
@@ -132,33 +144,39 @@ export class Block {
         this.onPortActive = this.regData.onPortActive;
 
       if(this.regData.ports.length > 0)
-        this.regData.ports.forEach(element => this.addPort(element));
+        this.regData.ports.forEach(element => this.addPort(element, false));
       if(this.regData.parameters.length > 0)
-        this.regData.parameters.forEach(element => this.addParameterPort(element));
+        this.regData.parameters.forEach(element => this.addParameterPort(element, false));
       
     }
 
+    this.createFn();
     this.updateContent();
     this.onResize();
   }
-  public destroy(host : HTMLElement) {
+  public destroy() {
+
+    this.editor.onBlockDelete(this);
 
     this.el.removeEventListener('mouseenter', this.onMouseEnter.bind(this));
     this.el.removeEventListener('mouseleave', this.onMouseOut.bind(this));
-    this.el.removeEventListener('mousemove', this.onMouseMove.bind(this));
-    this.el.removeEventListener('mouseup', this.onMouseUp.bind(this));
     this.el.removeEventListener('mousedown', this.onMouseDown.bind(this));
     this.el.removeEventListener('resize', this.onResize.bind(this));
     
-    this.inputPorts = [];
-    this.outputPorts = [];
-    this.inputParameters = [];
-    this.outputParameters = [];
+    this.inputPorts = null;
+    this.outputPorts = null;
+    this.inputParameters = null;
+    this.outputParameters = null;
+    this.allPorts = null;
 
-    host.removeChild(this.el);
+    this.editor.getBlockHostElement().removeChild(this.el);
   }
 
-  //端口操作
+  public updateZoom(zoom : number) {
+    this.el.style.zoom = zoom.toString();
+  }
+
+  //节点操作
   //===========================
 
   public inputPorts : Array<BlockBehaviorPort> = [];
@@ -167,7 +185,7 @@ export class Block {
   public outputParameters : Array<BlockParameterPort> = [];
   public allPorts : Array<BlockPort> = [];
 
-  public addPort(data : BlockPortRegData) {
+  public addPort(data : BlockPortRegData, isDyamicAdd = true) {
     let oldData = this.getPort(data.name, data.direction);
     if(oldData != null) {
       console.warn("[addPort] " + data.direction + " port " + data.name + " alreday exist !");
@@ -177,9 +195,15 @@ export class Block {
     let newPort = new BlockBehaviorPort(this);
     newPort.name = data.name;
     newPort.description = data.description;
+    newPort.isDyamicAdd = isDyamicAdd;
+    newPort.guid = data.guid;
     newPort.direction = data.direction;
+    newPort.regData = data;
 
-    this.inputPorts.push(newPort);
+    if(newPort.direction == 'input')
+      this.inputPorts.push(newPort);
+    else if(newPort.direction == 'output')
+      this.outputPorts.push(newPort);
     this.allPorts.push(newPort);
     this.addPortElement(newPort);
 
@@ -223,7 +247,7 @@ export class Block {
     }
     return null;
   }
-  public addParameterPort(data : BlockParameterPortRegData) {
+  public addParameterPort(data : BlockParameterPortRegData, isDyamicAdd = true) {
     let oldData = this.getParameterPort(data.name, data.direction);
     if(oldData != null) {
       console.warn("[addParameterPort] " + data.direction + " port " + data.name + " alreday exist !");
@@ -235,8 +259,14 @@ export class Block {
     newPort.name = data.name;
     newPort.description = data.description;
     newPort.direction = data.direction;
+    newPort.isDyamicAdd = isDyamicAdd;
+    newPort.guid = data.guid;
+    newPort.regData = data;
 
-    this.inputParameters.push(newPort);
+    if(newPort.direction == 'input')
+      this.inputParameters.push(newPort);
+    else if(newPort.direction == 'output')
+      this.outputParameters.push(newPort);
     this.allPorts.push(newPort);
     this.addPortElement(newPort);
 
@@ -282,6 +312,7 @@ export class Block {
     return null;
   }
 
+
   public getPortByUid(uid : string) {
     for(let i = 0, c = this.allPorts.length; i < c;i++)
         if(this.allPorts[i].uid == uid) 
@@ -318,13 +349,9 @@ export class Block {
     this.el.style.top = this.position.y + 'px';
   }
 
-  public updatePortConnectStatusElement(port : BlockPort) {
-    if(port.type == 'Behavior') {
-      port.elDot.classList.add(port.connectedPort == null ? this.portBehaviorIcon : this.portBehaviorIconActive);
-    }else if(port.type == 'Parameter') {
-      port.elDot.classList.add(port.connectedPort == null ? this.portParamIcon : this.portParamIconActive);
-    }
-  }
+
+  //节点元素更新
+  //===========================
 
   private addPortElement(port : BlockPort) {
     port.el = document.createElement('div');
@@ -342,7 +369,18 @@ export class Block {
     port.elDot.setAttribute('data-port-uid', port.uid);
     port.elDot.setAttribute('data-block-uid', this.uid);
     port.elSpan.innerText = port.name;
-    port.elSpan.setAttribute('title', port.description);
+
+    if(port.type == 'Parameter') {
+      port.elSpan.setAttribute('title', '参数类型：' + (<BlockParameterPort>port).paramType  + 
+      (' (' +((<BlockParameterPort>port).paramCustomType != '' ? (<BlockParameterPort>port).paramCustomType : '') + ')')
+       + '\n' + port.description);
+      port.el.setAttribute('data-param-type', (<BlockParameterPort>port).paramType);
+      port.el.setAttribute('data-param-custom-type', (<BlockParameterPort>port).paramCustomType);
+    } else port.elSpan.setAttribute('title', port.description);
+
+    port.elDot.addEventListener('mousedown', (e) => this.onPortMouseDown(port, e));
+    port.elDot.addEventListener('mouseenter', () => this.onPortMouseEnter(port));
+    port.elDot.addEventListener('mouseleave', () => this.onPortMouseLeave(port));
 
     //switch port and text's direction
     if(port.direction == 'input') {
@@ -368,6 +406,21 @@ export class Block {
   private removePortElement(port : BlockPort) {
     port.el.parentNode.removeChild(port.el);
   }
+  public updatePortConnectStatusElement(port : BlockPort) {
+
+    if(port.forceDotErrorState){
+      port.elDot.classList.add("error", this.portFailedIconActive);
+      port.elDot.classList.remove(this.portBehaviorIcon, this.portBehaviorIconActive, this.portParamIcon, this.portParamIconActive);
+    }else {
+      port.elDot.classList.remove("error", this.portFailedIconActive);
+      if(port.type == 'Behavior')
+        CommonUtils.setClassWithSwitch(port.elDot, port.connector != null || port.forceDotActiveState,
+          this.portBehaviorIcon, this.portBehaviorIconActive);
+      else if(port.type == 'Parameter')
+        CommonUtils.setClassWithSwitch(port.elDot, port.connector != null || port.forceDotActiveState, 
+          this.portParamIcon, this.portParamIconActive);
+    }
+  }
 
   //其他事件
   //===========================
@@ -382,11 +435,56 @@ export class Block {
   //鼠标事件
   //===========================
 
+  //
+  // 节点移动事件
+
+  public mouseDownInPort = false;
+  public mouseConnectingPort = false;
+
+  private onPortMouseEnter(port : BlockPort) {
+    this.mouseDownInPort = true;
+    this.editor.updateCurrentHoverPort(port);
+  }
+  private onPortMouseLeave(port : BlockPort) {
+    this.editor.updateCurrentHoverPortLeave(port);
+    this.mouseDownInPort = false;
+  }
+  private onPortMouseMove(e : MouseEvent) {
+    this.mouseConnectingPort = true;
+    this.editor.updateConnectEnd(new Vector2(e.x, e.y));
+    return true;
+  }
+  private onPortMouseDown(port : BlockPort, e : MouseEvent) {
+    this.mouseDownInPort = true;
+    this.mouseConnectingPort = false;
+    this.editor.startConnect(port);
+    this.editor.updateConnectEnd(new Vector2(e.x, e.y));
+
+    this.fnonPortMouseUp = () => this.onPortMouseUp(port);
+
+    document.addEventListener('mouseup', this.fnonPortMouseUp);
+    document.addEventListener('mousemove', this.fnonPortMouseMove);
+  }
+  private onPortMouseUp(port : BlockPort) {
+    this.mouseDownInPort = false;
+    this.mouseConnectingPort = false;
+    this.editor.endConnect(port);
+    
+    document.removeEventListener('mouseup', this.fnonPortMouseUp);
+    document.removeEventListener('mousemove', this.fnonPortMouseMove);
+  }
+
+  //
+  //单元移动事件
+
   public mouseDown = false;
 
   private mouseLastDownPos : Vector2 = new Vector2();
   private lastBlockPos : Vector2 = new Vector2();
   private lastMovedBlock = false;
+
+  public updateLastPos() { this.lastBlockPos.Set(this.position); }
+  public getLastPos() { return this.lastBlockPos; }
 
   private onMouseEnter(e : MouseEvent) {
     this.hover = true;
@@ -395,14 +493,16 @@ export class Block {
     this.hover = false;
   }
   private onMouseMove(e : MouseEvent) {
-    if(this.mouseDown) {
+    if(this.mouseDown && !this.mouseDownInPort && !this.mouseConnectingPort) {
       this.lastMovedBlock = true;
       this.setPos(new Vector2(
         this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
         this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)
-      ))
+      ));
+      this.editor.onMoveBlock(this, new Vector2(e.x - this.mouseLastDownPos.x, e.y - this.mouseLastDownPos.y));
+      return true;
     }
-    return true;
+    return false;
   }
   private onMouseDown(e : MouseEvent) {
     this.mouseDown = true;
@@ -410,24 +510,45 @@ export class Block {
     this.lastMovedBlock = false;
     this.lastBlockPos.Set(this.position);
 
-    
-    document.addEventListener('mousemove', this.onMouseMove.bind(this));
+    document.addEventListener('mousemove', this.fnonMouseMove);
+    document.addEventListener('mouseup', this.fnonMouseUp);
   }
   private onMouseUp(e : MouseEvent) {
     this.mouseDown = false;
-    if(!this.lastMovedBlock)
-      this.updateSelectStatus(true);
+    this.editor.onMoveBlockEnd(this);
 
-    document.removeEventListener('mousemove', this.onMouseMove.bind(this));
+    if(!this.lastMovedBlock) {
+      this.updateSelectStatus(true);
+      this.editor.onUserSelectBlock(this);
+    }
+
+    document.removeEventListener('mousemove', this.fnonMouseMove);
+    document.removeEventListener('mouseup', this.fnonMouseUp);
   }
 
-  //节点控制事件
+  private fnonMouseMove = null;
+  private fnonMouseUp = null;
+  private fnonPortMouseMove = null;
+  private fnonPortMouseUp = null;
+
+  private createFn() {
+    this.fnonMouseUp = this.onMouseUp.bind(this);
+    this.fnonMouseMove = this.onMouseMove.bind(this);
+    this.fnonPortMouseMove = this.onPortMouseMove.bind(this);
+  }
+
+  //单元控制事件
   //===========================
 
+  public onCreate : OnBlockCallback = (block) => {};
   public onPortActive : OnPortActiveCallback = (block, port) => {};
   public onParameterUpdate : OnParameterUpdateCallback = (block, port) => {};
 
 }
 
+export type OnBlockCallback = (block : Block, port : BlockBehaviorPort) => void;
 export type OnPortActiveCallback = (block : Block, port : BlockBehaviorPort) => void;
 export type OnParameterUpdateCallback = (block : Block, port : BlockParameterPort) => void;
+
+
+export type BlockBreakPoint = 'enable'|'disable'|'none';

@@ -58,7 +58,7 @@ Array.prototype.remove = function(item) {
   return rs;
 }
 Array.prototype.contains = function(item) {
-  return this.indexOf(item)
+  return this.indexOf(item) >= 0;
 }
 if(!Array.prototype.findIndex){
 	Array.prototype.findIndex = function(predicateFn,thisArg){

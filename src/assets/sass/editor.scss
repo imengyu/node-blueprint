@@ -1,0 +1,98 @@
+
+$toolbar-height: 45px;
+
+.toolbar {
+  position: absolute;
+  height: $toolbar-height;
+  left: 0;
+  right: 0;
+  top: 0;
+  background-color: #f7f7f7;
+  border: 1px solid #eeefff;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  user-select: none;
+  z-index: 100;
+  overflow: hidden;
+
+  > div {
+    height: $toolbar-height;
+    line-height: $toolbar-height;
+  }
+  .button {
+    text-align: center;
+    display: inline-block;
+    padding: 1px 8px;
+    cursor: pointer;
+    font-size: 18px;
+    user-select: none;
+
+    &.icon {
+      width: $toolbar-height;
+      font-size: 23px;
+    }
+
+    &:hover, &.active {
+      background-color: #dfdfdf;
+    }
+    &:focus {
+      opacity: 0.8;
+    }
+
+    &.disabled, &[disabled] {
+      cursor: pointer!important;
+      background-color: transparent!important;
+      opacity: 1;
+
+      &.icon i {
+        color: #bdbdbd;
+      }
+    }
+  }
+  .separator {
+    display: inline-block;
+    width: 1px;
+    height: 33px;
+    margin: 4px 3px 0 3px;
+    background-color: #eeefff;
+  }
+  .block {
+    display: inline-block;
+    padding: 1px 8px;
+  }
+}
+
+.main {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: $toolbar-height;
+  overflow: hidden;
+
+  #editor {
+    width: 100%;
+    height: 100%;
+  }
+  .editor {
+    display: block;
+    position: absolute;
+    background-color: #ffffff;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+  }
+  .prop {
+    position: absolute;
+    background-color: #f7f7f7;
+    border: 1px solid #eeefff;
+    top: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+
+}

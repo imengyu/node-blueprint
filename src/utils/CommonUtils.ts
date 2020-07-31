@@ -127,6 +127,17 @@ export default {
         result = "刚刚";
     return result;
   },
+
+
+  setClassWithSwitch(el : HTMLElement, on : boolean, class1 : string, class2 : string) {
+    if(on) {
+      if(el.classList.contains(class1))el.classList.remove(class1);
+      if(!el.classList.contains(class2))el.classList.add(class2);
+    }else {
+      if(el.classList.contains(class2))el.classList.remove(class2);
+      if(!el.classList.contains(class1))el.classList.add(class1);
+    }
+  }
 }
 
 

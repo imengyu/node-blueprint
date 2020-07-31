@@ -32,13 +32,23 @@ export class Rect {
       && rect.getLeft() < this.getRight() && rect.getTop()  < this.getBottom();
   }
 
-  public setPos(point : Vector2) {
-    this.x = point.x;
-    this.y = point.y;
+  public setPos(pointOrX : Vector2 | number, y?:number) {
+    if(typeof pointOrX == "number"){
+      this.x = pointOrX;
+      this.y = y;
+    }else {
+      this.x = pointOrX.x;
+      this.y = pointOrX.y;
+    }
   }
-  public setSize(size : Vector2) {
-    this.w = size.x;
-    this.h = size.y;
+  public setSize(sizeOrX : Vector2 | number, y?:number) {
+    if(typeof sizeOrX == "number"){
+      this.w = sizeOrX;
+      this.h = y;
+    }else {
+      this.w = sizeOrX.x;
+      this.h = sizeOrX.y;
+    }
   }
 
   public getRight() { return this.w < 0 ? this.x : this.x + this.w; }

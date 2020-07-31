@@ -1,5 +1,9 @@
+import { Rect } from "../model/rect";
+import { Vector2 } from "../model/vector2";
+
 export default {
   drawRoundedRect,
+  drawConnectorBezierCurve,
 }
 
 
@@ -24,4 +28,26 @@ function drawRoundedRect(ctx : CanvasRenderingContext2D, x : number, y : number,
   if (fill) { ctx.fill(); }
   if (stroke) { ctx.stroke(); }
   ctx.restore(); 
+}
+function drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, startPos : Vector2, endPos : Vector2, viewPort: Rect, viewZoom : number) {
+  
+  let x1 = startPos.x * viewZoom, x2 = endPos.x * viewZoom, 
+    y1 = startPos.y * viewZoom, y2 = endPos.y * viewZoom;
+
+  let yAbs = Math.abs(y2 - y1); 
+  let xAbs = Math.abs(x2 - x1); 
+
+  if(yAbs==0) yAbs=1;
+  if(xAbs==0) xAbs=1;
+
+  let yOff = ((x2 < x1 && yAbs < 100) ? (100 / yAbs * 2) : 0);
+  let xOff = ((xAbs < 100) ? xAbs : 100);
+
+  ctx.beginPath();
+  ctx.moveTo(x1 - viewPort.x, y1 - viewPort.y);
+  ctx.bezierCurveTo(
+    x1 - viewPort.x + xOff, y1 - viewPort.y + yOff, 
+    x2 - viewPort.x - xOff, y2 - viewPort.y - yOff, 
+    x2 - viewPort.x, y2 - viewPort.y);
+  ctx.stroke();
 }

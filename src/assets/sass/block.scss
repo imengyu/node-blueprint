@@ -7,13 +7,12 @@
   width: 1px;
   height: 1px;
   background-color: transparent;
-
-
 }
 .flow-block {
   display: inline-block;
   position: absolute;
   cursor: default;
+  user-select: none;
 
   border-radius: 8px;
   border: 3px solid transparent;
@@ -74,14 +73,12 @@
   }
 
   .area {
-    position: relative;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
 
     .ports {
-      position: relative;
       display: inline-block;
 
       &.input {
@@ -98,8 +95,6 @@
         align-items: center;
         margin-left: 10px;
       }
-
-
 
     }
   }
@@ -118,6 +113,9 @@
       &:active {
         opacity: 0.7;
       }
+      &.error {
+        color: #e9412a;
+      }
     }
     span {
       white-space: nowrap;
@@ -125,5 +123,57 @@
     }
   }
 
+
+}
+
+
+.block-add-panel {
+  position: absolute;
+  min-width: 230px;
+  border: 1px solid #b6acac;
+  background-color: #fff;
+  z-index: 25;
+  max-height: 500px;
+  overflow: hidden;
+  overflow-y: scroll;
+
+  .ivu-collapse-content {
+    padding: 0;
+    padding-left: 8px;
+  }
+}
+.block-list {
+  position: relative;
+  padding-top: 6px;
+
+  .block-item {
+    display: block;
+    padding: 3px 13px;
+    margin-left: -8px;
+
+    img {
+      display: inline-block;
+      float: left;
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+    }
+
+    h5 {
+      font-size: 14px;
+    }
+    span {
+      font-size: 12px;
+      color: #888;
+    }
+
+    &:hover {
+      background-color: rgba(183, 219, 232, 0.74);
+    }
+    &:active {
+      opacity: 0.7;
+    }
+  
+  }
 
 }
