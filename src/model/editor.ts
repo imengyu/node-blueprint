@@ -1,20 +1,23 @@
-import { Block } from "./block";
-import { Vector2 } from "./vector2";
-import { BlockPort } from "./port";
-import { Connector } from "./connector";
-import { BlockRegData } from "./blockdef";
+import { BlockEditor } from "./BlockEditor";
+import { Vector2 } from "./Vector2";
+import { BlockPort } from "./Port";
+import { ConnectorEditor } from "./Connector";
 
 export interface EditorInterface {
-  onMoveBlock(block : Block, moveOffest : Vector2);
-  onMoveBlockEnd(block : Block);
-  onUserSelectBlock(block : Block);
-  onBlockDelete(block : Block);
+  onMoveBlock(block : BlockEditor, moveOffest : Vector2);
+  onMoveBlockEnd(block : BlockEditor);
+  onUserSelectBlock(block : BlockEditor);
+  onBlockDelete(block : BlockEditor);
+
+  getBlocks() : BlockEditor[];
+  getConnectors() : ConnectorEditor[];
 
   getToolBarHeight() : number;
   getBlockHostElement() : HTMLElement;
-  getSelectedBlocks() : Block[];
+  getSelectedBlocks() : BlockEditor[];
   unSelectAllBlocks();
 
+  unConnectConnector(connector : ConnectorEditor);
   startConnect(port : BlockPort);
   updateConnectEnd(pos : Vector2);
   updateCurrentHoverPort(port : BlockPort);
@@ -22,14 +25,8 @@ export interface EditorInterface {
   getCurrentHoverPort() : BlockPort;
   endConnect(port : BlockPort);
 
-  getBlocks() : Block[];
-  getConnectors() : Connector[];
-
-  registerBlock(blockdef : BlockRegData, updateList ?: boolean);
-  getRegisteredBlock(guid : string);
-  unregisterBlock(guid : string);
-  /**
-   * 刷新单元列表
-   */
-  updateBlocksList();
+  getVue() : Vue;
+  getRunningState() : EditorRunningState;
 }
+
+export type EditorRunningState = 'editing'|'running'|'runningPaused';

@@ -13,9 +13,9 @@
 
     <div class="block-list">
       <div class="block-item" v-for="(item, index) in categoryData.blocks" :key="index" @click="$emit('onBlockItemClick', item)">
-        <img :src="item.logo" />
-        <h5>{{item.name}}</h5>
-        <span>{{item.description}}</span>
+        <img :src="item.baseInfo.logo" />
+        <h5>{{item.baseInfo.name}}</h5>
+        <span>{{item.baseInfo.description}}</span>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { CategoryData } from "../views/Editor.vue";
+import { CategoryData } from "../sevices/BlockService";
 
 @Component
 export default class BlockCategory extends Vue {

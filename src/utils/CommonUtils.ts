@@ -14,6 +14,7 @@ export default {
   isEmail,
   mergeJSON,
   mergeJsonArray,
+  strToHexCharCode,
 
   /**
    * 生成不重复随机数
@@ -23,6 +24,14 @@ export default {
     let idStr = Date.now().toString(36)
     idStr += Math.random().toString(36).substr(3,randomLength)
     return idStr
+  },
+  /**
+   * 生成不重复随机数
+   * @param randomLength 字符长度
+   */
+  genNonDuplicateIDHEX(randomLength){
+    let idStr = this.genNonDuplicateID(randomLength);
+    return strToHexCharCode(idStr).substr(2, randomLength);
   },
   /**
    * 通过一个B的文件大小获取可读的文件大小字符串
@@ -139,6 +148,7 @@ export default {
     }
   }
 }
+
 
 
 /*
@@ -344,7 +354,7 @@ function swapItems(arr, index1, index2){
  */
 function upData (arr, index) {
   　if (arr.length > 1 && index !== 0)
-  　　　return swapItems(arr, index, index - 1)
+  　return swapItems(arr, index, index - 1)
 }
 /**
  * 指定数组索引位置元素向下移
@@ -353,7 +363,7 @@ function upData (arr, index) {
  */
 function downData (arr, index) {
   　if (arr.length > 1 && index !== (arr.length - 1))
-    　　return swapItems(arr, index, index + 1)
+    return swapItems(arr, index, index + 1)
 }
 
 //字符串工具
@@ -363,7 +373,7 @@ function downData (arr, index) {
  * 检查字符串是否是中国的11位手机号
  * @param str 字符串
  */
-function isChinaPoneNumber(str) {
+function isChinaPoneNumber(str : string) {
   var myreg=/^[1][3,4,5,7,8][0-9]{9}$/;
   if (!myreg.test(str)) {
       return false;
@@ -375,7 +385,7 @@ function isChinaPoneNumber(str) {
  * 检查字符串是否是邮箱
  * @param str 字符串
  */
-function isEmail(str){
+function isEmail(str : string){
   var re=/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/;
   if (re.test(str) != true) {
     return false;
@@ -383,7 +393,16 @@ function isEmail(str){
     return true;
   }
 }
-
+function strToHexCharCode(str : string) : string {
+  if(str === "")
+    return "";
+  var hexCharCode = [];
+  hexCharCode.push("0x"); 
+  for(var i = 0; i < str.length; i++) {
+    hexCharCode.push((str.charCodeAt(i)).toString(16));
+  }
+  return hexCharCode.join("");
+}
 /**
  * 计算剩余时间为用户可读时间
  * @param limitTime 时间

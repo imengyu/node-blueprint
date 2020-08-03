@@ -15,6 +15,13 @@ interface Array<T> {
    * @param item 元素
    */
   contains(item: T) : boolean;
+
+  /**
+   * 仅添加元素一次到数组中，如果数组中已存在，则不会添加
+   * @param item 元素
+   * @returns 返回元素新的长度
+   */
+  addOnce(item: T) : number;
 }
 interface Date {
   /**

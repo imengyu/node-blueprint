@@ -1,8 +1,9 @@
 import CommonUtils from "../utils/CommonUtils";
-import { Block } from "./block";
-import { Vector2 } from "./vector2";
-import { Connector } from "./connector";
-import { BlockPortRegData } from "./blockdef";
+import { Block } from "./Block";
+import { Vector2 } from "./Vector2";
+import { Connector } from "./Connector";
+import { BlockPortRegData } from "./BlockDef";
+import { BlockEditor } from "./BlockEditor";
 
 /**
  * 单元节点
@@ -17,11 +18,9 @@ export class BlockPort {
    * 说明
    */
   public description = "This is a block port. Useage: unknow.";
-  public uid = "0";
   public guid = "";
 
   public constructor(block : Block) {
-    this.uid = this.uid + '_' + CommonUtils.genNonDuplicateID(3);
     this.parent = block;
   }
 
@@ -32,26 +31,33 @@ export class BlockPort {
   public connectedPort : BlockPort = null;
   public parent : Block = null;
   public type : BlockPortType = null;
+  public regData : BlockPortRegData = null;
 
+  public editorData : BlockPortEditorData = null;
+}
+export class BlockPortEditorData {
   public el : HTMLDivElement = null;
   public elDot : HTMLElement = null;
   public elSpan : HTMLSpanElement = null;
+  public elEditor : HTMLElement = null;
+  public elDeleteButton : HTMLElement = null;
 
   public forceDotErrorState = false;
   public forceDotActiveState = false;
 
-  public regData : BlockPortRegData = null;
+  public block : BlockEditor = null;
+  public parent : BlockPort = null;
 
   private pos = new Vector2();
   
   public getPosition() {
-    this.pos.Set(this.parent.position.x + this.elDot.offsetLeft + this.elDot.offsetWidth / 2,  
-      this.parent.position.y + this.elDot.offsetTop + this.elDot.offsetHeight / 2 + 3);
+    this.pos.Set(this.block.position.x + this.elDot.offsetLeft + this.elDot.offsetWidth / 2,  
+      this.block.position.y + this.elDot.offsetTop + this.elDot.offsetHeight / 2 + 3);
     return this.pos;
   }
 
   public updatePortConnectStatusElement() {
-    this.parent.updatePortConnectStatusElement(this);
+    this.block.updatePortConnectStatusElement(this.parent);
   }
 }
 
@@ -90,13 +96,25 @@ export class BlockParameterPort extends BlockPort {
   public paramType : BlockParameteType = 'any';
   public paramCustomType = '';
   public paramValue : any = null;
+  public paramUserSetValue : any = null;
 
+  /**
+   * 自定义参数端口属性供代码使用（会保存至文件中）
+   */
+  public options = {
 
-  public update(source : BlockParameterPort) {
-    this.paramValue = source.paramValue;
+  };
+
+  public update(source ?: BlockParameterPort) {
+
+    if(source) 
+      this.paramValue = source.paramValue;
+
     this.parent.onParameterUpdate(this.parent, this);
 
-    if(this.connectedPort != null) {
+    //更新下一级
+    if(this.connectedPort != null 
+      && (!this.parent.isEditorBlock || (<BlockEditor>this.parent).editor.getRunningState() == 'running')) {
       (<BlockParameterPort>this.connectedPort).update(this);
     }
   }

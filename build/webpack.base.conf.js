@@ -42,6 +42,15 @@ module.exports = {
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
       {
+        test: /\.worker\.js$/, // 以 .worker.js 结尾的文件将被 worker-loader 加载
+        use: { 
+          loader: 'worker-loader',
+          options: {
+            inline: true
+          }
+        }
+      },
+      {
         test: /\.tsx?$/,
         exclude: resolve('node_modules'),
         loader: 'ts-loader',

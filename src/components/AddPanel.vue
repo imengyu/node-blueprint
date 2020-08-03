@@ -14,9 +14,9 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { CategoryData } from "../views/Editor.vue";
 import BlockCategory from "./BlockCategory.vue";
-import { Vector2 } from "../model/vector2";
+import { Vector2 } from "../model/Vector2";
+import { CategoryData } from "../sevices/BlockService";
 
 @Component({
   components: {

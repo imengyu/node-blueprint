@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!--工具栏-->
     <div class="toolbar">
       <div class="button icon" title="新建" @click="newFile"><i class="iconfont icon-file-1"></i></div>
       <div class="button icon" title="打开" @click="loadFile"><i class="iconfont icon-folder-"></i></div>
@@ -23,14 +24,29 @@
       <div class="button icon" title="删除选中" :disabled="selectedBlocks.length==0&&selectedConnectors.length==0" 
         @click="showDeleteModalClick()"><i class="iconfont icon-trash"></i></div>
 
+      <div class="separator"></div>
 
+      <div v-if="runningState=='editing'" class="button icon" title="开始调试" @click="startRun"><i class="iconfont icon-play"></i></div>
+      <div v-if="runningState=='editing'" class="button icon" title="开始单步调试" @click="startRunAndStepNext"><i class="iconfont icon-play-next"></i></div>
+      <div v-if="runningState=='runningPaused'" class="button icon" title="运行下一步" @click="stepNext"><i class="iconfont icon-play-next"></i></div>
+      
+      <div v-if="runningState=='running'" class="button icon" title="暂停调试" @click="pauseRun"><i class="iconfont icon-pause"></i></div>
+      <div v-if="runningState=='running'" class="button icon" title="停止调试" @click="stopRun"><i class="iconfont running"></i></div>
+
+      <div class="separator"></div>
+
+      <div class="button icon" title="打开控制台" @click="openConsole"><i class="iconfont icon-terminal"></i></div>
+    
     </div>
+    <!--添加单元弹出窗口-->
     <AddPanel v-show="showAddBlockPanel" 
       :allBlocksGrouped="allBlocksGrouped" 
       :showPos="showAddBlockPanelPos"
       @onBlockItemClick="onBlockAddItemClick" />
+    <!--主编辑器-->
     <div class="main">
       <Split v-model="splitOff">
+        <!--流图编辑器-->
         <div slot="left" id="editorHost" class="editor" :style="{ 
           cursor: (isDragView ? 'grabbing' : (mouseLeftMove ? 'grab' : 'default'))
         }">
@@ -48,11 +64,13 @@
             </div>
           </div>
         </div>
+        <!--属性栏-->
         <div slot="right" class="prop">
 
         </div>
       </Split>
     </div>
+    <!--对话框-->
     <Modal v-model="showDeleteModal" width="360">
       <p slot="header" style="color:#f60;text-align:center">
         <Icon type="ios-information-circle"></Icon>
@@ -69,32 +87,43 @@
         <Button size="large" @click="showDeleteModal=false">取消</Button>
       </div>
     </Modal>
+    <Modal v-model="showDropChangesModal" width="360">
+      <p slot="header" style="color:#f60;text-align:center">
+        <Icon type="ios-information-circle"></Icon>
+        <span>文件保存提示</span>
+      </p>
+      <div style="text-align:center">
+        你希望丢弃当前文档的更改吗？<br>
+        注意，未保存的更改将丢失！
+      </div>
+      <div slot="footer">
+        <Button size="large" @click="showDropChangesModal=false">取消</Button>
+        <Button type="error" size="large" @click="doNewFile">丢弃更改</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { State } from 'vuex-class'
-import { Block } from '../model/block'
-import { Vector2 } from "../model/vector2";
-import { Rect } from "../model/rect";
-import { BlockRegData } from "../model/blockdef";
-import { EditorInterface } from "../model/editor";
-import { BlockPort, BlockParameterPort } from "../model/port";
-import { Connector } from "../model/connector";
-import { EditorFileParser } from "../model/parser";
+import { Block } from '../model/Block'
+import { Vector2 } from "../model/Vector2";
+import { Rect } from "../model/Rect";
+import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData } from "../model/BlockDef";
+import { EditorInterface, EditorRunningState } from "../model/Editor";
+import { BlockPort, BlockParameterPort } from "../model/Port";
+import { ConnectorEditor } from "../model/Connector";
+import { EditorFileParser } from "../model/Parser";
 
-import BaseBlocks from "../model/blocks/baseBlocks";
+import BaseBlocks from "../model/Blocks/BaseBlocks";
 import CanvasUtils from "../utils/CanvasUtils";
 import CommonUtils from "../utils/CommonUtils";
 import BlockCategory from "../components/BlockCategory.vue";
 import AddPanel from "../components/AddPanel.vue";
-
-export type CategoryData = {
-  category: string,
-  childCategories: Array<CategoryData>,
-  blocks: Array<BlockRegData>
-};
+import BlockServiceInstance from "../sevices/BlockService";
+import ParamTypeServiceInstance from "../sevices/ParamTypeService";
+import { BlockEditor } from "../model/BlockEditor";
 
 @Component({
   components: {
@@ -124,6 +153,7 @@ export default class Editor extends Vue implements EditorInterface {
   ctx : CanvasRenderingContext2D = null;
   blockHost : HTMLDivElement = null;
 
+  public getVue() : Vue { return this; }
   public getToolBarHeight() { return this.toolBarHeight; }
   public getBlockHostElement() { return this.blockHost; }
 
@@ -271,97 +301,35 @@ export default class Editor extends Vue implements EditorInterface {
       else this.ctx.strokeStyle = "#000";
 
       if(this.connectingStartPort.direction == 'input')
-        CanvasUtils.drawConnectorBezierCurve(this.ctx, this.connectingEndPos, this.connectingStartPort.getPosition(), this.viewPort, this.viewZoom);
+        CanvasUtils.drawConnectorBezierCurve(this.ctx, this.connectingEndPos, this.connectingStartPort.editorData.getPosition(), this.viewPort, this.viewZoom);
       else if(this.connectingStartPort.direction == 'output')
-        CanvasUtils.drawConnectorBezierCurve(this.ctx, this.connectingStartPort.getPosition(), this.connectingEndPos, this.viewPort, this.viewZoom);
+        CanvasUtils.drawConnectorBezierCurve(this.ctx, this.connectingStartPort.editorData.getPosition(), this.connectingEndPos, this.viewPort, this.viewZoom);
     
 
     }
   }
 
+
   // 单元管理
   //======================= 
 
-  private allBlocks = {};
-  private allBlocksGrouped : Array<CategoryData> = [];
+  public allBlocksGrouped = [];
 
-  /**
-   * 注册单元
-   * @param blockdef 单元信息
-   * @param updateList 是否刷新列表
-   */
-  public registerBlock(blockdef : BlockRegData, updateList = true) {
-    if(this.getRegisteredBlock(blockdef.guid)) {
-      console.warn("[registerBlock] Block guid " + blockdef.guid + " alreday registered !");
-      return;
-    }
-    this.allBlocks[blockdef.guid] = blockdef;
-    if(updateList)
-      this.updateBlocksList();
-  }
-  public getRegisteredBlock(guid : string) {
-    return this.allBlocks[guid];
-  }
-  public unregisterBlock(guid : string) {
-    let regData : BlockRegData = this.allBlocks[guid]
-    if(regData) {
-      if((<any>regData).categoryObject) {
-        (<CategoryData>(<any>regData).categoryObject).blocks.remove(regData);
-      }
-    }
-    this.allBlocks[guid] = undefined;
-  }
-
-  private findOrCrateBlocksListCategoryAtCategory(path : string, parent : Array<CategoryData>) : CategoryData {
-    let spIndex = path.indexOf('/');
-    let categoryName = path;
-    if(spIndex > 0) 
-      categoryName = path.substring(0, spIndex);
-
-    let category : CategoryData = null;
-    for(let i = 0, c = parent.length; i < c; i++) {
-      if(parent[i].category == categoryName){
-        category = parent[i];
-        break;
-      }
-    }
-
-    //没有则创建
-    if(category == null) {
-      category = {
-        category: categoryName,
-        childCategories: [],
-        blocks: []
-      };
-      parent.push(category);
-    }
-
-    //如果还有下一级，则递归查找
-    if(spIndex > 0 && spIndex < path.length) 
-      return this.findOrCrateBlocksListCategoryAtCategory(path.substring(spIndex + 1), category.childCategories);
-    else 
-      return category;
-  }
-  public findBlocksListCategory(path : string) : CategoryData {
-    return this.findOrCrateBlocksListCategoryAtCategory(path, this.allBlocksGrouped);
-  }
-  /**
-   * 刷新单元列表
-   */
-  public updateBlocksList() {
-    Object.keys(this.allBlocks).forEach(key => {
-      let regData : BlockRegData = this.allBlocks[key];
-      let category = this.findBlocksListCategory(regData.category);
-
-      (<any>regData).categoryObject = category;
-
-      if(!category.blocks.contains(regData)) 
-        category.blocks.push(regData);
-    });
-  }
   onBlockAddItemClick(block : BlockRegData) {
     this.showAddBlockPanel = false;
-    this.addBlock(new Block(this, block), this.viewPort.calcCenter());
+
+    //检查单元是否只能有一个
+    if(block.settings.oneBlockOnly) {
+      if(this.getBlocksByGUID(block.guid).length > 0) {
+        this.$Modal.info({
+          title: '提示',
+          content: '当前文档中已经有 ' + block.baseInfo.name + ' 了哦，此单元只能有一个'
+        });
+        return;
+      }
+    }
+
+    this.addBlock(new BlockEditor(this, block), this.viewPort.calcCenter());
   }
 
   //添加单元弹出
@@ -395,12 +363,26 @@ export default class Editor extends Vue implements EditorInterface {
     this.showDeleteModal = false;
   }
 
-  blocks : Array<Block> = [];
-  connectors : Array<Connector> = [];
+  blocks : Array<BlockEditor> = [];
+  connectors : Array<ConnectorEditor> = [];
 
   public getBlocks() { return this.blocks;}
   public getConnectors() { return this.connectors;}
-
+  public getBlocksByGUID(guid : string) { 
+    let arr = [];
+    this.blocks.forEach(element => {
+      if(element.guid==guid)
+        arr.push(element);
+    });
+    return arr;
+  }
+  public getOneBlockByGUID(guid : string) { 
+    for (let index = 0; index < this.blocks.length; index++) {
+      if(this.blocks[index].guid==guid)
+        return this.blocks[index];
+    }
+    return null;
+  }
 
   // 逻辑控制
   //=======================
@@ -415,8 +397,8 @@ export default class Editor extends Vue implements EditorInterface {
   // 鼠标逻辑控制
   //=======================
 
-  selectedBlocks : Array<Block> = [];
-  selectedConnectors : Array<Connector> = [];
+  selectedBlocks : Array<BlockEditor> = [];
+  selectedConnectors : Array<ConnectorEditor> = [];
 
   multiSelectRect = new Rect();
   mouseLeftMove = false;
@@ -475,13 +457,13 @@ export default class Editor extends Vue implements EditorInterface {
 
   //单元控制事件
 
-  public onUserSelectBlock(block : Block) {
+  public onUserSelectBlock(block : BlockEditor) {
     if(!this.selectedBlocks.contains(block)) {
       this.selectedBlocks.push(block);
       block.updateLastPos();
     }
   }
-  public onMoveBlock(block : Block, moveOffest : Vector2) {
+  public onMoveBlock(block : BlockEditor, moveOffest : Vector2) {
     if(this.selectedBlocks.length > 0) {
       this.selectedBlocks.forEach(element => {
         if(element!=block) {
@@ -493,19 +475,19 @@ export default class Editor extends Vue implements EditorInterface {
       });
     }
   }
-  public onMoveBlockEnd(block : Block) {
+  public onMoveBlockEnd(block : BlockEditor) {
     if(this.selectedBlocks.length > 0) {
       this.selectedBlocks.forEach(element => {
         element.updateLastPos();
       });
     }
   }
-  public onBlockDelete(block : Block) {
+  public onBlockDelete(block : BlockEditor) {
     if(this.selectedBlocks.contains(block)) 
       this.selectedBlocks.remove(block);
     block.allPorts.forEach((p) => {
       if(p.connector != null)
-        this.unConnectConnector(p.connector);
+        this.unConnectConnector(<ConnectorEditor>p.connector);
     })
   }
 
@@ -523,22 +505,24 @@ export default class Editor extends Vue implements EditorInterface {
    * 断开链接
    * @param connector 目标链接
    */
-  public unConnectConnector(connector : Connector) {
+  public unConnectConnector(connector : ConnectorEditor) {
     this.connectors.remove(connector);
     this.selectedConnectors.remove(connector);
         
     connector.startPort.connectedPort = null;
     connector.startPort.connector = null;
-    connector.startPort.updatePortConnectStatusElement();
+    connector.startPort.editorData.updatePortConnectStatusElement();
     connector.endPort.connectedPort = null;
     connector.endPort.connector = null;
-    connector.endPort.updatePortConnectStatusElement();
+    connector.endPort.editorData.updatePortConnectStatusElement();
+
+    this.setFileChanged();
   }
   public getCanConnect() { return this.connectingCanConnect; }
   public startConnect(port : BlockPort) {
     this.connectingStartPort = port;
-    this.connectingStartPort.forceDotActiveState = true;
-    this.connectingStartPort.updatePortConnectStatusElement();
+    this.connectingStartPort.editorData.forceDotActiveState = true;
+    this.connectingStartPort.editorData.updatePortConnectStatusElement();
     this.isConnecting = true;
   }
   public endConnect(port : BlockPort) {
@@ -548,43 +532,59 @@ export default class Editor extends Vue implements EditorInterface {
       //已经链接上了，取消链接
       if(this.currentHoverPort.connector == this.connectingStartPort.connector 
         && this.connectingStartPort.connector != null) {
-        this.unConnectConnector(this.currentHoverPort.connector);   
+        this.unConnectConnector(<ConnectorEditor>this.currentHoverPort.connector);   
         this.isConnecting = false;
         this.connectingStartPort = null;
         return;
       }
 
       //新建链接
-      let connector = new Connector();
+      let connector = new ConnectorEditor();
 
       //根据方向链接节点
       if(this.connectingStartPort.direction == 'output') {
 
-        if(this.connectingStartPort.connector != null) {
+        //如果是行为端口，只能输出一条线路。
+        if(this.connectingStartPort.type == 'Behavior' 
+          && this.connectingStartPort.connector != null) {
           this.connectingStartPort.connector.endPort.connector = null;
-          this.connectors.remove(this.connectingStartPort.connector);
+          this.connectors.remove(<ConnectorEditor>this.connectingStartPort.connector);
+        }
+        //如果是参数端口，只能输入一条线路。
+        if(this.connectingStartPort.type == 'Parameter'
+          && this.currentHoverPort.connector != null) {
+          this.currentHoverPort.connector.endPort.connector = null;
+          this.connectors.remove(<ConnectorEditor>this.currentHoverPort.connector);
         }
 
         this.connectingStartPort.connectedPort = this.currentHoverPort;
-        this.connectingStartPort.updatePortConnectStatusElement();
-        this.connectingStartPort.connector = connector
+        this.connectingStartPort.connector = connector;
+        this.connectingStartPort.editorData.updatePortConnectStatusElement();
         this.currentHoverPort.connector = connector;
-        this.currentHoverPort.updatePortConnectStatusElement();
+        this.currentHoverPort.editorData.updatePortConnectStatusElement();
 
         connector.startPort = this.connectingStartPort;
         connector.endPort = this.currentHoverPort;
       }else if(this.currentHoverPort.direction == 'output') {
 
-        if(this.currentHoverPort.connector != null) {
+        //如果是行为端口，只能输出一条线路。
+        if(this.connectingStartPort.type == 'Behavior' 
+          && this.currentHoverPort.connector != null) {
           this.currentHoverPort.connector.endPort.connector = null;
-          this.connectors.remove(this.currentHoverPort.connector);
+          this.connectors.remove(<ConnectorEditor>this.currentHoverPort.connector);
+        }
+        //如果是参数端口，只能输入一条线路。
+        if(this.currentHoverPort.type == 'Parameter'
+          && this.connectingStartPort.connector != null) {
+          this.connectingStartPort.connector.endPort.connector = null;
+          this.connectors.remove(<ConnectorEditor>this.connectingStartPort.connector);
         }
 
-        this.currentHoverPort.connectedPort = this.currentHoverPort;
-        this.currentHoverPort.updatePortConnectStatusElement();
         this.currentHoverPort.connector = connector;
+        this.currentHoverPort.connectedPort = this.currentHoverPort;
+        this.currentHoverPort.editorData.updatePortConnectStatusElement();
         this.connectingStartPort.connector = connector;
-        this.connectingStartPort.updatePortConnectStatusElement();
+        this.connectingStartPort.editorData.updatePortConnectStatusElement();
 
         connector.startPort = this.currentHoverPort;
         connector.endPort = this.connectingStartPort;
@@ -599,11 +599,13 @@ export default class Editor extends Vue implements EditorInterface {
     this.isConnecting = false;
     
     if(this.connectingStartPort != null) {
-      this.connectingStartPort.forceDotActiveState = false;
-      this.connectingStartPort.forceDotErrorState = false;
-      this.connectingStartPort.updatePortConnectStatusElement();
+      this.connectingStartPort.editorData.forceDotActiveState = false;
+      this.connectingStartPort.editorData.forceDotErrorState = false;
+      this.connectingStartPort.editorData.updatePortConnectStatusElement();
       this.connectingStartPort = null;
     }
+
+    this.setFileChanged();
   }
   public updateConnectEnd(posDocunment : Vector2) { 
     this.connectingEndPos.Set(posDocunment.x + this.viewPort.x, 
@@ -612,9 +614,9 @@ export default class Editor extends Vue implements EditorInterface {
   public updateCurrentHoverPortLeave(port : BlockPort) {
     if(this.currentHoverPort == port) {
       if(port != this.connectingStartPort) {
-        this.currentHoverPort.forceDotErrorState = false;
-        this.currentHoverPort.forceDotActiveState = false;
-        this.currentHoverPort.updatePortConnectStatusElement();
+        this.currentHoverPort.editorData.forceDotErrorState = false;
+        this.currentHoverPort.editorData.forceDotActiveState = false;
+        this.currentHoverPort.editorData.updatePortConnectStatusElement();
       }
       this.connectingIsFail = false;
       this.currentHoverPort = null;
@@ -626,9 +628,9 @@ export default class Editor extends Vue implements EditorInterface {
     }
 
     if(this.currentHoverPort != null) {
-      this.currentHoverPort.forceDotErrorState = false;
-      this.currentHoverPort.forceDotActiveState = false;
-      this.currentHoverPort.updatePortConnectStatusElement();
+      this.currentHoverPort.editorData.forceDotErrorState = false;
+      this.currentHoverPort.editorData.forceDotActiveState = false;
+      this.currentHoverPort.editorData.updatePortConnectStatusElement();
     }
     this.currentHoverPort = port;
 
@@ -660,15 +662,15 @@ export default class Editor extends Vue implements EditorInterface {
 
     //更新点的状态
     if(this.connectingCanConnect) {
-      this.currentHoverPort.forceDotErrorState = false;
-      this.currentHoverPort.forceDotActiveState = true;
+      this.currentHoverPort.editorData.forceDotErrorState = false;
+      this.currentHoverPort.editorData.forceDotActiveState = true;
       this.connectingIsFail = false;
     }else {
-      this.currentHoverPort.forceDotErrorState = true;
-      this.currentHoverPort.forceDotActiveState = false;
+      this.currentHoverPort.editorData.forceDotErrorState = true;
+      this.currentHoverPort.editorData.forceDotActiveState = false;
       this.connectingIsFail = true;
     }
-    this.currentHoverPort.updatePortConnectStatusElement();
+    this.currentHoverPort.editorData.updatePortConnectStatusElement();
   }
   public getCurrentHoverPort() : BlockPort {
     return this.currentHoverPort;
@@ -780,127 +782,30 @@ export default class Editor extends Vue implements EditorInterface {
     }
   }
 
-  // 测试
-  //=======================
-
-  private test2() {
-    this.viewPort.y--;
-    this.recalcViewPort();
-  }  
-  private test1() {
-    this.viewPort.y++;
-    this.recalcViewPort();
-  }
-  private test3() {
-    this.addBlock(new Block(this, this.getRegisteredBlock("DDDB2039-9876-15D1-3410-FCD04941C750")), this.viewPort.calcCenter());
-  }
-
-  private initDebug() {
-    this.registerBlock({
-      guid: "DDDB2039-9876-15D1-3410-FCD04941C750",
-      name: "Test block",
-      description: "This is a single block. Useage: unknow.",
-      logo: "",
-      logoRight: "",
-      logoBottom: "",
-      category: '测试',
-      author: 'imengyu',
-      version: '2.0',
-      ports : [
-        {
-          name: "入口",
-          description: '默认入口单元',
-          direction: 'input',
-          guid: 'CDEDC799'
-        },
-        {
-          name: "出口",
-          description: '默认出口单元',
-          direction: 'output',
-          guid: 'F8E71C0D'
-        },
-      ],
-      parameters: [],
-      onCreate: () => {},
-      onPortActive : (block, port) => {},
-      onParameterUpdate : (block, port) => {},
-    }, false);
-    this.registerBlock({
-      guid: "31CCFD61-0164-015A-04B1-732F0A7D6661",
-      name: "相加",
-      description: "相加单元，相加两个或多个参数",
-      logo: "",
-      logoRight: "",
-      logoBottom: "",
-      category: '测试/工具',
-      author: 'imengyu',
-      version: '2.0',
-      ports : [
-        {
-          name: "入口",
-          description: '默认入口单元',
-          direction: 'input',
-          guid: 'CDEDC799'
-        },
-        {
-          name: "出口",
-          description: '默认出口单元',
-          direction: 'output',
-          guid: 'F8E71C0D'
-        },
-      ],
-      parameters: [
-        {
-          name: "参数1",
-          description: '',
-          direction: 'input',
-          guid: '732F0A7D',
-          paramType: 'any',
-          paramCustomType: ''
-        },
-        {
-          name: "参数2",
-          description: '',
-          direction: 'input',
-          guid: '0A7D6661',
-          paramType: 'any',
-          paramCustomType: ''
-        },
-        {
-          name: "结果",
-          description: '',
-          direction: 'output',
-          guid: '42DCF7F4',
-          paramType: 'any',
-          paramCustomType: ''
-        },
-      ],
-      onCreate: () => {},
-      onPortActive : (block, port) => {},
-      onParameterUpdate : (block, port) => {},
-    }, false);
-    this.updateBlocksList();
-  }
-
   // 块控制
   //=======================
 
 
-  public addBlock(block : Block, position : Vector2, connectToPort ?: any) {
+  public addBlock(block : BlockEditor, position : Vector2, connectToPort ?: BlockPort) {
     this.blocks.push(block);
 
     block.create();
     block.setPos(position);
-    
+
+    this.setFileChanged();
   }
-  public deleteBlock(block : Block) {
+  public deleteBlock(block : BlockEditor) {
+
     block.destroy();
+
     this.blocks.remove(block);
+    this.setFileChanged();
   }
 
 
   // 整体控制
   //=======================
+
 
   private onWindowSizeChanged() {
     let editorHost = <HTMLCanvasElement>document.getElementById("editorHost");
@@ -924,13 +829,17 @@ export default class Editor extends Vue implements EditorInterface {
 
     this.parser = new EditorFileParser(this);
 
-    BaseBlocks.register(this);
+    BlockServiceInstance.init();
+    BlockServiceInstance.isEditorMode = true;
+    BlockServiceInstance.allBlocksGrouped = this.allBlocksGrouped;
+    BaseBlocks.register();
+    ParamTypeServiceInstance.init();
+    BlockServiceInstance.updateBlocksList();
 
-    this.initDebug();
     setTimeout(() => {
       this.onWindowSizeChanged();
+      this.newFile();
     }, 1000)
-    
   }
   private destroy() {
     this.editorHost.removeEventListener('mousedown', this.onMouseDown);
@@ -957,10 +866,28 @@ export default class Editor extends Vue implements EditorInterface {
   // 文件保存写入控制
   //=======================
 
+  private showDropChangesModal = false;
+
   private parser : EditorFileParser
+  private currentFileChanged = false;
+
+  private setFileChanged() { this.currentFileChanged = true; }
+  private doNewFile() {
+    this.currentFileChanged = true;
+    this.blocks = [];
+    this.connectors = [];
+
+    let centerPoint = this.viewPort.calcCenter();
+    centerPoint.x -= (this.viewPort.w / 10);
+    this.addBlock(new BlockEditor(this, BaseBlocks.getScriptBaseBlockIn()), new Vector2(
+      this.viewPort.x + (this.viewPort.w / 2 - 35) - this.viewPort.w / 2.5,
+      this.viewPort.y + (this.viewPort.h / 2 - 15)
+    ));
+  }
 
   public newFile() {
-
+    if(this.currentFileChanged) this.showDropChangesModal = true;
+    else this.doNewFile();
   }
   public saveFile() {
     console.log(this.parser.saveToString());
@@ -968,6 +895,58 @@ export default class Editor extends Vue implements EditorInterface {
   }
   public loadFile() {
     
+  }
+
+  // 调试运行控制
+  //=======================
+
+  runningState : EditorRunningState = 'editing';
+
+  private startBlock : BlockEditor = null;
+
+  public getRunningState() { return this.runningState;}
+
+  public startRun() {
+    if(this.runningState == 'editing') {
+
+      //查找入口单元
+      this.startBlock = this.getOneBlockByGUID(BaseBlocks.getScriptBaseBlockIn().guid);
+      if(this.startBlock == null) {
+        this.$Modal.info({
+          title: '错误',
+          content: '没有找到入口单元，无法运行脚本'
+        });
+        return false;
+      }
+      //激活入口单元
+      
+
+      return true;
+    }
+    return false;
+  }
+  public startRunAndStepNext() {
+    if(this.runningState == 'editing') {
+      if(this.startRun()) {
+
+      }
+    }
+  }
+  public stopRun() {
+    
+  }
+  public pauseRun() {
+    
+  }
+  public stepNext() {
+    
+  }
+
+  public openConsole() {
+    this.$Modal.info({
+      title: '提示',
+      content: '请按 F12 开启控制台'
+    });
   }
 
 }

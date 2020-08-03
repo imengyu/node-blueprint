@@ -43,6 +43,11 @@ String.prototype.contains = function (str) {
 
 //数组
 
+Array.prototype.addOnce = function(item) {
+  if(this.indexOf(item) >= 0) return this.length;
+  else return this.push(item);
+}
+
 Array.prototype.remove = function(item) {
   var dx = typeof item === 'number' ? item : this.indexOf(item);
   var rs = false
