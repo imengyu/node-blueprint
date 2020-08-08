@@ -4,6 +4,7 @@ import { BlockParameterPort, BlockBehaviorPort, BlockPortDirection, BlockPort, B
 import CommonUtils from "../utils/CommonUtils";
 import { BlockEditor } from "./BlockEditor";
 import { ConnectorEditor } from "./Connector";
+import { BlockRunLoopData, BlockRunner } from "./Runner";
 
 export class Block {
 
@@ -27,6 +28,12 @@ export class Block {
   public data = {
 
   };
+
+
+  /**
+   * 块的断点触发设置
+   */
+  public breakpoint : BlockBreakPoint = 'none';
 
   public constructor() {
     this.uid = CommonUtils.genNonDuplicateIDHEX(16);
@@ -67,6 +74,16 @@ export class Block {
    * 获取当前单元是不是在编辑器模式中
    */
   public isEditorBlock = false;
+  /**
+   * 当前单元所在的运行上下文
+   */
+  public currentRunningContext : BlockRunLoopData = null;
+  /**
+   * 当前单元所在的运行器
+   */
+  public currentRunner : BlockRunner = null;
+
+
   //单元控制事件
   //===========================
 
@@ -119,7 +136,9 @@ export class Block {
       this.outputPorts[newPort.guid] = newPort;
       this.outputPortCount++;
     }
-    this.allPorts.push(newPort);
+
+    if(data.defaultConnectPort) this.allPorts.unshift(newPort);
+    else this.allPorts.push(newPort);
 
     if(typeof this.onAddPortElement == 'function') this.onAddPortElement(newPort);
     if(typeof this.onPortAdd == 'function') this.onPortAdd(this, newPort);
@@ -138,8 +157,9 @@ export class Block {
       return;
     }
 
-    if(oldData.connector != null && oldData.parent.isEditorBlock)
-      (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>oldData.connector);
+    //取消连接
+    if(oldData.parent.isEditorBlock)
+      this.unConnectPort(oldData);
 
     this.allPorts.remove(oldData);
     if(typeof this.onRemovePortElement == 'function') this.onRemovePortElement(oldData);
@@ -174,7 +194,7 @@ export class Block {
    * @param data 参数端口数据
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
    */
-  public addParameterPort(data : BlockParameterPortRegData, isDyamicAdd = true) {
+  public addParameterPort(data : BlockParameterPortRegData, isDyamicAdd = true, initialValue = null) {
     let oldData = this.getParameterPort(data.name, data.direction);
     if(oldData != null) {
       console.warn("[addParameterPort] " + data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !");
@@ -189,6 +209,8 @@ export class Block {
     newPort.isDyamicAdd = isDyamicAdd;
     newPort.paramType = data.paramType;
     newPort.paramCustomType = data.paramCustomType;
+    newPort.paramDefaultValue = data.paramDefaultValue;
+    newPort.paramUserSetValue = initialValue;
     newPort.guid = data.guid;
     newPort.regData = data;
 
@@ -200,7 +222,9 @@ export class Block {
       this.outputParameters[newPort.guid] = newPort;
       this.outputParameterCount++;
     }
-    this.allPorts.push(newPort);
+
+    if(data.defaultConnectPort) this.allPorts.unshift(newPort);
+    else this.allPorts.push(newPort);
 
     if(typeof this.onAddPortElement == 'function') this.onAddPortElement(newPort);
     if(typeof this.onParameterAdd == 'function') this.onParameterAdd(this, newPort);
@@ -220,8 +244,9 @@ export class Block {
       return;
     }
 
-    if(oldData.connector != null && oldData.parent.isEditorBlock)
-      (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>oldData.connector);
+    //取消连接
+    if(oldData.parent.isEditorBlock)
+      this.unConnectPort(oldData);
 
     this.allPorts.remove(oldData);
 
@@ -280,13 +305,33 @@ export class Block {
     return undefined;
   }
   /**
-   * 激活某一个输出行为端口
+   * 更新输出参数端口的数据
+   * @param guid 参数端口GUID
+   */
+  public setOutputParamValue(guid : string, value : any) {
+    let port = <BlockParameterPort>this.outputParameters[guid];
+    if(port) {
+      port.paramValue = value;
+      port.update();
+    }
+  }
+  /**
+   * 在当前上下文激活某一个输出行为端口
    * @param guid 行为端口GUID
    */
   public activeOutputPort(guid : string) {
-    let port = <BlockBehaviorPort>this.inputPorts[guid];
+    let port = <BlockBehaviorPort>this.outputPorts[guid];
     if(port)
-      port.active()
+      port.active(this.currentRunningContext);
+  }
+  /**
+   * 在新的上下文中激活某一个输出行为端口（适用于接收事件）
+   * @param guid 行为端口GUID
+   */
+  public activeOutputPortInNewContext(guid : string) {
+    let port = <BlockBehaviorPort>this.outputPorts[guid];
+    if(port)
+      port.activeInNewContext();
   }
   /**
    * 根据GUID获取某个端口
@@ -297,6 +342,34 @@ export class Block {
         if(this.allPorts[i].guid == guid) 
           return this.allPorts[i];
     return null;
+  }
+
+  public getOnePortByDirection(direction : BlockPortDirection) {
+    for(let i = 0, c = this.allPorts.length; i < c;i++)
+      if(this.allPorts[i].type == 'Behavior' && this.allPorts[i].direction == direction) 
+        return this.allPorts[i];
+    return null;
+  }
+  public getOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '') {
+    for(let i = 0, c = this.allPorts.length; i < c;i++)
+      if(this.allPorts[i].type == 'Parameter' 
+        && this.allPorts[i].direction == direction
+        && (<BlockParameterPort>this.allPorts[i]).paramType == type
+        && (<BlockParameterPort>this.allPorts[i]).paramCustomType == customType) 
+        return this.allPorts[i];
+    return null;
+  }
+  public unConnectPort(oldData : BlockPort) {
+    if(oldData.direction == 'input') {
+      if(oldData.connectedFromPort.length > 0)
+        oldData.connectedFromPort.forEach((c) => 
+          (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>c.connector));
+    }
+    else if(oldData.direction == 'output') {
+      if(oldData.connectedToPort.length > 0)
+        oldData.connectedToPort.forEach((c) => 
+          (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>c.connector));
+    }
   }
 
   protected onAddPortElement : (port : BlockPort) => void = null;

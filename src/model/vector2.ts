@@ -15,6 +15,19 @@ export class Vector2 {
     }
     if(typeof y != "undefined") this.y = y;
   }
+  public clone() {
+    return new Vector2(this.x, this.y);
+  }
+  public multiply(v : number) {
+    this.x *= v;
+    this.y *= v;
+    return this;
+  }
+  public divide(v : number) {
+    this.x /= v;
+    this.y /= v;
+    return this;
+  }
 }
 
 export var ZeroVector2 = new Vector2();

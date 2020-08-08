@@ -1,14 +1,24 @@
 <template>
-  <div class="block-add-panel" :style="{ left: (showPos != null ? showPos.x : 0) + 'px', top: (showPos != null ? showPos.y : 0) + 'px' }">
-    <Collapse simple>
-      <Panel v-for="(item, index) in allBlocksGrouped" :key="index" :name="index.toString()">
+  <div ref="block-add-panel" class="block-add-panel" 
+    :style="{ left: (showPos != null ? showPos.x : 0) + 'px', top: (showPos != null ? showPos.y : 0) + 'px' }"
+    @click="onClick($event)">
+    <div class="text-center">添加{{ filterText }}</div>
+
+    <Input v-model="searchValue" placeholder="搜索单元..." clearable size="small" suffix="ios-search" :style="{margin:'5px 0'}" />
+
+    <div v-for="(item, index) in allBlocksGrouped" :key="index" :name="index.toString()" v-show="item.show&&item.filterShow"
+      class="collapse-item">
+      <span class="collapse-title"  @click="item.open=!item.open;">
+        <i :class="'collapse-arrow iconfont ' + (item.open ? 'icon-arrow-down-1' : 'icon-arrow-right-')"></i>
         {{ item.category }}
-        <div slot="content">
-          <BlockCategory :categoryData="item" @onBlockItemClick="onBlockItemClick">
-          </BlockCategory>
-        </div>
-      </Panel>
-    </Collapse>
+      </span>
+      <BlockCategory v-show="item.open" :categoryData="item" 
+        @on-block-item-click="onBlockItemClick">
+      </BlockCategory>
+    </div>
+
+    <div v-if="currentShowCount==0 && searchValue != ''" class="text-center">暂无结果</div>
+
   </div>
 </template>
 
@@ -17,6 +27,8 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
+import { BlockPortDirection, BlockParameteType } from "../model/port";
+import { BlockRegData } from "../model/BlockDef";
 
 @Component({
   components: {
@@ -28,9 +40,119 @@ export default class AddPanel extends Vue {
 
   @Prop({ default: null }) allBlocksGrouped : Array<CategoryData>;
   @Prop({ default: null }) showPos : Vector2;
+  @Prop({ default: false }) show : boolean;
 
+  filterText = '所有可用单元';
+
+  @Prop({ default: null }) filterByPort : BlockPortDirection;
+  @Prop({ default: null }) filterByParamPort : BlockPortDirection;
+  @Prop({ default: null }) filterByParamPortType : BlockParameteType;
+  @Prop({ default: null }) filterByParamPortCustomType : string;
+
+  @Watch('show')
+  onShowChanged(newV) {
+    if(newV) { setTimeout(() => {
+      document.addEventListener('click', this.onDocClick);
+    }, 100); } 
+    else document.removeEventListener('click', this.onDocClick);
+  }
+  @Watch('searchValue')
+  onSearch(newV) {
+    if(newV == '') this.clearSearch();
+    else this.doSearch();
+  }
+
+  searchValue = '';
+  currentShowCount = 0;
+  currentFilterCount = 0;
+
+  focus() {
+    setTimeout(() => {
+      (<HTMLElement>this.$refs['block-add-panel']).focus();
+    }, 50);
+  }
+
+  doFilterLoop(cn : (b : BlockRegData) => boolean) {
+    this.currentFilterCount = 0;
+    let loop = function(data : CategoryData) {
+      let showChildCount = 0;
+      data.blocks.forEach((b) => {
+        b.show = cn(b);
+        if(b.show) showChildCount++;
+      });
+      data.childCategories.forEach((d) => showChildCount += loop(d));
+      data.show = showChildCount > 0;
+      return showChildCount;
+    };
+    this.allBlocksGrouped.forEach((cd) => this.currentFilterCount += loop(cd));
+  }
+  doFilter() {
+    if(this.filterByPort != null) {
+      this.filterText = '包含' + (this.filterByPort == 'input' ? '入' : '出') + '行为节点的单元';
+      this.doFilterLoop((b) => b.hasOnePortByDirection(this.filterByPort));
+    }
+    else if(this.filterByParamPort != null) {
+      this.doFilterLoop((b) => b.hasOneParamPortByDirectionAndType(this.filterByParamPort,
+        this.filterByParamPortType, this.filterByParamPortCustomType));
+
+      this.filterText = (this.filterByParamPort == 'input' ? '获取' : '输出') + 
+        ((this.filterByParamPortType == 'custom' || this.filterByParamPortType == 'enum') ?
+        this.filterByParamPortCustomType : this.filterByParamPortType) + '的单元';
+    }
+    else this.clearFilter();
+  }
+  clearFilter() {
+
+    let loop = function(data : CategoryData) {
+      data.show = true;
+      data.blocks.forEach((b) => b.show = true);
+      data.childCategories.forEach((d) => loop(d));
+    };
+
+    this.allBlocksGrouped.forEach((cd) => loop(cd));
+    this.filterText = '所有可用单元';
+  }
+  doSearch() {
+    this.currentShowCount = 0;
+    let _this = this;
+    let loop = function(data : CategoryData) {
+      let showChildCount = 0;
+      data.blocks.forEach((b) => {
+        b.filterShow = b.baseInfo.name.contains(_this.searchValue) || b.baseInfo.description.contains(_this.searchValue);
+        if(b.filterShow) showChildCount++;
+
+        data.childCategories.forEach((d) => showChildCount += loop(d));
+      });
+      data.childCategories.forEach((d) => showChildCount += loop(d));
+      data.filterShow = showChildCount > 0;
+      data.open = true;
+      return showChildCount;
+    };
+    this.allBlocksGrouped.forEach((cd) => this.currentShowCount += loop(cd));
+  }
+  clearSearch() {
+
+    let loop = function(data : CategoryData) {
+      data.filterShow = true;
+      data.open = false;
+      data.blocks.forEach((b) => b.filterShow = true);
+      data.childCategories.forEach((d) => loop(d));
+    };
+
+    this.allBlocksGrouped.forEach((cd) => loop(cd));
+  }
+
+  onDocClick() {
+    this.$emit('onClose');
+    document.removeEventListener('click', this.onDocClick);
+  }
+  onClick(e : MouseEvent) {
+    e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
+  }
   onBlockItemClick(block) {
     this.$emit('onBlockItemClick', block)
   }
+
+
 }
 </script>

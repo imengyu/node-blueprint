@@ -15,24 +15,55 @@
   user-select: none;
 
   border-radius: 8px;
-  border: 3px solid transparent;
+  border: 3px solid rgba(0, 0, 0, 0.666);
 
-  &:hover, &.selected {
-    border: 3px solid #2ec4ff;
-  }
+  background-color: rgba(0, 0, 0, 0.466);
+  box-shadow: 0 0 8px 1px rgba(0,0,0,0.3);
+
+  color: #fff;
+
   &.selected {
-    background-color: rgba(255,255,255,0.3);
+    border: 3px solid rgb(231, 157, 0);
+  }
+  &.actived {
+    border: 3px solid rgb(72, 203, 255);
+  }
+  &.breakpoint-actived {
+    border: 3px solid rgb(219, 51, 0);
+  }
+  &.breakpoint-actived.actived {
+    border: 3px solid rgb(255, 74, 61);
   }
 
   .title {
     position: relative;
     text-align: center;
-    background-color: #45b4f5;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     padding: 6px 8px;
     font-size: 13px;
     user-select: none;
+    background-color: rgba(255,255,255,0.3);
+
+    &.small {
+      
+      position: absolute;
+      z-index: -1;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+
+      .logo {
+        width: 60px;
+        height: 60px;
+      }
+    }
 
     .sub-title {
       display: block;
@@ -46,38 +77,96 @@
       width: 20px;
       height: 20px;
       margin-right: 5px;
+      background-size: contain;
+      background-position: center;
+      vertical-align: middle;
     }
+    span {
+      vertical-align: middle;
+    }
+
 
     .logo-right {
       position: absolute;
       display: inline-block;
       width: 32px;
       height: 32px;
+      background-size: contain;
+      background-position: center;
       right: -15px;
       top: -15px;
     }
     .logo-bottom {
       position: absolute;
       display: inline-block;
+      background-size: contain;
+      background-position: center;
       width: 16px;
       height: 16px;
       left: -5px;
       bottom: -5px;
     }
   }
+  .title-small {
+    position: absolute;
+    right: 5px;
+    top: 2px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+
+  .breakpoint-status {
+    position: absolute;
+    display: inline-block;
+    line-height: 32px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    left: -16px;
+    top: -16px;
+    color: #cf1010;
+    z-index: 3;
+  }
+  .breakpoint-arrow {
+    display: inline-block;
+    position: absolute;
+    color: rgba(214, 59, 0, 0.72);
+    transform: rotate(90deg) scaleY(1.5) scaleX(0.8);
+    text-shadow: 0px 0px 10px #9e3300;
+    font-size: 50px;
+    top: -50px;
+    left: calc(50% - 20px);
+    z-index: 2;
+  }
+
+
   .custom-editor {
     position: relative;
-    background-color:rgba(109, 209, 245, 0.514);
+    background-color: rgba(224, 224, 224, 0.26);
+
+    &.without-title {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+
+      > div {
+        &:first-child {
+          padding-top: 8px;
+        }
+        &:last-child {
+          padding-bottom: 8px;
+        }
+      }
+    }
 
     > div {
-      padding: 3px 8px;
+      padding: 4px 9px;
     }
   }
   .content {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
     padding: 6px 3px;
-    background-color:rgba(183, 219, 232, 0.74);
   }
 
   .area {
@@ -126,11 +215,11 @@
       display: inline-block;
       width: 15px;
       height: 15px;
-      color: #888888;
+      color: #979797;
       margin: 0 10px;
 
       &:hover {
-        color: #646464;
+        color: #e6e6e6;
       }
 
 
@@ -140,17 +229,15 @@
   .port {
     white-space: nowrap;
 
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.39);
+    }
+
     .port-dot {
       font-size: 12px;
       margin: 0 5px;
       cursor: crosshair;
 
-      &:hover {
-        color: #45b4f5;
-      }
-      &:active {
-        opacity: 0.7;
-      }
       &.error {
         color: #e9412a;
       }
@@ -165,7 +252,6 @@
     }
     .port-delete {
       margin: 0 8px;
-      
     }
   }
 
@@ -173,53 +259,3 @@
 }
 
 
-.block-add-panel {
-  position: absolute;
-  min-width: 230px;
-  border: 1px solid #b6acac;
-  background-color: #fff;
-  z-index: 25;
-  max-height: 500px;
-  overflow: hidden;
-  overflow-y: scroll;
-
-  .ivu-collapse-content {
-    padding: 0;
-    padding-left: 8px;
-  }
-}
-.block-list {
-  position: relative;
-  padding-top: 6px;
-
-  .block-item {
-    display: block;
-    padding: 3px 13px;
-    margin-left: -8px;
-
-    img {
-      display: inline-block;
-      float: left;
-      width: 20px;
-      height: 20px;
-      margin-right: 5px;
-    }
-
-    h5 {
-      font-size: 14px;
-    }
-    span {
-      font-size: 12px;
-      color: #888;
-    }
-
-    &:hover {
-      background-color: rgba(183, 219, 232, 0.74);
-    }
-    &:active {
-      opacity: 0.7;
-    }
-  
-  }
-
-}

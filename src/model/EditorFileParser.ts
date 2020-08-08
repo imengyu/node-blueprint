@@ -1,6 +1,9 @@
 import { EditorInterface } from "./Editor";
 import CommonUtils from "../utils/CommonUtils";
 import { BlockParameterPort, BlockBehaviorPort } from "./Port";
+import { BlockEditor } from "./BlockEditor";
+import BlockServiceInstance from "../sevices/BlockService";
+import { BlockRegData, BlockPortRegData } from "./BlockDef";
 
 export class EditorFileParser {
 
@@ -21,6 +24,8 @@ export class EditorFileParser {
       ports: [],
       boxs: [],
       comments: [],
+      viewPort: this.editor.getViewPort(),
+      scale: this.editor.getScale(),
     };
 
     let findBlockGUIDMap = function(guid : string) {
@@ -54,6 +59,7 @@ export class EditorFileParser {
         mark: block.mark,
         breakpoint: block.breakpoint,
         options: block.options,
+        position: block.position,
       };
 
       let blocksIndex = data.blocks.push(blockData) - 1;
@@ -143,46 +149,80 @@ export class EditorFileParser {
     });
 
     //Write connectors
-    this.editor.getBlocks().forEach(block => {
-
-      for(let i = 0, keys = Object.keys(block.outputPorts), c = keys.length; i < c; i++) {
-
-        let connector = block.outputPorts[keys[i]].connector;
-        if(connector != null) {
-          data.connectors.push({
-            startBlock: findBlockIndex(connector.startPort.parent.uid),
-            startPort: connector.startPort.guid,
-            endBlock: findBlockIndex(connector.endPort.parent.uid),
-            endPort: connector.endPort.guid,
-          });
-        }
-      }
-
-      for(let i = 0, keys = Object.keys(block.outputParameters), c = keys.length; i < c; i++) {
-
-        let connector = block.outputParameters[keys[i]].connector;
-        if(connector != null) {
-          data.connectors.push({
-            startBlock: findBlockIndex(connector.startPort.parent.uid),
-            startPort: connector.startPort.guid,
-            endBlock: findBlockIndex(connector.endPort.parent.uid),
-            endPort: connector.endPort.guid,
-          });
-        }
-      }
+    this.editor.getConnectors().forEach(connector => {
+      data.connectors.push({
+        startBlock: findBlockIndex(connector.startPort.parent.uid),
+        startPort: connector.startPort.guid,
+        endBlock: findBlockIndex(connector.endPort.parent.uid),
+        endPort: connector.endPort.guid,
+      });
     });
 
     return JSON.stringify(data);
   }
 
   //加载
-  public loadFromString(str : string, editorMode : boolean) {
+  public loadFromString(str : string) {
     if(CommonUtils.isNullOrEmpty(str)) {
       console.log('[loadFromString] invalid string!');
       return false;
     }
 
+    this.editor.clearAll();
+
     let data = JSON.parse(str);
+
+    let blockRegDatas : Array<BlockRegData> = [];
+    let blocks : Array<BlockEditor> = [];
+    let portRegDatas = [];
+
+    //block GUID map
+    data.blockMap.forEach(guid => blockRegDatas.push(BlockServiceInstance.getRegisteredBlock(guid)));
+    //port GUID map
+    data.portMap.forEach(port => portRegDatas.push(port));
+
+    //blocks
+    data.blocks.forEach(block => {
+      let blockInstance = new BlockEditor(
+        this.editor,
+        blockRegDatas[block.guidMap],
+      );
+      blockInstance.uid = block.uid;
+      blockInstance.breakpoint = block.breakpoint;
+      blockInstance.options = block.options;
+
+      blocks.push(blockInstance);
+      this.editor.addBlock(blockInstance, block.position);
+    });
+
+    //param ports
+    data.params.forEach(param => {
+      let port : BlockParameterPort = null;
+      if(param.dyamicAdd)
+        port = blocks[param.blockMap].addParameterPort(portRegDatas[param.guidMap].regData, true, param.value);
+      else {
+        port = blocks[param.blockMap].getParameterPort(portRegDatas[param.guidMap].guid.substr(37));
+        port.paramUserSetValue = param.value;
+        (<BlockEditor>port.parent).forceUpdateParamValueToEditor(port);
+      }
+
+      port.paramValue = param.value;
+      port.options = param.options;
+    });
+
+    //behavior ports
+    data.ports.forEach(port => blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true));
+
+    //connectors
+    data.connectors.forEach(connector => {
+      let startPort = blocks[connector.startBlock].getPortByGUID(connector.startPort);
+      let endPort = blocks[connector.endBlock].getPortByGUID(connector.endPort);
+      this.editor.connectConnector(startPort, endPort);
+    });
+
+
+
+
 
 
 

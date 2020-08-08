@@ -34,14 +34,6 @@ export class BlockRegData {
      */
     logo : "",
     /**
-     * 单元右上角的大图标 32x32
-     */
-    logoRight : "",
-    /**
-     * 单元左下角的小图标 16x15
-     */
-    logoBottom : "",
-    /**
      * 单元所属类别。可以用 / 来归到子类里面
      */
     category : "",
@@ -63,6 +55,21 @@ export class BlockRegData {
    * 单元的参数节点
    */
   public parameters : Array<BlockParameterPortRegData> = [];
+
+  public hasOnePortByDirection(direction : BlockPortDirection) {
+    for(let i = 0, c = this.ports.length; i < c;i++)
+      if(this.ports[i].direction == direction) 
+        return true;
+    return false;
+  }
+  public hasOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '') {
+    for(let i = 0, c = this.parameters.length; i < c;i++)
+      if(this.parameters[i].direction == direction
+        && this.parameters[i].paramType == type
+        && this.parameters[i].paramCustomType == customType) 
+        return true;
+    return false;
+  }
 
   /**
    * 单元的配置
@@ -109,7 +116,7 @@ export class BlockRegData {
     onParameterRemove : OnParameterUpdateCallback,
     onCreateCustomEditor : BlockEditorComponentCreateFn,
     onUserAddPort: OnUserAddPortCallback,
-    OnUserAddParam: OnUserAddParamCallback,
+    onUserAddParam: OnUserAddParamCallback,
   } = {
 
     /**
@@ -148,13 +155,47 @@ export class BlockRegData {
     /**
      * 用户创建参数端口时的回调（仅编辑器模式调用）
      */
-    OnUserAddParam: null,
+    onUserAddParam: null,
   }
+
+  /**
+   * 单元的自定义样式
+   */
+  public blockStyle = new BlockStyleSettings();
+
+  show = true;
+  filterShow = true;
 }
 
 export type BlockParametersChangeSettings = {
   userCanAddInputParameter: boolean,
   userCanAddOutputParameter: boolean
+}
+export class BlockStyleSettings  {
+  /**
+   * 单元右上角的大图标 32x32
+   */
+  public logoRight = "";
+  /**
+   * 单元左下角的小图标 16x16
+   */
+  public logoBottom = "";
+  /**
+   * 单元标题背景颜色
+   */
+  public titleBakgroundColor = '';
+  /**
+   * 单元标题颜色
+   */
+  public titleColor = '';
+  /**
+   * 是否使用短标题栏
+   */
+  public smallTitle = false;
+  /**
+   * 是否隐藏题栏
+   */
+  public noTitle = false;
 }
 
 export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, 
@@ -182,7 +223,10 @@ export class BlockPortRegData {
    * 节点的方向
    */
   public direction : BlockPortDirection = null;
-
+  /**
+   * 设置是否默认连接至此节点。最好只有一个设置为true，如果有多个，先添加的为默认连接。
+   */
+  public defaultConnectPort = false;
 }
 
 /**
@@ -197,23 +241,24 @@ export class BlockParameterPortRegData extends BlockPortRegData {
    * 自定义参数类型
    */
   public paramCustomType = '';
+  /**
+   * 参数的默认值
+   */
+  public paramDefaultValue = null;
 }
 
 export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, 
   port : BlockParameterPort, 
   regData : BlockParameterTypeRegData) => HTMLElement;
-export type BlockParameterEditorValueChangedFn = (editorEle : HTMLElement, 
-    port : BlockParameterPort) => boolean;
+export type BlockParameterEditorValueChangedFn = (port : BlockParameterPort, editorEle : HTMLElement) => void;
 
 export class BlockParameterEditorRegData {
   /**
    * 一个函数回调，在这里创建数据类型的对应编辑器，用来编辑此种类型的数据。
    */
   public editorCreate : BlockParameterEditorComponentCreateFn  = null;
-  /**
-   * 当参数更新时的回调。通常在这个回调更新编辑器状态
-   */
-  public editorValueChanged : BlockParameterEditorValueChangedFn  = null;
+
+  public forceUpdateValue : BlockParameterEditorValueChangedFn  = null;
 }
 
 /**
@@ -240,6 +285,10 @@ export class BlockParameterTypeRegData {
    * 编辑器创建
    */
   public editor : BlockParameterEditorRegData = null;
+  /**
+   * 类型的颜色
+   */
+  public color : string = 'rgb(253,253,253)';
 }
 
 /**

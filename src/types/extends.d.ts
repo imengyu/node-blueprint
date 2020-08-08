@@ -22,6 +22,11 @@ interface Array<T> {
    * @returns 返回元素新的长度
    */
   addOnce(item: T) : number;
+
+  /**
+   * 清空数组
+   */
+  empty();
 }
 interface Date {
   /**

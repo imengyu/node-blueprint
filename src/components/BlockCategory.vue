@@ -1,24 +1,24 @@
 <template>
   <div>
 
-    <Collapse simple>
-      <Panel v-for="(item, index) in categoryData.childCategories" :key="index" :name="index.toString()">
+    <div v-for="(item, index) in categoryData.childCategories" :key="index" :name="index.toString()"
+      v-show="item.show&&item.filterShow"
+      class="collapse-item">
+      <span class="collapse-title" @click="item.open=!item.open;">
+        <i :class="'collapse-arrow iconfont ' + (item.open ? 'icon-arrow-down-1' : 'icon-arrow-right-')"></i>
         {{ item.category }}
-        <div slot="content">
-          <BlockCategory :categoryData="item" @onBlockItemClick="(block) => $emit('onBlockItemClick', block)">
-          </BlockCategory>
-        </div>
-      </Panel>
-    </Collapse>
-
-    <div class="block-list">
-      <div class="block-item" v-for="(item, index) in categoryData.blocks" :key="index" @click="$emit('onBlockItemClick', item)">
-        <img :src="item.baseInfo.logo" />
-        <h5>{{item.baseInfo.name}}</h5>
-        <span>{{item.baseInfo.description}}</span>
-      </div>
+      </span>
+      <BlockCategory v-show="item.open" :categoryData="item" @on-block-item-click="(block) => $emit('on-block-item-click', block)">
+      </BlockCategory>
     </div>
 
+    <div class="block-list">
+      <div class="block-item" v-for="(item, index) in categoryData.blocks" :key="index" @click="$emit('on-block-item-click', item)"
+        :title="item.baseInfo.description"
+        v-show="item.show && item.filterShow">
+        <img v-if="item.baseInfo.logo!=''" :src="item.baseInfo.logo" />{{ item.baseInfo.name }}
+      </div>
+    </div>
 
   </div>
 </template>

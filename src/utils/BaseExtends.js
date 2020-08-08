@@ -48,6 +48,10 @@ Array.prototype.addOnce = function(item) {
   else return this.push(item);
 }
 
+Array.prototype.empty = function(item) {
+  this.splice(0, this.length);
+}
+
 Array.prototype.remove = function(item) {
   var dx = typeof item === 'number' ? item : this.indexOf(item);
   var rs = false

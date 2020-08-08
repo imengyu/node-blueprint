@@ -1,24 +1,27 @@
-
-$toolbar-height: 45px;
+@import './root';
 
 .toolbar {
   position: absolute;
-  height: $toolbar-height;
+  border-right: none;
+  width: $left-toolbar-width;
+  top: 30px;
+  bottom: 0;
   left: 0;
-  right: 0;
-  top: 0;
-  background-color: #f7f7f7;
-  border: 1px solid #eeefff;
+  background: #2F2F2C;
+  z-index: 4;
+
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   user-select: none;
   z-index: 100;
   overflow: hidden;
 
   > div {
-    height: $toolbar-height;
-    line-height: $toolbar-height;
+    width: $left-toolbar-width;
+    height: $left-toolbar-width;
+    line-height: $left-toolbar-width;
   }
   .button {
     text-align: center;
@@ -27,35 +30,70 @@ $toolbar-height: 45px;
     cursor: pointer;
     font-size: 18px;
     user-select: none;
+    color: #b6b6b6;
 
     &.icon {
-      width: $toolbar-height;
+      width: $left-toolbar-width;
+      height: $left-toolbar-width;
       font-size: 23px;
     }
 
-    &:hover, &.active {
-      background-color: #dfdfdf;
+    &:hover {
+      color: #fff;
+    }
+    &.active {
+      color: #000000;
+      background-color: #fff;
     }
     &:focus {
       opacity: 0.8;
     }
 
+    &.yellow {
+      color: #ffa600;
+
+      &:hover {
+        color: #eccc72;
+      }
+    }
+    &.red {
+      color: #ff5200;
+
+      &:hover {
+        color: #fd7536;
+      }
+    }
+    &.green {
+      color: #39c300;
+
+      &:hover {
+        color: #7ce64f;
+      }
+    }
+    &.blue {
+      color: #307bdd;
+
+      &:hover {
+        color: #74a4e4;
+      }
+    }
+
     &.disabled, &[disabled] {
-      cursor: pointer!important;
-      background-color: transparent!important;
+      cursor: default!important;
       opacity: 1;
+      background-color: transparent!important;
 
       &.icon i {
-        color: #bdbdbd;
+        color: #505050;
       }
     }
   }
   .separator {
     display: inline-block;
-    width: 1px;
-    height: 33px;
+    width: 100%;
+    height: 1px;
     margin: 4px 3px 0 3px;
-    background-color: #eeefff;
+    background-color: #353535;
   }
   .block {
     display: inline-block;
@@ -66,15 +104,18 @@ $toolbar-height: 45px;
 .main {
   display: block;
   position: absolute;
-  left: 0;
+  left: $left-toolbar-width;
   right: 0;
   bottom: 0;
-  top: $toolbar-height;
+  top: $top-menu-height;
   overflow: hidden;
+  border: solid #444 1px;
 
   #editor {
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    background-color: rgb(38,38,38);
   }
   .editor {
     display: block;
@@ -84,15 +125,199 @@ $toolbar-height: 45px;
     top: 0;
     bottom: 0;
     right: 0;
+    overflow: hidden;
   }
   .prop {
     position: absolute;
-    background-color: #f7f7f7;
-    border: 1px solid #eeefff;
+    background-color: rgb(59, 59, 59);
+    color: #b6b6b6;
     top: 0;
     bottom: 0;
     right: 0;
+    left: 0;
+
+    .prop-item {
+      white-space: nowrap;
+      position: relative;
+      padding: 3px 2px 5px 0;
+      border-bottom: 1px solid #464646;
+
+      > div, > input, > select {
+        display: inline-block;
+        max-width: 60%;
+      }
+      > span {
+
+        display: inline-block;
+        width: 40%;
+        text-align: right;
+        padding-right: 10px;
+      }
+    }
+
   }
 
+  .ivu-split-trigger {
+    background: #4c4c4c;
+    border: 1px solid #2f2f2f;
+
+    .ivu-split-trigger-bar {
+      background: rgba(255, 255, 255, 0.47);
+    }
+  }
+}
+
+//
+.collapse-list {
+  position: relative;
+}
+.collapse-item {
+  display: block;
+  padding: 1px 1px 1px 7px;
+
+  .block-list {
+    margin-left: 13px;
+    margin-top: 2px;
+  }
+
+  .collapse-title {
+    user-select: none;
+    cursor: pointer;
+
+    i {
+      transition: transform ease-in-out 0.2s;
+    }
+
+    &:hover {
+      color: rgb(69,180,245);
+
+      i {
+        color: rgb(69,180,245);
+      }
+    }
+  }
+  .collapse-arrow {
+    color: #000;
+    margin-right: 3px;
+  }
+}
+
+//添加单元浮动菜单
+.block-add-panel {
+  position: absolute;
+  min-width: 230px;
+  border: 1px solid #b6acac;
+  background-color: #fff;
+  z-index: 25;
+  max-height: 500px;
+  overflow: hidden;
+  overflow-y: scroll;
+  padding: 8px 4px;
+}
+.block-list {
+  position: relative;
+
+  .block-item {
+    display: block;
+    padding: 0px 13px;
+    margin-left: -8px;
+    cursor: default;
+
+    img {
+      display: inline-block; 
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    h5 {
+      font-size: 14px;
+    }
+    span {
+      font-size: 12px;
+      color: #888;
+    }
+
+    &:hover {
+      background-color: rgba(183, 219, 232, 0.74);
+    }
+    &:active {
+      opacity: 0.7;
+    }
+  
+  }
+
+}
+
+.common-tip {
+  position: absolute;
+  padding: 2px 5px;
+  background-color: #fff;
+  border: 1px solid #bdbdbd;
+  z-index: 2000;
+}
+
+//调整缩放工具
+.zoom_tool {
+
+  position: absolute;
+  width: 90px;
+  height: 26px;
+  right: 40px;
+  bottom: 25px;
+  border-radius: 15px;
+  background-color: #2F2F2C;
+  opacity: 0.4;
+  transition: opacity ease-in-out 0.2s;
+  text-align: center;
+
+  &:hover, &:active {
+    outline: none;
+    opacity: 1;
+  }
+
+  a {
+    position: absolute;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    padding: 0;
+    font-size: 16px;
+    top: 1px;
+    line-height: 24px;
+
+    &.left { left: 1px; }
+    &.right { right: 1px; }
+
+    &:hover {
+      color: #2F2F2C;
+      background-color: #fff;
+      border-radius: 50%;
+    }
+  }
+  select {
+    position: absolute;
+    opacity: 0;
+    left: 28px;
+    top: 4px;
+    width: 35px;
+    cursor: pointer;
+    z-index: 2;
+  }
+  span {
+    position: absolute;
+    display: inline-block;
+    text-align: center;
+    height: 15px;
+    width: 35px;
+    line-height: 15px;
+    left: 28px;
+    top: 6px;
+
+    color: #fff;
+    cursor: pointer;
+  }
 
 }

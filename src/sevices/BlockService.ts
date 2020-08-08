@@ -41,9 +41,10 @@ export class BlockService {
 
   private findOrCrateBlocksListCategoryAtCategory(path : string, parent : Array<CategoryData>) : CategoryData {
     let spIndex = path.indexOf('/');
-    let categoryName = path;
-    if(spIndex > 0) 
-      categoryName = path.substring(0, spIndex);
+    let categoryName = '';
+
+    if(spIndex > 0) categoryName = path.substring(0, spIndex);
+    else categoryName = path;
 
     let category : CategoryData = null;
     for(let i = 0, c = parent.length; i < c; i++) {
@@ -58,7 +59,10 @@ export class BlockService {
       category = {
         category: categoryName,
         childCategories: [],
-        blocks: []
+        blocks: [],
+        open: false,
+        show: true,
+        filterShow: true,
       };
       parent.push(category);
     }
@@ -98,5 +102,8 @@ export default BlockServiceInstance;
 export type CategoryData = {
   category: string,
   childCategories: Array<CategoryData>,
-  blocks: Array<BlockRegData>
+  blocks: Array<BlockRegData>,
+  open: boolean,
+  show: boolean,
+  filterShow: boolean,
 };

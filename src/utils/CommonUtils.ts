@@ -16,6 +16,13 @@ export default {
   mergeJsonArray,
   strToHexCharCode,
 
+  valueToStr(val) {
+    if(typeof val == 'string') 
+      return '"' + val + '"';
+    else 
+      return val + ''
+  },
+
   /**
    * 生成不重复随机数
    * @param randomLength 字符长度

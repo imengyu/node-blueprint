@@ -23,13 +23,26 @@ export class Rect {
     if(typeof h != "undefined") this.h = h;
   }
 
+  public testInRectXY(x : number, y : number) {
+    return x >= this.getLeft() && y >= this.getTop() 
+      && x <= this.getRight() && y <= this.getBottom();
+  }
   public testInRect(point : Vector2) {
-    return point.x > this.getLeft() && point.y > this.getTop() 
-      && point.x < this.getRight() && point.y < this.getBottom();
+    return point.x >= this.getLeft() && point.y >= this.getTop() 
+      && point.x <= this.getRight() && point.y <= this.getBottom();
   }
   public testRectCross(rect : Rect) {
-    return rect.getRight() > this.getLeft() && rect.getBottom() > this.getTop()  
-      && rect.getLeft() < this.getRight() && rect.getTop()  < this.getBottom();
+    let a_cx,a_cy; /* 第一个中心点*/
+    let b_cx,b_cy; /* 第二个中心点*/
+    
+    a_cx = this.x + (this.w/2);
+    a_cy = this.y + (this.h/2);
+
+    b_cx = rect.x + (rect.w/2);
+    b_cy = rect.y + (rect.h/2);
+
+    return ((Math.abs(a_cx - b_cx) <= (this.w/2 + rect.w/2))
+      && (Math.abs(a_cy - b_cy) <= (this.h/2 + rect.h/2)));
   }
 
   public setPos(pointOrX : Vector2 | number, y?:number) {
@@ -64,3 +77,4 @@ export class Rect {
     return this.center;
   }
 }
+
