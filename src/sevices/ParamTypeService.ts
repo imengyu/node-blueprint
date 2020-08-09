@@ -1,4 +1,4 @@
-import { BlockParameterTypeRegData } from "../model/BlockDef";
+import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
 
 export class ParamTypeService {
   public allCustomTypes : Array<BlockParameterTypeRegData> = [];

@@ -27,7 +27,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { BlockEditor } from "../model/BlockEditor";
+import { BlockEditor } from "../model/Editor/BlockEditor";
 
 @Component
 export default class BlockProp extends Vue {

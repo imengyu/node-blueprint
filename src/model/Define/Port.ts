@@ -1,10 +1,10 @@
-import CommonUtils from "../utils/CommonUtils";
 import { Block } from "./Block";
-import { Vector2 } from "./Vector2";
-import { Connector, ConnectorEditor } from "./Connector";
+import { Vector2 } from "../Vector2";
+import { Connector } from "./Connector";
+import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockPortRegData, BlockParameterEditorRegData } from "./BlockDef";
-import { BlockEditor } from "./BlockEditor";
-import { BlockRunLoopData } from "./Runner";
+import { BlockEditor } from "../Editor/BlockEditor";
+import { BlockRunLoopData } from "../WorkProvider/Runner";
 
 /**
  * 单元节点
@@ -69,7 +69,7 @@ export class BlockPort {
   }
   public unconnectAllConnector() { 
     if(this.parent.isEditorBlock)
-      this.parent.unConnectPort(this);
+      (<BlockEditor>this.parent).unConnectPort(this);
   }
   public isPortConnected() { 
     if(this.direction == 'input')
@@ -143,7 +143,7 @@ export class BlockBehaviorPort extends BlockPort {
       runningContext.currentBlock = this.parent;
 
       this.parent.currentRunningContext = runningContext;
-      this.parent.onPortActive(this.parent, this);
+      this.parent.onPortActive.invoke(this.parent, this);
 
       //编辑器状态更新
       if(this.parent.isEditorBlock)
@@ -190,7 +190,7 @@ export class BlockParameterPort extends BlockPort {
     if(this.direction == 'input') {
       if(typeof source != 'undefined')
         this.paramValue = source.paramValue;
-      this.parent.onParameterUpdate(this.parent, this);
+      this.parent.onParameterUpdate.invoke(this.parent, this);
       if(this.parent.isEditorBlock) 
         //更新编辑器状态
         (<BlockEditor>this.parent).updatePortParamVal(this);

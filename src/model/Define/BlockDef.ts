@@ -1,6 +1,7 @@
 import { BlockParameteType, BlockPortDirection, BlockParameterPort } from "./Port";
-import { OnPortActiveCallback, OnParameterUpdateCallback, OnBlockCreateCallback, OnPortCallback, OnUserAddParamCallback, OnUserAddPortCallback } from "./Block";
-import { BlockEditor } from "./BlockEditor";
+import { OnPortActiveCallback, OnParameterUpdateCallback, OnBlockCreateCallback, 
+  OnPortCallback, OnUserAddParamCallback, OnUserAddPortCallback } from "./Block";
+import { BlockEditor } from "../Editor/BlockEditor";
 
 /**
  * 单元信息结构

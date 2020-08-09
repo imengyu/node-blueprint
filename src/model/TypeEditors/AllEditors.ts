@@ -1,5 +1,5 @@
-import { BlockParameteType } from "../port";
-import { BlockParameterEditorRegData, BlockParameterEnumRegData } from "../BlockDef";
+import { BlockParameteType } from "../Define/Port";
+import { BlockParameterEditorRegData, BlockParameterEnumRegData } from "../Define/BlockDef";
 import CommonUtils from "../../utils/CommonUtils";
 
 export default {

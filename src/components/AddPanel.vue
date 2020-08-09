@@ -27,8 +27,8 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
-import { BlockPortDirection, BlockParameteType } from "../model/port";
-import { BlockRegData } from "../model/BlockDef";
+import { BlockPortDirection, BlockParameteType } from "../model/Define/Port";
+import { BlockRegData } from "../model/Define/BlockDef";
 
 @Component({
   components: {

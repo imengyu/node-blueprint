@@ -8,7 +8,9 @@ import "./assets/sass/main.scss"
 import "./utils/BaseExtends"
 import 'iview/dist/styles/iview.css';
 import iView from 'iview';
+import Contextmenu from "vue-contextmenujs"
 
+Vue.use(Contextmenu);
 Vue.use(iView);
 Vue.config.productionTip = false
 Vue.config.productionTip = false

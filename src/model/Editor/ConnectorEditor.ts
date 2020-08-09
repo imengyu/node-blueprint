@@ -1,14 +1,16 @@
-import { BlockPort, BlockParameterPort } from "./Port";
-import { Rect } from "./Rect";
-import CanvasUtils from "../utils/CanvasUtils";
-import CommonUtils from "../utils/CommonUtils";
-import { Vector2 } from "./Vector2";
+import { Rect } from "../Rect";
+import CanvasUtils from "../../utils/CanvasUtils";
+import CommonUtils from "../../utils/CommonUtils";
+import { Vector2 } from "../Vector2";
+import { Connector } from "../Define/Connector";
+import { BlockPort, BlockParameterPort } from "../Define/Port";
 
-export class Connector {
-  public startPort : BlockPort;
-  public endPort : BlockPort;
-}
 export class ConnectorEditor extends Connector {
+
+  public constructor(startPort ?: BlockPort, endPort ?: BlockPort) {
+    super(startPort, endPort);
+  }
+
   public selected = false;
   public hover = false;
   public actived = false;
@@ -35,7 +37,6 @@ export class ConnectorEditor extends Connector {
     this.rect.Set(x1, y1, x2 - x1, y2 - y1);
     return this.rect.testInRect(pos);
   }
-
   public testRectCross(rect : Rect, viewZoom: number) {
     let startPos = this.startPort.editorData.getPosition();
     let endPos = this.endPort.editorData.getPosition();

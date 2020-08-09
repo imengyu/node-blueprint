@@ -1,37 +1,37 @@
 @import './root';
 
-.menu_bar {
+.menu-bar {
   padding: 0 0 0 50px;
   background: #2f2f2c;
   position: relative;
   z-index: 2;
   height: $top-menu-height;
 
-  > .menu {
+  > .menu-bar-item {
     height: $top-menu-height;
   }
 }
-.menu {
+.menu-bar-item {
   position: relative;
   z-index: 5;
   color: #333;
   display: inline-block;
 
   &.open {
-    .menu_title {
+    .menu-title {
       background: white;
       color: #333;
     }
-    .menu_list {
+    .menu-list {
       display: block;
     }
   }
 
-  .menu_list {
+  .menu-list {
     display: none;
     position: absolute;
 
-    .menu_item {
+    .menu-item {
       position: relative;
       overflow: hidden;
       line-height: 22px;
@@ -77,7 +77,7 @@
     }
   }
 }
-.menu_title {
+.menu-title {
   cursor: pointer;
   display: inline-block;
   padding: 7px 10px;
@@ -86,7 +86,7 @@
   position: relative;
   vertical-align: top;
 }
-.menu_list {
+.menu-list {
   display: none;
   position: absolute;
   top: 28px;

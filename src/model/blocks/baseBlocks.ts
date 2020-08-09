@@ -1,9 +1,10 @@
 import BlockServiceInstance from "../../sevices/BlockService";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
-import { BlockParameterEnumRegData, BlockRegData } from "../BlockDef";
-import { BlockParameterPort, BlockBehaviorPort, BlockParameteType } from "../Port";
+import { BlockParameterEnumRegData, BlockRegData } from "../Define/BlockDef";
+import { BlockParameterPort, BlockBehaviorPort, BlockParameteType } from "../Define/Port";
 import CommonUtils from "../../utils/CommonUtils";
 import DebugWorkProviderInstance from "../WorkProvider/DebugWorkProvider";
+import StringUtils from "../../utils/StringUtils";
 
 export default { 
   register,
@@ -421,7 +422,7 @@ function registerCalcBase() {
   blockAddition.callbacks.onUserAddParam = (block, dirction) => {
     return {
       name: '参数' + (block.inputParameterCount + 1),
-      guid: CommonUtils.pad((block.inputParameterCount + 1), 8),
+      guid: StringUtils.pad((block.inputParameterCount + 1), 8),
       paramCustomType: '',
       paramType: block.options['opType'],
       paramDefaultValue: null,

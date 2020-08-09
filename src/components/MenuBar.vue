@@ -1,12 +1,12 @@
 <template>
-  <div class="menu_bar">
-    <div v-for="(menu,i) in menus" :class="menu.show ? 'menu open' : 'menu'" :key="i" 
+  <div class="menu-bar">
+    <div v-for="(menu,i) in menus" :class="menu.show ? 'menu-bar-item open' : 'menu-bar-item'" :key="i" 
       @click="onItemMouseClick(menu)" 
       @mouseenter="onItemMouseEnter(menu)" @mouseleave="onItemMouseLeave(menu)">
-      <div class="menu_title">{{ menu.name }}</div>
-      <div class="menu_list"> 
-        <div v-for="(menuChild, i2) in menu.childs" :key="i2" @click="onMenuItemMouseLevel(menuChild, $event)"
-          :class="menuChild.show ? (menuChild.separator?'separator':(menuChild.enable ?'menu_item':'menu_item disabled')) : 'display-none'">
+      <div class="menu-title">{{ menu.name }}</div>
+      <div class="menu-list"> 
+        <div v-for="(menuChild, i2) in menu.childs" :key="i2" @click="onMenuItemMouseClick(menuChild, $event)"
+          :class="menuChild.show ? (menuChild.separator?'separator':(menuChild.enable ?'menu-item':'menu-item disabled')) : 'display-none'">
             <i v-if="menuChild.checked" class="iconfont icon-check-"></i>
             {{menuChild.separator?'':menuChild.name}}
             <span v-if="menuChild.shortcut!=''" class="shortcut">{{menuChild.shortcut}}</span>
@@ -42,11 +42,12 @@ export default class MenuBar extends Vue {
 
   onItemMouseClick(menu : MenuData) {
     menu.show = !menu.show;
+    menu.enter = menu.show;
     if(menu.show) this.currentShowMenu = menu;
     else if(this.currentShowMenu == menu) this.currentShowMenu = null;
-
   }
   onItemMouseEnter(menu : MenuData) {
+    menu.enter = true;
     if(this.currentShowMenu != null)  {
       this.currentShowMenu.show = false;
       this.currentShowMenu = menu;
@@ -59,9 +60,10 @@ export default class MenuBar extends Vue {
         this.currentShowMenu.show = false;
         this.currentShowMenu = null;
       }
+      menu.enter = false;
     }, 200)
   }
-  onMenuItemMouseLevel(menu : MenuData, e : MouseEvent) {
+  onMenuItemMouseClick(menu : MenuData, e : MouseEvent) {
     if(!menu.separator) {
       if(typeof menu.callback == 'function')
         menu.callback(menu);
@@ -86,6 +88,7 @@ export class MenuData {
   public separator = false;
   public callback : MenuCallback = null;
   public childs : Array<MenuData> = null;
+  public enter = true;
 
   public constructor(name : string, callbackOrChild : MenuCallback | Array<MenuData> , shortcut = '', checked = false, enabled = true) {
     this.name = name;

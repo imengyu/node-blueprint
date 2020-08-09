@@ -1,7 +1,10 @@
-import { BlockBehaviorPort } from "./Port";
-import { Block } from "./Block";
-import { ConnectorEditor } from "./Connector";
+import { BlockBehaviorPort } from "../Define/Port";
+import { Block } from "../Define/Block";
+import { ConnectorEditor } from "../Editor/ConnectorEditor";
 
+/**
+ * 流图运行器
+ */
 export class BlockRunner {
 
   /**
@@ -164,9 +167,15 @@ export class BlockRunner {
   public onRunnerEnd : () => void = null;
 }
 
+/**
+ * 运行状态
+ */
 export type RunnerState = 'stopped'|'running'|'idle';
 export type RunnerWorkType = 'connector'|'activator';
 
+/**
+ * 运行上下文数据
+ */
 export class BlockRunLoopData {
 
   public startPort : BlockBehaviorPort = null;

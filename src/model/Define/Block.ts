@@ -1,10 +1,11 @@
 import { BlockParameterPortRegData, BlockPortRegData, BlockRegData, } from "./BlockDef";
 import { BlockParameterPort, BlockBehaviorPort, BlockPortDirection, BlockPort, BlockParameteType } from "./Port";
 
-import CommonUtils from "../utils/CommonUtils";
-import { BlockEditor } from "./BlockEditor";
-import { ConnectorEditor } from "./Connector";
-import { BlockRunLoopData, BlockRunner } from "./Runner";
+import CommonUtils from "../../utils/CommonUtils";
+import { BlockEditor } from "../Editor/BlockEditor";
+import { ConnectorEditor } from "../Editor/ConnectorEditor";
+import { BlockRunLoopData, BlockRunner } from "../WorkProvider/Runner";
+import { EventHandler } from "../../utils/EventHandler";
 
 export class Block {
 
@@ -39,25 +40,25 @@ export class Block {
     this.uid = CommonUtils.genNonDuplicateIDHEX(16);
   }
 
-  public create() {
+  public create(v) {
     if(this.regData) {
       this.guid = this.regData.guid
 
       if(typeof this.regData.callbacks.onCreate == 'function') 
-        this.onCreate = this.regData.callbacks.onCreate;
+        this.onCreate.addListener(this.regData.callbacks.onCreate);
       if(typeof this.regData.callbacks.onParameterUpdate == 'function') 
-        this.onParameterUpdate = this.regData.callbacks.onParameterUpdate;
+        this.onParameterUpdate.addListener(this.regData.callbacks.onParameterUpdate);
       if(typeof this.regData.callbacks.onPortActive == 'function') 
-        this.onPortActive = this.regData.callbacks.onPortActive;
+        this.onPortActive.addListener(this.regData.callbacks.onPortActive);
 
       if(typeof this.regData.callbacks.onParameterAdd == 'function') 
-        this.onParameterAdd = this.regData.callbacks.onParameterAdd;
+        this.onParameterAdd.addListener(this.regData.callbacks.onParameterAdd);
       if(typeof this.regData.callbacks.onParameterRemove == 'function') 
-        this.onParameterRemove = this.regData.callbacks.onParameterRemove;
+        this.onParameterRemove.addListener(this.regData.callbacks.onParameterRemove);
       if(typeof this.regData.callbacks.onPortAdd == 'function') 
-        this.onPortAdd = this.regData.callbacks.onPortAdd;
+        this.onPortAdd.addListener(this.regData.callbacks.onPortAdd);
       if(typeof this.regData.callbacks.onPortRemove == 'function') 
-        this.onPortRemove = this.regData.callbacks.onPortRemove;
+        this.onPortRemove.addListener(this.regData.callbacks.onPortRemove);
 
       if(this.regData.ports.length > 0)
         this.regData.ports.forEach(element => this.addPort(element, false));
@@ -66,7 +67,7 @@ export class Block {
     }
 
     if(this.onCreate != null)
-      this.onCreate(this);
+      this.onCreate.invoke(this);
   }
 
   public regData : BlockRegData = null;
@@ -87,13 +88,13 @@ export class Block {
   //单元控制事件
   //===========================
 
-  public onCreate : OnBlockCreateCallback = (block) => {};
-  public onPortActive : OnPortActiveCallback = (block, port) => {};
-  public onParameterUpdate : OnParameterUpdateCallback = (block, port) => {};
-  public onPortAdd : OnPortCallback = null;
-  public onPortRemove : OnPortCallback = null;
-  public onParameterAdd : OnParameterUpdateCallback = null;
-  public onParameterRemove : OnParameterUpdateCallback = null;
+  public onCreate = new EventHandler<OnBlockCreateCallback>();
+  public onPortActive = new EventHandler<OnPortActiveCallback>();
+  public onParameterUpdate = new EventHandler<OnParameterUpdateCallback>();
+  public onPortAdd = new EventHandler<OnPortCallback>();
+  public onPortRemove = new EventHandler<OnPortCallback>();
+  public onParameterAdd = new EventHandler<OnParameterUpdateCallback>();
+  public onParameterRemove = new EventHandler<OnParameterUpdateCallback>();
 
   //节点操作
   //===========================
@@ -140,8 +141,8 @@ export class Block {
     if(data.defaultConnectPort) this.allPorts.unshift(newPort);
     else this.allPorts.push(newPort);
 
-    if(typeof this.onAddPortElement == 'function') this.onAddPortElement(newPort);
-    if(typeof this.onPortAdd == 'function') this.onPortAdd(this, newPort);
+    this.onAddPortElement.invoke(newPort);
+    this.onPortAdd.invoke(this, newPort);
 
     return newPort;
   }
@@ -157,13 +158,10 @@ export class Block {
       return;
     }
 
-    //取消连接
-    if(oldData.parent.isEditorBlock)
-      this.unConnectPort(oldData);
 
     this.allPorts.remove(oldData);
-    if(typeof this.onRemovePortElement == 'function') this.onRemovePortElement(oldData);
-    if(typeof this.onPortRemove == 'function') this.onPortRemove(this, oldData);
+    this.onRemovePortElement.invoke(oldData);
+    this.onPortRemove.invoke(this, oldData);
 
     if(direction == 'input') {
       delete(this.inputPorts[guid]);
@@ -226,8 +224,8 @@ export class Block {
     if(data.defaultConnectPort) this.allPorts.unshift(newPort);
     else this.allPorts.push(newPort);
 
-    if(typeof this.onAddPortElement == 'function') this.onAddPortElement(newPort);
-    if(typeof this.onParameterAdd == 'function') this.onParameterAdd(this, newPort);
+    this.onAddPortElement.invoke(newPort);
+    this.onParameterAdd.invoke(this, newPort);
 
     return newPort;
   }
@@ -244,14 +242,10 @@ export class Block {
       return;
     }
 
-    //取消连接
-    if(oldData.parent.isEditorBlock)
-      this.unConnectPort(oldData);
-
     this.allPorts.remove(oldData);
 
-    if(typeof this.onRemovePortElement == 'function') this.onRemovePortElement(oldData);
-    if(typeof this.onParameterRemove == 'function') this.onParameterRemove(this, oldData);
+    this.onRemovePortElement.invoke(oldData);
+    this.onParameterRemove.invoke(this, oldData);
 
     if(oldData.direction == 'input'){
       delete(this.inputParameters[guid]);
@@ -289,8 +283,7 @@ export class Block {
       port.paramType = newType;
       port.paramCustomType = newCustomType;
 
-      if(typeof this.onUpdatePortElement == 'function')
-        this.onUpdatePortElement(port);
+      this.onUpdatePortElement.invoke(port);
     }
   }
 
@@ -359,22 +352,10 @@ export class Block {
         return this.allPorts[i];
     return null;
   }
-  public unConnectPort(oldData : BlockPort) {
-    if(oldData.direction == 'input') {
-      if(oldData.connectedFromPort.length > 0)
-        oldData.connectedFromPort.forEach((c) => 
-          (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>c.connector));
-    }
-    else if(oldData.direction == 'output') {
-      if(oldData.connectedToPort.length > 0)
-        oldData.connectedToPort.forEach((c) => 
-          (<BlockEditor>oldData.parent).editor.unConnectConnector(<ConnectorEditor>c.connector));
-    }
-  }
 
-  protected onAddPortElement : (port : BlockPort) => void = null;
-  protected onUpdatePortElement : (port : BlockPort) => void = null;
-  protected onRemovePortElement : (port : BlockPort) => void = null;
+  protected onAddPortElement = new EventHandler<PortCallback>();
+  protected onUpdatePortElement = new EventHandler<PortCallback>();
+  protected onRemovePortElement = new EventHandler<PortCallback>();
 }
 
 export type OnBlockCreateCallback = (block : Block) => void;
@@ -382,6 +363,7 @@ export type OnBlockCallback = (block : Block, port : BlockBehaviorPort) => void;
 export type OnPortActiveCallback = (block : Block, port : BlockBehaviorPort) => void;
 export type OnParameterUpdateCallback = (block : Block, port : BlockParameterPort) => void;
 export type OnPortCallback = (block : Block, port : BlockBehaviorPort) => void;
+export type PortCallback = (port : BlockBehaviorPort) => void;
 
 export type OnUserAddPortCallback = (block : Block, direction : BlockPortDirection) => BlockPortRegData;
 export type OnUserAddParamCallback = (block : Block, direction : BlockPortDirection) => BlockParameterPortRegData;

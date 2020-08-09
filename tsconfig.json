@@ -20,6 +20,7 @@
       "./node_modules/@types/node",
       "./node_modules/vue/types",
       "./node_modules/vue-router/types",
+      "./node_modules/iview/types",
     ],
   }, 
   "include": [

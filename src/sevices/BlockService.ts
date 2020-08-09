@@ -1,4 +1,4 @@
-import { BlockRegData } from "../model/BlockDef";
+import { BlockRegData } from "../model/Define/BlockDef";
 
 export class BlockService {
   public allBlocks = {};

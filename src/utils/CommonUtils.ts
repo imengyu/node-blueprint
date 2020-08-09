@@ -1,20 +1,21 @@
+import StringUtils from "./StringUtils";
+
 export default {
   /**
    * 字符串判空
    * @param str 字符串
    */
   isNullOrEmpty(str){
-    return !str || typeof str == 'undefined' || str == ''
+    return StringUtils.isNullOrEmpty(str);
   },
-  isBase64,
   isJSON,
   isArray,
-  isNumber,
-  isChinaPoneNumber,
-  isEmail,
   mergeJSON,
   mergeJsonArray,
-  strToHexCharCode,
+  exportRaw,
+
+  getTop,
+  getLeft,
 
   valueToStr(val) {
     if(typeof val == 'string') 
@@ -38,7 +39,7 @@ export default {
    */
   genNonDuplicateIDHEX(randomLength){
     let idStr = this.genNonDuplicateID(randomLength);
-    return strToHexCharCode(idStr).substr(2, randomLength);
+    return StringUtils.strToHexCharCode(idStr).substr(2, randomLength);
   },
   /**
    * 通过一个B的文件大小获取可读的文件大小字符串
@@ -84,9 +85,6 @@ export default {
     }
     return null;
   },
-  
-  pad,
-  formatNumberWithComma,
 
   clone,
   cloneValue,
@@ -95,9 +93,6 @@ export default {
   upData,
   downData,
 
-  setCookie,
-  getCookie,
-  delCookie,
 
   calcTimeSurplus,
   /**
@@ -156,35 +151,6 @@ export default {
   }
 }
 
-
-
-/*
- * 功能：按千位逗号分割
- * 参数：s，需要格式化的数值.
- * 参数：type,判断格式化后是否需要小数位.
- * 返回：返回格式化后的数值字符串.
- */
-function formatNumberWithComma(s, type) {
-  if (/[^0-9\.]/.test(s))
-      return "0";
-  if (s == null || s == "")
-      return "0";
-  s = s.toString().replace(/^(\d*)$/, "$1.");
-  s = (s + "00").replace(/(\d*\.\d\d)\d*/, "$1");
-  s = s.replace(".", ",");
-  var re = /(\d)(\d{3},)/;
-  while (re.test(s))
-      s = s.replace(re, "$1,$2");
-  s = s.replace(/,(\d\d)$/, ".$1");
-  if (type == 0) { // 不带小数位(默认是有小数位)
-      var a = s.split(".");
-      if (a[1] == "00") {
-          s = a[0];
-      }
-  }
-  return s;
-}
-
 /**
  * 克隆对象
  * @param {Object} obj 要克隆对象
@@ -220,7 +186,6 @@ function cloneValue(setObj, sourceObj){
     }
   });
 }
-
 
 function mergeJSON(minor, main) {
   for (var key in minor) {
@@ -263,84 +228,6 @@ function mergeJsonArray(a, b) {
   return r;
 }
 
-// 字符串操作
-//================
-
-
-/**
-* 判断字符串是否是 Base64 编码
-* @param {String} str 
-*/
-function isBase64(str) {
-  return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/.test(str);
-}
-/**
- * 检测字符串是否是一串数字
- * @param {String} val 
- */
-function isNumber(val) {
-  var regPos = /^\d+(\.\d+)?$/; //非负浮点数
-  var regNeg = /^(-(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)))$/; //负浮点数
-  if (regPos.test(val) || regNeg.test(val)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-/**
- * 数字补0
- */
-function pad(num, n) {
-  var len = num.toString().length;
-  while (len < n) {
-    num = "0" + num;
-    len++;
-  }
-  return num;
-}
-
-
-
-// Cookie 操作
-//================
-
-/**
- * 设置 Cookie
- * @param {String} name Cookie 名称
- * @param {*} value 
- * @param {number} expires 过期时间（秒） 
- * @param {string} path 路径
- */
-function setCookie(name, value, expires = 0, path = undefined) {
-  var exp = new Date();
-  exp.setTime(exp.getTime() + expires * 1000);
-  document.cookie = name + "=" + escape(value) + ";expires=" + (<any>exp).toGMTString() + (path ?  + ";path=" + path : '');
-}
-/**
- * 读取 Cookie
- * @param {String} name Cookie 名称
- */ 
-function getCookie(name) {
-  var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
-
-  if (arr = document.cookie.match(reg))
-
-    return unescape(arr[2]);
-  else
-    return null;
-}
-/**
- * 删除 Cookie
- * @param {String} name Cookie 名称
- */ 
-function delCookie(name) {
-  var exp = new Date();
-  exp.setTime(exp.getTime() - 1);
-  var cval = getCookie(name);
-  if (cval != null)
-    document.cookie = name + "=" + cval + ";expires=" + (<any>exp).toGMTString();
-}
-
 //数组操作
 //================
 
@@ -373,43 +260,6 @@ function downData (arr, index) {
     return swapItems(arr, index, index + 1)
 }
 
-//字符串工具
-//================
-
-/**
- * 检查字符串是否是中国的11位手机号
- * @param str 字符串
- */
-function isChinaPoneNumber(str : string) {
-  var myreg=/^[1][3,4,5,7,8][0-9]{9}$/;
-  if (!myreg.test(str)) {
-      return false;
-  } else {
-      return true;
-  }
-}
-/**
- * 检查字符串是否是邮箱
- * @param str 字符串
- */
-function isEmail(str : string){
-  var re=/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/;
-  if (re.test(str) != true) {
-    return false;
-  }else{
-    return true;
-  }
-}
-function strToHexCharCode(str : string) : string {
-  if(str === "")
-    return "";
-  var hexCharCode = [];
-  hexCharCode.push("0x"); 
-  for(var i = 0; i < str.length; i++) {
-    hexCharCode.push((str.charCodeAt(i)).toString(16));
-  }
-  return hexCharCode.join("");
-}
 /**
  * 计算剩余时间为用户可读时间
  * @param limitTime 时间
@@ -442,3 +292,37 @@ function calcTimeSurplus(limitTime : Date) {
   
   return '已经超过时间了';
 }
+
+function fakeClick(obj) {
+  var ev = document.createEvent("MouseEvents");
+  ev.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+  obj.dispatchEvent(ev);
+}
+
+function exportRaw(name, data) {
+  var export_blob = new Blob([data]);
+  var save_link = <HTMLLinkElement>document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+  save_link.href = URL.createObjectURL(export_blob);
+  save_link.setAttribute('download', name);
+  fakeClick(save_link);
+}
+
+
+/**
+ * 获取元素的绝对纵坐标
+ * @param e 
+ */
+function getTop(e : HTMLElement) {
+  var offset = e.offsetTop;
+  if (e.offsetParent != null) offset += getTop(<HTMLElement>e.offsetParent);
+  return offset;
+}
+/**
+ * 获取元素的绝对横坐标
+ * @param e 元素
+ */
+function getLeft(e : HTMLElement) {
+  var offset = e.offsetLeft;
+  if (e.offsetParent != null) offset += getLeft(<HTMLElement>e.offsetParent);
+  return offset;
+} 

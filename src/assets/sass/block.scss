@@ -126,6 +126,7 @@
     left: -16px;
     top: -16px;
     color: #cf1010;
+    text-shadow: 0 0 10px #af0000;
     z-index: 3;
   }
   .breakpoint-arrow {
@@ -239,7 +240,7 @@
       cursor: crosshair;
 
       &.error {
-        color: #e9412a;
+        color: #ff7562!important;
       }
     }
     span {

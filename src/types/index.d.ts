@@ -1,7 +1,8 @@
 
-/// <reference types="sizzle" />
 /// <reference path="extends.d.ts" />
+/// <reference path="vue-contextmenujs.d.ts" />
 
-import * as main from '../main'
 
-export = main;
+export interface Maim {
+
+}
