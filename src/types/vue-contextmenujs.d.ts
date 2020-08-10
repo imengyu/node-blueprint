@@ -1,5 +1,3 @@
-import Vue from "vue";
-
 export declare interface MenuOptions {
   /**
    * 菜单结构信息

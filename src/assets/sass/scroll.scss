@@ -1,0 +1,44 @@
+/* Common Scroll bar */
+
+/* PC Scrollbar */
+
+@mixin pc-fix-scrollbar(){
+    @media (min-width: 768px) {
+        &::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: #707070;
+            border-radius: 3px;
+    
+            &:hover {
+                background: #e0e0e0;
+            }
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    }
+}
+
+@mixin pc-fix-scrollbar-white(){
+    @media (min-width: 768px) {
+        &::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: #d6d6d6;
+            opacity: .7;
+            border-radius: 3px;
+    
+            &:hover {
+                background: #707070;
+            }
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    }
+}

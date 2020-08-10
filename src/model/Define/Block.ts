@@ -36,29 +36,32 @@ export class Block {
    */
   public breakpoint : BlockBreakPoint = 'none';
 
-  public constructor() {
+  public constructor(regData ?: BlockRegData) {
     this.uid = CommonUtils.genNonDuplicateIDHEX(16);
+    if(regData)
+      this.regData = regData;
+    this.createBase();
   }
 
-  public create(v) {
+  private createBase() {
     if(this.regData) {
       this.guid = this.regData.guid
 
       if(typeof this.regData.callbacks.onCreate == 'function') 
-        this.onCreate.addListener(this.regData.callbacks.onCreate);
+        this.onCreate.addListener(this,this.regData.callbacks.onCreate);
       if(typeof this.regData.callbacks.onParameterUpdate == 'function') 
-        this.onParameterUpdate.addListener(this.regData.callbacks.onParameterUpdate);
+        this.onParameterUpdate.addListener(this,this.regData.callbacks.onParameterUpdate);
       if(typeof this.regData.callbacks.onPortActive == 'function') 
-        this.onPortActive.addListener(this.regData.callbacks.onPortActive);
+        this.onPortActive.addListener(this,this.regData.callbacks.onPortActive);
 
       if(typeof this.regData.callbacks.onParameterAdd == 'function') 
-        this.onParameterAdd.addListener(this.regData.callbacks.onParameterAdd);
+        this.onParameterAdd.addListener(this,this.regData.callbacks.onParameterAdd);
       if(typeof this.regData.callbacks.onParameterRemove == 'function') 
-        this.onParameterRemove.addListener(this.regData.callbacks.onParameterRemove);
+        this.onParameterRemove.addListener(this,this.regData.callbacks.onParameterRemove);
       if(typeof this.regData.callbacks.onPortAdd == 'function') 
-        this.onPortAdd.addListener(this.regData.callbacks.onPortAdd);
+        this.onPortAdd.addListener(this,this.regData.callbacks.onPortAdd);
       if(typeof this.regData.callbacks.onPortRemove == 'function') 
-        this.onPortRemove.addListener(this.regData.callbacks.onPortRemove);
+        this.onPortRemove.addListener(this,this.regData.callbacks.onPortRemove);
 
       if(this.regData.ports.length > 0)
         this.regData.ports.forEach(element => this.addPort(element, false));
@@ -66,8 +69,7 @@ export class Block {
         this.regData.parameters.forEach(element => this.addParameterPort(element, false));
     }
 
-    if(this.onCreate != null)
-      this.onCreate.invoke(this);
+    this.onCreate.invoke(this);
   }
 
   public regData : BlockRegData = null;
@@ -115,15 +117,15 @@ export class Block {
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
    */
   public addPort(data : BlockPortRegData, isDyamicAdd = true) {
-    let oldData = this.getPort(data.name, data.direction);
+    let oldData = this.getPort(data.guid, data.direction);
     if(oldData != null && oldData != undefined) {
       console.warn("[addPort] " + data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !");
       return oldData;
     }
 
     let newPort = new BlockBehaviorPort(this);
-    newPort.name = data.name;
-    newPort.description = data.description;
+    newPort.name = data.name ? data.name : '';
+    newPort.description = data.description ? data.description : '';
     newPort.isDyamicAdd = isDyamicAdd;
     newPort.guid = data.guid;
     newPort.direction = data.direction;
@@ -193,7 +195,7 @@ export class Block {
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
    */
   public addParameterPort(data : BlockParameterPortRegData, isDyamicAdd = true, initialValue = null) {
-    let oldData = this.getParameterPort(data.name, data.direction);
+    let oldData = this.getParameterPort(data.guid, data.direction);
     if(oldData != null) {
       console.warn("[addParameterPort] " + data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !");
       return oldData;
@@ -201,13 +203,13 @@ export class Block {
 
     let newPort = new BlockParameterPort(this);
 
-    newPort.name = data.name;
-    newPort.description = data.description;
+    newPort.name = data.name? data.name : '';
+    newPort.description = data.description? data.description : '';
     newPort.direction = data.direction;
     newPort.isDyamicAdd = isDyamicAdd;
     newPort.paramType = data.paramType;
-    newPort.paramCustomType = data.paramCustomType;
-    newPort.paramDefaultValue = data.paramDefaultValue;
+    newPort.paramCustomType = data.paramCustomType ? data.paramCustomType : '';
+    newPort.paramDefaultValue = data.paramDefaultValue ? data.paramDefaultValue : null;
     newPort.paramUserSetValue = initialValue;
     newPort.guid = data.guid;
     newPort.regData = data;
@@ -343,12 +345,15 @@ export class Block {
         return this.allPorts[i];
     return null;
   }
-  public getOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '') {
+  public getOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '', includeAny = true) {
     for(let i = 0, c = this.allPorts.length; i < c;i++)
       if(this.allPorts[i].type == 'Parameter' 
         && this.allPorts[i].direction == direction
-        && (<BlockParameterPort>this.allPorts[i]).paramType == type
-        && (<BlockParameterPort>this.allPorts[i]).paramCustomType == customType) 
+        && (
+          ((<BlockParameterPort>this.allPorts[i]).paramType == type && (<BlockParameterPort>this.allPorts[i]).paramCustomType == customType)
+          || (includeAny && (<BlockParameterPort>this.allPorts[i]).paramType == 'any')
+          )
+        )
         return this.allPorts[i];
     return null;
   }

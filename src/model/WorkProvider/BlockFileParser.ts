@@ -6,6 +6,7 @@ import StringUtils from "../../utils/StringUtils";
 import { BlockParameterPort, BlockBehaviorPort } from "../Define/Port";
 import { Connector } from "../Define/Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
+import { Block } from "../Define/Block";
 
 /**
  * 流图保存加载解析器
@@ -28,6 +29,10 @@ export class BlockFileParser {
       ports: [],
       boxs: [],
       comments: graph.comments,
+      comment: graph.comment,
+      behavorPorts: graph.behavorPorts,
+      parameterPorts: graph.parameterPorts,
+      variables: graph.variables,
     };
 
     let findBlockGUIDMap = function(guid : string) {
@@ -59,9 +64,10 @@ export class BlockFileParser {
         guidMap: mapIndex,
         uid: block.uid,
         mark: saveToEditor ? (<BlockEditor>block).mark : undefined,
+        markOpen: saveToEditor ? (<BlockEditor>block).markOpen : undefined,
         breakpoint: saveToEditor ? block.breakpoint : undefined,
         options: block.options,
-        position: saveToEditor ? (<BlockEditor>block).position : undefined
+        position: saveToEditor ? (<BlockEditor>block).position : undefined,
       };
 
       let blocksIndex = data.blocks.push(blockData) - 1;
@@ -171,7 +177,7 @@ export class BlockFileParser {
 
     return data;
   }
-  private loadGraph(graphData, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean) {
+  private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean) {
 
     let graph : BlockGraphDocunment = {
       name: graphData.name,
@@ -182,17 +188,25 @@ export class BlockFileParser {
       blocks: [],
       connectors: [],
       isEditor: readToEditor,
+      parent: parentGraph,
+      comment: graphData.comment,
+      behavorPorts: graphData.behavorPorts,
+      parameterPorts: graphData.parameterPorts,
+      variables: graphData.variables,
     };
     
     //blocks
     graphData.blocks.forEach(block => {
-      let blockInstance = new BlockEditor(
-        blockRegDatas[block.guidMap],
-      );
+      let blockInstance = readToEditor ? new BlockEditor(blockRegDatas[block.guidMap]) : new Block(blockRegDatas[block.guidMap]);
+      
       blockInstance.uid = block.uid;
       blockInstance.breakpoint = block.breakpoint;
       blockInstance.options = block.options;
-      blockInstance.position = block.position;
+      if(readToEditor) {
+        (<BlockEditor>blockInstance).position.Set(block.position);
+        (<BlockEditor>blockInstance).mark = block.mark;
+        (<BlockEditor>blockInstance).markOpen = block.markOpen;
+      }
 
       graph.blocks.push(blockInstance);
     });
@@ -226,7 +240,7 @@ export class BlockFileParser {
 
     //child graph
     graphData.childGraphs.forEach(childGraph => {
-      graph.children.push(this.loadGraph(childGraph, blockRegDatas, portRegDatas, readToEditor));
+      graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor));
     }); 
 
     return graph;
@@ -277,7 +291,7 @@ export class BlockFileParser {
     //port GUID map
     data.portMap.forEach(port => portRegDatas.push(port));
     //load Graph
-    doc.mainGraph = this.loadGraph(data.mainGraph, blockRegDatas, portRegDatas, readToEditor);
+    doc.mainGraph = this.loadGraph(data.mainGraph, null, blockRegDatas, portRegDatas, readToEditor);
 
     return doc;
   }

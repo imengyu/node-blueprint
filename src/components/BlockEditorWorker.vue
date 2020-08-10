@@ -4,7 +4,9 @@
       left: -viewPort.x + 'px', top: -viewPort.y + 'px' ,
       userSelect: (isMultiSelecting ? 'none' : 'unset'),
       transform: 'scale(' + viewZoom + ')'
-    }">
+    }"
+      oncontextmenu="return false" 
+    >
 
     </div>
     <!--对话框-->
@@ -32,11 +34,13 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Rect } from "../model/Rect";
 import { BlockPort, BlockPortDirection, BlockParameteType, BlockPortType, BlockParameterPort } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
-import { BlockEditor } from "../model/Editor/BlockEditor";
+import { BlockEditor, BlockBreakPoint } from "../model/Editor/BlockEditor";
 import { Vector2 } from "../model/Vector2";
 import { BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { BlockRunner } from "../model/WorkProvider/Runner";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
+import { MenuItem } from "iview";
+import { MenuOptions } from "../types/vue-contextmenujs";
 
 /**
  * 编辑器逻辑控制
@@ -83,6 +87,9 @@ export default class BlockEditorWorker extends Vue {
   mouseCurrentPos = new Vector2();
   mouseCurrentPosInViewPort = new Vector2();
 
+  public getSelecteBlockCount() {
+    return this.selectedBlocks.length;
+  }
   public hasSelected() {
     return this.selectedBlocks.length > 0 || this.selectedConnectors.length > 0
   }
@@ -138,23 +145,30 @@ export default class BlockEditorWorker extends Vue {
     for(let i = 0, c= this.connectors.length;i<c;i++)
       this.connectors[i].hover = (this.connectors[i].testInRect(this.mouseCurrentPosInViewPort, this.viewZoom));
   }
-  private updateMousePos(e : MouseEvent) {
+
+  public updateMousePos(e : MouseEvent) {
     this.mouseCurrentPos.x = e.x - this.toolBarWidth;
     this.mouseCurrentPos.y = e.y - this.toolBarHeight;
     this.mouseCurrentPosInViewPort.x = this.viewPort.x + e.x - this.toolBarWidth;
     this.mouseCurrentPosInViewPort.y = this.viewPort.y + e.y - this.toolBarHeight;
   }
+  public getMouseCurrentPos() {
+    return this.mouseCurrentPos;
+  }
 
   //单元控制事件
   //=======================
 
-  public onUserSelectBlock(block : BlockEditor) {
-    if(this.selectedBlocks.length > 0)
-      for(var i=0;i<this.blocks.length;i++) 
-        if(this.blocks[i] != block)
-          this.blocks[i].updateSelectStatus(false);
-    this.selectedBlocks.splice(0, this.selectedBlocks.length);
-    this.selectedBlocks.push(block);
+  public onUserSelectBlock(block : BlockEditor, selectSingle : boolean) {
+    if(selectSingle) {
+      if(this.selectedBlocks.length > 0)
+        for(var i=0;i<this.blocks.length;i++) 
+          if(this.blocks[i] != block)
+            this.blocks[i].updateSelectStatus(false);
+      this.selectedBlocks.splice(0, this.selectedBlocks.length);
+    }
+    if(!this.selectedBlocks.contains(block))
+      this.selectedBlocks.push(block);
     this.$emit('update-select-state');
     block.updateLastPos();
   }
@@ -345,6 +359,9 @@ export default class BlockEditorWorker extends Vue {
 
     this.isConnectingToNew = false;
     this.isConnecting = false;
+    
+    this.connectingStartPort.editorData.forceDotActiveState = false;
+    this.connectingStartPort.editorData.updatePortConnectStatusElement();
     this.connectingStartPort = null;
 
     return port;
@@ -481,6 +498,38 @@ export default class BlockEditorWorker extends Vue {
   public getCurrentHoverPort() : BlockPort {
     return this.currentHoverPort;
   }
+  public unConnectBlock(block : BlockEditor) {
+    block.allPorts.forEach((p) => p.unconnectAllConnector());
+  }
+  public refreshBlock(block : BlockEditor) {
+    block.allPorts.forEach((p) => {
+      if(p.type == 'Parameter') {
+        (<BlockParameterPort>p).update();
+      }
+    });
+  }
+
+  //选中单元的操作
+  //=======================
+
+  public unConnectSelectedBlock() {
+    this.selectedBlocks.forEach((b) => this.unConnectBlock(b));
+  }
+  public refreshSelectedBlock() {
+    this.selectedBlocks.forEach((b) => this.refreshBlock(b));
+  }
+  public alignSelectedBlock(align : 'left'|'top'|'right'|'bottom') {
+    this.selectedBlocks.forEach((b) => {
+      
+    });
+
+  }
+  public setSelectedBlockBreakpointState(state : BlockBreakPoint) {
+    this.selectedBlocks.forEach((b) => {
+      b.breakpoint = state;
+      b.updateBreakPointStatus();
+    });
+  }
 
   //编辑器鼠标事件
   //=======================
@@ -613,32 +662,9 @@ export default class BlockEditorWorker extends Vue {
       this.testCastConnector();
     }
   }
-  private onMouseWhell(e : WheelEvent) {
+  private onMouseWhell(e : WheelEvent) {  
     this.updateMousePos(e);
-
-    let oldScale = this.viewScale;
-    let pos = new Vector2(this.viewPort.x + this.mouseCurrentPos.x, 
-      this.viewPort.y + this.mouseCurrentPos.y);
-    pos.x = pos.x / this.viewZoom;
-    pos.y = pos.y / this.viewZoom;
-
-    if(e.deltaY < 0) {    
-      if(oldScale <= 100 && this.viewScale + 5 > 100 && !this.keyControlDown)
-        this.$emit('update:viewScale', 100);
-      else if(this.viewScale > 200)
-        this.$emit('update:viewScale', 200);
-      else this.$emit('update:viewScale', this.viewScale + 5);
-    }else if(e.deltaY > 0) {
-      if(this.viewScale - 5 < 30) this.$emit('update:viewScale', 30);
-      else this.$emit('update:viewScale', this.viewScale - 5)
-    }
-
-    this.$emit('update-viewport');
-    this.updateMousePos(e);
-
-    pos.x = pos.x * this.viewZoom - this.mouseCurrentPos.x;
-    pos.y = pos.y * this.viewZoom - this.mouseCurrentPos.y;
-    this.viewPort.setPos(pos);
+    this.$emit('on-mouse-zoom-view', e);
   }
 
   keyControlDown = false;
@@ -669,6 +695,9 @@ export default class BlockEditorWorker extends Vue {
 
     }
   }
+
+  getIsKeyControlDown() { return this.keyControlDown; }
+
 
   //删除疑问对话框
   //=============================

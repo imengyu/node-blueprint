@@ -9,6 +9,7 @@ import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import { Block, OnUserAddPortCallback, OnUserAddParamCallback } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockEditorOwner } from "./BlockEditorOwner";
+import StringUtils from "../../utils/StringUtils";
 
 
 /**
@@ -21,14 +22,15 @@ export class BlockEditor extends Block {
   public position : Vector2 = new Vector2();
   public size : Vector2 = new Vector2(150, 200);
 
-  public name = "Single";
-  public description = "This is a single block. Useage: unknow.";
+  public name = '';
+  public description = '';
   /**
    * 块的用户注释
    */
-  public mark = "";
+  public mark = '';
+  public markOpen = false;
 
-  public logo = "";
+  public logo = '';
 
   public selected = false;
   public hover = false;
@@ -38,13 +40,12 @@ export class BlockEditor extends Block {
   public editor : BlockEditorOwner = null;
 
   public constructor(regData ?: BlockRegData) {
-    super();
-    if(regData)
-      this.regData = regData;
-    this.onAddPortElement.addListener(this.addPortElement);
-    this.onRemovePortElement.addListener(this.removePortElement);
-    this.onUpdatePortElement.addListener(this.updatePortElement);
-    this.onPortRemove.addListener(this.onPortRemoveCallback);
+    super(regData);
+   
+    this.onAddPortElement.addListener(this, this.addPortElement);
+    this.onRemovePortElement.addListener(this,this.removePortElement);
+    this.onUpdatePortElement.addListener(this,this.updatePortElement);
+    this.onPortRemove.addListener(this,this.onPortRemoveCallback);
   }
 
   public portIcons = {
@@ -96,6 +97,11 @@ export class BlockEditor extends Block {
     this.el = document.createElement('div');
     this.el.classList.add("flow-block");
     this.el.setAttribute("id", this.uid);
+
+    if(!StringUtils.isNullOrEmpty(this.blockStyleSettings.minWidth))
+      this.el.style.minWidth = this.blockStyleSettings.minWidth;
+
+    //#region Ports
 
     let content = document.createElement('div');
     let areaPorts = document.createElement('div');
@@ -153,6 +159,10 @@ export class BlockEditor extends Block {
     content.appendChild(areaParamPortsBottom);
     content.classList.add("content");
 
+    //#endregion
+
+    //#region Title and logo
+
     this.els.elTitle = document.createElement('div');
     this.els.elTitle.classList.add("title");
     this.els.elTitle.setAttribute('title', this.description);
@@ -197,16 +207,65 @@ export class BlockEditor extends Block {
     this.els.elLogoBottom = document.createElement('div');
     this.els.elLogoBottom.classList.add("logo-bottom");
 
-    this.el.appendChild(this.els.elBreakPointStatus);
-    this.el.appendChild(this.els.elBreakPointArrow);
-    this.el.appendChild(this.els.elTitle);
-    this.el.appendChild(this.els.elCustomEditor);
-    this.el.appendChild(content);
-
     this.els.elTitle.appendChild(this.els.elLogo);
     this.els.elTitle.appendChild(this.els.elTitleText);
     this.els.elTitle.appendChild(this.els.elLogoRight);
     this.els.elTitle.appendChild(this.els.elLogoBottom);
+
+    //#endregion
+
+    //#region Comment
+
+    this.els.elComment = document.createElement('div');
+    this.els.elComment.classList.add('flow-block-comment', 'flow-block-no-move');
+    this.els.elCommentText = document.createElement('div');
+    this.els.elCommentText.classList.add('flow-block-comment-text', 'flow-block-no-move');
+    this.els.elCommentText.setAttribute('contenteditable', 'true');
+    this.els.elCommentPlaceHolder = document.createElement('span');
+    this.els.elCommentPlaceHolder.classList.add('flow-block-comment-place-holder');
+    this.els.elCommentPlaceHolder.innerText = '点击添加注释';
+    this.els.elCommentOpen = document.createElement('a');
+    this.els.elCommentOpen.setAttribute('title', '打开注释气泡');
+    this.els.elCommentOpen.classList.add('flow-block-comment-open','iconfont','icon-qipao');
+    this.els.elCommentClose = document.createElement('a');
+    this.els.elCommentClose.classList.add('iconfont','icon-close-');
+    this.els.elCommentClose.setAttribute('title', '隐藏注释气泡');
+
+    this.els.elCommentOpen.onclick = () => {
+      this.markOpen = true;
+      this.updateComment();
+    };
+    this.els.elCommentClose.onclick = () => {
+      this.markOpen = false;
+      this.updateComment();
+    };
+    this.els.elCommentPlaceHolder.onclick = () => {
+      this.els.elCommentPlaceHolder.style.display = 'none';
+      this.els.elCommentText.focus();
+    };
+    this.els.elCommentText.oninput = () => {
+      this.els.elComment.style.top = -(this.els.elCommentText.offsetHeight - 23 + 40) + 'px';
+    };
+    this.els.elCommentText.onblur = () => {
+      this.mark = this.els.elCommentText.innerText;
+      this.updateComment();
+    };
+
+    this.els.elComment.appendChild(this.els.elCommentPlaceHolder);
+    this.els.elComment.appendChild(this.els.elCommentText);
+    this.els.elComment.appendChild(this.els.elCommentClose);
+
+    //#endregion
+
+    this.el.appendChild(this.els.elCommentOpen);
+    this.el.appendChild(this.els.elComment);
+    this.el.appendChild(this.els.elTitle);
+    this.el.appendChild(this.els.elCustomEditor);
+    this.el.appendChild(content);
+    this.el.appendChild(this.els.elBreakPointStatus);
+    this.el.appendChild(this.els.elBreakPointArrow);
+
+    //Events
 
     this.el.addEventListener('mouseenter', this.onMouseEnter.bind(this));
     this.el.addEventListener('mouseleave', this.onMouseOut.bind(this));
@@ -215,10 +274,9 @@ export class BlockEditor extends Block {
     this.el.addEventListener('mousedown', this.onMouseDown.bind(this));
     this.el.addEventListener('resize', this.onResize.bind(this));
     this.el.addEventListener('wheel', this.onMouseWhell.bind(this));
+    this.el.addEventListener('contextmenu', this.onContextMenu.bind(this));
 
     host.appendChild(this.el);
-
-    super.create(null);
 
     if(typeof this.onCreateCustomEditor == 'function')
       this.onCreateCustomEditor(this.els.elCustomEditor, this, this.regData);
@@ -228,6 +286,7 @@ export class BlockEditor extends Block {
     this.flushAllPortElementCreateState();
     this.updateContent();
     this.updateBreakPointStatus();
+    this.updateComment();
   }
   public destroy() {
 
@@ -239,6 +298,7 @@ export class BlockEditor extends Block {
     this.el.removeEventListener('mousedown', this.onMouseDown.bind(this));
     this.el.removeEventListener('resize', this.onResize.bind(this));
     this.el.removeEventListener('wheel', this.onMouseWhell.bind(this));
+    this.el.removeEventListener('contextmenu', this.onContextMenu.bind(this));
 
     this.inputPorts = null;
     this.outputPorts = null;
@@ -247,6 +307,45 @@ export class BlockEditor extends Block {
     this.allPorts = null;
 
     this.editor.getBlockHostElement().removeChild(this.el);
+  }
+
+  /**
+   * 更新位置
+   * @param pos 位置
+   */
+  public setPos(pos ?: Vector2) {
+    if(typeof pos != 'undefined')
+      this.position.Set(pos);
+    this.el.style.left = this.position.x + 'px';
+    this.el.style.top = this.position.y + 'px';
+  }
+  /**
+   * 断开端口的所有连接
+   * @param oldData 目标
+   */
+  public unConnectPort(oldData : BlockPort) {
+    if(oldData.direction == 'input') {
+      if(oldData.connectedFromPort.length > 0)
+        oldData.connectedFromPort.forEach((c) => 
+          this.editor.unConnectConnector(<ConnectorEditor>c.connector));
+    }
+    else if(oldData.direction == 'output') {
+      if(oldData.connectedToPort.length > 0)
+        oldData.connectedToPort.forEach((c) => 
+          this.editor.unConnectConnector(<ConnectorEditor>c.connector));
+    }
+  }
+  /**
+   * 隐藏
+   */
+  public hide() {
+    if(this.created) this.el.style.display = 'none';
+  }
+  /**
+   * 显示
+   */
+  public show() {
+    if(this.created) this.el.style.display = '';
   }
 
   //#region 数据更新
@@ -259,11 +358,11 @@ export class BlockEditor extends Block {
       this.el.setAttribute('title', this.name + '\n' + this.description);
     else{
       this.els.elTitleText.innerText = this.name;
-      this.el.setAttribute('title', this.description);
+      this.els.elTitle.setAttribute('title', this.description);
     }
     this.el.setAttribute('data-guid', this.guid);
 
-    this.els.elLogo.style.display = CommonUtils.isNullOrEmpty(this.logo) ? 'none' : 'inline-block';
+    this.els.elLogo.style.display = (CommonUtils.isNullOrEmpty(this.logo) || this.blockStyleSettings.hideLogo) ? 'none' : 'inline-block';
     if(this.logo.startsWith('<')) this.els.elLogo.innerHTML = this.logo;
     else if(!CommonUtils.isNullOrEmpty(this.logo)) this.els.elLogo.style.backgroundImage = 'url(' + this.logo + ')';
 
@@ -307,47 +406,15 @@ export class BlockEditor extends Block {
         break;
     }
   }
+  public updateComment() {
+    this.els.elComment.style.display = this.markOpen ? '' : 'none';
+    this.els.elCommentClose.style.display = this.markOpen ? '' : 'none';
+    this.els.elCommentOpen.style.display = this.markOpen ? 'none' : '';
+    this.els.elCommentText.innerText = this.mark;
+    this.els.elCommentPlaceHolder.style.display = this.mark == '' ? '' : 'none';
+  }
 
   //#endregion
-
-  /**
-   * 更新位置
-   * @param pos 位置
-   */
-  public setPos(pos ?: Vector2) {
-    if(typeof pos != 'undefined')
-      this.position.Set(pos);
-    this.el.style.left = this.position.x + 'px';
-    this.el.style.top = this.position.y + 'px';
-  }
-  /**
-   * 断开端口的所有连接
-   * @param oldData 目标
-   */
-  public unConnectPort(oldData : BlockPort) {
-    if(oldData.direction == 'input') {
-      if(oldData.connectedFromPort.length > 0)
-        oldData.connectedFromPort.forEach((c) => 
-          this.editor.unConnectConnector(<ConnectorEditor>c.connector));
-    }
-    else if(oldData.direction == 'output') {
-      if(oldData.connectedToPort.length > 0)
-        oldData.connectedToPort.forEach((c) => 
-          this.editor.unConnectConnector(<ConnectorEditor>c.connector));
-    }
-  }
-  /**
-   * 隐藏
-   */
-  public hide() {
-    if(this.created) this.el.style.display = 'none';
-  }
-  /**
-   * 显示
-   */
-  public show() {
-    if(this.created) this.el.style.display = '';
-  }
 
   //#region 节点元素更新
   //===========================
@@ -438,7 +505,7 @@ export class BlockEditor extends Block {
 
     if((portParameter.paramType == 'custom' || portParameter.paramType == 'enum') 
         && !CommonUtils.isNullOrEmpty(portParameter.paramCustomType)) 
-        customType = ParamTypeServiceInstance.getCustomype(portParameter.paramCustomType);
+        customType = ParamTypeServiceInstance.getCustomType(portParameter.paramCustomType);
 
     //类型编辑器
     let editor : BlockParameterEditorRegData = null;
@@ -489,6 +556,12 @@ export class BlockEditor extends Block {
       + '\n' + port.description
       + '\n类型：' + port.editorData.el.getAttribute('data-param-type-name')
       + '\n值：' + CommonUtils.valueToStr((<BlockParameterPort>port).paramValue));
+  }
+  public updateAllPortElement() {
+    this.allPorts.forEach((p) => {
+      this.updatePortElement(p);
+      this.updatePortConnectStatusElement(p);
+    });
   }
   public flushAllPortElementCreateState() {
     this.allPorts.forEach((port) => {
@@ -702,7 +775,7 @@ export class BlockEditor extends Block {
     this.hover = false;
   }
   private onMouseMove(e : MouseEvent) {
-    if(this.mouseDown && this.hover && !this.mouseDownInPort && !this.mouseConnectingPort) {
+    if(this.mouseDown && e.button == 0 && this.hover && !this.mouseDownInPort && !this.mouseConnectingPort) {
       let pos = new Vector2(
         this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
         this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)
@@ -717,11 +790,11 @@ export class BlockEditor extends Block {
           let multiSelectBlocks = this.editor.getMultiSelectedBlocks();
           if(multiSelectBlocks.length == 0 || multiSelectBlocks.contains(this)) {
             this.updateSelectStatus(true);
-            this.editor.onUserSelectBlock(this);
+            this.editor.onUserSelectBlock(this, false);
           }else {
             this.editor.unSelectAllBlocks();
             this.updateSelectStatus(true);
-            this.editor.onUserSelectBlock(this);
+            this.editor.onUserSelectBlock(this, false);
           }
         }
       }
@@ -749,7 +822,7 @@ export class BlockEditor extends Block {
       this.editor.onMoveBlockEnd(this);
     }else {
       this.updateSelectStatus(true);
-      this.editor.onUserSelectBlock(this);
+      this.editor.onUserSelectBlock(this, e.button == 0);
     }
 
     document.removeEventListener('mousemove', this.fnonMouseMove);
@@ -759,6 +832,10 @@ export class BlockEditor extends Block {
     if(this.testIsDownInControl(e)) 
       e.stopPropagation();
   }
+  private onContextMenu(e) {
+    this.editor.showBlockRightMenu(new Vector2(e.x, e.y));
+    return false;
+  }
 
   //#endregion 
 
@@ -766,6 +843,7 @@ export class BlockEditor extends Block {
     let target = (<HTMLElement>e.target);
     return (target.tagName == 'INPUT' 
       || target.tagName == 'SELECT'
+      || target.classList.contains('flow-block-no-move') 
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
       || target.classList.contains('port')
@@ -817,4 +895,10 @@ export class BlockEditorHTMLData {
 
   elBreakPointArrow : HTMLDivElement = null;
   elBreakPointStatus : HTMLDivElement = null ;
+
+  elComment : HTMLDivElement = null;
+  elCommentText : HTMLDivElement = null;
+  elCommentPlaceHolder : HTMLSpanElement = null;
+  elCommentOpen : HTMLElement = null;
+  elCommentClose : HTMLElement = null;
 }

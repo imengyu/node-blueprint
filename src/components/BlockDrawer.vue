@@ -45,7 +45,6 @@
       @update-connectingFailedText="(v) => connectingFailedText = v"
       @update-multiSelectRect="(v) => multiSelectRect = v"
       :mouseLeftMove="mouseLeftMove"
-      :connectingConnector="connectingConnector"
       :currentDocunment="currentDocunment"
       :runner="runner"
       :editorHost="editorHost"
@@ -61,6 +60,7 @@
       @clear-add-block-panel-filter="$emit('clear-add-block-panel-filter')"
       @set-add-block-inpos="setAddBlockInpos"
       @on-delete-block="onDeleteBlock"
+      @on-mouse-zoom-view="onMouseZoomView"
       :toolBarHeight="toolBarHeight"
       :toolBarWidth="toolBarWidth"
       >
@@ -73,8 +73,8 @@
     </BlockEditoClipBoard>
     <div class="zoom_tool">
       <a href="javascript:;" class="left iconfont icon-zoom-out" title="缩小" @click="zoomOut()"></a>
-      <select v-model="viewZoom" @change="zoomUpdate()">
-        <option v-for="(v, i) in zoomValues" :key="i" :value="v/100">{{v}}%</option>
+      <select v-model="zoomSelectValue" @change="zoomUpdate(zoomSelectValue)">
+        <option v-for="(v, i) in zoomValues" :key="i" :value="v">{{v}}%</option>
       </select>
       <span>{{viewScale}}%</span>
       <a href="javascript:;" class="right iconfont icon-zoom" title="放大" @click="zoomIn()"></a>
@@ -115,6 +115,7 @@ export default class BlockDrawer extends Vue {
   currentDocunment : BlockDocunment = null;
 
   loadedBlocks : Array<BlockEditor> = [];
+  loadedConnectors : Array<ConnectorEditor> = [];
 
   /**
    * 加载绘制文档
@@ -135,6 +136,8 @@ export default class BlockDrawer extends Vue {
     if(this.currentDocunment != null) {
       this.loadedBlocks.forEach((block) => block.destroy());
       this.loadedBlocks.empty();
+      this.loadedConnectors.forEach((connector) => connector.inited = false);
+      this.loadedConnectors.empty();
       this.currentDocunment = null;
     }
   }
@@ -162,12 +165,35 @@ export default class BlockDrawer extends Vue {
 
       this.recalcViewPort();
 
+      //初始化元素的编辑器使用数据
+      this.connectors.forEach((connector) => {
+        if(!connector.inited) {
+          connector.startPort.connectedToPort.push({
+            port: connector.endPort,
+            connector: connector
+          });
+          connector.endPort.connectedFromPort.push({
+            port: connector.startPort,
+            connector: connector
+          });
+          connector.inited = true;
+          connector.currentRunner = this.runner;
+          this.loadedConnectors.push(connector);
+        }
+      });
       this.blocks.forEach(element => {
         if(!element.created) {
           element.create(this.blockOwnerData);
+          element.setPos(element.position);
           this.loadedBlocks.push(element);
+        }else {
+          element.show();
+          element.setPos(element.position);
         }
+
+        element.updateAllPortElement();
       });
+      
 
     }else {
       this.$Modal.error({
@@ -295,6 +321,7 @@ export default class BlockDrawer extends Vue {
   }
   public recalcViewPort() {
     this.viewZoom = this.viewScale / 100;
+    this.zoomSelectValue = this.viewScale;
     this.viewPort.w = this.viewRealSize.w;
     this.viewPort.h = this.viewRealSize.h;
   }
@@ -303,6 +330,7 @@ export default class BlockDrawer extends Vue {
   }
 
   zoomValues = [ 30, 50, 60, 80, 100, 110, 120, 130, 150, 170, 190, 200 ];
+  zoomSelectValue = 100;
 
   //缩放控制
   //========================
@@ -338,6 +366,37 @@ export default class BlockDrawer extends Vue {
     this.viewPort.setPos(pos);
   }
 
+  private onMouseZoomView(e : WheelEvent) {
+    let mouseCurrentPos = this.editorWorker.getMouseCurrentPos();
+    let oldScale = this.viewScale;
+    let pos = new Vector2(this.viewPort.x + mouseCurrentPos.x, this.viewPort.y + mouseCurrentPos.y);
+
+    pos.x = pos.x / this.viewZoom;
+    pos.y = pos.y / this.viewZoom;
+
+    if(e.deltaY < 0) {    
+      if(oldScale <= 100 && this.viewScale + 5 > 100 && !this.editorWorker.getIsKeyControlDown())
+        this.viewScale = 100;
+      else 
+        this.viewScale = this.viewScale + 5;
+
+      if(this.viewScale > 200) this.viewScale = 200;
+    }else if(e.deltaY > 0) {
+      this.viewScale = this.viewScale - 5;
+
+      if(this.viewScale < 30) this.viewScale = 30;
+    }
+
+    this.recalcViewPort();
+    this.editorWorker.updateMousePos(e);
+
+    mouseCurrentPos = this.editorWorker.getMouseCurrentPos();
+
+    pos.x = pos.x * this.viewZoom - mouseCurrentPos.x;
+    pos.y = pos.y * this.viewZoom - mouseCurrentPos.y;
+
+    this.viewPort.setPos(pos);
+  }
   private onWindowSizeChanged() {
     this.viewRealSize.w = this.editorHost.offsetWidth;
     this.viewRealSize.h = this.editorHost.offsetHeight;
@@ -347,6 +406,7 @@ export default class BlockDrawer extends Vue {
   editorHost : HTMLDivElement = null;
   editorWorker : BlockEditorWorker = null;
   editorCanvas : BlockEditorCanvasDrawer = null;
+  editoClipboard : BlockEditoClipBoard = null;
 
   blockOwnerData : BlockEditorOwner = null;
 
@@ -357,6 +417,7 @@ export default class BlockDrawer extends Vue {
 
       this.editorWorker = <BlockEditorWorker>this.$refs.editorWorker;
       this.editorCanvas = <BlockEditorCanvasDrawer>this.$refs.editorCanvas;
+      this.editoClipboard = <BlockEditoClipBoard>this.$refs.editoClipboard;
 
       this.editorHost = <HTMLDivElement>this.$refs.editorHost;
       this.editorHost.addEventListener('resize', () => this.onWindowSizeChanged);
@@ -377,6 +438,7 @@ export default class BlockDrawer extends Vue {
         getBlockHostElement: this.editorWorker.getBlockHostElement,
         getMultiSelectedBlocks: this.editorWorker.getMultiSelectedBlocks,
         unConnectConnector: this.editorWorker.unConnectConnector,
+        showBlockRightMenu: this.showBlockRightMenu,
         getVue: () => this
       };
 
@@ -436,7 +498,6 @@ export default class BlockDrawer extends Vue {
     }, 200);
   }
 
-
   public hasSelected() { return this.editorWorker.hasSelected(); }
   public getMultiSelectedBlocks()  { return this.editorWorker.getMultiSelectedBlocks(); }
   public getSelectedBlocks()  { return this.editorWorker.getSelectedBlocks(); }
@@ -465,6 +526,56 @@ export default class BlockDrawer extends Vue {
           params.update();
         }
       });
+    });
+  }
+  public showDeleteModalClick() { this.editorWorker.showDeleteModalClick(); }
+
+
+  //剪贴板控制
+  //=======================
+
+  public clipboardCopySelect() { 
+    
+  }
+  public clipboardCutSelect() { 
+
+  }
+  public clipboardPaste() { 
+    if(this.editoClipboard.getBlocksClipboardState()) {
+
+    }
+  }
+
+  
+  //单元右键菜单
+  //=======================
+
+  showBlockRightMenu(screenPos : Vector2) {
+    let selectedCount = this.editorWorker.getSelecteBlockCount();
+    this.$contextmenu({
+      x: screenPos.x,
+      y: screenPos.y,
+      items: [
+        { label: "删除", onClick: () => this.deleteSelectedBlocks() },
+        { label: "剪切", onClick: () => this.clipboardCutSelect() },
+        { label: "复制", onClick: () => this.clipboardCopySelect() },
+        { label: "粘贴", disabled: !this.editoClipboard.getBlocksClipboardState(), onClick: () => this.clipboardPaste() },
+        { label: "刷新节点", divided: true, onClick: () => this.editorWorker.refreshSelectedBlock() },
+        { label: "断开连接", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+        { label: "对齐", disabled: selectedCount < 2, children: [
+          { label: "左对齐", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+          { label: "上对齐", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+          { label: "右对齐", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+          { label: "下对齐", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+        ] },
+        { label: "断点", children: [
+          { label: "无", onClick: () => this.editorWorker.setSelectedBlockBreakpointState('none') },
+          { label: "启用", onClick: () => this.editorWorker.setSelectedBlockBreakpointState('enable') },
+          { label: "禁用", onClick: () => this.editorWorker.setSelectedBlockBreakpointState('disable') },
+        ] },
+      ],
+      zIndex: 100,
+      customClass: 'menu-context',
     });
   }
 }

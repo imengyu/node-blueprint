@@ -11,6 +11,12 @@ export default class BlockEditoClipBoard extends Vue {
   blockClipboard : Array<BlockEditor> = [];
 
   /**
+   * 获取单元剪贴板状态
+   */
+  getBlocksClipboardState() { 
+    return this.blockClipboard.length == 0; 
+  }
+  /**
    * 获取剪贴板中的块
    */
   getBlocksInClipboard() { 
@@ -22,7 +28,7 @@ export default class BlockEditoClipBoard extends Vue {
   writeToClipboard(arr : BlockEditor[]) {
     this.blockClipboard.empty();
     arr.forEach((k) => this.blockClipboard.push(k));
-    this.$emit('update-clipboard-state', this.blockClipboard.length == 0);
+    this.$emit('update-clipboard-state', this.blockClipboard.length != 0);
   }
   /**
    * 清空剪贴板

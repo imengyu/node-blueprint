@@ -9,7 +9,7 @@ export class BlockEditorOwner {
   getVue : () => Vue;
 
   onBlockDelete : (block : BlockEditor) => void;
-  onUserSelectBlock : (block : BlockEditor) => void;
+  onUserSelectBlock : (block : BlockEditor, selectSingle : boolean) => void;
   onMoveBlock : (block : BlockEditor, pos : Vector2) => void;
   onMoveBlockEnd : (block : BlockEditor) => void;
 
@@ -22,4 +22,6 @@ export class BlockEditorOwner {
 
   unSelectAllBlocks : () => void;
   unConnectConnector: (connector : ConnectorEditor) => void;
+
+  showBlockRightMenu : (pos : Vector2) => void;
 }

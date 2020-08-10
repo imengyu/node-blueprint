@@ -1,22 +1,25 @@
 import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
 
 export class ParamTypeService {
-  public allCustomTypes : Array<BlockParameterTypeRegData> = [];
+  private allCustomTypes : Array<BlockParameterTypeRegData> = [];
+
+  public getAllCustomTypes() { return this.allCustomTypes; }
+  public getAllBaseTypes() { return [ 'boolean','bigint','number', 'string', 'function','object','any' ]; }
 
   public init() {
     
   }
 
   public registerCustomType(reg : BlockParameterTypeRegData) {
-    let old = this.getCustomype(reg.name);
+    let old = this.getCustomType(reg.name);
     if(old != null) {
-      console.warn("[registerEnumType] Enum " + reg.name + " alreday registered !");
+      console.warn("[registerCustomType] Type " + reg.name + " alreday registered !");
       return old;
     }
     this.allCustomTypes.push(reg);
     return reg;
   }
-  public getCustomype(name : string) {
+  public getCustomType(name : string) {
     for(let i = 0, c = this.allCustomTypes.length; i < c; i++){
       if(this.allCustomTypes[i].name == name)
         return this.allCustomTypes[i];
@@ -24,9 +27,9 @@ export class ParamTypeService {
     return null;
   }
   public unregisterCustomType(name : string) {
-    let old = this.getCustomype(name);
+    let old = this.getCustomType(name);
     if(old == null)
-      console.warn("[unregisterCustomType] Enum " + name + " are not register !");
+      console.warn("[unregisterCustomType] Type " + name + " are not register !");
 
     this.allCustomTypes.remove(old);
   }
@@ -41,7 +44,8 @@ export class ParamTypeService {
       case 'object': return 'rgb(0,160,232)';
       case 'any': return 'rgb(250,250,250)';
       default:
-        return this.getCustomype(name).color;
+        let type = this.getCustomType(name);
+        return type ? type.color : 'rgb(250,250,250)';
     }
   }
 }

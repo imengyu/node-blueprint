@@ -1,7 +1,14 @@
 <template>
   <div>
     <!--菜单栏-->
-    <MenuBar :menus="menuMain" />
+    <MenuBar :menus="menuMain">
+      <div class="editor-breadcrumb" style="margin-left:18px">
+        <div v-for="(graph, i) in graphBreadcrumb" :key="i" :class="(i==graphBreadcrumb.length-1?'last':'')+(graph.isCurrent?' current':'')">
+          <span v-if="graph.isCurrent">{{graph.text}}</span>
+          <a v-else href="javascript:;" @click="goGraph(graph.graph)">{{graph.text}}</a>
+        </div>
+      </div>
+    </MenuBar>
     <!--工具栏-->
     <div class="toolbar">
 
@@ -49,7 +56,14 @@
       :filterByParamPortCustomType="filterByParamPortCustomType" 
       @onBlockItemClick="onBlockAddItemClick"
       @onClose="showAddBlockPanel=false" />
-    
+    <!--添加单元弹出窗口-->
+    <ChooseTypePanel
+      ref="ChooseTypePanel"
+      :show="showChooseTypePanel"
+      :showPos="showChooseTypePanelPos"
+      :style="{ maxHeight: showChooseTypePanelMaxHeight + 'px' }"
+      @onItemClick="onChooseTypeItemClick"
+      @onClose="showChooseTypePanel=false" />
     
     <!--主编辑器-->
     <div class="main">
@@ -68,8 +82,24 @@
         ></BlockDrawer>
         <!--属性栏-->
         <div slot="right" class="prop">
-          <BlockProp v-if="!isMultiSelecting && selectedBlock" :block="selectedBlock"></BlockProp>
-          <ConnectorProp v-else-if="!isMultiSelecting && selectedConnector" :connector="selectedConnector"></ConnectorProp>
+          <Split v-model="split2" mode="vertical">
+            <div slot="top" class="prop-host">
+              <BlockProp v-if="!isMultiSelecting && selectedBlock" :block="selectedBlock"></BlockProp>
+              <ConnectorProp v-else-if="!isMultiSelecting && selectedConnector" :connector="selectedConnector"></ConnectorProp>
+            </div>
+            <div slot="bottom" class="prop-host">
+              <DocunmentProp v-if="currentDocunment && currentGraph == currentDocunment.mainGraph" 
+                :doc="currentDocunment"
+                @on-open-graph="goGraph"
+
+              ></DocunmentProp>
+              <GraphProp v-else-if="currentGraph" 
+                :graph="currentGraph"
+                @on-open-graph="goGraph"
+
+              ></GraphProp>
+            </div>
+          </Split>
         </div>
       </Split>
     </div>
@@ -85,7 +115,7 @@
       </div>
       <div slot="footer">
         <Button size="large" @click="showDropChangesModal=false">取消</Button>
-        <Button type="error" size="large" @click="doNewFile();showDropChangesModal=false;">丢弃更改</Button>
+        <Button type="error" size="large" @click="dropChangesCallback();showDropChangesModal=false;">丢弃更改</Button>
       </div>
     </Modal>
     <!--打开文件Input-->
@@ -124,6 +154,9 @@ import { MenuOptions, MenuItem } from "../types/vue-contextmenujs";
 import ConnectorProp from "../components/ConnectorProp.vue";
 import BlockDrawer from "../components/BlockDrawer.vue";
 import MenuBar, { MenuData, MenuSeparator } from "../components/MenuBar.vue";
+import GraphProp from "../components/GraphProp.vue";
+import DocunmentProp from "../components/DocunmentProp.vue";
+import ChooseTypePanel from "../components/ChooseTypePanel.vue";
 
 export type EditorRunningState = 'editing'|'running'|'runningPaused';
 
@@ -135,6 +168,9 @@ export type EditorRunningState = 'editing'|'running'|'runningPaused';
     'BlockProp': BlockProp,
     'ConnectorProp': ConnectorProp,
     'BlockDrawer': BlockDrawer,
+    'GraphProp': GraphProp,
+    'DocunmentProp': DocunmentProp,
+    'ChooseTypePanel': ChooseTypePanel,
   }
 })
 export default class Editor extends Vue {
@@ -142,6 +178,7 @@ export default class Editor extends Vue {
 
   mouseLeftMove = false;
   splitOff = 0.8;
+  split2 = 0.28;
 
   menuMain : Array<MenuData> = [];
   menuItemStartRun : MenuData = null;
@@ -181,7 +218,7 @@ export default class Editor extends Vue {
     this.menuItemCut = new MenuData('剪切', () => {}, 'Ctrl+X');
     this.menuItemCopy = new MenuData('复制', () => {}, 'Ctrl+C');
     this.menuItemPatse = new MenuData('粘贴', () => {}, 'Ctrl+V');
-    this.menuItemDelete = new MenuData('删除', () => this.editorControl.deleteSelectedBlocks(), 'Delete');
+    this.menuItemDelete = new MenuData('删除', () => this.showDeleteModalClick(), 'Delete');
 
     this.menuMain = [
       new MenuData('文件', [
@@ -250,9 +287,36 @@ export default class Editor extends Vue {
       ],
     };
   }
-  showBlockMenu() {
-    this.$contextmenu(this.menuBlock); 
-  }
+  showBlockMenu() { this.$contextmenu(this.menuBlock);  }
+  showDeleteModalClick() { this.editorControl.showDeleteModalClick() }
+
+  graphBreadcrumb : Array<{
+    text: string,
+    graph: BlockGraphDocunment,
+    isCurrent: boolean,
+  }> = [];
+
+  @Watch('currentGraph')
+  loadGraphBreadcrumb(v : BlockGraphDocunment) {
+    if(v == null || this.currentDocunment == null) this.graphBreadcrumb.empty();
+    else {
+      this.graphBreadcrumb.empty();
+      this.graphBreadcrumb.push({
+        text: v.name,
+        graph: v,
+        isCurrent: true
+      });
+      let loop = (graph : BlockGraphDocunment) => {
+        this.graphBreadcrumb.unshift({
+          text: graph.name,
+          graph: graph,
+          isCurrent: false
+        });
+        if(v.parent != null) loop(v.parent);
+      };
+      if(v.parent != null) loop(v.parent);
+    }
+  } 
 
   //子模块状态信息
   isSelectedBlock = false;
@@ -336,6 +400,31 @@ export default class Editor extends Vue {
       e.offsetLeft + this.editorControl.toolBarWidth,
       e.offsetTop + this.editorControl.toolBarHeight + 3
     ));
+  }
+
+  //#endregion
+
+  //#region 选择数据类型菜单
+
+  showChooseTypePanel = false;
+  showChooseTypePanelPos = new Vector2();
+  showChooseTypePanelMaxHeight = 500;
+  showChooseTypePanelCallback : Function = null;
+
+  onChooseTypeItemClick(choosedType : BlockParameterTypeRegData) {
+    if(typeof this.showChooseTypePanelCallback == 'function')
+      this.showChooseTypePanelCallback(choosedType);
+  }
+  public showChooseTypePanelAt(pos : Vector2) {
+    this.showChooseTypePanelPos = pos;
+    this.showChooseTypePanel = true;
+    this.showChooseTypePanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
+    if(this.showChooseTypePanelMaxHeight > 500) this.showChooseTypePanelMaxHeight = 500;
+    else if(this.showChooseTypePanelMaxHeight < 222) {
+      this.showChooseTypePanelPos.y -= 222 - this.showChooseTypePanelMaxHeight;
+      this.showChooseTypePanelMaxHeight = 222;
+    }
+    (<AddPanel>this.$refs.ChooseTypePanel).focus();
   }
 
   //#endregion
@@ -462,10 +551,10 @@ export default class Editor extends Vue {
   private showDropChangesModal = false;
   private dropChangesCallback = () => {};
 
-  private parser : BlockFileParser;
-  private currentDocunment : BlockDocunment;
-  private currentGraph : BlockGraphDocunment;
-  private currentFileChanged = false;
+  public parser : BlockFileParser = null;
+  public currentDocunment : BlockDocunment = null;
+  public currentGraph : BlockGraphDocunment = null;
+  public currentFileChanged = false;
 
   private setFileChanged() { 
     this.currentFileChanged = true; 
@@ -505,8 +594,16 @@ export default class Editor extends Vue {
             content: '发生了错误：' + e
           });
           this.doNewFile();
+          console.error(e);
         }
       };
+    }
+  }
+
+  public goGraph(g : BlockGraphDocunment) {
+    if(g != this.currentGraph) {
+      this.currentGraph = g;
+      this.editorControl.drawGraph(this.currentGraph);
     }
   }
 

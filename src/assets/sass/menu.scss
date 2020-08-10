@@ -9,6 +9,12 @@
 
   > .menu-bar-item {
     height: $top-menu-height;
+    vertical-align: middle;
+  }
+
+  > .editor-breadcrumb {
+    height: $top-menu-height;
+    vertical-align: middle;
   }
 }
 .menu-bar-item {
@@ -30,51 +36,6 @@
   .menu-list {
     display: none;
     position: absolute;
-
-    .menu-item {
-      position: relative;
-      overflow: hidden;
-      line-height: 22px;
-      padding: 5px 69px 5px 25px;
-      cursor: default;
-      color: #333;
-
-      i {
-        position: absolute;
-        display: inline-block;
-        left: 5px;
-        top: 5px;
-        width: 20px;
-        height: 20px;
-        font-size: 17px;
-      }
-
-      &.disabled {
-        opacity: 0.5;
-        cursor: default;
-      }
-
-      &:hover:not(.disabled) {
-        background: rgba(0,0,0,0.1);
-        color: #000;
-      }
-
-      span {
-        display: block;
-        position: absolute;
-        right: 10px;
-        padding: 5px;
-        background: rgba(0,0,0, 0.1);
-        top: 6px;
-        text-align: center;
-        font-size: 10px;
-        line-height: 120%;
-      }
-    }
-    .separator {
-      margin: 5px 0;
-      border-top: solid #ddd 1px;
-    }
   }
 }
 .menu-title {
@@ -86,6 +47,15 @@
   position: relative;
   vertical-align: top;
 }
+
+.menu-context {
+  position: absolute;
+  white-space: nowrap;
+  background: white;
+  padding: 7px 0;
+  border-radius: 0 3px 3px 3px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
 .menu-list {
   display: none;
   position: absolute;
@@ -96,4 +66,49 @@
   padding: 7px 0;
   border-radius: 0 3px 3px 3px;
   box-shadow: 0 0 20px rgba(0,0,0,0.8);
+
+  .menu-item {
+    position: relative;
+    overflow: hidden;
+    line-height: 22px;
+    padding: 5px 69px 5px 25px;
+    cursor: default;
+    color: #333;
+
+    i {
+      position: absolute;
+      display: inline-block;
+      left: 5px;
+      top: 5px;
+      width: 20px;
+      height: 20px;
+      font-size: 17px;
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    &:hover:not(.disabled) {
+      background: rgba(0,0,0,0.1);
+      color: #000;
+    }
+
+    span {
+      display: block;
+      position: absolute;
+      right: 10px;
+      padding: 5px;
+      background: rgba(0,0,0, 0.1);
+      top: 6px;
+      text-align: center;
+      font-size: 10px;
+      line-height: 120%;
+    }
+  }
+  .separator {
+    margin: 5px 0;
+    border-top: solid #ddd 1px;
+  }
 }

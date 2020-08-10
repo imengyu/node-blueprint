@@ -18,6 +18,7 @@ export class ConnectorEditor extends Connector {
   public drawPos = false;
   public currentRunner = null;
   public valText = '';
+  public inited = false;
 
   private rect : Rect = new Rect();
   private dotPos = -1;

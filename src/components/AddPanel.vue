@@ -93,7 +93,7 @@ export default class AddPanel extends Vue {
     }
     else if(this.filterByParamPort != null) {
       this.doFilterLoop((b) => b.hasOneParamPortByDirectionAndType(this.filterByParamPort,
-        this.filterByParamPortType, this.filterByParamPortCustomType));
+        this.filterByParamPortType, this.filterByParamPortCustomType, true));
 
       this.filterText = (this.filterByParamPort == 'input' ? '获取' : '输出') + 
         ((this.filterByParamPortType == 'custom' || this.filterByParamPortType == 'enum') ?

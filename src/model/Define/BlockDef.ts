@@ -8,9 +8,10 @@ import { BlockEditor } from "../Editor/BlockEditor";
  */
 export class BlockRegData {
 
-  public constructor(guid : string, name : string) {
+  public constructor(guid : string, name : string, description?:string) {
     this.guid = guid;
     this.baseInfo.name = name;
+    if(description) this.baseInfo.description = description;
   }
 
   /**
@@ -63,11 +64,11 @@ export class BlockRegData {
         return true;
     return false;
   }
-  public hasOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '') {
+  public hasOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '', includeAny = false) {
     for(let i = 0, c = this.parameters.length; i < c;i++)
       if(this.parameters[i].direction == direction
-        && this.parameters[i].paramType == type
-        && this.parameters[i].paramCustomType == customType) 
+        && (this.parameters[i].paramType == type && this.parameters[i].paramCustomType == customType
+          || (this.parameters[i].paramType == 'any' && includeAny))) 
         return true;
     return false;
   }
@@ -197,6 +198,14 @@ export class BlockStyleSettings  {
    * 是否隐藏题栏
    */
   public noTitle = false;
+  /**
+   * 单元最小宽度
+   */
+  public minWidth = '';
+  /**
+   * 是否隐logo
+   */
+  public hideLogo = false;
 }
 
 export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, 
@@ -207,45 +216,45 @@ export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : Blo
 /**
  * 行为节点信息结构
  */
-export class BlockPortRegData {
+export interface BlockPortRegData {
   /**
-   * 节点 唯一 GUID (8位数字或字符串)，一个单元内不能重复
+   * 节点 的唯一ID (数字或字符串，可以随便写)，一个单元内不能重复
    */
-  public guid = "";
+  guid: string,
   /**
    * 名称
    */
-  public name = "";
+  name?: string,
   /**
    * 说明
    */
-  public description = "This is a block port. Useage: unknow.";
+  description?: string,
   /**
    * 节点的方向
    */
-  public direction : BlockPortDirection = null;
+  direction : BlockPortDirection,
   /**
    * 设置是否默认连接至此节点。最好只有一个设置为true，如果有多个，先添加的为默认连接。
    */
-  public defaultConnectPort = false;
+  defaultConnectPort?: boolean,
 }
 
 /**
  * 参数节点信息结构
  */
-export class BlockParameterPortRegData extends BlockPortRegData {
+export interface BlockParameterPortRegData extends BlockPortRegData {
   /**
    * 参数的类型，如果设置为 custom 你可以设置 paramCustomType 来设置参数为自己的类型
    */
-  public paramType : BlockParameteType = 'any';
+  paramType : BlockParameteType;
   /**
    * 自定义参数类型
    */
-  public paramCustomType = '';
+  paramCustomType ?: string;
   /**
    * 参数的默认值
    */
-  public paramDefaultValue = null;
+  paramDefaultValue ?: any;
 }
 
 export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, 
@@ -268,10 +277,11 @@ export class BlockParameterEditorRegData {
  */
 export class BlockParameterTypeRegData {
 
-  public constructor(name : string, prototypeName : string, editor ?: BlockParameterEditorRegData) {
+  public constructor(name : string, prototypeName : string, color?: string, editor ?: BlockParameterEditorRegData) {
     this.name = name;
     this.prototypeName = prototypeName;
     if(typeof editor != 'undefined') this.editor = editor;
+    if(typeof color != 'undefined') this.color = color;
   }
 
   /**
@@ -298,8 +308,9 @@ export class BlockParameterTypeRegData {
  */
 export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
 
-  public constructor(name : string, allowTypes ?: Array<{ value: string, description: string }> | Array<string>, editor ?: BlockParameterEditorRegData) {
-    super(name, 'enum', editor);
+  public constructor(name : string, allowTypes ?: Array<{ value: string, description: string }> | Array<string>, color?: string, 
+    editor ?: BlockParameterEditorRegData) {
+    super(name, 'enum', color, editor);
 
     if(typeof allowTypes != 'undefined' && allowTypes.length > 0) {
       if(typeof allowTypes[0] == 'string'){

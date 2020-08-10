@@ -1,6 +1,7 @@
 import { Rect } from "../Rect";
 import { Block } from "./Block";
 import { Connector } from "./Connector";
+import { BlockPortRegData, BlockParameterPortRegData } from "./BlockDef";
 
 /**
  * 文档结构
@@ -46,6 +47,11 @@ export class BlockGraphDocunment {
    */
   name : string = '';
   /**
+   * 注释
+   */
+  comment : string = '';
+
+  /**
    * 当前图的视口
    */
   viewPort = new Rect(2048, 2048, 0, 0);
@@ -69,6 +75,29 @@ export class BlockGraphDocunment {
    * 注释
    */
   comments: Array<any> = [];
+
+  /**
+   * 行为端口
+   */
+  behavorPorts: Array<BlockPortRegData> = [];
+  /**
+   * 参数端口
+   */
+  parameterPorts: Array<BlockParameterPortRegData> = [];
+
+  /**
+   * 图表变量
+   */
+  variables: Array<{
+    name: string,
+    type: string,
+    defaultValue: any,
+  }> = [];
+
+  /**
+   * 父图表
+   */
+  parent : BlockGraphDocunment = null;
 
   isEditor = false;
 }

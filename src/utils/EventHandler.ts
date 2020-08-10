@@ -1,18 +1,27 @@
 export class EventHandler<T> {
-  public listener : Array<T> = [];
+  public listener : Array<{
+    _this : any,
+    callback : Function,
+  }> = [];
 
-  public addListener(callback : T) {
-    this.listener.push(callback);
+  public addListener(_this : any, callback : T) {
+    this.listener.push({
+      _this: _this,
+      callback: <any>callback,
+    });
   }
   public removeListener(callback : T) {
-    this.listener.remove(callback);
+    for(let i = this.listener.length - 1; i >= 0; i--)
+      if(this.listener[i].callback == <any>callback) {
+        this.listener.remove(i);
+        break;
+      }
   }
   public invoke(...args) {
     let _args = arguments;
-    let _this = this;
     this.listener.forEach((callback) => {
-      if(typeof callback == 'function')
-        callback.apply(_this, _args)
+      if(typeof callback.callback == 'function')
+        callback.callback.apply(callback._this, _args)
     });
   }
 }

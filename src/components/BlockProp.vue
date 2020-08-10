@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="prop-header">单元属性</div>
     <div class="prop-item">
       <span>GUID: </span>
       <input type="text" v-model="block.guid" disabled="disabled" />

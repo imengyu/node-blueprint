@@ -1,4 +1,5 @@
 @import './root';
+@import './scroll';
 
 .toolbar {
   position: absolute;
@@ -144,7 +145,7 @@
 
       > div, > input, > select {
         display: inline-block;
-        max-width: 60%;
+        width: 60%;
       }
       > span {
 
@@ -153,6 +154,16 @@
         text-align: right;
         padding-right: 10px;
       }
+    }
+    .prop-header {
+      background-color: #2b2b2b;
+      white-space: nowrap;
+      position: relative;
+      padding: 6px 2px 5px 15px;
+      border-bottom: 1px solid #464646;
+      color: #b1b1b1;
+      font-weight: bold;
+      font-size: 14px;
     }
 
   }
@@ -167,7 +178,7 @@
   }
 }
 
-//
+//可折叠列表
 .collapse-list {
   position: relative;
 }
@@ -202,6 +213,108 @@
   }
 }
 
+
+//属性列表
+.prop-host {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding-top: 15px;
+
+  overflow: hidden;
+  overflow-y: scroll;
+
+  @include pc-fix-scrollbar-white();
+
+  input, textarea, select {
+    display: inline-block;
+    padding: 2px 5px;
+    background-color: #686868;
+    color: rgb(255, 255, 255);
+    outline: none;
+    border: none;
+    border-radius: 6px;
+
+    &::-webkit-input-placeholder {
+      color: #bbbbbb;
+    }
+
+    &:disabled {
+      background-color: #4b4b4b;
+      color: #919191;
+
+      &:hover , &:active {
+        background-color: #686868;
+        color: #e7e7e7;
+      }
+    }
+
+    &:hover , &:active {
+      background-color: #fff;
+      color: #000;
+    }
+  }
+}
+.prop-list {
+  position: relative;
+
+  .prop-list-item {
+    position: relative;
+    padding: 4px 5px;
+    background-color: #575757;
+    margin: 3px;
+    border-radius: 8px;
+
+    a {
+      color: #b3b3b3;
+      padding: 2px 5px;
+      background-color: #292929;
+      border-radius: 6px;
+
+      &:hover, &:focus {
+        color: #000;
+        background-color: #fff;
+      }
+    }
+
+    .prop-delete {
+      display: inline-block;
+      position: absolute;
+      font-size: 16px;
+      height: 20px;
+      line-height: 16px;
+      color: #c70000;
+      right: 3px;
+      bottom: 3px;
+      background-color: #cccccc;
+
+      &:hover {
+        color: #ff4b4b;
+      }
+    }
+    .prop-item {
+      padding: 2px 2px 0 0;
+      border-bottom: none;
+
+      input, textarea, select {
+        background-color: #d1d1d1;
+        color: #333333;
+
+        &:hover , &:active {
+          background-color: #fff;
+          color: #000;
+        }
+      }
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.253);
+    }
+  }
+}
+
 //添加单元浮动菜单
 .block-add-panel {
   position: absolute;
@@ -213,6 +326,8 @@
   overflow: hidden;
   overflow-y: scroll;
   padding: 8px 4px;
+
+  @include pc-fix-scrollbar-white();
 }
 .block-list {
   position: relative;
@@ -223,7 +338,7 @@
     margin-left: -8px;
     cursor: default;
 
-    img {
+    img, .logo {
       display: inline-block; 
       width: 20px;
       height: 20px;
@@ -320,4 +435,45 @@
     cursor: pointer;
   }
 
+}
+
+//编辑器面包屑
+.editor-breadcrumb {
+  position: relative;
+  display: inline-block;
+  color: #999;
+  font-size: 14px;
+  vertical-align: middle;
+
+  > div {
+    padding: 5px 10px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color .2s cubic-bezier(.645,.045,.355,1);
+    color: #b9bcc4;
+
+    &.current {
+      background-color: #262626;
+    }
+
+    a {
+      color: #b9bcc4;
+
+      &:hover, &:focus {
+        color: #fff;
+      }
+    }
+
+    &::after {
+      display: inline-block;
+      content: '/';
+      margin: 0 6px;
+      font-weight: 400;
+      color: #c0c4cc;
+    }
+
+    &.last::after {
+      display: none;
+    }
+  }
 }

@@ -8,7 +8,7 @@ import "./assets/sass/main.scss"
 import "./utils/BaseExtends"
 import 'iview/dist/styles/iview.css';
 import iView from 'iview';
-import Contextmenu from "vue-contextmenujs"
+import Contextmenu from "vue-contextmenujs/dist/contextmenu.umd"
 
 Vue.use(Contextmenu);
 Vue.use(iView);
