@@ -1,7 +1,7 @@
 import { Rect } from "../Rect";
 import { Block } from "./Block";
 import { Connector } from "./Connector";
-import { BlockPortRegData, BlockParameterPortRegData } from "./BlockDef";
+import { BlockPortRegData } from "./BlockDef";
 
 /**
  * 文档结构
@@ -11,6 +11,7 @@ export class BlockDocunment {
   public constructor(name = '') {
     this.name = name;
     this.mainGraph = new BlockGraphDocunment(name);
+    this.mainGraph.isMainGraph = true;
   }
 
   /**
@@ -76,28 +77,27 @@ export class BlockGraphDocunment {
    */
   comments: Array<any> = [];
 
-  /**
-   * 行为端口
-   */
-  behavorPorts: Array<BlockPortRegData> = [];
-  /**
-   * 参数端口
-   */
-  parameterPorts: Array<BlockParameterPortRegData> = [];
+  inputPorts: Array<BlockPortRegData> = [];
+  outputPorts: Array<BlockPortRegData> = [];
 
   /**
    * 图表变量
    */
-  variables: Array<{
-    name: string,
-    type: string,
-    defaultValue: any,
-  }> = [];
+  variables: Array<BlockGraphVariable> = [];
 
   /**
    * 父图表
    */
   parent : BlockGraphDocunment = null;
 
+
+  isMainGraph = false;
+
   isEditor = false;
+}
+
+export interface BlockGraphVariable {
+  name: string,
+  type: string,
+  defaultValue: any,
 }

@@ -1,18 +1,25 @@
 import BlockServiceInstance from "../../sevices/BlockService";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import { BlockParameterEnumRegData, BlockRegData } from "../Define/BlockDef";
-import { BlockParameterPort, BlockBehaviorPort, BlockParameteType } from "../Define/Port";
+import { BlockPort } from "../Define/Port";
 import DebugWorkProviderInstance from "../WorkProvider/DebugWorkProvider";
 import OperatorBlocks from "./OperatorBlocks";
+import { BlockEditor } from "../Editor/BlockEditor";
 
 export default { 
   register,
   getScriptBaseBlockIn() { return blockIn; },
-  getScriptBaseBlockOut() { return blockOut;  }
+  getScriptBaseBlockOut() { return blockOut;  },
+  getScriptBaseGraphIn() { return graphIn; },
+  getScriptBaseGraphOut() { return graphOut;  },
+  getScriptBaseVariableGet() { return variableGet;  },
+  getScriptBaseVariableSet() { return variableSet;  },
 }
 
 function register() {
   registerScriptBase();
+  registerScriptGraphBase();
+  registerScriptVariableBase();
   registerDebugBase();
   registerTypeBase();
 
@@ -21,6 +28,10 @@ function register() {
 
 let blockIn : BlockRegData;
 let blockOut : BlockRegData;
+let graphIn : BlockRegData;
+let graphOut : BlockRegData;
+let variableGet : BlockRegData;
+let variableSet : BlockRegData;
 
 function registerScriptBase()  {
 
@@ -39,12 +50,14 @@ function registerScriptBase()  {
       direction: 'output',
       guid: '00000000',
       defaultConnectPort: true,
+      paramType: 'execute',
     },
   ]
   blockIn.callbacks.onCreate = () => {};
   blockIn.callbacks.onPortActive = (block, port) => {};
-  blockIn.callbacks.onParameterUpdate = (block, port) => {};
+  blockIn.callbacks.onPortUpdate = (block, port) => {};
   blockIn.settings.oneBlockOnly = true;
+  blockIn.type = 'base';
   blockIn.blockStyle.titleBakgroundColor = "rgba(25,25,112,0.6)";
 
   blockOut.baseInfo.author = 'imengyu';
@@ -59,18 +72,191 @@ function registerScriptBase()  {
       direction: 'input',
       guid: '00000001',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
   ]
   blockOut.callbacks.onCreate = () => {};
-  blockOut.callbacks.onPortActive = (block, port) => {
-    block.currentRunningContext.runner.notifyEnd();
-  };
-  blockOut.callbacks.onParameterUpdate = (block, port) => {};
+  blockOut.callbacks.onPortActive = (block, port) => block.currentRunningContext.runner.notifyEnd();
+  blockOut.callbacks.onPortUpdate = (block, port) => {};
+  blockOut.type = 'base';
   blockOut.settings.oneBlockOnly = true;
   blockOut.blockStyle.titleBakgroundColor = "rgba(112,30,133,0.6)";
 
   BlockServiceInstance.registerBlock(blockIn, false);
   BlockServiceInstance.registerBlock(blockOut, false);
+}
+function registerScriptVariableBase()  {
+
+  variableGet = new BlockRegData("886A9FB9-095C-0708-B347-D2AEC6C59F05", "获取变量");
+  variableSet = new BlockRegData("1CD2A867-30A6-11CB-AC7F-47B524D3063D", "设置变量");
+
+  //获取变量
+
+  variableGet.baseInfo.author = 'imengyu';
+  variableGet.baseInfo.description = "获取变量的值";
+  variableGet.baseInfo.category = '基础';
+  variableGet.baseInfo.version = '2.0';
+  variableGet.type = 'base';
+  variableGet.callbacks.onCreate = () => {};
+  variableGet.callbacks.onPortActive = (block, port) => {
+    
+  };
+  variableGet.callbacks.onPortUpdate = (block, port) => {
+
+  };
+  variableGet.settings.oneBlockOnly = true;
+  variableGet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  variableGet.blockStyle.noTitle = true;
+
+  //设置变量
+
+  variableSet.baseInfo.author = 'imengyu';
+  variableSet.baseInfo.description = "设置变量的值";
+  variableSet.baseInfo.category = '基础';
+  variableSet.baseInfo.version = '2.0';
+  variableSet.type = 'base';
+  variableSet.callbacks.onCreate = () => {};
+  variableSet.callbacks.onPortActive = (block, port) => {
+    
+  };
+  variableSet.callbacks.onPortUpdate = (block, port) => {
+
+  };
+  variableSet.settings.oneBlockOnly = true;
+  variableSet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+
+  BlockServiceInstance.registerBlock(variableSet, false);
+  BlockServiceInstance.registerBlock(variableGet, false);
+}
+function registerScriptGraphBase()  {
+
+  graphIn = new BlockRegData("CC4BE0CB-AA1D-7FD9-DF29-71701BE69254", "输入");
+  graphOut = new BlockRegData("6BA2899B-BD12-1E0B-D958-EB5C8C698319", "输出");
+
+  //输入
+
+  graphIn.baseInfo.author = 'imengyu';
+  graphIn.baseInfo.description = "输入此图表";
+  graphIn.baseInfo.category = '基础/脚本';
+  graphIn.baseInfo.version = '2.0';
+  graphIn.baseInfo.logo = require('../../assets/images/BlockIcon/entry_go.svg');
+  graphIn.type = 'base';
+  graphIn.callbacks.onCreate = (block) => {
+    block.currentGraph.inputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'output'));
+
+    if(block.isEditorBlock) {
+      let blockEditor = (<BlockEditor>block);
+
+      blockEditor.data['onGraphPortAdd'] = blockEditor.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'input') 
+          block.addPort(port, false, port.paramDefaultValue, 'output');
+      });
+      blockEditor.data['onGraphPortRemove'] = blockEditor.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'input')
+          block.deletePort(port.guid);
+      });
+      blockEditor.data['onGraphPortUpdate'] = blockEditor.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'input') {
+          let portReal = blockEditor.getPortByGUID(port.guid);
+          portReal.paramType = port.paramType;
+          portReal.paramCustomType = port.paramCustomType;
+          portReal.paramDefaultValue = port.paramDefaultValue;
+          blockEditor.updatePort(portReal);
+        }
+      });
+      blockEditor.data['onGraphPortMoveDown'] = blockEditor.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'input')
+          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'down');
+      });
+      blockEditor.data['onGraphPortMoveUp'] = blockEditor.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'input') 
+          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'up');
+      });
+    }
+  };
+  graphIn.callbacks.onPortActive = (block, port) => {
+
+  };
+  graphIn.callbacks.onPortUpdate = (block, port) => {
+
+  };
+  graphIn.callbacks.onDestroy = (block) => {
+    
+    if(block.isEditorBlock) {
+      let blockEditor = (<BlockEditor>block);
+      blockEditor.editor.editorEvents.onGraphPortAdd.removeListener(<number>blockEditor.data['onGraphPortAdd']);
+      blockEditor.editor.editorEvents.onGraphPortRemove.removeListener(<number>blockEditor.data['onGraphPortRemove']);
+      blockEditor.editor.editorEvents.onGraphPortUpdate.removeListener(<number>blockEditor.data['onGraphPortUpdate']);
+      blockEditor.editor.editorEvents.onGraphPortMoveDown.removeListener(<number>blockEditor.data['onGraphPortMoveDown']);
+      blockEditor.editor.editorEvents.onGraphPortMoveUp.removeListener(<number>blockEditor.data['onGraphPortMoveUp']);
+    }
+  };
+  graphIn.settings.oneBlockOnly = true;
+  graphIn.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+
+  //输出
+
+  graphOut.baseInfo.author = 'imengyu';
+  graphOut.baseInfo.description = "从此图表输出";
+  graphOut.baseInfo.category = '基础/脚本';
+  graphOut.baseInfo.version = '2.0';
+  graphOut.baseInfo.logo = require('../../assets/images/BlockIcon/entry_exit.svg');
+  graphOut.type = 'base';
+  graphOut.callbacks.onCreate = (block) => {
+    block.currentGraph.outputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'input'));
+
+    if(block.isEditorBlock) {
+      let blockEditor = (<BlockEditor>block);
+
+      blockEditor.data['onGraphPortAdd'] = blockEditor.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'output') 
+          block.addPort(port, false, port.paramDefaultValue, 'input');
+      });
+      blockEditor.data['onGraphPortRemove'] = blockEditor.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'output') 
+          block.deletePort(port.guid);
+      });
+      blockEditor.data['onGraphPortUpdate'] = blockEditor.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'output') {
+          let portReal = blockEditor.getPortByGUID(port.guid);
+          portReal.paramType = port.paramType;
+          portReal.paramCustomType = port.paramCustomType;
+          portReal.paramDefaultValue = port.paramDefaultValue;
+          blockEditor.updatePort(portReal);
+        }
+      });
+      blockEditor.data['onGraphPortMoveDown'] = blockEditor.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'output') 
+          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'down');
+      });
+      blockEditor.data['onGraphPortMoveUp'] = blockEditor.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+        if(graph == block.currentGraph && port.direction == 'output') 
+          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'up');
+      });
+    }
+  };
+  graphOut.callbacks.onPortActive = (block, port) => {
+    
+  };
+  graphOut.callbacks.onPortUpdate = (block, port) => {
+
+  };
+  graphOut.callbacks.onDestroy = (block) => {
+    
+    if(block.isEditorBlock) {
+      let blockEditor = (<BlockEditor>block);
+      blockEditor.editor.editorEvents.onGraphPortAdd.removeListener(<number>blockEditor.data['onGraphPortAdd']);
+      blockEditor.editor.editorEvents.onGraphPortRemove.removeListener(<number>blockEditor.data['onGraphPortRemove']);
+      blockEditor.editor.editorEvents.onGraphPortUpdate.removeListener(<number>blockEditor.data['onGraphPortUpdate']);
+      blockEditor.editor.editorEvents.onGraphPortMoveDown.removeListener(<number>blockEditor.data['onGraphPortMoveDown']);
+      blockEditor.editor.editorEvents.onGraphPortMoveUp.removeListener(<number>blockEditor.data['onGraphPortMoveUp']);
+    }
+  };
+  graphOut.settings.oneBlockOnly = true;
+  graphOut.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+
+  BlockServiceInstance.registerBlock(graphIn, false);
+  BlockServiceInstance.registerBlock(graphOut, false);
 }
 function registerDebugBase() {
 
@@ -95,6 +281,7 @@ function registerDebugBase() {
       direction: 'input',
       guid: '00000001',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
     {
       name: "",
@@ -102,9 +289,8 @@ function registerDebugBase() {
       direction: 'output',
       guid: '00000002',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
-  ];
-  blockDelay.parameters = [
     {
       name: "时长",
       description: '延迟时长（毫秒）',
@@ -130,24 +316,19 @@ function registerDebugBase() {
   blockDebug.baseInfo.version = '2.0';
   blockDebug.ports = [
     {
-      name: "",
-      description: '',
       direction: 'input',
       guid: '00000001',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
     {
-      name: "",
-      description: '',
       direction: 'output',
       guid: '00000002',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
-  ];
-  blockDebug.parameters = [
     {
       name: "输出",
-      description: '',
       direction: 'input',
       guid: '00000003',
       paramType: 'any',
@@ -157,7 +338,6 @@ function registerDebugBase() {
     },
     {
       name: "等级",
-      description: '',
       direction: 'input',
       guid: '00000004',
       paramType: 'enum',
@@ -172,9 +352,9 @@ function registerDebugBase() {
     block.data['portOut'] = block.getPortByGUID('00000002');
   };
   blockDebug.callbacks.onPortActive = (block, port) => {
-    let paramInput = <BlockParameterPort>block.data['paramInput'];
-    let paramLevel = <BlockParameterPort>block.data['paramLevel'];
-    let portOut = <BlockBehaviorPort>block.data['portOut'];
+    let paramInput = <BlockPort>block.data['paramInput'];
+    let paramLevel = <BlockPort>block.data['paramLevel'];
+    let portOut = <BlockPort>block.data['portOut'];
 
     switch(<string>paramLevel.paramValue) {
       case 'log':
@@ -193,7 +373,7 @@ function registerDebugBase() {
 
     portOut.active(block.currentRunningContext);
   };
-  blockDebug.callbacks.onParameterUpdate = (block, port) => {};
+  blockDebug.callbacks.onPortUpdate = (block, port) => {};
   blockDebug.callbacks.onCreateCustomEditor = null;
   blockDebug.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
@@ -203,44 +383,33 @@ function registerDebugBase() {
   blockModal.baseInfo.version = '2.0';
   blockModal.ports = [
     {
-      name: "",
-      description: '',
       direction: 'input',
       guid: '00000001',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
     {
-      name: "",
-      description: '',
       direction: 'output',
       guid: '00000002',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
-  ];
-  blockModal.parameters = [
     {
       name: "标题",
-      description: '',
       direction: 'input',
       guid: '00000003',
       paramType: 'string',
-      paramCustomType: '',
-      paramDefaultValue: '',
       defaultConnectPort: false,
     },
     {
       name: "文字",
-      description: '',
       direction: 'input',
       guid: '00000004',
       paramType: 'string',
-      paramCustomType: '',
-      paramDefaultValue: '',
       defaultConnectPort: false,
     },
     {
       name: "等级",
-      description: '',
       direction: 'input',
       guid: '00000005',
       paramType: 'enum',
@@ -256,17 +425,16 @@ function registerDebugBase() {
     block.data['portOut'] = block.getPortByGUID('00000002');
   };
   blockModal.callbacks.onPortActive = (block, port) => {
-    let paramText = <BlockParameterPort>block.data['paramText'];
-    let paramTitle = <BlockParameterPort>block.data['paramTitle'];
-    let paramLevel = <BlockParameterPort>block.data['paramLevel'];
-    let portOut = <BlockBehaviorPort>block.data['portOut'];
+    let paramText = <BlockPort>block.data['paramText'];
+    let paramTitle = <BlockPort>block.data['paramTitle'];
+    let paramLevel = <BlockPort>block.data['paramLevel'];
+    let portOut = <BlockPort>block.data['portOut'];
 
     DebugWorkProviderInstance.ModalProvider(<string>paramLevel.paramValue, <string>paramTitle.paramValue, <string>paramText.paramValue, () => {
       portOut.activeInNewContext();
     });
-
   };
-  blockModal.callbacks.onParameterUpdate = (block, port) => {};
+  blockModal.callbacks.onPortUpdate = (block, port) => {};
   blockModal.callbacks.onCreateCustomEditor = null;
   blockModal.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
@@ -276,11 +444,10 @@ function registerDebugBase() {
   blockConfirm.baseInfo.version = '2.0';
   blockConfirm.ports = [
     {
-      name: "",
-      description: '',
       direction: 'input',
       guid: '00000001',
       defaultConnectPort: true,
+      paramType: 'execute',
     },
     {
       name: "点击确认",
@@ -288,34 +455,28 @@ function registerDebugBase() {
       direction: 'output',
       guid: '00000002',
       defaultConnectPort: false,
+      paramType: 'execute',
     },
     {
       name: "点击取消",
       description: '用户点击了取消按钮',
+      paramType: 'execute',
       direction: 'output',
       guid: '00000003',
       defaultConnectPort: false,
     },
-  ];
-  blockConfirm.parameters = [
     {
       name: "标题",
-      description: '',
       direction: 'input',
       guid: '00000004',
       paramType: 'string',
-      paramCustomType: '',
-      paramDefaultValue: '',
       defaultConnectPort: false,
     },
     {
       name: "文字",
-      description: '',
       direction: 'input',
       guid: '00000005',
       paramType: 'string',
-      paramCustomType: '',
-      paramDefaultValue: '',
       defaultConnectPort: false,
     },
   ];
@@ -331,7 +492,7 @@ function registerDebugBase() {
       });
 
   };
-  blockConfirm.callbacks.onParameterUpdate = (block, port) => {};
+  blockConfirm.callbacks.onPortUpdate = (block, port) => {};
   blockConfirm.callbacks.onCreateCustomEditor = null;
   blockConfirm.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
@@ -351,7 +512,7 @@ function registerTypeBase() {
   block.baseInfo.author = 'imengyu';
   block.baseInfo.category = '基础/类型参数';
   block.baseInfo.version = '2.0';
-  block.parameters = [
+  block.ports = [
     {
       direction: 'input',
       guid: '00000001',
@@ -363,7 +524,7 @@ function registerTypeBase() {
       paramType: 'string',
     },
   ];
-  block.callbacks.onParameterUpdate = comUppdateFn;
+  block.callbacks.onPortUpdate = comUppdateFn;
   block.blockStyle.titleBakgroundColor = "rgba(255,20,147,0.6)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
@@ -376,7 +537,7 @@ function registerTypeBase() {
   block.baseInfo.author = 'imengyu';
   block.baseInfo.category = '基础/类型参数';
   block.baseInfo.version = '2.0';
-  block.parameters = [
+  block.ports = [
     {
       direction: 'input',
       guid: '00000001',
@@ -389,7 +550,7 @@ function registerTypeBase() {
       paramType: 'number',
     },
   ];
-  block.callbacks.onParameterUpdate = comUppdateFn;
+  block.callbacks.onPortUpdate = comUppdateFn;
   block.blockStyle.titleBakgroundColor = "rgba(158,258,68,0.6)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
@@ -402,7 +563,7 @@ function registerTypeBase() {
   block.baseInfo.author = 'imengyu';
   block.baseInfo.category = '基础/类型参数';
   block.baseInfo.version = '2.0';
-  block.parameters = [
+  block.ports = [
     {
       direction: 'input',
       guid: '00000001',
@@ -415,7 +576,7 @@ function registerTypeBase() {
       paramType: 'bigint',
     },
   ];
-  block.callbacks.onParameterUpdate = comUppdateFn;
+  block.callbacks.onPortUpdate = comUppdateFn;
   block.blockStyle.titleBakgroundColor = "rgba(0,168,243,0.5)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
@@ -428,7 +589,7 @@ function registerTypeBase() {
   block.baseInfo.author = 'imengyu';
   block.baseInfo.category = '基础/类型参数';
   block.baseInfo.version = '2.0';
-  block.parameters = [
+  block.ports = [
     {
       direction: 'input',
       guid: '00000001',
@@ -441,7 +602,7 @@ function registerTypeBase() {
       paramType: 'boolean',
     },
   ];
-  block.callbacks.onParameterUpdate = comUppdateFn;
+  block.callbacks.onPortUpdate = comUppdateFn;
   block.blockStyle.titleBakgroundColor = "rgba(180,0,0,0.6)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;

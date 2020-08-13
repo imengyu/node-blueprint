@@ -1,9 +1,10 @@
-import { BlockParameteType } from "../Define/Port";
+import { BlockParameterType } from "../Define/Port";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData } from "../Define/BlockDef";
 import CommonUtils from "../../utils/CommonUtils";
+import StringUtils from "../../utils/StringUtils";
 
 export default {
-  getBaseEditors(type : BlockParameteType) {
+  getBaseEditors(type : BlockParameterType) {
     switch(type) {
       case 'any':
       case 'object':
@@ -22,15 +23,13 @@ export default {
   },
   getDefaultEnumEditor(customType : BlockParameterEnumRegData) : BlockParameterEditorRegData {
     return {
-      editorCreate: (parentEle, port, regData) => {
+      editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
         let ele = document.createElement('select')
         ele.setAttribute('type', "text");
 
-        if(port.paramValue == null || typeof port.paramValue != 'string') {
-          port.paramValue = (port.paramDefaultValue != null 
-            && typeof port.paramDefaultValue == 'string') ? 
-              port.paramDefaultValue : (customType.allowTypes.length > 0 ? customType.allowTypes[0] : '');
-        }
+        if(nowVal == null || typeof nowVal != 'string') 
+          nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'string' ? defaultVal : 
+            (customType.allowTypes.length > 0 ? customType.allowTypes[0] : ''));
 
         customType.allowTypes.forEach((k) => {
           let option = document.createElement('option')
@@ -39,133 +38,156 @@ export default {
           ele.appendChild(option);
         });
 
-        if(port.paramUserSetValue != null && typeof port.paramUserSetValue == 'string')
-          ele.value = <string>port.paramUserSetValue;
+        if(nowVal != null && typeof nowVal == 'string')
+          ele.value = <string>nowVal;
        
-        ele.onchange = () => {
-          port.paramUserSetValue = ele.value;
-          port.paramValue = ele.value;
-          port.update();
-        };  
+        ele.onchange = () => changeCallBack(ele.value);
 
         return ele
       },
-      forceUpdateValue: (port, editorEle) => {
-        (<HTMLInputElement>editorEle).value = <string>port.paramUserSetValue;
+      forceUpdateValue: (newVal, editorEle) => {
+        (<HTMLInputElement>editorEle).value = <string>newVal;
       }
     };;
   }
 }
 
 let booleanEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, port, regData) => {
+  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
 
-    if(port.paramValue == null || typeof port.paramValue != 'boolean') {
-      port.paramValue = port.paramDefaultValue != null 
-      && typeof port.paramDefaultValue == 'boolean' ? port.paramDefaultValue : false;
-    }
+    if(nowVal == null || typeof nowVal != 'boolean') 
+    nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'boolean' ? defaultVal : false);
 
     let ele = document.createElement('input')
     ele.setAttribute('type', "checkbox");
-    if(<boolean>port.paramValue == true)
+    if(<boolean>nowVal == true)
       ele.setAttribute('checked', "checked");
-
-    ele.onchange = () => {
-      port.paramUserSetValue = ele.checked;
-      port.paramValue = ele.checked;
-      port.update();
-    };  
+    ele.onchange = () => changeCallBack(ele.checked);  
 
     return ele
   },
-  forceUpdateValue: (port, editorEle) => {
-    if(<boolean>port.paramUserSetValue) 
+  forceUpdateValue: (newVal, editorEle) => {
+    if(newVal != null && <boolean>newVal) 
       editorEle.setAttribute('checked', "checked");
     else  
       editorEle.removeAttribute('checked');
   }
 };
 let numberEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, port, regData) => {
-    if(port.paramValue == null || typeof port.paramValue != 'number') {
-      port.paramValue = port.paramDefaultValue != null 
-      && typeof port.paramDefaultValue == 'number' ? port.paramDefaultValue : 0;
+  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+
+    if(nowVal == null || typeof nowVal != 'number') 
+    nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'number' ? defaultVal : 0);
+
+    let div = document.createElement('div');
+    let ele = document.createElement('input');
+    let errSpan = document.createElement('i');
+    div.classList.add('display-inline-block');
+    errSpan.classList.add('text-warning','iconfont','icon-error-1', 'ml-2');
+    errSpan.style.display = 'none';
+
+    let updateValue = () => {
+      if(CommonUtils.isNullOrEmpty(ele.value)){
+        errSpan.style.display = 'none';
+        changeCallBack(null);
+      } else if(StringUtils.isNumber(ele.value)) {
+        let num = parseFloat(ele.value);
+        if(num > Number.MAX_VALUE || (num > 0 && num < Number.MIN_VALUE) || num < -Number.MAX_VALUE) {
+          errSpan.style.display = '';
+          errSpan.setAttribute('title', ele.value + ' 超出了 Number 的范围 ('+Number.MIN_VALUE+','+Number.MAX_VALUE+')，这可能会导致数据错误');
+        }else {
+          errSpan.style.display = 'none';
+          changeCallBack(num);
+        }
+      } else {
+        errSpan.style.display = '';
+        errSpan.setAttribute('title', ele.value + ' 不是有效的数字');
+      }
     }
 
-    let ele = document.createElement('input')
-    let updateValue = () => {
-      port.paramValue = parseFloat(ele.value);
-      port.paramUserSetValue = parseFloat(ele.value);
-      port.update();
-    };
-
-    if(port.paramUserSetValue != null && typeof port.paramUserSetValue == 'number')
-      ele.value = (<number>port.paramUserSetValue).toString();
+    if(nowVal != null && typeof nowVal == 'number')
+      ele.value = (<number>nowVal).toString();
 
     ele.style.width = '50px';
     ele.setAttribute('type', "text");
-    ele.setAttribute('value', (<number>port.paramValue).toString());
-    ele.oninput = function() { ele.value = ele.value.replace(/[^\d]/g,''); }
+    ele.oninput = function() { ele.value = ele.value.replace(/[^(\d|\.|\-)]/g,''); }
     ele.onkeypress = (e) => { if(e.keyCode == 13) updateValue(); };
     ele.onblur = () => updateValue();
-    return ele
+
+    div.appendChild(ele);
+    div.appendChild(errSpan);
+    return div
   },
-  forceUpdateValue: (port, editorEle) => {
-    if(typeof port.paramUserSetValue == 'number')
-      (<HTMLInputElement>editorEle).value = (<number>port.paramUserSetValue).toString();
+  forceUpdateValue: (newVal, editorEle) => {
+    if(newVal != null && typeof newVal == 'number')
+      (<HTMLInputElement>editorEle).value = (<number>newVal).toString();
   }
 };
 let bigintEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, port, regData) => {
-    if(port.paramValue == null || typeof port.paramValue != 'bigint'){
-      port.paramValue = port.paramDefaultValue != null 
-        && typeof port.paramDefaultValue == 'bigint' ? port.paramDefaultValue : BigInt(0);
+  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+
+    if(nowVal == null || typeof nowVal != 'bigint') 
+      nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'bigint' ? defaultVal : BigInt(0));
+
+    let div = document.createElement('div');
+    let ele = document.createElement('input');
+    let errSpan = document.createElement('i');
+    div.classList.add('display-inline-block');
+    errSpan.classList.add('text-warning','iconfont','icon-error-1');
+    errSpan.style.display = 'none';
+
+    let updateValue = () => {
+      if(CommonUtils.isNullOrEmpty(ele.value)){
+        errSpan.style.display = 'none';
+        changeCallBack(null);
+      } else if(StringUtils.isNumber(ele.value)) {
+        let num = BigInt(ele.value);
+        if(!Number.isSafeInteger(num)) {
+          errSpan.style.display = '';
+          errSpan.setAttribute('title', ele.value + ' 超出了 BigInt 的范围 ('+Number.MIN_SAFE_INTEGER+','+Number.MAX_SAFE_INTEGER+')，这可能会导致数据错误');
+        }else {
+          errSpan.style.display = 'none';
+          changeCallBack(num);
+        }
+      } else {
+        errSpan.style.display = '';
+        errSpan.setAttribute('title', ele.value + ' 不是有效的数字');
+      }
     }
 
-    let ele = document.createElement('input')
-    let updateValue = () => {
-      port.paramValue = BigInt(ele.value);
-      port.paramUserSetValue = BigInt(ele.value);
-      port.update();
-    };
-
-    if(port.paramUserSetValue != null && typeof port.paramUserSetValue == 'bigint')
-      ele.value = (<bigint>port.paramUserSetValue).toString();
+    if(nowVal != null && typeof nowVal == 'bigint')
+      ele.value = (<bigint>nowVal).toString();
 
     ele.style.width = '100px';
     ele.setAttribute('type', "text");
-    ele.setAttribute('value', (<bigint>port.paramValue).toString());
-    ele.oninput = function() { ele.value = ele.value.replace(/[^\d]/g,''); }
+    ele.oninput = function() { ele.value = ele.value.replace(/[^(\d|\-)]/g,''); }
     ele.onkeypress = (e) => { if(e.keyCode == 13) updateValue(); };
     ele.onblur = () => updateValue();
-    return ele
+
+    div.appendChild(ele);
+    div.appendChild(errSpan);
+    return div
   },
-  forceUpdateValue: (port, editorEle) => {
-    if(typeof port.paramUserSetValue == 'bigint')
-      (<HTMLInputElement>editorEle).value = (<bigint>port.paramUserSetValue).toString();
+  forceUpdateValue: (newVal, editorEle) => {
+    if(newVal != null && typeof newVal == 'bigint')
+      (<HTMLInputElement>editorEle).value = (<bigint>newVal).toString();
   }
 };
 let stringEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, port, regData) => {
-    if(port.paramValue == null || typeof port.paramValue != 'string') {
-      port.paramValue = port.paramDefaultValue != null 
-        && typeof port.paramDefaultValue == 'string' ? port.paramDefaultValue : '';
-    }
+  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+
+    if(nowVal == null || typeof nowVal != 'string') 
+      nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'string' ? defaultVal : '');
 
     let ele = document.createElement('input')
     ele.style.width = '50px';
-    if(port.paramUserSetValue != null && typeof port.paramUserSetValue == 'string')
-      ele.value = <string>port.paramUserSetValue;
+    if(nowVal != null && typeof nowVal == 'string')
+      ele.value = <string>nowVal;
     ele.setAttribute('type', "text");
-    ele.setAttribute('value', <string>port.paramValue);
-    ele.onblur = () => {
-      port.paramValue = ele.value;
-      port.paramUserSetValue = ele.value;
-      port.update();
-    };
+    ele.onblur = () => changeCallBack(ele.value);
     return ele
   },
-  forceUpdateValue: (port, editorEle) => {
-    (<HTMLInputElement>editorEle).value = port.paramUserSetValue;
+  forceUpdateValue: (newVal, editorEle) => {
+    (<HTMLInputElement>editorEle).value = newVal;
   }
 };

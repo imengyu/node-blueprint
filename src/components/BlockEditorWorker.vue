@@ -32,15 +32,16 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Rect } from "../model/Rect";
-import { BlockPort, BlockPortDirection, BlockParameteType, BlockPortType, BlockParameterPort } from "../model/Define/Port";
+import { BlockPort, BlockPortDirection, BlockParameterType, BlockPortType } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { BlockEditor, BlockBreakPoint } from "../model/Editor/BlockEditor";
 import { Vector2 } from "../model/Vector2";
-import { BlockGraphDocunment } from "../model/Define/BlockDocunment";
+import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
 import { BlockRunner } from "../model/WorkProvider/Runner";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import { MenuItem } from "iview";
 import { MenuOptions } from "../types/vue-contextmenujs";
+import CommonUtils from "../utils/CommonUtils";
 
 /**
  * 编辑器逻辑控制
@@ -53,8 +54,9 @@ export default class BlockEditorWorker extends Vue {
   @Prop({default: 100}) viewScale: number;
 
   //
-
-  @Prop({ default: null }) currentDocunment : BlockGraphDocunment;
+  
+  @Prop({ default: null }) currentGraph : BlockGraphDocunment;
+  @Prop({ default: null }) currentDocunment : BlockDocunment;
   @Prop({ default: null }) blocks : Array<BlockEditor>;
   @Prop({ default: null }) connectors : Array<ConnectorEditor>;
   @Prop({ default: null }) runner : BlockRunner;
@@ -205,6 +207,7 @@ export default class BlockEditorWorker extends Vue {
   public addBlock(block : BlockEditor, position : Vector2, connectToPort ?: BlockPort) {
     this.blocks.push(block);
 
+    block.currentGraph = this.currentGraph;
     block.create(this.blockOwnerData);
     block.setPos(position);
 
@@ -212,6 +215,7 @@ export default class BlockEditorWorker extends Vue {
   }
   public deleteBlock(block : BlockEditor, rm = true) {
 
+    block.currentGraph = null;
     block.destroy();
 
     this.$emit('on-delete-block', block);
@@ -234,9 +238,8 @@ export default class BlockEditorWorker extends Vue {
   connectingCanConnect : boolean = false;
   connectingFailedText : string = '';
 
-  private connectingOtherSideRequireType : BlockPortType = 'Behavior';
+  private connectingOtherSideRequireType : BlockParameterType = 'any';
   private connectingOtherSideRequireDirection : BlockPortDirection = null;
-  private connectingOtherSideRequireParamType : BlockParameteType = null;
   private connectingOtherSideRequireParamCustomType : string = null;
 
   currentHoverPort : BlockPort = null;
@@ -264,10 +267,10 @@ export default class BlockEditorWorker extends Vue {
       connector = new ConnectorEditor();
 
       //如果是行为端口，只能输出一条线路。取消连接之前的线路
-      if(startPort.type == 'Behavior' && startPort.connectedToPort.length >= 0)
+      if(startPort.paramType == 'execute' && startPort.connectedToPort.length >= 0)
         startPort.connectedToPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
       //如果是参数端口，只能输入一条线路。取消连接之前的线路
-      if(startPort.type == 'Parameter' && endPort.connectedFromPort.length >= 0) 
+      if(startPort.paramType != 'execute' && endPort.connectedFromPort.length >= 0) 
         endPort.connectedFromPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
 
       startPort.connectedToPort.push({
@@ -297,10 +300,10 @@ export default class BlockEditorWorker extends Vue {
       connector = new ConnectorEditor();
 
       //如果是行为端口，只能输出一条线路。
-      if(endPort.type == 'Behavior' && endPort.connectedToPort.length > 0) 
+      if(endPort.paramType == 'execute' && endPort.connectedToPort.length > 0) 
         endPort.connectedToPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
       //如果是参数端口，只能输入一条线路。
-      if(startPort.type == 'Parameter' && startPort.connectedFromPort.length > 0) 
+      if(startPort.paramType != 'execute' && startPort.connectedFromPort.length > 0) 
         startPort.connectedFromPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
 
       endPort.connectedToPort.push({
@@ -347,12 +350,8 @@ export default class BlockEditorWorker extends Vue {
   public endConnectToNew(block ?: BlockEditor) : BlockPort {
     let port : BlockPort = null;
     if(typeof block != 'undefined') {
-      if(this.connectingOtherSideRequireType == 'Behavior') 
-        port = block.getOnePortByDirection(this.connectingOtherSideRequireDirection);
-      else if(this.connectingOtherSideRequireType == 'Parameter') 
-        port = block.getOneParamPortByDirectionAndType(this.connectingOtherSideRequireDirection,
-          this.connectingOtherSideRequireParamType, this.connectingOtherSideRequireParamCustomType);
-
+      port = block.getOnePortByDirectionAndType(this.connectingOtherSideRequireDirection,
+          this.connectingOtherSideRequireType, this.connectingOtherSideRequireParamCustomType, true);
       if(port != null)
         this.connectConnector(this.connectingStartPort, port);
     }
@@ -360,9 +359,11 @@ export default class BlockEditorWorker extends Vue {
     this.isConnectingToNew = false;
     this.isConnecting = false;
     
-    this.connectingStartPort.editorData.forceDotActiveState = false;
-    this.connectingStartPort.editorData.updatePortConnectStatusElement();
-    this.connectingStartPort = null;
+    if(this.connectingStartPort != null) {
+      this.connectingStartPort.editorData.forceDotActiveState = false;
+      this.connectingStartPort.editorData.updatePortConnectStatusElement();
+      this.connectingStartPort = null;
+    }
 
     return port;
   }
@@ -374,15 +375,9 @@ export default class BlockEditorWorker extends Vue {
     port.editorData.forceDotActiveState = true;
     port.editorData.updatePortConnectStatusElement();
 
-    this.connectingOtherSideRequireType = port.type;
     this.connectingOtherSideRequireDirection = port.direction == 'input' ? 'output' : 'input';
-    if(port.type == 'Parameter') {
-      this.connectingOtherSideRequireParamType = (<BlockParameterPort>port).paramType;
-      this.connectingOtherSideRequireParamCustomType = (<BlockParameterPort>port).paramCustomType;
-    }else {
-      this.connectingOtherSideRequireParamType = null;
-      this.connectingOtherSideRequireParamCustomType = null;
-    }
+    this.connectingOtherSideRequireType = port.paramType;
+    this.connectingOtherSideRequireParamCustomType = port.paramType == 'execute' ? null : port.paramCustomType;
   }
   public endConnect(port : BlockPort) {
 
@@ -390,10 +385,9 @@ export default class BlockEditorWorker extends Vue {
     if(this.currentHoverPort == null && this.connectingStartPort != null) {
 
       this.$emit('update-add-block-panel-filter', {
-        filterByPort: this.connectingOtherSideRequireType == 'Behavior' ? this.connectingOtherSideRequireDirection : null,
-        filterByParamPort: this.connectingOtherSideRequireType == 'Parameter' ? this.connectingOtherSideRequireDirection : null,
-        filterByParamPortType : this.connectingOtherSideRequireParamType,
-        filterByParamPortCustomType : this.connectingOtherSideRequireParamCustomType
+        filterByPortDirection: this.connectingOtherSideRequireDirection,
+        filterByPortType : this.connectingOtherSideRequireType,
+        filterByPortCustomType : this.connectingOtherSideRequireParamCustomType
       })
 
       this.$emit('show-add-block-panel-view-port-pos', this.connectingEndPos);
@@ -456,7 +450,7 @@ export default class BlockEditorWorker extends Vue {
     if(this.currentHoverPort.parent == this.connectingStartPort.parent){
       this.connectingCanConnect = false;
       this.connectingFailedText = '不能连接同一个单元的节点';
-    }else if(this.currentHoverPort.type == this.connectingStartPort.type) {
+    }else{
       //方向必须不同才能链接
       this.connectingCanConnect = this.currentHoverPort.direction != this.connectingStartPort.direction;
       if(!this.connectingCanConnect) 
@@ -464,23 +458,14 @@ export default class BlockEditorWorker extends Vue {
 
       //参数类型检查
       if(this.connectingCanConnect) {
-        if(this.currentHoverPort.type == 'Parameter') {
-          if(this.currentHoverPort.direction == 'input')
-            this.connectingCanConnect = (<BlockParameterPort>this.currentHoverPort).checkParameterAllow(<BlockParameterPort>this.connectingStartPort); 
-          else if(this.connectingStartPort.direction == 'input') 
-            this.connectingCanConnect = (<BlockParameterPort>this.connectingStartPort).checkParameterAllow(<BlockParameterPort>this.currentHoverPort);
+        if(this.currentHoverPort.direction == 'input')
+          this.connectingCanConnect = this.currentHoverPort.checkTypeAllow(this.connectingStartPort); 
+        else if(this.connectingStartPort.direction == 'input') 
+          this.connectingCanConnect = this.connectingStartPort.checkTypeAllow(this.currentHoverPort);
 
-          if(!this.connectingCanConnect) 
-            this.connectingFailedText = (<BlockParameterPort>this.connectingStartPort).getParamType() + ' 与 ' + (<BlockParameterPort>this.currentHoverPort).getParamType() + ' 不兼容';
-        
-        }else if(this.currentHoverPort.type == 'Behavior') {
-
-        }
+        if(!this.connectingCanConnect) 
+          this.connectingFailedText = this.connectingStartPort.getParamType() + ' 与 ' + this.currentHoverPort.getParamType() + ' 不兼容';
       }
-        
-    }else {
-      this.connectingCanConnect = false;
-      this.connectingFailedText = '行为节点与参数节点不能连接';
     }
 
     //更新点的状态
@@ -503,9 +488,8 @@ export default class BlockEditorWorker extends Vue {
   }
   public refreshBlock(block : BlockEditor) {
     block.allPorts.forEach((p) => {
-      if(p.type == 'Parameter') {
-        (<BlockParameterPort>p).update();
-      }
+      if(p.paramType != 'execute') 
+        p.update();
     });
   }
 
@@ -536,8 +520,7 @@ export default class BlockEditorWorker extends Vue {
 
   private testEventInControl(e : Event){
     let target = (<HTMLElement>e.target);
-    return (target.tagName == 'INPUT' 
-      || target.tagName == 'SELECT'
+    return (CommonUtils.isEventInControl(e)
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
       || target.classList.contains('port')

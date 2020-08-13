@@ -27,7 +27,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
-import { BlockPortDirection, BlockParameteType } from "../model/Define/Port";
+import { BlockPortDirection, BlockParameterType } from "../model/Define/Port";
 import { BlockRegData } from "../model/Define/BlockDef";
 
 @Component({
@@ -44,10 +44,9 @@ export default class AddPanel extends Vue {
 
   filterText = '所有可用单元';
 
-  @Prop({ default: null }) filterByPort : BlockPortDirection;
-  @Prop({ default: null }) filterByParamPort : BlockPortDirection;
-  @Prop({ default: null }) filterByParamPortType : BlockParameteType;
-  @Prop({ default: null }) filterByParamPortCustomType : string;
+  @Prop({ default: null }) filterByPortDirection : BlockPortDirection;
+  @Prop({ default: null }) filterByPortType : BlockParameterType;
+  @Prop({ default: null }) filterByPortCustomType : string;
 
   @Watch('show')
   onShowChanged(newV) {
@@ -87,17 +86,13 @@ export default class AddPanel extends Vue {
     this.allBlocksGrouped.forEach((cd) => this.currentFilterCount += loop(cd));
   }
   doFilter() {
-    if(this.filterByPort != null) {
-      this.filterText = '包含' + (this.filterByPort == 'input' ? '入' : '出') + '行为节点的单元';
-      this.doFilterLoop((b) => b.hasOnePortByDirection(this.filterByPort));
-    }
-    else if(this.filterByParamPort != null) {
-      this.doFilterLoop((b) => b.hasOneParamPortByDirectionAndType(this.filterByParamPort,
-        this.filterByParamPortType, this.filterByParamPortCustomType, true));
+    if(this.filterByPortType != null) {
+      this.doFilterLoop((b) => b.hasOnePortByDirectionAndType(this.filterByPortDirection,
+        this.filterByPortType, this.filterByPortCustomType, true));
 
-      this.filterText = (this.filterByParamPort == 'input' ? '获取' : '输出') + 
-        ((this.filterByParamPortType == 'custom' || this.filterByParamPortType == 'enum') ?
-        this.filterByParamPortCustomType : this.filterByParamPortType) + '的单元';
+      this.filterText = (this.filterByPortDirection == 'input' ? '获取 ' : '输出 ') + 
+        ((this.filterByPortType == 'custom' || this.filterByPortType == 'enum') ?
+          this.filterByPortCustomType : this.filterByPortType) + ' 的单元';
     }
     else this.clearFilter();
   }

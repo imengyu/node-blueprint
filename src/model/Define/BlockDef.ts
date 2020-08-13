@@ -1,6 +1,5 @@
-import { BlockParameteType, BlockPortDirection, BlockParameterPort } from "./Port";
-import { OnPortActiveCallback, OnParameterUpdateCallback, OnBlockCreateCallback, 
-  OnPortCallback, OnUserAddParamCallback, OnUserAddPortCallback } from "./Block";
+import { BlockParameterType, BlockPortDirection } from "./Port";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 
 /**
@@ -18,6 +17,11 @@ export class BlockRegData {
    * 单元 唯一 GUID ，不能重复
    */
   public guid = "";
+
+  /**
+   * 单元类型
+   */
+  public type : BlockType = 'normal';
 
   /**
    * 基础信息
@@ -50,26 +54,24 @@ export class BlockRegData {
   }
 
   /**
-   * 单元的行为节点
+   * 单元的端口
    */
   public ports : Array<BlockPortRegData> = [];
-  /**
-   * 单元的参数节点
-   */
-  public parameters : Array<BlockParameterPortRegData> = [];
 
-  public hasOnePortByDirection(direction : BlockPortDirection) {
-    for(let i = 0, c = this.ports.length; i < c;i++)
-      if(this.ports[i].direction == direction) 
-        return true;
-    return false;
-  }
-  public hasOneParamPortByDirectionAndType(direction : BlockPortDirection, type : BlockParameteType, customType = '', includeAny = false) {
-    for(let i = 0, c = this.parameters.length; i < c;i++)
-      if(this.parameters[i].direction == direction
-        && (this.parameters[i].paramType == type && this.parameters[i].paramCustomType == customType
-          || (this.parameters[i].paramType == 'any' && includeAny))) 
-        return true;
+  public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, customType = '', includeAny = false) {
+    if(type == 'execute') {
+      for(let i = 0, c = this.ports.length; i < c;i++)
+        if(this.ports[i].direction == direction && this.ports[i].paramType == 'execute')
+          return true;
+    }else {
+      for(let i = 0, c = this.ports.length; i < c;i++)
+        if(this.ports[i].direction == direction
+          && (
+            (type == 'any' && includeAny)
+            || (this.ports[i].paramType == type && this.ports[i].paramCustomType == customType)
+            || (this.ports[i].paramType == 'any' && includeAny))) 
+          return true;
+    }
     return false;
   }
 
@@ -109,16 +111,14 @@ export class BlockRegData {
    * 单元定义回调
    */
   public callbacks : {
-    onCreate : OnBlockCreateCallback,
-    onPortActive : OnPortActiveCallback,
-    onPortAdd : OnPortCallback,
-    onPortRemove : OnPortCallback,
-    onParameterUpdate : OnParameterUpdateCallback,
-    onParameterAdd : OnParameterUpdateCallback,
-    onParameterRemove : OnParameterUpdateCallback,
+    onCreate : OnBlockEventCallback,
+    onDestroy : OnBlockEventCallback,
+    onPortActive : OnPortEventCallback,
+    onPortAdd : OnPortEventCallback,
+    onPortRemove : OnPortEventCallback,
+    onPortUpdate : OnPortEventCallback,
     onCreateCustomEditor : BlockEditorComponentCreateFn,
     onUserAddPort: OnUserAddPortCallback,
-    onUserAddParam: OnUserAddParamCallback,
   } = {
 
     /**
@@ -127,37 +127,35 @@ export class BlockRegData {
      */
     onCreate : (block) => {},
     /**
+     * 单元释放时的回调。
+     */
+    onDestroy : (block) => {},
+    /**
      * 单元工作处理函数。行为节点激活时的回调。
      * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
      */
     onPortActive : null,
+    /**
+     * 用户添加了一个端口时的回调。
+     */
     onPortAdd : null,
+    /**
+     * 用户删除了一个端口时的回调。
+     */
     onPortRemove : null,
     /**
      * 单元工作处理函数。参数更新时的回调。
      * 通常在这个回调里面进行参数更新，请不要在这里调用行为节点。
      */
-    onParameterUpdate : null,
-    /**
-     * 用户添加了一个参数时的回调。
-     */
-    onParameterAdd : null,
-    /**
-     * 用户删除了一个参数时的回调。
-     */
-    onParameterRemove : null,
+    onPortUpdate : null,
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
      */
     onCreateCustomEditor : null,
     /**
-     * 用户创建行为端口时的回调（仅编辑器模式调用）
+     * 用户创建端口时的回调（仅编辑器模式调用）
      */
     onUserAddPort: null,
-    /**
-     * 用户创建参数端口时的回调（仅编辑器模式调用）
-     */
-    onUserAddParam: null,
   }
 
   /**
@@ -208,11 +206,6 @@ export class BlockStyleSettings  {
   public hideLogo = false;
 }
 
-export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, 
-  regData : BlockRegData) => void;
-
-
-
 /**
  * 行为节点信息结构
  */
@@ -237,16 +230,10 @@ export interface BlockPortRegData {
    * 设置是否默认连接至此节点。最好只有一个设置为true，如果有多个，先添加的为默认连接。
    */
   defaultConnectPort?: boolean,
-}
-
-/**
- * 参数节点信息结构
- */
-export interface BlockParameterPortRegData extends BlockPortRegData {
   /**
-   * 参数的类型，如果设置为 custom 你可以设置 paramCustomType 来设置参数为自己的类型
+   * 端口的类型，execute为执行端口，如果设置为 custom 你可以设置 paramCustomType 来设置参数为自己的类型
    */
-  paramType : BlockParameteType;
+  paramType : BlockParameterType;
   /**
    * 自定义参数类型
    */
@@ -255,12 +242,13 @@ export interface BlockParameterPortRegData extends BlockPortRegData {
    * 参数的默认值
    */
   paramDefaultValue ?: any;
+
+  /**
+   * 是否强制不显示编辑参数控件
+   */
+  forceNoEditorControl ?: boolean;
 }
 
-export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, 
-  port : BlockParameterPort, 
-  regData : BlockParameterTypeRegData) => HTMLElement;
-export type BlockParameterEditorValueChangedFn = (port : BlockParameterPort, editorEle : HTMLElement) => void;
 
 export class BlockParameterEditorRegData {
   /**
@@ -333,3 +321,10 @@ export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
   }> = [];
 
 }
+
+
+export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
+export type BlockParameterEditorValueChangedFn = (newVal : any, editorEle : HTMLElement) => void;
+export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, 
+  regData : BlockRegData) => void;
+

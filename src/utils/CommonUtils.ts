@@ -70,6 +70,8 @@ export default {
     else return "晚上"
   },
 
+  getElementIndex,
+
   /**
    * 在 value/label 的数组中查找
    * @param list 数组
@@ -93,6 +95,15 @@ export default {
   upData,
   downData,
 
+  /**
+   * 检查事件是否处于控件内（input\select）
+   * @param e 事件
+   */
+  isEventInControl(e) {
+    let target = (<HTMLElement>e.target);
+    return (target.tagName == 'INPUT' 
+      || target.tagName == 'SELECT');
+  },
 
   calcTimeSurplus,
   /**
@@ -237,9 +248,14 @@ function mergeJsonArray(a, b) {
  * @param {Number} index1 索引1
  * @param {Number} index2 索引2
  */
-function swapItems(arr, index1, index2){
-  　arr[index1] = arr.splice(index2,1,arr[index1])[0]
-  　return arr
+function swapItems(arr, index1, index2) {
+  arr[index1] = arr.splice(index2,1,arr[index1])[0]
+  /*
+  let x = arr[index1];
+  arr[index1] = arr[index2];
+  arr[index2] = x;
+  */
+  return arr
 }
 /**
  * 指定数组索引位置元素向上移
@@ -326,3 +342,10 @@ function getLeft(e : HTMLElement) {
   if (e.offsetParent != null) offset += getLeft(<HTMLElement>e.offsetParent);
   return offset;
 } 
+
+function getElementIndex(element : HTMLElement) {
+  for(let i = 0, c = element.parentNode.childNodes.length; i < c; i++)
+    if(element.parentNode.childNodes.item(i) == element)
+      return i;
+  return -1;
+}

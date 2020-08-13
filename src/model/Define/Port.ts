@@ -5,6 +5,7 @@ import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockPortRegData, BlockParameterEditorRegData } from "./BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { BlockRunLoopData } from "../WorkProvider/Runner";
+import logger from "../../utils/Logger";
 
 /**
  * 单元节点
@@ -19,20 +20,28 @@ export class BlockPort {
    * 说明
    */
   public description = "This is a block port. Useage: unknow.";
+  /**
+   * 端口ID
+   */
   public guid = "";
 
   public constructor(block : Block) {
     this.parent = block;
   }
 
+  /**
+   * 获取端口的方向
+   */
   public direction : BlockPortDirection = null;
+  /**
+   * 获取端口是否是动态添加的
+   */
   public isDyamicAdd = false;
 
   public connectedFromPort : Array<BlockPortConnectorData> = [];
   public connectedToPort : Array<BlockPortConnectorData> = [];
 
   public parent : Block = null;
-  public type : BlockPortType = null;
   public regData : BlockPortRegData = null;
 
   public editorData : BlockPortEditorData = null;
@@ -79,7 +88,135 @@ export class BlockPort {
 
     return false;
   }
+
+
+  //参数以及更新
+
+  public paramType : BlockParameterType = 'any';
+  public paramCustomType = '';
+  public paramValue : any = null;
+  public paramUserSetValue : any = null;
+  public paramDefaultValue : any = null;
+
+  public forceNoEditorControl = false;
+
+  /**
+   * 自定义参数端口属性供代码使用（会保存至文件中）
+   */
+  public options = {
+
+  };
+
+  /**
+   * 循环更新参数端口
+   * @param source 来源端口
+   */
+  public update(source ?: BlockPort) {
+
+    if(this.paramType == 'execute') {
+      logger.warning('[Port.update] Cannot update port '+ this.parent.guid + '-' + this.guid +' because it is execute port.');
+      return;
+    }
+
+    if(this.direction == 'input') {
+      if(typeof source != 'undefined')
+        this.paramValue = source.paramValue;
+      this.parent.onPortUpdate.invoke(this.parent, this);
+      if(this.parent.isEditorBlock) 
+        //更新编辑器状态
+        (<BlockEditor>this.parent).updatePortParamVal(this);
+    }
+    //更新下一级
+    else if(this.direction == 'output' && this.connectedToPort.length > 0) {
+      this.connectedToPort.forEach(element => {
+        element.port.update(this);
+        if(this.parent.isEditorBlock)
+          (<BlockEditor>this.parent).updatePortParamVal(this);
+          //激活编辑器状态
+        if(this.parent.currentRunner && this.parent.isEditorBlock && this.parent.currentRunner.state != 'stopped') 
+          (<ConnectorEditor>element.connector).active(this);
+      });
+    }
+  }
+  /**
+   * 获取端口类型
+   */
+  public getParamType() {
+    if(this.paramType == 'custom' || this.paramType == 'enum') 
+      return this.paramCustomType;
+    return this.paramType;
+  }
+  /**
+   * 检查目标端口参数类型是否与本端口匹配
+   * @param sourcePort 目标端口
+   */
+  public checkTypeAllow(sourcePort : BlockPort) : boolean {
+    if(this.paramType == 'execute') 
+      return sourcePort.paramType == 'execute';
+    if(this.paramType == "any") 
+      return true;
+    return (this.paramType == sourcePort.paramType && this.paramType != 'custom') || 
+      (this.paramType == 'custom' && sourcePort.paramType == 'custom' && this.paramCustomType == sourcePort.paramCustomType) || 
+      (this.paramType == 'enum' && sourcePort.paramType == 'enum' && this.paramCustomType == sourcePort.paramCustomType);
+  }
+
+  //执行激活
+
+  /**
+   * 在新队列中激活当前执行端口
+   * （通常用于延时任务完成后的回调）
+   */
+  public activeInNewContext() {
+    if(this.paramType != 'execute') {
+      logger.warning('[Port.activeInNewContext] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
+      return;
+    }
+    if(this.direction == 'output')
+      this.parent.currentRunner.push(this, 'connector');
+  }
+  /**
+   * 在当前队列中激活当前执行端口
+   * @param runningContext 当前运行上下文
+   */
+  public active(runningContext : BlockRunLoopData) {
+
+    if(this.paramType != 'execute') {
+      logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
+      return;
+    }
+
+    if(this.direction == 'input') {
+
+      //断点触发
+      if(this.parent.breakpoint == 'enable' && runningContext.lastBreakPointPort != this) {
+        if(runningContext.runner.markInterrupt(runningContext, this, this.parent))
+          return;
+      }
+
+      runningContext.lastPort = this;
+      runningContext.currentBlock = this.parent;
+
+      this.parent.currentRunningContext = runningContext;
+      this.parent.onPortActive.invoke(this.parent, this);
+
+      //编辑器状态更新
+      if(this.parent.isEditorBlock)
+        (<BlockEditor>this.parent).markActive();
+    }
+    else if(this.direction == 'output') {
+      //编辑器状态更新
+      if(this.parent.isEditorBlock)
+        (<BlockEditor>this.parent).markDective();
+
+      this.parent.currentRunningContext = null;
+
+      runningContext.lastPort = this;
+      runningContext.currentBlock = null;
+      runningContext.runner.callNextConnectedPort(runningContext, this);
+    }            
+  }
 }
+
 export class BlockPortConnectorData {
   public port : BlockPort = null;
   public connector : Connector = null;
@@ -114,110 +251,4 @@ export class BlockPortEditorData {
 
 export type BlockPortType = 'Behavior'|'Parameter';
 export type BlockPortDirection = 'input'|'output';
-export type BlockParameteType = 'bigint'|'number'|'string'|'boolean'|'function'|'object'|'any'|'enum'|'custom';
-
-/**
- * 行为单元节点
- */
-export class BlockBehaviorPort extends BlockPort {
-  constructor(block : Block) {
-    super(block);
-    this.type = 'Behavior';
-  }
-
-  public activeInNewContext() {
-    if(this.direction == 'output')
-      this.parent.currentRunner.push(this, 'connector');
-  }
-  public active(runningContext : BlockRunLoopData) {
-    
-    if(this.direction == 'input') {
-
-      //断点触发
-      if(this.parent.breakpoint == 'enable' && runningContext.lastBreakPointPort != this) {
-        if(runningContext.runner.markInterrupt(runningContext, this, this.parent))
-          return;
-      }
-
-      runningContext.lastPort = this;
-      runningContext.currentBlock = this.parent;
-
-      this.parent.currentRunningContext = runningContext;
-      this.parent.onPortActive.invoke(this.parent, this);
-
-      //编辑器状态更新
-      if(this.parent.isEditorBlock)
-        (<BlockEditor>this.parent).markActive();
-    }
-    else if(this.direction == 'output') {
-      //编辑器状态更新
-      if(this.parent.isEditorBlock)
-        (<BlockEditor>this.parent).markDective();
-
-      this.parent.currentRunningContext = null;
-
-      runningContext.lastPort = this;
-      runningContext.currentBlock = null;
-      runningContext.runner.callNextConnectedPort(runningContext, this);
-    }            
-  }
-}
-
-/**
- * 参数单元节点
- */
-export class BlockParameterPort extends BlockPort {
-  constructor(block : Block) {
-    super(block);
-    this.type = 'Parameter';
-  }
-
-  public paramType : BlockParameteType = 'any';
-  public paramCustomType = '';
-  public paramValue : any = null;
-  public paramUserSetValue : any = null;
-  public paramDefaultValue : any = null;
-
-  /**
-   * 自定义参数端口属性供代码使用（会保存至文件中）
-   */
-  public options = {
-
-  };
-
-  public update(source ?: BlockParameterPort) {
-
-    if(this.direction == 'input') {
-      if(typeof source != 'undefined')
-        this.paramValue = source.paramValue;
-      this.parent.onParameterUpdate.invoke(this.parent, this);
-      if(this.parent.isEditorBlock) 
-        //更新编辑器状态
-        (<BlockEditor>this.parent).updatePortParamVal(this);
-    }
-    //更新下一级
-    else if(this.direction == 'output' && this.connectedToPort.length > 0) {
-      this.connectedToPort.forEach(element => {
-        (<BlockParameterPort>element.port).update(this);
-        if(this.parent.isEditorBlock)
-          (<BlockEditor>this.parent).updatePortParamVal(this);
-          //激活编辑器状态
-        if(this.parent.currentRunner && this.parent.isEditorBlock && this.parent.currentRunner.state != 'stopped') 
-          (<ConnectorEditor>element.connector).active(this);
-      });
-    }
-  }
-
-  public getParamType() {
-    if(this.paramType == 'custom' || this.paramType == 'enum') 
-      return this.paramCustomType;
-    return this.paramType;
-  }
-  public checkParameterAllow(sourcePort : BlockParameterPort) : boolean {
-    if(this.paramType == "any") 
-      return true;
-    return (this.paramType == sourcePort.paramType && this.paramType != 'custom') || 
-      (this.paramType == 'custom' && sourcePort.paramType == 'custom' && this.paramCustomType == sourcePort.paramCustomType) || 
-      (this.paramType == 'enum' && sourcePort.paramType == 'enum' && this.paramCustomType == sourcePort.paramCustomType);
-  }
-}
+export type BlockParameterType = 'execute'|'bigint'|'number'|'string'|'boolean'|'function'|'object'|'any'|'enum'|'custom';

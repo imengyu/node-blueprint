@@ -3,7 +3,7 @@ import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
 import BlockServiceInstance from "../../sevices/BlockService";
 import StringUtils from "../../utils/StringUtils";
-import { BlockParameterPort, BlockBehaviorPort } from "../Define/Port";
+import { BlockPort } from "../Define/Port";
 import { Connector } from "../Define/Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { Block } from "../Define/Block";
@@ -22,17 +22,17 @@ export class BlockFileParser {
       viewPort: graph.viewPort,
       scale: graph.scale,
       childGraphs: [],
+
+      comment: graph.comment,
+      inputPorts: graph.inputPorts,
+      outputPorts: graph.outputPorts,
+      variables: graph.variables,
       
       blocks: [],
-      connectors: [],
-      params: [],
       ports: [],
+      connectors: [],
       boxs: [],
       comments: graph.comments,
-      comment: graph.comment,
-      behavorPorts: graph.behavorPorts,
-      parameterPorts: graph.parameterPorts,
-      variables: graph.variables,
     };
 
     let findBlockGUIDMap = function(guid : string) {
@@ -73,87 +73,48 @@ export class BlockFileParser {
       let blocksIndex = data.blocks.push(blockData) - 1;
 
       //Write Parameters
-      for(let i = 0, keys = Object.keys(block.inputParameters), c = keys.length; i < c; i++) {
-
-        let port : BlockParameterPort = block.inputParameters[keys[i]];
-        let portData = findPortGUIDMap(block.guid + '-' + port.guid);
-        if(portData[0] == -1)
-          portData[0] = docData.portMap.push({
-            guid: block.guid + '-' + port.guid,
-            regData: port.regData,
-          }) - 1;
-
-        data.params.push({
-          blockMap: blocksIndex,            
-          guidMap: portData[0],
-          dyamicAdd: port.isDyamicAdd,
-          direction: 'input',
-          options: port.options,
-          value: port.paramUserSetValue
-        })
-      }
-      for(let i = 0, keys = Object.keys(block.outputParameters), c = keys.length; i < c; i++) {
-
-        let port : BlockParameterPort = block.outputParameters[keys[i]];
-        let portData = findPortGUIDMap(block.guid + '-' + port.guid);
-        if(portData[0] == -1)
-          portData[0] = docData.portMap.push({
-            guid: block.guid + '-' + port.guid,
-            regData: port.regData,
-          }) - 1;
-
-        data.params.push({
-          blockMap: blocksIndex,            
-          guidMap: portData[0],
-          dyamicAdd: port.isDyamicAdd,
-          direction: 'output',
-          options: port.options,
-          value: port.paramUserSetValue
-        })
-      }
-      
-      //Write dyamicadd ports
       for(let i = 0, keys = Object.keys(block.inputPorts), c = keys.length; i < c; i++) {
 
-        let port : BlockBehaviorPort = block.inputPorts[keys[i]];
-        if(port.isDyamicAdd) {
+        let port : BlockPort = block.inputPorts[keys[i]];
+        let portData = findPortGUIDMap(block.guid + '-' + port.guid);
+        if(portData[0] == -1)
+          portData[0] = docData.portMap.push({
+            guid: block.guid + '-' + port.guid,
+            regData: port.regData,
+          }) - 1;
 
-          let portData = findPortGUIDMap(block.guid + '-' + port.guid);
-          if(portData[0] == -1)
-            portData[0] = docData.portMap.push({
-              guid: block.guid + '-' + port.guid,
-              regData: port.regData,
-            }) - 1;
-            
+        if(port.paramType != 'execute' || port.isDyamicAdd)
           data.ports.push({
-            blockMap: blocksIndex,
+            blockMap: blocksIndex,            
             guidMap: portData[0],
+            dyamicAdd: port.isDyamicAdd,
             direction: 'input',
+            options: port.options,
+            value: port.paramUserSetValue,
+            type: port.paramType,
           })
-        }
       }
       for(let i = 0, keys = Object.keys(block.outputPorts), c = keys.length; i < c; i++) {
 
-        let port : BlockBehaviorPort = block.outputPorts[keys[i]];
-        if(port.isDyamicAdd) {
+        let port : BlockPort = block.outputPorts[keys[i]];
+        let portData = findPortGUIDMap(block.guid + '-' + port.guid);
+        if(portData[0] == -1)
+          portData[0] = docData.portMap.push({
+            guid: block.guid + '-' + port.guid,
+            regData: port.regData,
+          }) - 1;
 
-          let portData = findPortGUIDMap(block.guid + '-' + port.guid);
-          if(portData[0] == -1)
-            portData[0] = docData.portMap.push({
-              guid: block.guid + '-' + port.guid,
-              regData: port.regData,
-            }) - 1;
-            
+        if(port.paramType != 'execute' || port.isDyamicAdd)
           data.ports.push({
-            blockMap: blocksIndex,
+            blockMap: blocksIndex,            
             guidMap: portData[0],
+            dyamicAdd: port.isDyamicAdd,
             direction: 'output',
+            options: port.options,
+            value: port.paramUserSetValue,
+            type: port.paramType,
           })
-        }
       }
-
-
-
     });
 
     //Write connectors
@@ -190,9 +151,10 @@ export class BlockFileParser {
       isEditor: readToEditor,
       parent: parentGraph,
       comment: graphData.comment,
-      behavorPorts: graphData.behavorPorts,
-      parameterPorts: graphData.parameterPorts,
+      inputPorts: graphData.inputPorts,
+      outputPorts: graphData.outputPorts,
       variables: graphData.variables,
+      isMainGraph: false,
     };
     
     //blocks
@@ -201,6 +163,7 @@ export class BlockFileParser {
       
       blockInstance.uid = block.uid;
       blockInstance.breakpoint = block.breakpoint;
+      blockInstance.currentGraph = graph;
       blockInstance.options = block.options;
       if(readToEditor) {
         (<BlockEditor>blockInstance).position.Set(block.position);
@@ -211,22 +174,22 @@ export class BlockFileParser {
       graph.blocks.push(blockInstance);
     });
 
-    //param ports
-    graphData.params.forEach(param => {
-      let port : BlockParameterPort = null;
-      if(param.dyamicAdd)
-        port = graph.blocks[param.blockMap].addParameterPort(portRegDatas[param.guidMap].regData, true, param.value);
+    //ports
+    graphData.ports.forEach(port => {
+      if(port.type == 'execute')
+        graph.blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true);
       else {
-        port = graph.blocks[param.blockMap].getParameterPort(portRegDatas[param.guidMap].guid.substr(37));
-        port.paramUserSetValue = param.value;
+        let paramPort : BlockPort = null;
+        if(port.dyamicAdd)
+          paramPort = graph.blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true, port.value);
+        else {
+          paramPort = graph.blocks[port.blockMap].getPort(portRegDatas[port.guidMap].guid.substr(37));
+          paramPort.paramUserSetValue = port.value;
+        }
+        paramPort.paramValue = port.value;
+        paramPort.options = port.options;
       }
-
-      port.paramValue = param.value;
-      port.options = param.options;
     });
-
-    //behavior ports
-    graphData.ports.forEach(port => graph.blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true));
 
     //connectors
     graphData.connectors.forEach(connector => {
@@ -292,7 +255,8 @@ export class BlockFileParser {
     data.portMap.forEach(port => portRegDatas.push(port));
     //load Graph
     doc.mainGraph = this.loadGraph(data.mainGraph, null, blockRegDatas, portRegDatas, readToEditor);
-
+    doc.mainGraph.isMainGraph = true;
+    
     return doc;
   }
 }

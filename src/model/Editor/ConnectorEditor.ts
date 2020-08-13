@@ -3,7 +3,7 @@ import CanvasUtils from "../../utils/CanvasUtils";
 import CommonUtils from "../../utils/CommonUtils";
 import { Vector2 } from "../Vector2";
 import { Connector } from "../Define/Connector";
-import { BlockPort, BlockParameterPort } from "../Define/Port";
+import { BlockPort } from "../Define/Port";
 
 export class ConnectorEditor extends Connector {
 
@@ -59,8 +59,8 @@ export class ConnectorEditor extends Connector {
     this.activeCount = 0;
     this.dotPos = 0.8;
 
-    if(port && port.type == 'Parameter') 
-      this.updateValueText((<BlockParameterPort>port).paramValue);
+    if(port && port.paramType != 'execute') 
+      this.updateValueText(port.paramValue);
   }
   public clearActive() {
     this.actived = false;

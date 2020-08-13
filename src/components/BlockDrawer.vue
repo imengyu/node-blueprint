@@ -46,6 +46,7 @@
       @update-multiSelectRect="(v) => multiSelectRect = v"
       :mouseLeftMove="mouseLeftMove"
       :currentDocunment="currentDocunment"
+      :currentGraph="currentGraph"
       :runner="runner"
       :editorHost="editorHost"
       :blockOwnerData="blockOwnerData"
@@ -66,11 +67,11 @@
       >
     </BlockEditorWorker>
     <!--剪贴板-->
-    <BlockEditoClipBoard 
+    <BlockEditorClipBoard 
       ref="editoClipboard"
       @update-clipboard-state="(v) => $emit('update-clipboard-state', v)"
       >
-    </BlockEditoClipBoard>
+    </BlockEditorClipBoard>
     <div class="zoom_tool">
       <a href="javascript:;" class="left iconfont icon-zoom-out" title="缩小" @click="zoomOut()"></a>
       <select v-model="zoomSelectValue" @change="zoomUpdate(zoomSelectValue)">
@@ -90,22 +91,23 @@ import { Rect } from "../model/Rect";
 
 import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
 import BlockEditorWorker from "./BlockEditorWorker.vue";
-import { BlockPort, BlockParameterPort } from "../model/Define/Port";
+import { BlockPort } from "../model/Define/Port";
 import { BlockRunner } from "../model/WorkProvider/Runner";
-import { BlockRegData } from "../model/Define/BlockDef";
-import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
+import { BlockRegData, BlockPortRegData } from "../model/Define/BlockDef";
+import { BlockEditorOwner, BlockGraphVariableChangeCallback, BlockPortRegDataMoveCallback, BlockPortRegDataCallback, BlockGraphPortChangeCallback } from "../model/Editor/BlockEditorOwner";
 import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
-import BlockEditoClipBoard from "./BlockEditoClipBoard.vue";
+import BlockEditorClipBoard from "./BlockEditorClipBoard.vue";
 import { EditorSettings } from "../model/Editor/EditorSettings";
 import BaseBlocks from "../model/Blocks/BaseBlocks";
 import CommonUtils from "../utils/CommonUtils";
+import { EventHandler } from "../utils/EventHandler";
 
 @Component({
   components: {
     'BlockEditorCanvasDrawer': BlockEditorCanvasDrawer,
-    'BlockEditoClipBoard': BlockEditoClipBoard,
+    'BlockEditorClipBoard': BlockEditorClipBoard,
     'BlockEditorWorker': BlockEditorWorker,
   }
 })
@@ -155,6 +157,8 @@ export default class BlockDrawer extends Vue {
       this.blocks = <BlockEditor[]>this.currentGraph.blocks;
       this.connectors = <ConnectorEditor[]>this.currentGraph.connectors;
 
+      //加载上次的视口设置
+
       if(this.currentGraph.viewPort != null)
         this.viewPort.setPos(this.currentGraph.viewPort.x, this.currentGraph.viewPort.y);
       else
@@ -164,6 +168,12 @@ export default class BlockDrawer extends Vue {
       else this.zoomUpdate(100);
 
       this.recalcViewPort();
+
+      //如果是空文档，那么初始化
+      if(this.blocks.length == 0) {
+        if(this.currentGraph.isMainGraph) this.newFile();
+        else this.newGraph();
+      }
 
       //初始化元素的编辑器使用数据
       this.connectors.forEach((connector) => {
@@ -193,7 +203,6 @@ export default class BlockDrawer extends Vue {
 
         element.updateAllPortElement();
       });
-      
 
     }else {
       this.$Modal.error({
@@ -263,7 +272,7 @@ export default class BlockDrawer extends Vue {
   }
   public userAddBlock(blockData : BlockRegData) {
     //检查单元是否只能有一个
-    if(blockData.settings.oneBlockOnly) {
+    if(blockData.settings.oneBlockOnly || blockData.type == 'base') {
       if(this.getBlocksByGUID(blockData.guid).length > 0) {
         this.$Modal.info({
           title: '提示',
@@ -272,7 +281,6 @@ export default class BlockDrawer extends Vue {
         return;
       }
     }
-
     let newBlock = new BlockEditor(blockData);
     if(this.isAddBlockInPos) { //在指定位置添加单元
       
@@ -406,7 +414,7 @@ export default class BlockDrawer extends Vue {
   editorHost : HTMLDivElement = null;
   editorWorker : BlockEditorWorker = null;
   editorCanvas : BlockEditorCanvasDrawer = null;
-  editoClipboard : BlockEditoClipBoard = null;
+  editoClipboard : BlockEditorClipBoard = null;
 
   blockOwnerData : BlockEditorOwner = null;
 
@@ -417,7 +425,7 @@ export default class BlockDrawer extends Vue {
 
       this.editorWorker = <BlockEditorWorker>this.$refs.editorWorker;
       this.editorCanvas = <BlockEditorCanvasDrawer>this.$refs.editorCanvas;
-      this.editoClipboard = <BlockEditoClipBoard>this.$refs.editoClipboard;
+      this.editoClipboard = <BlockEditorClipBoard>this.$refs.editoClipboard;
 
       this.editorHost = <HTMLDivElement>this.$refs.editorHost;
       this.editorHost.addEventListener('resize', () => this.onWindowSizeChanged);
@@ -439,9 +447,31 @@ export default class BlockDrawer extends Vue {
         getMultiSelectedBlocks: this.editorWorker.getMultiSelectedBlocks,
         unConnectConnector: this.editorWorker.unConnectConnector,
         showBlockRightMenu: this.showBlockRightMenu,
-        getVue: () => this
+        graphVariableChange: {
+          onVariableAdd: (g, v) => this.blockOwnerData.editorEvents.onVariableAdd.invoke(g, v),
+          onVariableRemove: (g, v) => this.blockOwnerData.editorEvents.onVariableRemove.invoke(g, v),
+          onVariableUpdate: (g, v) => this.blockOwnerData.editorEvents.onVariableUpdate.invoke(g, v),
+        },
+        graphPortChange: {
+          onPortAdd: (g, port) => this.blockOwnerData.editorEvents.onGraphPortAdd.invoke(g, port),
+          onPortRemove: (g, port) => this.blockOwnerData.editorEvents.onGraphPortRemove.invoke(g, port),
+          onPortUpdate: (g, port) => this.blockOwnerData.editorEvents.onGraphPortUpdate.invoke(g, port),
+          onPortMoveUp: (g, port, index) => this.blockOwnerData.editorEvents.onGraphPortMoveUp.invoke(g, port, index),
+          onPortMoveDown: (g, port, index) => this.blockOwnerData.editorEvents.onGraphPortMoveDown.invoke(g, port, index),
+        },
+        editorEvents: {
+          onGraphPortAdd : new EventHandler<BlockGraphPortChangeCallback>(),
+          onGraphPortUpdate : new EventHandler<BlockGraphPortChangeCallback>(),
+          onGraphPortRemove : new EventHandler<BlockGraphPortChangeCallback>(),
+          onGraphPortMoveUp : new EventHandler<BlockGraphPortChangeCallback>(),
+          onGraphPortMoveDown : new EventHandler<BlockGraphPortChangeCallback>(),
+          onVariableAdd: new EventHandler<BlockGraphVariableChangeCallback>(),
+          onVariableRemove: new EventHandler<BlockGraphVariableChangeCallback>(),
+          onVariableUpdate: new EventHandler<BlockGraphVariableChangeCallback>(),
+        },
+        getVue: () => this,
       };
-
+      this.$emit('update-block-owner-data', this.blockOwnerData);
       this.onWindowSizeChanged();
       this.recalcViewPort();
     },200);
@@ -489,12 +519,32 @@ export default class BlockDrawer extends Vue {
   public newFile() {
     setTimeout(() => {
       this.clearAll();
-      let centerPoint = this.viewPort.calcCenter();
-      centerPoint.x -= (this.viewPort.w / 10);
+
+      //添加默认端口
       this.editorWorker.addBlock(new BlockEditor(BaseBlocks.getScriptBaseBlockIn()), new Vector2(
         this.viewPort.x + (this.viewPort.w / 2 - 35) - this.viewPort.w / 2.5,
         this.viewPort.y + (this.viewPort.h / 2 - 15)
       ));
+      this.editorWorker.addBlock(new BlockEditor(BaseBlocks.getScriptBaseBlockOut()), new Vector2(
+        this.viewPort.x + (this.viewPort.w / 2 - 35) + this.viewPort.w / 2.5,
+        this.viewPort.y + (this.viewPort.h / 2 - 15)
+      ));
+    }, 200);
+  }
+  public newGraph() {
+    setTimeout(() => {
+      this.clearAll();
+
+      //添加默认端口
+      this.editorWorker.addBlock(new BlockEditor(BaseBlocks.getScriptBaseGraphIn()), new Vector2(
+        this.viewPort.x + (this.viewPort.w / 2 - 35) - this.viewPort.w / 2.5,
+        this.viewPort.y + (this.viewPort.h / 2 - 15)
+      ));
+      this.editorWorker.addBlock(new BlockEditor(BaseBlocks.getScriptBaseGraphOut()), new Vector2(
+        this.viewPort.x + (this.viewPort.w / 2 - 35) + this.viewPort.w / 2.5,
+        this.viewPort.y + (this.viewPort.h / 2 - 15)
+      ));
+
     }, 200);
   }
 
@@ -519,9 +569,9 @@ export default class BlockDrawer extends Vue {
     this.blocks.forEach((block) => {
       block.currentRunner = this.runner;
       
-      Object.keys(block.inputParameters).forEach((guid) => {
-        let params = (<BlockParameterPort>block.inputParameters[guid]);
-        if(params.paramUserSetValue != null) {
+      Object.keys(block.inputPorts).forEach((guid) => {
+        let params = <BlockPort>block.inputPorts[guid];
+        if(params.paramType!= 'execute' && params.paramUserSetValue != null) {
           params.paramValue = params.paramUserSetValue;
           params.update();
         }
@@ -529,6 +579,10 @@ export default class BlockDrawer extends Vue {
     });
   }
   public showDeleteModalClick() { this.editorWorker.showDeleteModalClick(); }
+  //TODO
+  public doDeleteGraph(graph : BlockGraphDocunment) {
+
+  }
 
 
   //剪贴板控制

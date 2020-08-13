@@ -1,6 +1,5 @@
-import { BlockRegData, BlockParameterPortRegData, BlockPortRegData } from "../Define/BlockDef";
-import { BlockParameterPort, BlockParameteType } from "../Define/Port";
-import StringUtils from "../../utils/StringUtils";
+import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
+import { BlockParameterType } from "../Define/Port";
 import BlockServiceInstance from "../../sevices/BlockService";
 import { Block } from "../Define/Block";
 
@@ -19,24 +18,23 @@ function registerCalcBase() {
   let blockDivide = new BlockRegData("FFCA28BB-B182-0D05-5ECE-AF2F7B549B6B", "除");
   let blockModulo = new BlockRegData("ECD228AA-D88D-E02D-51FB-DAEE67ABA31C", "求余");
 
-  let CalcBase_onCreate = (block) => {
+  let CalcBase_onCreate = (block : Block) => {
     if(typeof block.options['opType'] == 'undefined') {
       block.options['opType'] = 'any';
     }else {
       //更换数据类型
       block.allPorts.forEach((port) => {
-        if(port.type == 'Parameter') {
-          block.changePortParamType(<BlockParameterPort>port, block.options['opType']);
-        }
+        if(port.paramType != 'execute')
+          block.changePortParamType(port, block.options['opType']);
       });
     }
   };
-  let CalcBase_onUserAddParam = (block, dirction) => {
+  let CalcBase_onUserAddPort = (block : Block, dirction, type) => {
     return {
-      name: '参数' + (block.inputParameterCount + 1),
-      guid: 'PI' + (block.inputParameterCount + 1),
-      paramType: block.options['opType'],
-      direction: dirction
+      name: '参数' + (block.inputPortCount),
+      guid: 'PI' + (block.inputPortCount),
+      paramType: type == 'execute' ? 'execute' : block.options['opType'],
+      direction: dirction,
     };
   };
   let CalcBase_onCreateCustomEditor = (parentEle, block : Block, regData) => {
@@ -46,7 +44,7 @@ function registerCalcBase() {
       (block.regData == blockAddition ? '<option value="string">string</option>' : '');
     typeSelector.value = block.options['opType'];
     typeSelector.onchange = () => {
-      let newType : BlockParameteType;
+      let newType : BlockParameterType;
       switch(typeSelector.value) {
         case 'string': newType = 'string'; break;
         case 'number': newType = 'number'; break;
@@ -57,9 +55,8 @@ function registerCalcBase() {
       block.options['opType'] = newType;
       //更换数据类型
       block.allPorts.forEach((port) => {
-        if(port.type == 'Parameter') {
-          block.changePortParamType(<BlockParameterPort>port, newType);
-        }
+        if(port.paramType != 'execute')
+          block.changePortParamType(port, newType);
       });
     };
     el.innerText = '类型：';
@@ -70,17 +67,16 @@ function registerCalcBase() {
   let CalcBase_cm_ports : Array<BlockPortRegData> = [
     {
       direction: 'input',
-      guid: 'BI'
+      guid: 'BI',
+      paramType: 'execute'
     },
     {
       direction: 'output',
-      guid: 'BO'
+      guid: 'BO',
+      paramType: 'execute'
     },
-  ];
-  let CalcBase_cm_parameters : Array<BlockParameterPortRegData> = [
     {
       name: "参数1",
-      description: '',
       direction: 'input',
       guid: 'PI1',
       paramType: 'any'
@@ -109,19 +105,20 @@ function registerCalcBase() {
   blockAddition.baseInfo.version = '2.0';
   blockAddition.baseInfo.logo = require('../../assets/images/BlockIcon/add.svg');
   blockAddition.ports = CalcBase_cm_ports;
-  blockAddition.parameters = CalcBase_cm_parameters
   blockAddition.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockAddition.callbacks.onCreate = CalcBase_onCreate;
   blockAddition.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else rs += block.getInputParamValue(guid);
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v
+        else rs += v;
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockAddition.callbacks.onUserAddParam = CalcBase_onUserAddParam;
+  blockAddition.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockAddition.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockAddition.blockStyle.smallTitle = true;
   blockAddition.blockStyle.minWidth = '150px';
@@ -136,19 +133,20 @@ function registerCalcBase() {
   blockSubstract.baseInfo.version = '2.0';
   blockSubstract.baseInfo.logo = require('../../assets/images/BlockIcon/sub.svg');
   blockSubstract.ports = CalcBase_cm_ports;
-  blockSubstract.parameters = CalcBase_cm_parameters;
   blockSubstract.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockSubstract.callbacks.onCreate = CalcBase_onCreate;
   blockSubstract.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else rs -= block.getInputParamValue(guid);
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else rs -= v;
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockSubstract.callbacks.onUserAddParam = CalcBase_onUserAddParam;
+  blockSubstract.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockSubstract.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockSubstract.blockStyle.smallTitle = true;
   blockSubstract.blockStyle.minWidth = '150px';
@@ -163,19 +161,20 @@ function registerCalcBase() {
   blockMultiply.baseInfo.version = '2.0';
   blockMultiply.baseInfo.logo = require('../../assets/images/BlockIcon/multiply.svg');
   blockMultiply.ports = CalcBase_cm_ports;
-  blockMultiply.parameters = CalcBase_cm_parameters;
   blockMultiply.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMultiply.callbacks.onCreate = CalcBase_onCreate;
   blockMultiply.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else rs *= block.getInputParamValue(guid);
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else rs *= v;
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockMultiply.callbacks.onUserAddParam = CalcBase_onUserAddParam;
+  blockMultiply.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockMultiply.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockMultiply.blockStyle.smallTitle = true;
   blockMultiply.blockStyle.minWidth = '150px';
@@ -190,19 +189,20 @@ function registerCalcBase() {
   blockDivide.baseInfo.version = '2.0';
   blockDivide.baseInfo.logo = require('../../assets/images/BlockIcon/divide.svg');
   blockDivide.ports = CalcBase_cm_ports;
-  blockDivide.parameters = CalcBase_cm_parameters;
   blockDivide.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockDivide.callbacks.onCreate = CalcBase_onCreate;
   blockDivide.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else rs /= block.getInputParamValue(guid);
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else rs /= v;
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockDivide.callbacks.onUserAddParam = CalcBase_onUserAddParam;
+  blockDivide.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockDivide.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockDivide.blockStyle.smallTitle = true;
   blockDivide.blockStyle.minWidth = '150px';
@@ -217,18 +217,19 @@ function registerCalcBase() {
   blockModulo.baseInfo.version = '2.0';
   blockModulo.baseInfo.logo = require('../../assets/images/BlockIcon/modulo.svg');
   blockModulo.ports = CalcBase_cm_ports;
-  blockModulo.parameters = CalcBase_cm_parameters;
   blockModulo.callbacks.onCreate = CalcBase_onCreate;
   blockModulo.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else rs -= block.getInputParamValue(guid);
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else rs -= v;
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockModulo.callbacks.onUserAddParam = CalcBase_onUserAddParam;
+  blockModulo.callbacks.onUserAddPort = CalcBase_onUserAddPort;
 
   //#endregion
 
@@ -242,26 +243,28 @@ function registerCalcBase() {
 
 function registerCalcScalar() {
 
-  let CalcScalar_onUserAddParam = (block, dirction) : BlockParameterPortRegData => {
+  let CalcScalar_onUserAddPort = (block, dirction, type) : BlockPortRegData => {
     return {
-      name: '参数' + (block.inputParameterCount + 1),
-      guid: 'PI' + (block.inputParameterCount + 1),
-      paramType: 'any',
-      direction: dirction
+      name: '参数' + (block.inputPortCount),
+      guid: 'PI' + (block.inputPortCount),
+      paramType: type == 'execute' ? 'execute' : 'any',
+      direction: dirction,
     };
   };
 
   let CalcScalar_cm_ports : Array<BlockPortRegData> = [
     {
       direction: 'input',
-      guid: 'BI'
+      guid: 'BI',
+      paramType: 'execute'
     },
     {
       direction: 'output',
-      guid: 'BO'
-    },
+      guid: 'BO',
+      paramType: 'execute'
+    }
   ];
-  let CalcScalar_cm_parameters : Array<BlockParameterPortRegData> = [
+  let CalcScalar_cm_param_ports : Array<BlockPortRegData> = [
     {
       name: "参数1",
       direction: 'input',
@@ -295,22 +298,23 @@ function registerCalcScalar() {
   blockMinimum.baseInfo.category = '运算';
   blockMinimum.baseInfo.version = '2.0';
   blockMinimum.baseInfo.logo = require('../../assets/images/BlockIcon/min.svg');
-  blockMinimum.ports = CalcScalar_cm_ports;
-  blockMinimum.parameters = CalcScalar_cm_parameters;
+  blockMinimum.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockMinimum.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMinimum.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else {
-        let v : number = block.getInputParamValue(guid);
-        if(v < rs) rs = v;
-      }
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else {
+          let vn : number = v;
+          if(vn < rs) rs = v;
+        }
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockMinimum.callbacks.onUserAddParam = CalcScalar_onUserAddParam;
+  blockMinimum.callbacks.onUserAddPort = CalcScalar_onUserAddPort;
 
   //#endregion
 
@@ -319,22 +323,23 @@ function registerCalcScalar() {
   blockMaximum.baseInfo.category = '运算';
   blockMaximum.baseInfo.version = '2.0';
   blockMaximum.baseInfo.logo = require('../../assets/images/BlockIcon/max.svg');
-  blockMaximum.ports = CalcScalar_cm_ports;
-  blockMaximum.parameters = CalcScalar_cm_parameters;
+  blockMaximum.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockMaximum.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMaximum.callbacks.onPortActive = (block, port) => { 
     let rs = null;
-    Object.keys(block.inputParameters).forEach(guid => {
-      if(rs == null) rs = block.getInputParamValue(guid);
-      else {
-        let v : number = block.getInputParamValue(guid);
-        if(v > rs) rs = v;
-      }
+    Object.keys(block.inputPorts).forEach(guid => {
+      let v = block.getInputParamValue(guid);
+      if(typeof v != 'undefined')
+        if(rs == null) rs = v;
+        else {
+          let vn : number = v;
+          if(vn > rs) rs = v;
+        }
     });
     block.setOutputParamValue('PO1', rs);
     block.activeOutputPort('BO');
   };
-  blockMaximum.callbacks.onUserAddParam = CalcScalar_onUserAddParam;
+  blockMaximum.callbacks.onUserAddPort = CalcScalar_onUserAddPort;
 
   //#endregion
   
@@ -343,13 +348,12 @@ function registerCalcScalar() {
   blockAverage.baseInfo.category = '运算';
   blockAverage.baseInfo.version = '2.0';
   blockAverage.baseInfo.logo = require('../../assets/images/BlockIcon/avg.svg');
-  blockAverage.ports = CalcScalar_cm_ports;
-  blockAverage.parameters = CalcScalar_cm_parameters;
+  blockAverage.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockAverage.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockAverage.callbacks.onPortActive = (block, port) => { 
     let rs = null;
     let paramCount = 0;
-    Object.keys(block.inputParameters).forEach(guid => {
+    Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
       if(v != null && typeof v == 'number') {
         if(rs == null) rs = v;
@@ -360,7 +364,7 @@ function registerCalcScalar() {
     block.setOutputParamValue('PO1', rs / paramCount);
     block.activeOutputPort('BO');
   };
-  blockAverage.callbacks.onUserAddParam = CalcScalar_onUserAddParam;
+  blockAverage.callbacks.onUserAddPort = CalcScalar_onUserAddPort;
 
   //#endregion
 
@@ -369,8 +373,7 @@ function registerCalcScalar() {
   blockRound.baseInfo.category = '运算';
   blockRound.baseInfo.version = '2.0';
   blockRound.baseInfo.logo = require('../../assets/images/BlockIcon/round.svg');
-  blockRound.ports = CalcScalar_cm_ports;
-  blockRound.parameters = [
+  blockRound.ports = CalcScalar_cm_ports.concat([
     {
       direction: 'input',
       guid: 'PI1',
@@ -382,7 +385,7 @@ function registerCalcScalar() {
       guid: 'PO1',
       paramType: 'number'
     },
-  ];
+  ]);
   blockRound.callbacks.onCreate = (block) => {
     if(typeof block.options['opType'] == 'undefined')
       block.options['opType'] = 'any';
@@ -416,8 +419,7 @@ function registerCalcScalar() {
   blockRoot.baseInfo.category = '运算';
   blockRoot.baseInfo.version = '2.0';
   blockRoot.baseInfo.logo = require('../../assets/images/BlockIcon/sqrt.svg');
-  blockRoot.ports = CalcScalar_cm_ports;
-  blockRoot.parameters = [
+  blockRoot.ports = CalcScalar_cm_ports.concat([
     {
       name: "x",
       description: '被开方数',
@@ -441,7 +443,7 @@ function registerCalcScalar() {
       guid: 'PO1',
       paramType: 'number'
     },
-  ];
+  ]);
   blockRoot.callbacks.onPortActive = (block, port) => { 
     let x = block.getInputParamValue('PI1');
     let n = block.getInputParamValue('PI2');
@@ -457,13 +459,12 @@ function registerCalcScalar() {
   blockExponentiate.baseInfo.category = '运算';
   blockExponentiate.baseInfo.version = '2.0';
   blockExponentiate.baseInfo.logo = require('../../assets/images/BlockIcon/exp.svg');
-  blockExponentiate.ports = CalcScalar_cm_ports;
-  blockExponentiate.parameters = [
+  blockExponentiate.ports = CalcScalar_cm_ports.concat([
     {
       name: "x",
       description: '底数',
       direction: 'input',
-      paramDefaultValue: 9,
+      paramDefaultValue: 2,
       guid: 'PI1',
       paramType: 'number'
     },
@@ -471,7 +472,7 @@ function registerCalcScalar() {
       name: "n",
       description: '指数',
       direction: 'input',
-      paramDefaultValue: 2,
+      paramDefaultValue: 3,
       guid: 'PI2',
       paramType: 'number'
     },
@@ -482,7 +483,7 @@ function registerCalcScalar() {
       guid: 'PO1',
       paramType: 'number'
     },
-  ];
+  ]);
   blockExponentiate.callbacks.onPortActive = (block, port) => { 
     let x = block.getInputParamValue('PI1');
     let n = block.getInputParamValue('PI2');
@@ -498,12 +499,11 @@ function registerCalcScalar() {
   blockAbsolute.baseInfo.category = '运算';
   blockAbsolute.baseInfo.version = '2.0';
   blockAbsolute.baseInfo.logo = require('../../assets/images/BlockIcon/abs.svg');
-  blockAbsolute.ports = CalcScalar_cm_ports;
-  blockAbsolute.parameters = [
+  blockAbsolute.ports = CalcScalar_cm_ports.concat([
     {
       description: '需要取绝对值的数',
       direction: 'input',
-      paramDefaultValue: 9,
+      paramDefaultValue: 0,
       guid: 'PI1',
       paramType: 'number'
     },
@@ -513,7 +513,7 @@ function registerCalcScalar() {
       guid: 'PO1',
       paramType: 'number'
     },
-  ];
+  ]);
   blockAbsolute.callbacks.onPortActive = (block, port) => { 
     let x = block.getInputParamValue('PI1');
     block.setOutputParamValue('PO1', Math.abs(x));

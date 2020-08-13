@@ -7,7 +7,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 
 @Component
-export default class BlockEditoClipBoard extends Vue {
+export default class BlockEditorClipBoard extends Vue {
   blockClipboard : Array<BlockEditor> = [];
 
   /**

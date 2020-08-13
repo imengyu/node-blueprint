@@ -1,12 +1,12 @@
 import { Vector2 } from "../Vector2"
 import { Rect } from "../Rect";
 import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings } from "../Define/BlockDef";
-import { BlockParameterPort, BlockBehaviorPort, BlockPort, BlockPortEditorData } from "../Define/Port";
+import { BlockPort, BlockPortEditorData } from "../Define/Port";
 
 import CommonUtils from "../../utils/CommonUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
-import { Block, OnUserAddPortCallback, OnUserAddParamCallback } from "../Define/Block";
+import { Block, OnUserAddPortCallback } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
@@ -40,12 +40,12 @@ export class BlockEditor extends Block {
   public editor : BlockEditorOwner = null;
 
   public constructor(regData ?: BlockRegData) {
-    super(regData);
+    super(regData, true);
    
-    this.onAddPortElement.addListener(this, this.addPortElement);
-    this.onRemovePortElement.addListener(this,this.removePortElement);
-    this.onUpdatePortElement.addListener(this,this.updatePortElement);
-    this.onPortRemove.addListener(this,this.onPortRemoveCallback);
+    this.onAddPortElement.addListener(this, (block, port) => this.addPortElement(port));
+    this.onRemovePortElement.addListener(this, (block, port) => this.removePortElement(port));
+    this.onUpdatePortElement.addListener(this, (block, port) => this.updatePortElement(port));
+    this.onPortRemove.addListener(this, this.onPortRemoveCallback);
   }
 
   public portIcons = {
@@ -86,7 +86,6 @@ export class BlockEditor extends Block {
 
       this.onCreateCustomEditor = this.regData.callbacks.onCreateCustomEditor;
       this.onUserAddPort = this.regData.callbacks.onUserAddPort;
-      this.onUserAddParam = this.regData.callbacks.onUserAddParam;
 
       this.portsChangeSettings = this.regData.settings.portsChangeSettings;
       this.parametersChangeSettings = this.regData.settings.parametersChangeSettings;
@@ -278,10 +277,13 @@ export class BlockEditor extends Block {
 
     host.appendChild(this.el);
 
+    this.createFn();
+
+    this.onCreate.invoke(this);
+
     if(typeof this.onCreateCustomEditor == 'function')
       this.onCreateCustomEditor(this.els.elCustomEditor, this, this.regData);
 
-    this.createFn();
     this.onResize();
     this.flushAllPortElementCreateState();
     this.updateContent();
@@ -290,8 +292,10 @@ export class BlockEditor extends Block {
   }
   public destroy() {
 
-    this.created = false;
+    this.onDestroy.invoke(this);
     this.editor.onBlockDelete(this);
+
+    this.created = false;
 
     this.el.removeEventListener('mouseenter', this.onMouseEnter.bind(this));
     this.el.removeEventListener('mouseleave', this.onMouseOut.bind(this));
@@ -302,8 +306,6 @@ export class BlockEditor extends Block {
 
     this.inputPorts = null;
     this.outputPorts = null;
-    this.inputParameters = null;
-    this.outputParameters = null;
     this.allPorts = null;
 
     this.editor.getBlockHostElement().removeChild(this.el);
@@ -437,31 +439,26 @@ export class BlockEditor extends Block {
     port.editorData.parent = port;
     port.editorData.block = this;
     port.editorData.el = document.createElement('div');
+    port.editorData.el.classList.add("port", "iconfont");
     port.editorData.elDot = document.createElement('i');
     port.editorData.elSpan = document.createElement('span');
     port.editorData.elDeleteButton = document.createElement('a');
     port.editorData.elDeleteButton.onclick = () => this.onUserDeletePort(port);
 
-    port.editorData.el.classList.add("port", port.type);
-
-    port.editorData.elDeleteButton.classList.add("port-delete", "iconfont", port.type, this.portIcons.portPortDeleteIcon);
+    port.editorData.elDeleteButton.classList.add("port-delete", "iconfont", this.portIcons.portPortDeleteIcon);
     port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
     port.editorData.elDeleteButton.setAttribute('title', '删除参数');
 
-    if(port.type == 'Parameter') {
-      port.editorData.el.setAttribute('data-param-type', (<BlockParameterPort>port).paramType);
-      port.editorData.el.setAttribute('data-param-custom-type', (<BlockParameterPort>port).paramCustomType);
-    }else {
-      port.editorData.elDot.style.color = 'rgb(253,253,253)';
-    }
+    port.editorData.el.setAttribute('data-param-type', port.paramType);
+    port.editorData.el.setAttribute('data-param-custom-type', port.paramCustomType);
+    port.editorData.elDot.style.color = 'rgb(253,253,253)';
 
-    port.editorData.elDot.classList.add("port-dot", "iconfont", port.type);
+    port.editorData.elDot.classList.add("port-dot", "iconfont");
     port.editorData.el.setAttribute('data-port-guid', port.guid);
     port.editorData.el.setAttribute('data-block-uid', this.uid);
     port.editorData.elSpan.innerText = port.name;
 
-    if(port.type == 'Parameter') this.createOrRecreateParamPortEditor(port, true);
-    else port.editorData.el.setAttribute('title', port.description);
+    this.createOrRecreateParamPortEditor(port, true);
 
     port.editorData.el.addEventListener('mousedown', (e) => this.onPortMouseDown(port, e));
     port.editorData.el.addEventListener('mouseenter', () => this.onPortMouseEnter(port));
@@ -482,11 +479,11 @@ export class BlockEditor extends Block {
     }
 
     //add element node
-    if(port.type == 'Behavior') {
+    if(port.paramType == 'execute') {
       port.editorData.elDot.classList.add(this.portIcons.portBehaviorIcon);
       if(port.direction == 'input') this.els.elInputBehaviorPorts.appendChild(port.editorData.el);
       else if(port.direction == 'output') this.els.elOutputBehaviorPorts.appendChild(port.editorData.el);
-    }else if(port.type == 'Parameter') {
+    }else {
       port.editorData.elDot.classList.add(this.portIcons.portParamIcon);
       if(port.direction == 'input') this.els.elInputParamPorts.appendChild(port.editorData.el);
       else if(port.direction == 'output') this.els.elOutputParamPorts.appendChild(port.editorData.el);
@@ -495,19 +492,24 @@ export class BlockEditor extends Block {
   private createOrRecreateParamPortEditor(port : BlockPort, isAdd = false) {
     if(!this.created) return;
 
+    if(port.paramType == 'execute') {
+      port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
+      return;
+    }
+
     if(port.editorData.elEditor != null) {
       port.editorData.elEditor.parentNode.removeChild(port.editorData.elEditor);
       port.editorData.elEditor = null;
     }
 
-    let portParameter = <BlockParameterPort>port;
+    let portParameter = port;
     let customType : BlockParameterTypeRegData = null;
 
     if((portParameter.paramType == 'custom' || portParameter.paramType == 'enum') 
         && !CommonUtils.isNullOrEmpty(portParameter.paramCustomType)) 
         customType = ParamTypeServiceInstance.getCustomType(portParameter.paramCustomType);
 
-    //类型编辑器
+    //获取类型编辑器
     let editor : BlockParameterEditorRegData = null;
     if(port.direction == 'input') {
       if((portParameter.paramType == 'custom' || portParameter.paramType == 'enum') && customType !=  null){
@@ -529,13 +531,22 @@ export class BlockEditor extends Block {
     if(customType != null)
       port.editorData.elDot.style.color = customType.color;
     else
-      port.editorData.elDot.style.color = ParamTypeServiceInstance.getTypeColor((<BlockParameterPort>port).paramType);
+      port.editorData.elDot.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType);
 
     port.editorData.editor = editor;
 
     //创建类型编辑器
-    if(editor != null) {
-      port.editorData.elEditor = editor.editorCreate(port.editorData.el, portParameter, customType);
+    if(!port.forceNoEditorControl && editor != null) {
+
+      //创建编辑器和更新回调
+      port.editorData.elEditor = editor.editorCreate(port.editorData.el, (v) => {
+        portParameter.paramUserSetValue = v;
+        portParameter.paramValue = v;
+        portParameter.update();
+        return v;
+      }, portParameter.paramUserSetValue, portParameter.paramDefaultValue, customType);
+
+      //添加元素
       if(port.editorData.elEditor!=null) {
         port.editorData.elEditor.classList.add('param-editor');
         if(!isAdd) {
@@ -548,20 +559,23 @@ export class BlockEditor extends Block {
       }
     }
   }
+
   public updatePortParamVal(port : BlockPort) {
     if(!this.created) return;
 
     port.editorData.el.setAttribute('title', 
-    port.name
+      port.name
       + '\n' + port.description
       + '\n类型：' + port.editorData.el.getAttribute('data-param-type-name')
-      + '\n值：' + CommonUtils.valueToStr((<BlockParameterPort>port).paramValue));
+      + '\n值：' + CommonUtils.valueToStr(port.paramValue));
   }
   public updateAllPortElement() {
-    this.allPorts.forEach((p) => {
-      this.updatePortElement(p);
-      this.updatePortConnectStatusElement(p);
-    });
+    this.allPorts.forEach((p) => this.updatePort(p));
+  }
+  public updatePort(port : BlockPort) {
+    this.updatePortElement(port);
+    this.updatePortConnectStatusElement(port);
+    if(port.paramType != 'execute') this.updatePortParamVal(port);
   }
   public flushAllPortElementCreateState() {
     this.allPorts.forEach((port) => {
@@ -570,19 +584,35 @@ export class BlockEditor extends Block {
       }
     })
   }
+
   private updatePortElement(port : BlockPort) {
     if(!this.created) return;
 
     port.editorData.elSpan.innerText = port.name;
     port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
-    if(port.type == 'Parameter') {
-      port.editorData.el.setAttribute('data-param-type', (<BlockParameterPort>port).paramType);
-      port.editorData.el.setAttribute('data-param-custom-type', (<BlockParameterPort>port).paramCustomType);
+    if(port.paramType == 'execute'){
+      port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
+      port.editorData.elDot.classList.remove('icon-yuan1','icon-search2');
+
+      if(port.editorData.el.parentNode != (port.direction == 'input' ? this.els.elInputBehaviorPorts : this.els.elOutputBehaviorPorts)) {
+        port.editorData.el.parentNode.removeChild(port.editorData.el);
+        (port.direction == 'input' ? this.els.elInputBehaviorPorts : this.els.elOutputBehaviorPorts).appendChild(port.editorData.el);
+      }
+
+    } else {
+
+      if(port.editorData.el.parentNode != (port.direction == 'input' ? this.els.elInputParamPorts : this.els.elOutputParamPorts)) {
+        port.editorData.el.parentNode.removeChild(port.editorData.el);
+        (port.direction == 'input' ? this.els.elInputParamPorts : this.els.elOutputParamPorts).appendChild(port.editorData.el);
+      }
+
+      port.editorData.elDot.classList.remove('icon-sanjiaoxing','icon-zuo');
+      port.editorData.el.setAttribute('data-param-type', port.paramType);
+      port.editorData.el.setAttribute('data-param-custom-type', port.paramCustomType);
       this.createOrRecreateParamPortEditor(port);
-    }else {
-      port.editorData.el.setAttribute('title', port.description);
     }
 
+    this.updatePortConnectStatusElement(port);
   }
   private removePortElement(port : BlockPort) {
     if(!this.created) return;
@@ -594,11 +624,23 @@ export class BlockEditor extends Block {
     this.unConnectPort(port);
   }
 
+  public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {
+    let index = CommonUtils.getElementIndex(port.editorData.el);
+    if(index >= 0) {
+      let parent = port.editorData.el.parentNode;
+      let af = parent.childNodes.item(index + (move == 'up' ? 1 : -2));
+      if(af != null) {
+        parent.removeChild(port.editorData.el);
+        parent.insertBefore(port.editorData.el, af);
+      }
+    }
+  }
+
   //#endregion
 
   //#region 编辑器显示状态更新
 
-  public forceUpdateParamValueToEditor(port : BlockParameterPort) {
+  public forceUpdateParamValueToEditor(port : BlockPort) {
     if(port.editorData.editor != null)
       port.editorData.editor.forceUpdateValue(port, port.editorData.elEditor);
   }
@@ -611,16 +653,16 @@ export class BlockEditor extends Block {
         this.portIcons.portParamIcon, this.portIcons.portParamIconActive);
     }else {
       port.editorData.elDot.classList.remove("error", this.portIcons.portFailedIconActive);
-      if(port.type == 'Behavior')
+      if(port.paramType == 'execute')
         CommonUtils.setClassWithSwitch(port.editorData.elDot, port.isPortConnected() || port.editorData.forceDotActiveState,
           this.portIcons.portBehaviorIcon, this.portIcons.portBehaviorIconActive);
-      else if(port.type == 'Parameter') 
+      else
         CommonUtils.setClassWithSwitch(port.editorData.elDot, port.isPortConnected() || port.editorData.forceDotActiveState, 
           this.portIcons.portParamIcon, this.portIcons.portParamIconActive);
     }
 
     //数值编辑器状态
-    if(port.type == 'Parameter') 
+    if(port.paramType != 'execute') 
     {
       if(port.editorData.elEditor != null) {
         port.editorData.elEditor.style.display = port.isPortConnected() ? 'none' : 'inline-block';
@@ -661,12 +703,6 @@ export class BlockEditor extends Block {
         if(port.connectedFromPort.length > 0)
           port.connectedFromPort.forEach(element => (<ConnectorEditor>element.connector).clearActive());
       });
-      Object.keys(this.inputParameters).forEach(key => {
-        let port = (<BlockPort>this.inputParameters[key]);
-        if(port.connectedFromPort.length > 0)
-          port.connectedFromPort.forEach(element => (<ConnectorEditor>element.connector).clearActive());
-      });
-
     }
   }
 
@@ -681,25 +717,14 @@ export class BlockEditor extends Block {
     this.editor.getVue().$Modal.confirm({
       title: '提示',
       content: '确定删除此端口？',
-      onOk: () => {
-        if(port.type == 'Behavior') this.deletePort(port.guid);
-        else if(port.type == 'Parameter') this.deleteParameterPort(port.guid);
-      },
+      onOk: () => this.deletePort(port.guid),
       onCancel: () => {}
     });
   }
-  private onUserAddInputPort() {
-    this.addPort(this.onUserAddPort(this, 'input'), true);
-  }
-  private onUserAddOutputPort() {
-    this.addPort(this.onUserAddPort(this, 'output'), true);
-  }
-  private onUserAddInputParam() {
-    this.addParameterPort(this.onUserAddParam(this, 'input'), true);
-  }
-  private onUserAddOutputParam() {
-    this.addParameterPort(this.onUserAddParam(this, 'output'), true);
-  }
+  private onUserAddInputPort() { this.addPort(this.onUserAddPort(this, 'input', 'execute'), true); }
+  private onUserAddOutputPort() { this.addPort(this.onUserAddPort(this, 'output', 'execute'), true); }
+  private onUserAddInputParam() { this.addPort(this.onUserAddPort(this, 'input', 'param'), true); }
+  private onUserAddOutputParam() { this.addPort(this.onUserAddPort(this, 'output', 'param'), true); }
 
   private onResize() {
     this.size.Set(
@@ -841,8 +866,7 @@ export class BlockEditor extends Block {
 
   private testIsDownInControl(e : MouseEvent){
     let target = (<HTMLElement>e.target);
-    return (target.tagName == 'INPUT' 
-      || target.tagName == 'SELECT'
+    return (CommonUtils.isEventInControl(e)
       || target.classList.contains('flow-block-no-move') 
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
@@ -863,13 +887,7 @@ export class BlockEditor extends Block {
 
   public onCreateCustomEditor : BlockEditorComponentCreateFn = null;
   public onUserAddPort : OnUserAddPortCallback = null;
-  public onUserAddParam : OnUserAddParamCallback = null;
 }
-
-export type OnBlockCreateCallback = (block : Block) => void;
-export type OnBlockCallback = (block : Block, port : BlockBehaviorPort) => void;
-export type OnPortActiveCallback = (block : Block, port : BlockBehaviorPort) => void;
-export type OnParameterUpdateCallback = (block : Block, port : BlockParameterPort) => void;
 
 export type BlockBreakPoint = 'enable'|'disable'|'none';
 

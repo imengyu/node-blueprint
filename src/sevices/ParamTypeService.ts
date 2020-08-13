@@ -4,7 +4,7 @@ export class ParamTypeService {
   private allCustomTypes : Array<BlockParameterTypeRegData> = [];
 
   public getAllCustomTypes() { return this.allCustomTypes; }
-  public getAllBaseTypes() { return [ 'boolean','bigint','number', 'string', 'function','object','any' ]; }
+  public getAllBaseTypes() { return [ 'execute','boolean','bigint','number', 'string', 'function','object','any' ]; }
 
   public init() {
     
@@ -36,6 +36,7 @@ export class ParamTypeService {
 
   public getTypeColor(name : string) {
     switch(name) {
+      case 'execute': return 'rgb(246,246,246)';
       case 'boolean': return 'rgb(180,0,0)';
       case 'bigint': return 'rgb(0,168,243)';
       case 'number': return 'rgb(158,258,68)';

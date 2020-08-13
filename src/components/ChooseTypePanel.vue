@@ -47,7 +47,7 @@ export default class ChooseTypePanel extends Vue {
     e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
   }
   onItemClick(item) {
-    this.$emit('onItemClick', item)
+    this.$emit('onItemClick', item, item.isBaseType == true)
   }
 
   @Prop({ default: null }) showPos : Vector2;
@@ -61,7 +61,8 @@ export default class ChooseTypePanel extends Vue {
     ParamTypeServiceInstance.getAllBaseTypes().forEach(type => {
       this.allBaseTypes.push({
         name: type,
-        color: ParamTypeServiceInstance.getTypeColor(type)
+        color: ParamTypeServiceInstance.getTypeColor(type),
+        isBaseType: true,
       })
     });
   }

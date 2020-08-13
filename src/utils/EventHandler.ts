@@ -5,13 +5,15 @@ export class EventHandler<T> {
   }> = [];
 
   public addListener(_this : any, callback : T) {
-    this.listener.push({
+    return this.listener.push({
       _this: _this,
       callback: <any>callback,
-    });
+    }) - 1;
   }
-  public removeListener(callback : T) {
-    for(let i = this.listener.length - 1; i >= 0; i--)
+  public removeListener(callback : T|number) {
+    if(typeof callback == 'number') {
+      this.listener.remove(callback);
+    } else for(let i = this.listener.length - 1; i >= 0; i--)
       if(this.listener[i].callback == <any>callback) {
         this.listener.remove(i);
         break;

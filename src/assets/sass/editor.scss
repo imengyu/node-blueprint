@@ -1,7 +1,7 @@
 @import './root';
 @import './scroll';
 
-.toolbar {
+.editor-toolbar {
   position: absolute;
   border-right: none;
   width: $left-toolbar-width;
@@ -102,7 +102,7 @@
   }
 }
 
-.main {
+.editor-main {
   display: block;
   position: absolute;
   left: $left-toolbar-width;
@@ -143,16 +143,16 @@
       padding: 3px 2px 5px 0;
       border-bottom: 1px solid #464646;
 
-      > div, > input, > select {
+      > .prop-item-editor {
         display: inline-block;
         width: 60%;
       }
       > span {
-
         display: inline-block;
         width: 40%;
         text-align: right;
         padding-right: 10px;
+        vertical-align: top;
       }
     }
     .prop-header {
@@ -175,6 +175,32 @@
     .ivu-split-trigger-bar {
       background: rgba(255, 255, 255, 0.47);
     }
+  }
+}
+
+.editor-intro {
+  position: absolute;
+  z-index: 200;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  background-color: #fff;
+  opacity: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  transition: all ease-in-out 0.3s;
+
+  > h1 {
+    display: inline-block;
+  }
+
+  &.show {
+    opacity: 1;
   }
 }
 
@@ -228,7 +254,7 @@
 
   @include pc-fix-scrollbar-white();
 
-  input, textarea, select {
+  input, textarea, select, .prop-box {
     display: inline-block;
     padding: 2px 5px;
     background-color: #686868;
@@ -319,8 +345,10 @@
 .block-add-panel {
   position: absolute;
   min-width: 230px;
-  border: 1px solid #b6acac;
-  background-color: #fff;
+  background: white;
+  padding: 7px 0;
+  border-radius: 3px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
   z-index: 25;
   max-height: 500px;
   overflow: hidden;
@@ -446,6 +474,7 @@
   vertical-align: middle;
 
   > div {
+    display: inline-block;
     padding: 5px 10px;
     font-weight: 700;
     text-decoration: none;
@@ -474,6 +503,23 @@
 
     &.last::after {
       display: none;
+    }
+  }
+}
+
+.check-input {
+
+  .error-text {
+    display: none;
+    margin-top: 3px;
+    color: #f76758;
+  }
+
+  &.error {
+    border: 1px solid #f76758;
+
+    .error-text {
+      display: inline-block;
     }
   }
 }

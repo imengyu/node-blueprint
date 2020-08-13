@@ -1,4 +1,4 @@
-import { BlockBehaviorPort } from "../Define/Port";
+import { BlockPort } from "../Define/Port";
 import { Block } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 
@@ -49,7 +49,7 @@ export class BlockRunner {
    * @param startPort 起始节点
    * @param workType 执行方式
    */
-  public push(startPort : BlockBehaviorPort, workType : RunnerWorkType = 'connector') {
+  public push(startPort : BlockPort, workType : RunnerWorkType = 'connector') {
     return this.queue.push(new BlockRunLoopData(this, startPort, workType));
   }
 
@@ -82,18 +82,18 @@ export class BlockRunner {
     let currentPort = this.currentRunningContext.currentPort;
     if(this.currentRunningContext.loopLifeTime > 0) {//周期允许
       this.currentRunningContext.loopLifeTime--;
-      //激活对应端口
-      if(this.currentRunningContext.workType == 'connector') {
-        if(currentPort.direction == 'output' && currentPort.connectedToPort.length > 0) {
-          if(this.stepMode)  //单步执行模式
-            this.markInterrupt(this.currentRunningContext, <BlockBehaviorPort>currentPort.connectedToPort[0].port, 
-              currentPort.connectedToPort[0].port.parent);
-          else (<BlockBehaviorPort>currentPort.connectedToPort[0].port).active(this.currentRunningContext);
-          if((<BlockBehaviorPort>currentPort.connectedToPort[0].port).parent.isEditorBlock)
-            (<ConnectorEditor>currentPort.connectedToPort[0].connector).active(null);
-        }
-      }else {
-        currentPort.active(this.currentRunningContext);
+      if(currentPort.paramType == 'execute') {
+        //激活对应端口
+        if(this.currentRunningContext.workType == 'connector') {
+          if(currentPort.direction == 'output' && currentPort.connectedToPort.length > 0) {
+            if(this.stepMode)  //单步执行模式
+              this.markInterrupt(this.currentRunningContext, currentPort.connectedToPort[0].port, 
+                currentPort.connectedToPort[0].port.parent);
+            else (currentPort.connectedToPort[0].port).active(this.currentRunningContext);
+            if((currentPort.connectedToPort[0].port).parent.isEditorBlock)
+              (<ConnectorEditor>currentPort.connectedToPort[0].connector).active(null);
+          }
+        }else currentPort.active(this.currentRunningContext);
       }
     }else {
       //队列周期已用完，任务将在下一个队列任务中运行
@@ -107,21 +107,24 @@ export class BlockRunner {
    * @param runningContext 当前运行上下文
    * @param currentPort 当前连接节点
    */
-  public callNextConnectedPort(runningContext : BlockRunLoopData, currentPort : BlockBehaviorPort) {
-    if(runningContext.loopLifeTime > 0) {
-      runningContext.loopLifeTime--;
-      if(currentPort.direction == 'output' && currentPort.connectedToPort.length > 0) {
-        if(this.stepMode) //单步执行模式
-          this.markInterrupt(this.currentRunningContext, <BlockBehaviorPort>currentPort.connectedToPort[0].port, 
-            currentPort.connectedToPort[0].port.parent);
-        else 
-          (<BlockBehaviorPort>currentPort.connectedToPort[0].port).active(this.currentRunningContext);
-        if((<BlockBehaviorPort>currentPort.connectedToPort[0].port).parent.isEditorBlock)
-          (<ConnectorEditor>currentPort.connectedToPort[0].connector).active(null);
+  public callNextConnectedPort(runningContext : BlockRunLoopData, currentPort : BlockPort) {
+    if(currentPort.paramType == 'execute') {
+      if(runningContext.loopLifeTime > 0) {
+        runningContext.loopLifeTime--;
+      
+        if(currentPort.direction == 'output' && currentPort.connectedToPort.length > 0) {
+          if(this.stepMode) //单步执行模式
+            this.markInterrupt(this.currentRunningContext, <BlockPort>currentPort.connectedToPort[0].port, 
+              currentPort.connectedToPort[0].port.parent);
+          else 
+            (<BlockPort>currentPort.connectedToPort[0].port).active(this.currentRunningContext);
+          if((<BlockPort>currentPort.connectedToPort[0].port).parent.isEditorBlock)
+            (<ConnectorEditor>currentPort.connectedToPort[0].connector).active(null);
+        }
+      }else {
+        this.endRunningContext(runningContext);
+        this.queue.push(new BlockRunLoopData(this, currentPort));
       }
-    }else {
-      this.endRunningContext(runningContext);
-      this.queue.push(new BlockRunLoopData(this, currentPort));
     }
   }
   /**
@@ -129,7 +132,7 @@ export class BlockRunner {
    * @param block 断点所在块
    * @return 如果断点已处理返回，true
    */
-  public markInterrupt(runningContext : BlockRunLoopData, currentPort : BlockBehaviorPort, block : Block) : boolean {
+  public markInterrupt(runningContext : BlockRunLoopData, currentPort : BlockPort, block : Block) : boolean {
     if(currentPort.direction == 'input') {
       if(typeof this.onRunnerBreakPoint == 'function') {
         this.stop();
@@ -160,7 +163,7 @@ export class BlockRunner {
   /**
    * 当运行至断点时触发回调（如果要开启断点调试功能，此回调必须被赋值）
    */
-  public onRunnerBreakPoint : (currentPort : BlockBehaviorPort, block : Block) => void = null;
+  public onRunnerBreakPoint : (currentPort : BlockPort, block : Block) => void = null;
   /**
    * 当脚本结束被调用时触发回调
    */
@@ -178,17 +181,17 @@ export type RunnerWorkType = 'connector'|'activator';
  */
 export class BlockRunLoopData {
 
-  public startPort : BlockBehaviorPort = null;
-  public currentPort : BlockBehaviorPort = null;
+  public startPort : BlockPort = null;
+  public currentPort : BlockPort = null;
   public currentBlock : Block = null;
-  public lastPort : BlockBehaviorPort = null;
-  public lastBreakPointPort : BlockBehaviorPort = null;
+  public lastPort : BlockPort = null;
+  public lastBreakPointPort : BlockPort = null;
 
   public runner : BlockRunner = null;
   public loopLifeTime = 5;
   public workType : RunnerWorkType = 'connector';
 
-  public constructor(runner : BlockRunner, startPort : BlockBehaviorPort, workType : RunnerWorkType = 'connector') {
+  public constructor(runner : BlockRunner, startPort : BlockPort, workType : RunnerWorkType = 'connector') {
     this.runner = runner;
     this.startPort = startPort;
     this.currentPort = startPort;

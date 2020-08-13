@@ -1,5 +1,10 @@
 <template>
   <div>
+    <!--进入遮罩-->
+    <div :class="'editor-intro'+(showIntro?' show':'')" v-show="showIntroE">
+      <h1>Easy blueprint</h1>
+      <div>简单可视化脚本蓝图编辑器</div>
+    </div>
     <!--菜单栏-->
     <MenuBar :menus="menuMain">
       <div class="editor-breadcrumb" style="margin-left:18px">
@@ -10,7 +15,7 @@
       </div>
     </MenuBar>
     <!--工具栏-->
-    <div class="toolbar">
+    <div class="editor-toolbar">
 
       <div :class="'button icon'+(mouseLeftMove?'':' active')" title="鼠标用来选择组件" @click="mouseLeftMove=false"><i class="iconfont icon-yidong_huaban1"></i></div>
       <div :class="'button icon'+(mouseLeftMove?' active':'')" title="鼠标用来移动视图" @click="mouseLeftMove=true"><i class="iconfont icon-shou"></i></div>
@@ -50,10 +55,9 @@
       :allBlocksGrouped="allBlocksGrouped" 
       :showPos="showAddBlockPanelPos"
       :style="{ maxHeight: showAddBlockPanelMaxHeight + 'px' }"
-      :filterByParamPort="filterByParamPort" 
-      :filterByPort="filterByPort" 
-      :filterByParamPortType="filterByParamPortType" 
-      :filterByParamPortCustomType="filterByParamPortCustomType" 
+      :filterByPortDirection="filterByPortDirection"
+      :filterByPortType="filterByPortType" 
+      :filterByPortCustomType="filterByPortCustomType" 
       @onBlockItemClick="onBlockAddItemClick"
       @onClose="showAddBlockPanel=false" />
     <!--添加单元弹出窗口-->
@@ -66,7 +70,7 @@
       @onClose="showChooseTypePanel=false" />
     
     <!--主编辑器-->
-    <div class="main">
+    <div class="editor-main">
       <Split v-model="splitOff">
         <!--流图编辑器-->
         <BlockDrawer slot="left" ref="BlockDrawer"
@@ -79,6 +83,7 @@
           @clear-add-block-panel-filter="clearAddBlockPanelFilter"
           @update-clipboard-state="(v) => isClipboardFilled = v"
           @update-multi-selecting="(v) => isMultiSelecting = v"
+          @update-block-owner-data="(d) => blockOwnerData = d"
         ></BlockDrawer>
         <!--属性栏-->
         <div slot="right" class="prop">
@@ -91,11 +96,15 @@
               <DocunmentProp v-if="currentDocunment && currentGraph == currentDocunment.mainGraph" 
                 :doc="currentDocunment"
                 @on-open-graph="goGraph"
+                @choose-graph-variable-type="onChooseGraphVariableType"
 
               ></DocunmentProp>
               <GraphProp v-else-if="currentGraph" 
                 :graph="currentGraph"
+                :blockOwnerData="blockOwnerData"
                 @on-open-graph="goGraph"
+                @on-delete-graph="onDeleteGraph"
+                @choose-graph-variable-type="onChooseGraphVariableType"
 
               ></GraphProp>
             </div>
@@ -131,7 +140,7 @@ import { Block } from '../model/Define/Block'
 import { Vector2 } from "../model/Vector2";
 import { Rect } from "../model/Rect";
 import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData } from "../model/Define/BlockDef";
-import { BlockPort, BlockParameterPort } from "../model/Define/Port";
+import { BlockPort } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { BlockFileParser } from "../model/WorkProvider/BlockFileParser";
 
@@ -146,7 +155,7 @@ import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 import SettingsServiceInstance from "../sevices/SettingsService";
 import { BlockEditor } from "../model/Editor/BlockEditor";
-import { BlockBehaviorPort, BlockPortType, BlockParameteType, BlockPortDirection } from "../model/Define/Port";
+import { BlockPortType, BlockParameterType, BlockPortDirection } from "../model/Define/Port";
 import { BlockRunner, BlockRunLoopData } from "../model/WorkProvider/Runner";
 import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { EditorSettings } from "../model/Editor/EditorSettings";
@@ -179,6 +188,9 @@ export default class Editor extends Vue {
   mouseLeftMove = false;
   splitOff = 0.8;
   split2 = 0.28;
+
+  showIntro = true;
+  showIntroE = true;
 
   menuMain : Array<MenuData> = [];
   menuItemStartRun : MenuData = null;
@@ -296,6 +308,8 @@ export default class Editor extends Vue {
     isCurrent: boolean,
   }> = [];
 
+  blockOwnerData = null;
+
   @Watch('currentGraph')
   loadGraphBreadcrumb(v : BlockGraphDocunment) {
     if(v == null || this.currentDocunment == null) this.graphBreadcrumb.empty();
@@ -312,7 +326,7 @@ export default class Editor extends Vue {
           graph: graph,
           isCurrent: false
         });
-        if(v.parent != null) loop(v.parent);
+        if(graph.parent != null) loop(graph.parent);
       };
       if(v.parent != null) loop(v.parent);
     }
@@ -359,23 +373,20 @@ export default class Editor extends Vue {
   showAddBlockPanel = false;
   showAddBlockPanelMaxHeight = 500;
 
-  filterByPort : BlockPortDirection = null;
-  filterByParamPort : BlockPortDirection = null;
-  filterByParamPortType : BlockParameteType = null;
-  filterByParamPortCustomType : string = '';
+  filterByPortDirection : BlockPortDirection = null;
+  filterByPortType : BlockParameterType = null;
+  filterByPortCustomType : string = '';
 
   updateAddBlockPanelFilter(filter) {
-    this.filterByPort = filter.filterByPort;
-    this.filterByParamPort = filter.filterByParamPort;
-    this.filterByParamPortType = filter.filterByParamPortType;
-    this.filterByParamPortCustomType = filter.filterByParamPortCustomType;
+    this.filterByPortDirection = filter.filterByPortDirection;
+    this.filterByPortType = filter.filterByPortType;
+    this.filterByPortCustomType = filter.filterByPortCustomType;
     this.addBlockPanelDoFilter();
   }
   clearAddBlockPanelFilter() {
-    this.filterByPort = null;
-    this.filterByParamPort = null;
-    this.filterByParamPortType = null;
-    this.filterByParamPortCustomType = null;
+    this.filterByPortDirection = null;
+    this.filterByPortType = null;
+    this.filterByPortCustomType = null;
     (<AddPanel>this.$refs.AddBlockPanel).clearFilter();
   }
   addBlockPanelDoFilter() {
@@ -411,20 +422,29 @@ export default class Editor extends Vue {
   showChooseTypePanelMaxHeight = 500;
   showChooseTypePanelCallback : Function = null;
 
-  onChooseTypeItemClick(choosedType : BlockParameterTypeRegData) {
-    if(typeof this.showChooseTypePanelCallback == 'function')
-      this.showChooseTypePanelCallback(choosedType);
+  onChooseTypeItemClick(choosedType : BlockParameterTypeRegData, isBaseType : boolean) {
+    if(typeof this.showChooseTypePanelCallback == 'function') {
+      this.showChooseTypePanel = false;
+      this.showChooseTypePanelCallback(choosedType, isBaseType);
+    }
   }
   public showChooseTypePanelAt(pos : Vector2) {
     this.showChooseTypePanelPos = pos;
     this.showChooseTypePanel = true;
     this.showChooseTypePanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
+    if(this.showChooseTypePanelPos.x + 300 > window.innerWidth)
+      this.showChooseTypePanelPos.x -= this.showChooseTypePanelPos.x + 300 - window.innerWidth;
     if(this.showChooseTypePanelMaxHeight > 500) this.showChooseTypePanelMaxHeight = 500;
     else if(this.showChooseTypePanelMaxHeight < 222) {
       this.showChooseTypePanelPos.y -= 222 - this.showChooseTypePanelMaxHeight;
       this.showChooseTypePanelMaxHeight = 222;
     }
     (<AddPanel>this.$refs.ChooseTypePanel).focus();
+  }
+
+  onChooseGraphVariableType(v, pos : Vector2) {
+    this.showChooseTypePanelCallback = v;
+    this.showChooseTypePanelAt(pos);
   }
 
   //#endregion
@@ -471,6 +491,8 @@ export default class Editor extends Vue {
     BlockServiceInstance.updateBlocksList();
 
     setTimeout(() => {
+      this.showIntro = false;
+      setTimeout(() => this.showIntroE = false, 300);
       this.newFile();
     }, 1000)
   }
@@ -567,7 +589,6 @@ export default class Editor extends Vue {
     this.currentGraph = this.currentDocunment.mainGraph;
     this.editorControl.loadDocunment(this.currentDocunment);
     this.editorControl.drawGraph(this.currentGraph);
-    this.editorControl.newFile();
   }
   private doLoadFile() { 
     (<HTMLInputElement>this.$refs.OpenFileInput).value = null;
@@ -605,6 +626,11 @@ export default class Editor extends Vue {
       this.currentGraph = g;
       this.editorControl.drawGraph(this.currentGraph);
     }
+  }
+  public onDeleteGraph(g : BlockGraphDocunment) {
+    if(g.isMainGraph) return;
+    if(g == this.currentGraph) this.goGraph(g.parent);
+    this.editorControl.doDeleteGraph(g);
   }
 
 
@@ -654,7 +680,7 @@ export default class Editor extends Vue {
   }
   private onRunnerIdle() {
   }
-  private onRunnerBreakPoint(currentPort : BlockBehaviorPort, block : Block) {
+  private onRunnerBreakPoint(currentPort : BlockPort, block : Block) {
     this.runnerStopByBreakPoint = true;
     this.runningState = 'runningPaused';
     this.runningBlock = <BlockEditor>block;
