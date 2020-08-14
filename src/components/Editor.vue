@@ -95,7 +95,9 @@
             <div slot="bottom" class="prop-host">
               <DocunmentProp v-if="currentDocunment && currentGraph == currentDocunment.mainGraph" 
                 :doc="currentDocunment"
+                :blockOwnerData="blockOwnerData"
                 @on-open-graph="goGraph"
+                @on-delete-graph="onDeleteGraph"
                 @choose-graph-variable-type="onChooseGraphVariableType"
 
               ></DocunmentProp>
@@ -713,6 +715,8 @@ export default class Editor extends Vue {
         }
 
         //变量初始化以仅参数
+        this.editorControl.prepareGraphVariables(this.currentDocunment);
+        this.editorControl.invokeStartRun();
         this.editorControl.updateAllBlockPrams();
 
         //激活入口单元

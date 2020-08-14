@@ -27,12 +27,13 @@ export class BlockEditorOwner {
   unConnectConnector: (connector : ConnectorEditor) => void;
 
   showBlockRightMenu : (pos : Vector2) => void;
+  deleteBlock: (block : BlockEditor, rm ?: boolean) => void;
 
   //编辑器事件回调
   graphVariableChange : {
     onVariableAdd : (graph : BlockGraphDocunment, variable : BlockGraphVariable) => void,
     onVariableRemove : (graph : BlockGraphDocunment, variable : BlockGraphVariable) => void,
-    onVariableUpdate : (graph : BlockGraphDocunment, variable : BlockGraphVariable) => void,
+    onVariableUpdate : (graph : BlockGraphDocunment, variableOldName : string, variable : BlockGraphVariable) => void,
   };
   //编辑器事件回调
   graphPortChange : {
@@ -52,7 +53,7 @@ export class BlockEditorOwner {
     onGraphPortMoveDown : EventHandler<BlockGraphPortChangeCallback>,
     onVariableAdd: EventHandler<BlockGraphVariableChangeCallback>,
     onVariableRemove: EventHandler<BlockGraphVariableChangeCallback>,
-    onVariableUpdate: EventHandler<BlockGraphVariableChangeCallback>,
+    onVariableUpdate: EventHandler<BlockGraphVariableFullChangeCallback>,
   } = {
     onGraphPortAdd: null,
     onGraphPortUpdate: null,
@@ -71,3 +72,4 @@ export type BlockPortRegDataMoveCallback = (port: BlockPortRegData, index: numbe
 
 export type BlockGraphPortChangeCallback = (graph: BlockGraphDocunment, port: BlockPortRegData) => void;
 export type BlockGraphVariableChangeCallback = (graph: BlockGraphDocunment, variable : BlockGraphVariable) => void;
+export type BlockGraphVariableFullChangeCallback = (graph: BlockGraphDocunment, variableOldName: string, variable : BlockGraphVariable) => void;

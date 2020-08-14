@@ -236,6 +236,9 @@ export class BlockPortEditorData {
 
   public editor : BlockParameterEditorRegData = null;
 
+  public oldParamType : BlockParameterType = 'any';
+  public oldParamCustomType = '';
+
   private pos = new Vector2();
   
   public getPosition() {

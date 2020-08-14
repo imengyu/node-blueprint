@@ -83,25 +83,30 @@ let numberEditor : BlockParameterEditorRegData = {
     let ele = document.createElement('input');
     let errSpan = document.createElement('i');
     div.classList.add('display-inline-block');
+    ele.classList.add('input-border');
     errSpan.classList.add('text-warning','iconfont','icon-error-1', 'ml-2');
     errSpan.style.display = 'none';
 
     let updateValue = () => {
       if(CommonUtils.isNullOrEmpty(ele.value)){
         errSpan.style.display = 'none';
+        ele.classList.remove('input-warn');
         changeCallBack(null);
       } else if(StringUtils.isNumber(ele.value)) {
         let num = parseFloat(ele.value);
         if(num > Number.MAX_VALUE || (num > 0 && num < Number.MIN_VALUE) || num < -Number.MAX_VALUE) {
           errSpan.style.display = '';
           errSpan.setAttribute('title', ele.value + ' 超出了 Number 的范围 ('+Number.MIN_VALUE+','+Number.MAX_VALUE+')，这可能会导致数据错误');
+          ele.classList.add('input-warn');
         }else {
           errSpan.style.display = 'none';
+          ele.classList.remove('input-warn');
           changeCallBack(num);
         }
       } else {
         errSpan.style.display = '';
         errSpan.setAttribute('title', ele.value + ' 不是有效的数字');
+        ele.classList.add('input-warn');
       }
     }
 
@@ -133,25 +138,30 @@ let bigintEditor : BlockParameterEditorRegData = {
     let ele = document.createElement('input');
     let errSpan = document.createElement('i');
     div.classList.add('display-inline-block');
+    ele.classList.add('input-border');
     errSpan.classList.add('text-warning','iconfont','icon-error-1');
     errSpan.style.display = 'none';
 
     let updateValue = () => {
       if(CommonUtils.isNullOrEmpty(ele.value)){
         errSpan.style.display = 'none';
+        ele.classList.remove('input-warn');
         changeCallBack(null);
       } else if(StringUtils.isNumber(ele.value)) {
         let num = BigInt(ele.value);
         if(!Number.isSafeInteger(num)) {
           errSpan.style.display = '';
           errSpan.setAttribute('title', ele.value + ' 超出了 BigInt 的范围 ('+Number.MIN_SAFE_INTEGER+','+Number.MAX_SAFE_INTEGER+')，这可能会导致数据错误');
+          ele.classList.add('input-warn');
         }else {
           errSpan.style.display = 'none';
+          ele.classList.remove('input-warn');
           changeCallBack(num);
         }
       } else {
         errSpan.style.display = '';
         errSpan.setAttribute('title', ele.value + ' 不是有效的数字');
+        ele.classList.add('input-warn');
       }
     }
 

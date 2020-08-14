@@ -39,7 +39,7 @@ export class BlockRunner {
   }
   public clear() {
     clearInterval(this.loop);
-    this.queue = [];
+    this.queue.empty();
     this.loop = null;
     this.state = 'stopped';
     this.currentRunningContext = null;

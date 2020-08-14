@@ -1,5 +1,5 @@
 import { BlockParameterType, BlockPortDirection } from "./Port";
-import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback } from "./Block";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 
 /**
@@ -111,50 +111,59 @@ export class BlockRegData {
    * 单元定义回调
    */
   public callbacks : {
-    onCreate : OnBlockEventCallback,
-    onDestroy : OnBlockEventCallback,
-    onPortActive : OnPortEventCallback,
-    onPortAdd : OnPortEventCallback,
-    onPortRemove : OnPortEventCallback,
-    onPortUpdate : OnPortEventCallback,
-    onCreateCustomEditor : BlockEditorComponentCreateFn,
-    onUserAddPort: OnUserAddPortCallback,
-  } = {
-
     /**
      * 单元初始化时的回调。
      * 通常在这个回调里面进行单元初始化的一些工作，请不要在这里调用行为节点（因为节点未初始化完成）。
      */
-    onCreate : (block) => {},
+    onCreate : OnBlockEventCallback,
+    /**
+     * 单元在编辑器模式中初始化时的回调。
+     */
+    onEditorCreate : OnBlockEditorEventCallback,
     /**
      * 单元释放时的回调。
      */
-    onDestroy : (block) => {},
+    onDestroy : OnBlockEventCallback,
+    /**
+     * 当图表开始运行
+     */
+    onStartRun : OnBlockEventCallback,
     /**
      * 单元工作处理函数。行为节点激活时的回调。
      * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
      */
-    onPortActive : null,
+    onPortActive : OnPortEventCallback,
     /**
      * 用户添加了一个端口时的回调。
      */
-    onPortAdd : null,
+    onPortAdd : OnPortEventCallback,
     /**
      * 用户删除了一个端口时的回调。
      */
-    onPortRemove : null,
+    onPortRemove : OnPortEventCallback,
     /**
      * 单元工作处理函数。参数更新时的回调。
      * 通常在这个回调里面进行参数更新，请不要在这里调用行为节点。
      */
-    onPortUpdate : null,
+    onPortUpdate : OnPortEventCallback,
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
      */
-    onCreateCustomEditor : null,
+    onCreateCustomEditor : BlockEditorComponentCreateFn,
     /**
      * 用户创建端口时的回调（仅编辑器模式调用）
      */
+    onUserAddPort: OnUserAddPortCallback,
+  } = {
+    onCreate: null,
+    onDestroy: null,
+    onEditorCreate: null,
+    onStartRun : null,
+    onPortActive : null,
+    onPortAdd : null,
+    onPortRemove : null,
+    onPortUpdate : null,
+    onCreateCustomEditor : null,
     onUserAddPort: null,
   }
 

@@ -7,7 +7,6 @@
     }"
       oncontextmenu="return false" 
     >
-
     </div>
     <!--对话框-->
     <Modal v-model="showDeleteModal" width="360">
@@ -104,6 +103,9 @@ export default class BlockEditorWorker extends Vue {
   public getSelectedBlocks()  { 
     return this.selectedBlocks; 
   }
+  public getSelectedConnectors()  { 
+    return this.selectedConnectors; 
+  }
   public getOneSelectedBlock() {
     if(this.selectedBlocks.length == 1) 
       return this.selectedBlocks[0];
@@ -129,7 +131,7 @@ export default class BlockEditorWorker extends Vue {
   public unSelectAllConnectors() {
     for(let i = 0, c= this.connectors.length;i<c;i++) 
       this.connectors[i].selected = false;
-    this.selectedConnectors = [];
+    this.selectedConnectors.empty();
     this.$emit('update-select-state');
   }
 
@@ -137,8 +139,7 @@ export default class BlockEditorWorker extends Vue {
     for(let i = 0, c = this.connectors.length;i<c;i++) {
       if(this.connectors[i].hover){
         this.connectors[i].selected = true;
-        if(!this.selectedConnectors.contains(this.connectors[i]))
-          this.selectedConnectors.push(this.connectors[i]);
+        this.selectedConnectors.push(this.connectors[i]);
         break;
       }
     }
@@ -156,6 +157,9 @@ export default class BlockEditorWorker extends Vue {
   }
   public getMouseCurrentPos() {
     return this.mouseCurrentPos;
+  }
+  public getMouseCurrentPosInViewPort() {
+    return this.mouseCurrentPosInViewPort;
   }
 
   //单元控制事件
@@ -208,6 +212,7 @@ export default class BlockEditorWorker extends Vue {
     this.blocks.push(block);
 
     block.currentGraph = this.currentGraph;
+    block.createBase();
     block.create(this.blockOwnerData);
     block.setPos(position);
 
@@ -215,8 +220,8 @@ export default class BlockEditorWorker extends Vue {
   }
   public deleteBlock(block : BlockEditor, rm = true) {
 
-    block.currentGraph = null;
     block.destroy();
+    block.currentGraph = null;
 
     this.$emit('on-delete-block', block);
 
@@ -486,16 +491,21 @@ export default class BlockEditorWorker extends Vue {
   public unConnectBlock(block : BlockEditor) {
     block.allPorts.forEach((p) => p.unconnectAllConnector());
   }
+
+  //选中单元的操作
+  //=======================
+
+  public unconnectSelectedConnectors() {
+    this.selectedConnectors.forEach((c) => {
+      this.unConnectConnector(c);
+    });
+  }
   public refreshBlock(block : BlockEditor) {
     block.allPorts.forEach((p) => {
       if(p.paramType != 'execute') 
         p.update();
     });
   }
-
-  //选中单元的操作
-  //=======================
-
   public unConnectSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.unConnectBlock(b));
   }
@@ -565,22 +575,26 @@ export default class BlockEditorWorker extends Vue {
         this.unSelectAllConnectors();
         this.multiSelectedBlocks.empty();
         this.multiSelectRect.Set(0,0,0,0);
+        this.selectOneConnector();
 
-        if(e.button == 0)
-          this.selectOneConnector();
-        else if(!this.isDragView) {
+        if(e.button == 2 && !this.isDragView) {
           this.$emit('set-add-block-inpos', this.mouseDownViewPortPos);
           this.$emit('clear-add-block-panel-filter');
           this.$emit('show-add-block-panel-at-pos', this.mouseCurrentPos);
         }
 
       }else {
-        this.selectedBlocks = [];
+        this.selectedBlocks.empty();
         for(var i=0;i<this.blocks.length;i++)
           if(this.blocks[i].selected){
             this.blocks[i].updateLastPos();
             this.selectedBlocks.push(this.blocks[i]);
           }
+        this.selectedConnectors.empty()
+        for(let i = 0, c= this.connectors.length;i<c;i++)
+          if(this.connectors[i].hover)
+            this.selectedConnectors.push(this.connectors[i]);
+          
         this.$emit('update-select-state');
       }
 

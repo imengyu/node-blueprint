@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="canvas" class="editorCanvas" oncontextmenu="return false" :width="viewRealSize.w" :height="viewRealSize.h">
+  <canvas ref="canvas" class="editorCanvas" @contextmenu="onContextMenu($event)" :width="viewRealSize.w" :height="viewRealSize.h">
     你的浏览器不支持 canvas，请升级你的浏览器
   </canvas>
 </template>
@@ -160,6 +160,14 @@ export default class BlockEditorCanvasDrawer extends Vue {
       
     }
   }
+
+
+  private onContextMenu(e : MouseEvent) {
+    e.preventDefault();
+    this.$emit('contextmenu', e);
+    return false;
+  }
+
 
   mounted() {
     setTimeout(() => {

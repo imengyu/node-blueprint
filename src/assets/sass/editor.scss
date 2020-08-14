@@ -508,6 +508,11 @@
 }
 
 .check-input {
+  white-space: normal;
+
+  input {
+    border: 1px solid transparent;
+  }
 
   .error-text {
     display: none;
@@ -516,10 +521,23 @@
   }
 
   &.error {
-    border: 1px solid #f76758;
+
+    input {
+      border: 1px solid #f76758;
+      color: #ff503c;
+    }
 
     .error-text {
       display: inline-block;
     }
   }
+}
+.input-border {
+  border: 1px solid transparent;
+}
+.input-error {
+  border: 1px solid #f76758!important;
+}
+.input-warn {
+  border: 1px solid #daa000!important;
 }

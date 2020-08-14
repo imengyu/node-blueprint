@@ -39,7 +39,7 @@ export default {
    */
   genNonDuplicateIDHEX(randomLength){
     let idStr = this.genNonDuplicateID(randomLength);
-    return StringUtils.strToHexCharCode(idStr).substr(2, randomLength);
+    return StringUtils.strToHexCharCode(idStr, false).substr(idStr.length - randomLength, randomLength);
   },
   /**
    * 通过一个B的文件大小获取可读的文件大小字符串
@@ -159,6 +159,13 @@ export default {
       if(el.classList.contains(class2))el.classList.remove(class2);
       if(!el.classList.contains(class1))el.classList.add(class1);
     }
+  },
+
+  showElement(el : HTMLElement) {
+    el.style.display = '';
+  },
+  hideElement(el : HTMLElement) {
+    el.style.display = 'none';
   }
 }
 

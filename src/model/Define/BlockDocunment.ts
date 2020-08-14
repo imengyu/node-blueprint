@@ -2,6 +2,7 @@ import { Rect } from "../Rect";
 import { Block } from "./Block";
 import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
+import { EventHandler } from "../../utils/EventHandler";
 
 /**
  * 文档结构
@@ -85,6 +86,19 @@ export class BlockGraphDocunment {
    */
   variables: Array<BlockGraphVariable> = [];
 
+  public findGraphVariable(name : string) {
+    for (let index = 0; index < this.variables.length; index++) {
+      if(this.variables[index].name == name)
+        return this.variables[index];
+    }
+    return null;
+  }
+  public setGraphVariable(name : string|BlockGraphVariable, newV : any) {
+    if(typeof name == 'string') 
+      name = this.findGraphVariable(name);
+    name.set(newV);
+  }
+
   /**
    * 父图表
    */
@@ -96,8 +110,22 @@ export class BlockGraphDocunment {
   isEditor = false;
 }
 
-export interface BlockGraphVariable {
-  name: string,
-  type: string,
-  defaultValue: any,
+/**
+ * 图表变量
+ */
+export class BlockGraphVariable {
+
+  name = '';
+  type = '';
+  defaultValue = null;
+  value = null;
+
+  changeCallbacks : EventHandler<(v : BlockGraphVariable)=>void> = new EventHandler();
+
+  set(newV) {
+    if(this.value != newV) {
+      this.value = newV;
+      this.changeCallbacks.invoke(this);
+    }
+  }
 }

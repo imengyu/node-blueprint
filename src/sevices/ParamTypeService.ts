@@ -1,10 +1,22 @@
 import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
+import { BlockParameterType } from "../model/Define/Port";
 
 export class ParamTypeService {
   private allCustomTypes : Array<BlockParameterTypeRegData> = [];
 
   public getAllCustomTypes() { return this.allCustomTypes; }
   public getAllBaseTypes() { return [ 'execute','boolean','bigint','number', 'string', 'function','object','any' ]; }
+
+  public isBaseType(name : string) {
+    return this.getAllBaseTypes().indexOf(name) >= 0;
+  }
+  public getBaseTypeForCustomType(name : string) : BlockParameterType {
+    if(this.isBaseType(name)) return <BlockParameterType>name;
+    else {
+      let c = this.getCustomType(name);
+      return <BlockParameterType>(c ? c.prototypeName : 'any');
+    }
+  }
 
   public init() {
     

@@ -1,4 +1,4 @@
-import { BlockDocunment, BlockGraphDocunment } from "../Define/BlockDocunment";
+import { BlockDocunment, BlockGraphDocunment, BlockGraphVariable } from "../Define/BlockDocunment";
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
 import BlockServiceInstance from "../../sevices/BlockService";
@@ -140,22 +140,32 @@ export class BlockFileParser {
   }
   private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean) {
 
-    let graph : BlockGraphDocunment = {
-      name: graphData.name,
-      viewPort: graphData.viewPort,
-      scale: graphData.scale,
-      comments: graphData.comments,
-      children: [],
-      blocks: [],
-      connectors: [],
-      isEditor: readToEditor,
-      parent: parentGraph,
-      comment: graphData.comment,
-      inputPorts: graphData.inputPorts,
-      outputPorts: graphData.outputPorts,
-      variables: graphData.variables,
-      isMainGraph: false,
-    };
+    let graph = new BlockGraphDocunment()
+    
+    graph.name = graphData.name;
+    graph.viewPort = graphData.viewPort;
+    graph.scale = graphData.scale;
+    graph.comments = graphData.comments;
+    graph.children = [];
+    graph.blocks = [];
+    graph.connectors = [];
+    graph.isEditor = readToEditor;
+    graph.parent = parentGraph;
+    graph.comment = graphData.comment;
+    graph.inputPorts = graphData.inputPorts;
+    graph.outputPorts = graphData.outputPorts;
+    graph.variables = [];
+    graph.isMainGraph = false;
+
+    //variables
+    graphData.variables.forEach(variable => {
+      let v = new BlockGraphVariable();
+      v.defaultValue = variable.defaultValue;
+      v.value = variable.value;
+      v.name = variable.name;
+      v.type = variable.type;
+      graph.variables.push(v);
+    }); 
     
     //blocks
     graphData.blocks.forEach(block => {
@@ -165,6 +175,8 @@ export class BlockFileParser {
       blockInstance.breakpoint = block.breakpoint;
       blockInstance.currentGraph = graph;
       blockInstance.options = block.options;
+      blockInstance.createBase();
+
       if(readToEditor) {
         (<BlockEditor>blockInstance).position.Set(block.position);
         (<BlockEditor>blockInstance).mark = block.mark;
@@ -184,10 +196,13 @@ export class BlockFileParser {
           paramPort = graph.blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true, port.value);
         else {
           paramPort = graph.blocks[port.blockMap].getPort(portRegDatas[port.guidMap].guid.substr(37));
-          paramPort.paramUserSetValue = port.value;
+          if(paramPort != null)
+            paramPort.paramUserSetValue = port.value;
         }
-        paramPort.paramValue = port.value;
-        paramPort.options = port.options;
+        if(paramPort != null) {
+          paramPort.paramValue = port.value;
+          paramPort.options = port.options;
+        }
       }
     });
 
@@ -199,7 +214,6 @@ export class BlockFileParser {
       graph.connectors.push(readToEditor ? 
         new ConnectorEditor(startPort, endPort) : new Connector(startPort, endPort));
     }); 
-
 
     //child graph
     graphData.childGraphs.forEach(childGraph => {

@@ -81,14 +81,14 @@
     <!--图表变量-->
     <CollapsePropHeader title="图表变量">
       <div class="prop-list">
-        <div v-for="(variable,i) in graph.variables" :key="i" class="prop-list-item" @drag="onGraphVariableDrag(variable, $event)" draggable="true">
+        <div v-for="(variable,i) in graph.variables" :key="i" class="prop-list-item" @dragstart="onGraphVariableDrag(variable, $event)" draggable="true">
           <div class="prop-item">
             <span>变量名称</span>
             <InputCanCheck 
               type="text" class="prop-item-editor" 
-              v-model="variable.name" placeholder="请输入变量名称" 
-              :checkCallback="(n) => checkGraphVariableExists(n) ? '已存在相同名称的变量':true"
-              @blur="$emit('on-update-graph-variable', variable)"></InputCanCheck>
+              :value="variable.name" placeholder="请输入变量名称" 
+              :checkCallback="(o, n) => (o!=n && checkGraphVariableExists(n)) ? '已存在相同名称的变量':true"
+              @update="(o,n) => {variable.name=n;onUpdateGraphVariableDrag(o,variable)}"></InputCanCheck>
           </div>
           <div class="prop-item">
             <span>变量类型</span>
@@ -113,12 +113,12 @@
     <!--子图表-->
     <CollapsePropHeader title="子图表">
       <div class="prop-list">
-        <div v-for="(childGraph,i) in graph.children" :key="i" class="prop-list-item" @drag="onGraphChildGraphDrag(childGraph, $event)" draggable="true">
+        <div v-for="(childGraph,i) in graph.children" :key="i" class="prop-list-item" @dragstart="onGraphChildGraphDrag(childGraph, $event)" draggable="true">
           <div class="prop-item">
             <span>图表名称</span>
             <InputCanCheck type="text" 
               v-model="childGraph.name" placeholder="输入图表名称" 
-              :checkCallback="(n) => checkChildGraphExists(n) ? '已存在相同名称的子图表':true"
+              :checkCallback="(o, n) => (o != n && checkChildGraphExists(n)) ? '已存在相同名称的子图表':true"
               @blur="$emit('on-update-graph', childGraph)"></InputCanCheck>
           </div>
           <div class="prop-item">
@@ -177,11 +177,13 @@ export default class GraphProp extends Vue {
   //===========================
 
   onAddGraphVariable() {
-    let v : BlockGraphVariable = {
-      name: '变量' + this.graph.variables.length,
-      type: 'any',
-      defaultValue: null,
-    };
+    let v = new BlockGraphVariable();
+
+    v.name = '变量' + this.graph.variables.length;
+    v.type = 'any';
+    v.defaultValue = null;
+    v.value = null;
+
     this.graph.variables.push(v);
     this.blockOwnerData.graphVariableChange.onVariableAdd(this.graph, v);
   }
@@ -198,14 +200,20 @@ export default class GraphProp extends Vue {
   onChooseGraphVariableType(v : BlockGraphVariable, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData) => {
       v.type = type.name;
-      this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, v);
+      this.onUpdateGraphVariableDrag(v.name, v);
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
       e.y + 10));
   }
+  onUpdateGraphVariableDrag(vNameOld : string, v : BlockGraphVariable) {
+    this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, vNameOld, v);
+  }
   onGraphVariableDrag(v : BlockGraphVariable, e : DragEvent) {
-    if(CommonUtils.isEventInControl(e)) e.preventDefault();
+    if(CommonUtils.isEventInControl(e)) { 
+      e.preventDefault(); 
+      e.stopPropagation(); 
+    }
     else e.dataTransfer.setData('text/plain', 'drag:graph-variable:' + this.graph.name + ':' + v.name);
   }
 
@@ -228,7 +236,7 @@ export default class GraphProp extends Vue {
 
   onAddGraphPort(direction : BlockPortDirection) {
     let port : BlockPortRegData = {
-      guid: (direction == 'input' ? 'PI' : 'PO') + (direction == 'input' ? this.graph.inputPorts.length : this.graph.outputPorts.length),
+      guid: (direction == 'input' ? 'PI' : 'PO') + CommonUtils.genNonDuplicateIDHEX(6),
       name: '新端口' + (direction == 'input' ? this.graph.inputPorts.length : this.graph.outputPorts.length),
       direction: direction,
       paramType: <BlockParameterType>this.lastSetParamType,

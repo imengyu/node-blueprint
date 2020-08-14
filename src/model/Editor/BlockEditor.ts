@@ -54,7 +54,7 @@ export class BlockEditor extends Block {
     portParamIcon: 'icon-search2',
     portParamIconActive: 'icon-yuan1',
     portFailedIconActive: 'icon-close-',
-    portBehaviorAddIcon: 'icon-pluss-1',
+    portBehaviorAddIcon: 'icon-add-behavor-port',
     portParamAddIcon: 'icon-pluss-1',
     portPortDeleteIcon: 'icon-close-1',
   }
@@ -106,10 +106,10 @@ export class BlockEditor extends Block {
     let areaPorts = document.createElement('div');
     let areaPortsBottom = document.createElement('div');
 
-    this.els.elInputBehaviorPorts = document.createElement('div');
-    this.els.elInputBehaviorPorts.classList.add("ports", 'input');
-    this.els.elOutputBehaviorPorts = document.createElement('div');
-    this.els.elOutputBehaviorPorts.classList.add("ports", 'output');
+    this.els.elInputPorts = document.createElement('div');
+    this.els.elInputPorts.classList.add("ports", 'input');
+    this.els.elOutputPorts = document.createElement('div');
+    this.els.elOutputPorts.classList.add("ports", 'output');
 
     this.els.elAddInputBehaviorPort = document.createElement('a');
     this.els.elAddOutputBehaviorPort = document.createElement('a');
@@ -119,21 +119,6 @@ export class BlockEditor extends Block {
     this.els.elAddOutputBehaviorPort.setAttribute('title', '添加出端口');
     this.els.elAddInputBehaviorPort.onclick = this.onUserAddInputPort.bind(this);
     this.els.elAddOutputBehaviorPort.onclick = this.onUserAddOutputPort.bind(this);
-
-    areaPorts.classList.add("area", "Behavior");
-    areaPorts.appendChild(this.els.elInputBehaviorPorts);
-    areaPorts.appendChild(this.els.elOutputBehaviorPorts);
-    areaPortsBottom.classList.add("area-bottom", "Behavior");
-    areaPortsBottom.appendChild(this.els.elAddInputBehaviorPort);
-    areaPortsBottom.appendChild(this.els.elAddOutputBehaviorPort);
-
-    let areaParamPorts = document.createElement('div');
-    let areaParamPortsBottom = document.createElement('div');
-
-    this.els.elInputParamPorts = document.createElement('div');
-    this.els.elInputParamPorts.classList.add("ports", 'input');
-    this.els.elOutputParamPorts = document.createElement('div');
-    this.els.elOutputParamPorts.classList.add("ports", 'output');
 
     this.els.elAddInputParamPort = document.createElement('a');
     this.els.elAddOutputParamPort = document.createElement('a');
@@ -145,17 +130,17 @@ export class BlockEditor extends Block {
     this.els.elAddInputParamPort.onclick = this.onUserAddInputParam.bind(this);
     this.els.elAddOutputParamPort.onclick = this.onUserAddOutputParam.bind(this);
 
-    areaParamPorts.classList.add("area", "Param");
-    areaParamPorts.appendChild(this.els.elInputParamPorts);
-    areaParamPorts.appendChild(this.els.elOutputParamPorts);
-    areaParamPortsBottom.classList.add("area-bottom", "Param");
-    areaParamPortsBottom.appendChild(this.els.elAddInputParamPort);
-    areaParamPortsBottom.appendChild(this.els.elAddOutputParamPort);
+    areaPorts.classList.add("area");
+    areaPorts.appendChild(this.els.elInputPorts);
+    areaPorts.appendChild(this.els.elOutputPorts);
+    areaPortsBottom.classList.add("area-bottom");
+    areaPortsBottom.appendChild(this.els.elAddInputBehaviorPort);
+    areaPortsBottom.appendChild(this.els.elAddInputParamPort);
+    areaPortsBottom.appendChild(this.els.elAddOutputParamPort);
+    areaPortsBottom.appendChild(this.els.elAddOutputBehaviorPort);
 
     content.appendChild(areaPorts);
     content.appendChild(areaPortsBottom);
-    content.appendChild(areaParamPorts);
-    content.appendChild(areaParamPortsBottom);
     content.classList.add("content");
 
     //#endregion
@@ -215,6 +200,11 @@ export class BlockEditor extends Block {
 
     //#region Comment
 
+    this.els.elBottomInfoHost = document.createElement('div');
+    this.els.elBottomInfoHost.classList.add('bottom-info');
+
+    content.appendChild(this.els.elBottomInfoHost);
+ 
     this.els.elComment = document.createElement('div');
     this.els.elComment.classList.add('flow-block-comment', 'flow-block-no-move');
     this.els.elCommentText = document.createElement('div');
@@ -275,11 +265,17 @@ export class BlockEditor extends Block {
     this.el.addEventListener('wheel', this.onMouseWhell.bind(this));
     this.el.addEventListener('contextmenu', this.onContextMenu.bind(this));
 
+    //load port elements
+    this.allPorts.forEach(port => {
+      if(port.editorData == null)
+        this.addPortElement(port);
+    });
+
     host.appendChild(this.el);
 
     this.createFn();
 
-    this.onCreate.invoke(this);
+    this.onEditorCreate.invoke(this);
 
     if(typeof this.onCreateCustomEditor == 'function')
       this.onCreateCustomEditor(this.els.elCustomEditor, this, this.regData);
@@ -479,21 +475,25 @@ export class BlockEditor extends Block {
     }
 
     //add element node
-    if(port.paramType == 'execute') {
-      port.editorData.elDot.classList.add(this.portIcons.portBehaviorIcon);
-      if(port.direction == 'input') this.els.elInputBehaviorPorts.appendChild(port.editorData.el);
-      else if(port.direction == 'output') this.els.elOutputBehaviorPorts.appendChild(port.editorData.el);
-    }else {
+    if(port.paramType == 'execute')
+      port.editorData.elDot.classList.add(this.portIcons.portBehaviorIcon)
+    else 
       port.editorData.elDot.classList.add(this.portIcons.portParamIcon);
-      if(port.direction == 'input') this.els.elInputParamPorts.appendChild(port.editorData.el);
-      else if(port.direction == 'output') this.els.elOutputParamPorts.appendChild(port.editorData.el);
-    }
+
+    if(port.direction == 'input') this.els.elInputPorts.appendChild(port.editorData.el);
+    else if(port.direction == 'output') this.els.elOutputPorts.appendChild(port.editorData.el);
   }
   private createOrRecreateParamPortEditor(port : BlockPort, isAdd = false) {
     if(!this.created) return;
 
     if(port.paramType == 'execute') {
       port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
+      return;
+    }
+
+    if(port.editorData.oldParamCustomType == port.paramCustomType &&
+      port.editorData.oldParamType == port.paramType) {
+      this.updatePortParamVal(port);
       return;
     }
 
@@ -532,9 +532,6 @@ export class BlockEditor extends Block {
       port.editorData.elDot.style.color = customType.color;
     else
       port.editorData.elDot.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType);
-
-    port.editorData.editor = editor;
-
     //创建类型编辑器
     if(!port.forceNoEditorControl && editor != null) {
 
@@ -558,6 +555,10 @@ export class BlockEditor extends Block {
         }
       }
     }
+
+    port.editorData.editor = editor;
+    port.editorData.oldParamCustomType = port.paramCustomType;
+    port.editorData.oldParamType = port.paramType;
   }
 
   public updatePortParamVal(port : BlockPort) {
@@ -593,19 +594,7 @@ export class BlockEditor extends Block {
     if(port.paramType == 'execute'){
       port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
       port.editorData.elDot.classList.remove('icon-yuan1','icon-search2');
-
-      if(port.editorData.el.parentNode != (port.direction == 'input' ? this.els.elInputBehaviorPorts : this.els.elOutputBehaviorPorts)) {
-        port.editorData.el.parentNode.removeChild(port.editorData.el);
-        (port.direction == 'input' ? this.els.elInputBehaviorPorts : this.els.elOutputBehaviorPorts).appendChild(port.editorData.el);
-      }
-
     } else {
-
-      if(port.editorData.el.parentNode != (port.direction == 'input' ? this.els.elInputParamPorts : this.els.elOutputParamPorts)) {
-        port.editorData.el.parentNode.removeChild(port.editorData.el);
-        (port.direction == 'input' ? this.els.elInputParamPorts : this.els.elOutputParamPorts).appendChild(port.editorData.el);
-      }
-
       port.editorData.elDot.classList.remove('icon-sanjiaoxing','icon-zuo');
       port.editorData.el.setAttribute('data-param-type', port.paramType);
       port.editorData.el.setAttribute('data-param-custom-type', port.paramCustomType);
@@ -625,14 +614,23 @@ export class BlockEditor extends Block {
   }
 
   public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {
-    let index = CommonUtils.getElementIndex(port.editorData.el);
-    if(index >= 0) {
-      let parent = port.editorData.el.parentNode;
-      let af = parent.childNodes.item(index + (move == 'up' ? 1 : -2));
-      if(af != null) {
-        parent.removeChild(port.editorData.el);
-        parent.insertBefore(port.editorData.el, af);
+    let refEl : Element = null;
+    let parent = port.editorData.el.parentNode;
+    if(move == 'up') 
+      refEl = port.editorData.el.previousElementSibling;
+    else {
+      let n = port.editorData.el.nextElementSibling;
+      if(n != null) {
+        refEl = n.nextElementSibling;
+        if(refEl == null) {
+          parent.removeChild(port.editorData.el);
+          parent.appendChild(port.editorData.el);
+        }
       }
+    }
+    if(refEl != null) {
+      parent.removeChild(port.editorData.el);
+      parent.insertBefore(port.editorData.el, refEl);
     }
   }
 
@@ -704,6 +702,21 @@ export class BlockEditor extends Block {
           port.connectedFromPort.forEach(element => (<ConnectorEditor>element.connector).clearActive());
       });
     }
+  }
+  public addBottomTip(icon : string, text : string, className : string = '', show = true) {
+    let d = document.createElement('div');
+    d.setAttribute('class', className);
+    d.innerHTML = '<i class="iconfont '+icon+' mr-2"></i>' + text;
+    this.els.elBottomInfoHost.appendChild(d);
+    return d;
+  }
+  public updateBottomTip(el : HTMLElement, icon : string, text : string, className : string = '') {
+    el.setAttribute('class', className);
+    el.innerHTML = '<i class="iconfont '+icon+' mr-2"></i>' + text;
+    return el;
+  }
+  public deleteBottomTip(el : HTMLElement) {
+    this.els.elBottomInfoHost.removeChild(el);
   }
 
   private activeFlashInterval = null;
@@ -815,7 +828,7 @@ export class BlockEditor extends Block {
           let multiSelectBlocks = this.editor.getMultiSelectedBlocks();
           if(multiSelectBlocks.length == 0 || multiSelectBlocks.contains(this)) {
             this.updateSelectStatus(true);
-            this.editor.onUserSelectBlock(this, false);
+            this.editor.onUserSelectBlock(this, true);
           }else {
             this.editor.unSelectAllBlocks();
             this.updateSelectStatus(true);
@@ -892,16 +905,16 @@ export class BlockEditor extends Block {
 export type BlockBreakPoint = 'enable'|'disable'|'none';
 
 export class BlockEditorHTMLData {
-  elInputBehaviorPorts : HTMLDivElement = null;
-  elOutputBehaviorPorts : HTMLDivElement = null;
+
+  elInputPorts : HTMLDivElement = null;
+  elOutputPorts : HTMLDivElement = null;
+
   elAddInputBehaviorPort : HTMLElement = null;
   elAddOutputBehaviorPort : HTMLElement = null;
-
-  elInputParamPorts : HTMLDivElement = null;
-  elOutputParamPorts : HTMLDivElement = null;
-
   elAddInputParamPort : HTMLElement = null;
   elAddOutputParamPort : HTMLElement = null;
+
+  elBottomInfoHost : HTMLElement = null;
 
   elTitle : HTMLDivElement = null;
   elTitleText : HTMLElement = null;

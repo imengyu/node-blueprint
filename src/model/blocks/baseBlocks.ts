@@ -5,6 +5,9 @@ import { BlockPort } from "../Define/Port";
 import DebugWorkProviderInstance from "../WorkProvider/DebugWorkProvider";
 import OperatorBlocks from "./OperatorBlocks";
 import { BlockEditor } from "../Editor/BlockEditor";
+import CommonUtils from "../../utils/CommonUtils";
+import StringUtils from "../../utils/StringUtils";
+import logger from "../../utils/Logger";
 
 export default { 
   register,
@@ -97,14 +100,80 @@ function registerScriptVariableBase()  {
   variableGet.baseInfo.category = '基础';
   variableGet.baseInfo.version = '2.0';
   variableGet.type = 'base';
-  variableGet.callbacks.onCreate = () => {};
-  variableGet.callbacks.onPortActive = (block, port) => {
-    
-  };
-  variableGet.callbacks.onPortUpdate = (block, port) => {
+  variableGet.callbacks.onCreate = (block) => {
 
+    if(CommonUtils.isNullOrEmpty(block.options['variable']))
+      return;
+    
+    //添加端口
+    let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+    let port : BlockPort = null;
+
+    block.data['portGuid'] = StringUtils.strToHexCharCode(block.options['variable'], false);
+
+    if(variable != null) {
+      port = block.addPort({
+        guid: block.data['portGuid'],
+        direction: 'output',
+        paramType: ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type),
+        paramCustomType: variable.type,
+        name: block.options['variable'],
+      }, false, variable.defaultValue);
+
+      block.data['variable_changeCallback'] = variable.changeCallbacks.addListener(this, (v) => {
+        port.paramValue = v.value;
+        port.update();
+      });
+
+      block.data['variable_canuse'] = true;
+    }
   };
-  variableGet.settings.oneBlockOnly = true;
+  variableGet.callbacks.onEditorCreate = (block) => {
+    if(block.data['variable_canuse']) {
+
+      let port = block.getPortByGUID(block.data['portGuid']);
+
+      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
+        if(graph == block.currentGraph && variable.name == block.options['variable'])
+          block.editor.deleteBlock(block, true);
+      });
+      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(this, (graph, variableOldName, variable) => {
+        if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
+          block.options['variable'] = variable.name;
+
+          port.paramType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
+          port.paramCustomType = variable.type;
+          port.paramDefaultValue = variable.defaultValue;
+          port.name = variable.name;
+          
+          block.updatePort(port);
+        }
+      });
+    } else block.addBottomTip('icon-error-', '变量丢失，请重新添加', 'text-warning', true);
+  };
+  variableGet.callbacks.onStartRun = (block) => {
+    //更新参数端口
+    let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+    let portGuid = StringUtils.strToHexCharCode(block.options['variable'], false);
+    let port = block.getPortByGUID(portGuid);
+    if(variable != null && port != null)  {
+      port.paramValue = variable.value;
+      port.update();
+    }
+  };
+  variableGet.callbacks.onDestroy = (block) => {
+    
+    let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+    if(variable != null) {
+      variable.changeCallbacks.removeListener(<number>block.data['variable_changeCallback']);
+
+      if(block.isEditorBlock) {
+        let blockEditor = (<BlockEditor>block);
+        blockEditor.editor.editorEvents.onVariableUpdate.removeListener(<number>block.data['onVariableUpdate']);
+        blockEditor.editor.editorEvents.onVariableRemove.removeListener(<number>block.data['onVariableRemove']);
+      }
+    }
+  };
   variableGet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
   variableGet.blockStyle.noTitle = true;
 
@@ -115,14 +184,113 @@ function registerScriptVariableBase()  {
   variableSet.baseInfo.category = '基础';
   variableSet.baseInfo.version = '2.0';
   variableSet.type = 'base';
-  variableSet.callbacks.onCreate = () => {};
-  variableSet.callbacks.onPortActive = (block, port) => {
+  variableSet.ports = [
+    {
+      guid: 'PI0',
+      paramType: 'execute',
+      direction: 'input'
+    },
+    {
+      guid: 'PO0',
+      paramType: 'execute',
+      direction: 'output'
+    },
+  ];
+  variableSet.callbacks.onCreate = (block) => {
     
-  };
-  variableSet.callbacks.onPortUpdate = (block, port) => {
+    //添加端口
+    let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+    let portIn : BlockPort = null;
+    let portOut : BlockPort = null;
 
+    let portInGuid = StringUtils.strToHexCharCode(block.options['variable'] + '_I', false);
+    let portOutGuid = StringUtils.strToHexCharCode(block.options['variable'] + '_O', false);
+
+    block.data['portInGuid'] = portInGuid;
+    block.data['portOutGuid'] = portOutGuid;
+
+    if(variable != null) {
+      portIn = block.addPort({
+        guid: portInGuid,
+        direction: 'input',
+        paramType: ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type),
+        paramCustomType: variable.type,
+        paramDefaultValue: variable.defaultValue,
+      }, false, variable.defaultValue);
+      portOut = block.addPort({
+        guid: portOutGuid,
+        direction: 'output',
+        paramType: ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type),
+        paramCustomType: variable.type,
+        name: block.options['variable'],
+      }, false, variable.defaultValue);
+
+      block.data['variable_changeCallback'] = variable.changeCallbacks.addListener(this, (v) => {
+        portOut.paramValue = v.value;
+        portOut.update();
+      });
+    }
+
+    block.data['variable_canuse'] = true;
   };
-  variableSet.settings.oneBlockOnly = true;
+  variableSet.callbacks.onEditorCreate = (block) => {
+
+    if(block.data['variable_canuse']) {
+
+      let portIn = block.getPortByGUID(block.data['portInGuid']);
+      let portOut = block.getPortByGUID(block.data['portOutGuid']);
+
+      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
+        if(graph == block.currentGraph && variable.name == block.options['variable'])
+          block.editor.deleteBlock(block, true);
+      });
+      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(this, (graph, variableOldName, variable) => {
+        if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
+          block.options['variable'] = variable.name;
+
+          portIn.paramType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
+          portIn.paramCustomType = variable.type;
+          portIn.paramDefaultValue = variable.defaultValue;
+
+          block.updatePort(portIn);
+
+          portOut.paramType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
+          portOut.paramCustomType = variable.type;
+          portOut.paramDefaultValue = variable.defaultValue;
+          portOut.name = variable.name;
+
+          block.updatePort(portOut);
+        }
+      });
+
+    } else block.addBottomTip('icon-error-', '变量丢失，请重新添加', 'text-warning', true);
+  };
+  variableSet.callbacks.onPortActive = (block, port) => {
+    if(port.guid == 'PI0') {
+      let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+      if(variable != null) {
+        let val = block.getInputParamValue(block.data['portInGuid']);
+        variable.set(val);
+      }else {
+        logger.error('[Set variable] variable ' + block.options['variable'] + ' not found !');
+      }
+
+      block.activeOutputPort('PO0');
+    }
+  };
+  variableSet.callbacks.onDestroy = (block) => {
+    let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+    if(variable != null) {
+      variable.changeCallbacks.removeListener(<number>block.data['variable_changeCallback']);
+
+      if(block.isEditorBlock) {
+        let blockEditor = (<BlockEditor>block);
+        blockEditor.editor.editorEvents.onVariableUpdate.removeListener(<number>blockEditor.data['onVariableUpdate']);
+        blockEditor.editor.editorEvents.onVariableRemove.removeListener(<number>blockEditor.data['onVariableRemove']);
+      }
+    }
+  };
+
   variableSet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
 
   BlockServiceInstance.registerBlock(variableSet, false);
@@ -143,36 +311,35 @@ function registerScriptGraphBase()  {
   graphIn.type = 'base';
   graphIn.callbacks.onCreate = (block) => {
     block.currentGraph.inputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'output'));
+  };
+  graphIn.callbacks.onEditorCreate = (block) => {
 
-    if(block.isEditorBlock) {
-      let blockEditor = (<BlockEditor>block);
-
-      blockEditor.data['onGraphPortAdd'] = blockEditor.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'input') 
-          block.addPort(port, false, port.paramDefaultValue, 'output');
-      });
-      blockEditor.data['onGraphPortRemove'] = blockEditor.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'input')
-          block.deletePort(port.guid);
-      });
-      blockEditor.data['onGraphPortUpdate'] = blockEditor.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'input') {
-          let portReal = blockEditor.getPortByGUID(port.guid);
-          portReal.paramType = port.paramType;
-          portReal.paramCustomType = port.paramCustomType;
-          portReal.paramDefaultValue = port.paramDefaultValue;
-          blockEditor.updatePort(portReal);
-        }
-      });
-      blockEditor.data['onGraphPortMoveDown'] = blockEditor.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'input')
-          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'down');
-      });
-      blockEditor.data['onGraphPortMoveUp'] = blockEditor.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'input') 
-          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'up');
-      });
-    }
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'input') 
+        block.addPort(port, false, port.paramDefaultValue, 'output');
+    });
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'input')
+        block.deletePort(port.guid);
+    });
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'input') {
+        let portReal = block.getPortByGUID(port.guid);
+        portReal.paramType = port.paramType;
+        portReal.paramCustomType = port.paramCustomType;
+        portReal.paramDefaultValue = port.paramDefaultValue;
+        block.updatePort(portReal);
+      }
+    });
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'input')
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
+    });
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'input') 
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
+    });
+    
   };
   graphIn.callbacks.onPortActive = (block, port) => {
 
@@ -204,36 +371,33 @@ function registerScriptGraphBase()  {
   graphOut.type = 'base';
   graphOut.callbacks.onCreate = (block) => {
     block.currentGraph.outputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'input'));
-
-    if(block.isEditorBlock) {
-      let blockEditor = (<BlockEditor>block);
-
-      blockEditor.data['onGraphPortAdd'] = blockEditor.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'output') 
-          block.addPort(port, false, port.paramDefaultValue, 'input');
-      });
-      blockEditor.data['onGraphPortRemove'] = blockEditor.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'output') 
-          block.deletePort(port.guid);
-      });
-      blockEditor.data['onGraphPortUpdate'] = blockEditor.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'output') {
-          let portReal = blockEditor.getPortByGUID(port.guid);
-          portReal.paramType = port.paramType;
-          portReal.paramCustomType = port.paramCustomType;
-          portReal.paramDefaultValue = port.paramDefaultValue;
-          blockEditor.updatePort(portReal);
-        }
-      });
-      blockEditor.data['onGraphPortMoveDown'] = blockEditor.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'output') 
-          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'down');
-      });
-      blockEditor.data['onGraphPortMoveUp'] = blockEditor.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
-        if(graph == block.currentGraph && port.direction == 'output') 
-          blockEditor.movePortElementUpOrDown(blockEditor.getPortByGUID(port.guid), 'up');
-      });
-    }
+  };
+  graphOut.callbacks.onEditorCreate = (block) => {
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'output') 
+        block.addPort(port, false, port.paramDefaultValue, 'input');
+    });
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'output') 
+        block.deletePort(port.guid);
+    });
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'output') {
+        let portReal = block.getPortByGUID(port.guid);
+        portReal.paramType = port.paramType;
+        portReal.paramCustomType = port.paramCustomType;
+        portReal.paramDefaultValue = port.paramDefaultValue;
+        block.updatePort(portReal);
+      }
+    });
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'output') 
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
+    });
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+      if(graph == block.currentGraph && port.direction == 'output') 
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
+    });
   };
   graphOut.callbacks.onPortActive = (block, port) => {
     

@@ -6,6 +6,7 @@ import { BlockRunLoopData, BlockRunner } from "../WorkProvider/Runner";
 import { EventHandler } from "../../utils/EventHandler";
 import logger from "../../utils/Logger";
 import { BlockGraphDocunment } from "./BlockDocunment";
+import { BlockEditor } from "../Editor/BlockEditor";
 
 export class Block {
 
@@ -46,10 +47,9 @@ export class Block {
     this.isEditorBlock = editorBlock;
     if(regData)
       this.regData = regData;
-    this.createBase();
   }
 
-  private createBase() {
+  public createBase() {
     if(this.regData) {
       this.guid = this.regData.guid;
       this.type = this.regData.type;
@@ -58,6 +58,11 @@ export class Block {
         this.onCreate.addListener(this,this.regData.callbacks.onCreate);
       if(typeof this.regData.callbacks.onDestroy == 'function') 
         this.onDestroy.addListener(this,this.regData.callbacks.onDestroy);
+      if(typeof this.regData.callbacks.onEditorCreate == 'function') 
+        this.onEditorCreate.addListener(this,this.regData.callbacks.onEditorCreate);
+      if(typeof this.regData.callbacks.onStartRun == 'function') 
+        this.onStartRun.addListener(this,this.regData.callbacks.onStartRun);
+
       if(typeof this.regData.callbacks.onPortActive == 'function') 
         this.onPortActive.addListener(this,this.regData.callbacks.onPortActive);
       if(typeof this.regData.callbacks.onPortUpdate == 'function') 
@@ -70,9 +75,7 @@ export class Block {
       if(this.regData.ports.length > 0)
         this.regData.ports.forEach(element => this.addPort(element, false));
     }
-
-    if(!this.isEditorBlock)
-      this.onCreate.invoke(this);
+    this.onCreate.invoke(this);
   }
 
   public regData : BlockRegData = null;
@@ -98,7 +101,9 @@ export class Block {
   //===========================
 
   public onCreate = new EventHandler<OnBlockEventCallback>();
+  public onEditorCreate = new EventHandler<OnBlockEditorEventCallback>();
   public onDestroy = new EventHandler<OnBlockEventCallback>();
+  public onStartRun = new EventHandler<OnBlockEventCallback>();
   public onPortActive = new EventHandler<OnPortEventCallback>();
   public onPortUpdate = new EventHandler<OnPortEventCallback>();
   public onPortAdd = new EventHandler<OnPortEventCallback>();
@@ -288,8 +293,9 @@ export class Block {
 
 export type OnBlockEventCallback = (block : Block) => void;
 export type OnPortEventCallback = (block : Block, port : BlockPort) => void;
+export type OnBlockEditorEventCallback = (block : BlockEditor) => void;
 
-export type OnUserAddPortCallback = (block : Block, direction : BlockPortDirection, type : 'execute'|'param') => BlockPortRegData;
+export type OnUserAddPortCallback = (block : BlockEditor, direction : BlockPortDirection, type : 'execute'|'param') => BlockPortRegData;
 
 export type BlockBreakPoint = 'enable'|'disable'|'none';
 

@@ -14,8 +14,10 @@
     <CollapsePropHeader title="主图表">
 
       <GraphProp 
+        :blockOwnerData="blockOwnerData"
         :graph="doc.mainGraph" 
         @on-open-graph="(g)=>$emit('on-open-graph',g)"
+        @on-delete-graph="(g)=>$emit('on-delete-graph',g)"
         @choose-graph-variable-type="(v,p)=>$emit('choose-graph-variable-type',v,p)"
       ></GraphProp>
     </CollapsePropHeader>
@@ -28,6 +30,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { BlockDocunment } from "../model/Define/BlockDocunment";
 import GraphProp from "./GraphProp.vue";
 import CollapsePropHeader from "./CollapsePropHeader.vue";
+import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 
 @Component({
   components: {
@@ -39,5 +42,6 @@ export default class DocunmentProp extends Vue {
 
   @Prop({ default: null }) doc : BlockDocunment;
 
+  @Prop({ default: false }) blockOwnerData : BlockEditorOwner;
 }
 </script>
