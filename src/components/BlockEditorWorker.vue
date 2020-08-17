@@ -41,6 +41,7 @@ import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import { MenuItem } from "iview";
 import { MenuOptions } from "../types/vue-contextmenujs";
 import CommonUtils from "../utils/CommonUtils";
+import { Connector } from "../model/Define/Connector";
 
 /**
  * 编辑器逻辑控制
@@ -221,14 +222,30 @@ export default class BlockEditorWorker extends Vue {
   public deleteBlock(block : BlockEditor, rm = true) {
 
     block.destroy();
-    block.currentGraph = null;
-
+    
     this.$emit('on-delete-block', block);
 
-    if (rm) 
-      this.blocks.remove(block);
+    if (rm) {
+      if(block.currentGraph == this.currentGraph)
+        this.blocks.remove(block);
+      else
+        block.currentGraph.blocks.remove(block);
+    }
+
+    block.currentGraph = null;
 
     this.$emit('update-set-file-changed');
+  }
+  public calcBlocksRegion(blocks : BlockEditor[]) : Rect {
+    let x = null, y = null, r = null, b = null;
+    blocks.forEach((block) => {
+      if(x == null || block.position.x < x) x = block.position.x;
+      if(y == null || block.position.y < y) y = block.position.y;
+
+      if(r == null || block.position.x + block.size.x > r) r = block.position.x + block.size.x;
+      if(b == null || block.position.y + block.size.y > b) b = block.position.y + block.size.y;
+    })
+    return new Rect(x, y, r - x, b - y);
   }
 
   //链接控制事件
@@ -397,6 +414,7 @@ export default class BlockEditorWorker extends Vue {
 
       this.$emit('show-add-block-panel-view-port-pos', this.connectingEndPos);
       this.isConnectingToNew = true;
+      this.$emit('update-set-file-changed');
       return;
     }
     
@@ -490,15 +508,18 @@ export default class BlockEditorWorker extends Vue {
   }
   public unConnectBlock(block : BlockEditor) {
     block.allPorts.forEach((p) => p.unconnectAllConnector());
+
+    this.$emit('update-set-file-changed');
   }
 
-  //选中单元的操作
+  //单元的操作
   //=======================
 
   public unconnectSelectedConnectors() {
     this.selectedConnectors.forEach((c) => {
       this.unConnectConnector(c);
     });
+    this.$emit('update-set-file-changed');
   }
   public refreshBlock(block : BlockEditor) {
     block.allPorts.forEach((p) => {
@@ -508,21 +529,55 @@ export default class BlockEditorWorker extends Vue {
   }
   public unConnectSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.unConnectBlock(b));
+    this.$emit('update-set-file-changed');
   }
   public refreshSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.refreshBlock(b));
   }
   public alignSelectedBlock(align : 'left'|'top'|'right'|'bottom') {
+    switch(align) {
+      case 'left':
+
+        break;
+      case 'top':
+
+        break;
+      case 'right':
+
+        break;
+      case 'bottom':
+
+        break;
+    }
     this.selectedBlocks.forEach((b) => {
       
     });
-
+    this.$emit('update-set-file-changed');
   }
   public setSelectedBlockBreakpointState(state : BlockBreakPoint) {
     this.selectedBlocks.forEach((b) => {
       b.breakpoint = state;
       b.updateBreakPointStatus();
     });
+    this.$emit('update-set-file-changed');
+  }
+  public getBlocksAllConnector(block : BlockEditor[])  { 
+    let conn : Array<Connector> = []; 
+    block.forEach((b) => {
+      b.allPorts.forEach((p) => {
+        if(p.connectedFromPort.length > 0)
+          p.connectedFromPort.forEach((c) => {
+            if(!conn.contains(c.connector))
+              conn.push(c.connector);
+          });
+        if(p.connectedToPort.length > 0)
+          p.connectedToPort.forEach((c) => {
+            if(!conn.contains(c.connector))
+              conn.push(c.connector);
+          }); 
+      });
+    });
+    return conn;
   }
 
   //编辑器鼠标事件
@@ -666,6 +721,8 @@ export default class BlockEditorWorker extends Vue {
 
   keyControlDown = false;
 
+  public getIsControlKeyDown() { return this.keyControlDown; }
+
   //编辑器键盘事件
   //=======================
 
@@ -682,18 +739,17 @@ export default class BlockEditorWorker extends Vue {
     if(this.testEventInControl(e))
       return;
     switch(e.keyCode) {
-      case 17: //Ctrl
+      case 17://Ctrl
         this.keyControlDown = false;
         break;
-      case 8://Backspace
-      case 127://Delete
+      case 46://Delete
         this.showDeleteModalClick();
         break;
-
+      default:
+        this.$emit('on-editor-key', e.keyCode, e);
+        break;
     }
   }
-
-  getIsKeyControlDown() { return this.keyControlDown; }
 
 
   //删除疑问对话框
@@ -705,9 +761,9 @@ export default class BlockEditorWorker extends Vue {
     if(this.hasSelected())
       this.showDeleteModal = true;
   }
-  deleteSelectedBlocks() {
-    this.selectedBlocks.forEach((block) => this.deleteBlock(block));
-    this.selectedConnectors.forEach((connector) => this.unConnectConnector(connector));
+  public deleteSelectedBlocks() {
+    this.selectedBlocks.concat().forEach((block) => this.deleteBlock(block));
+    this.selectedConnectors.concat().forEach((connector) => this.unConnectConnector(connector));
     this.showDeleteModal = false;
   }
 

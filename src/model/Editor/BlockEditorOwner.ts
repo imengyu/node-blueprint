@@ -2,7 +2,7 @@ import { BlockEditor } from "./BlockEditor";
 import { BlockPort } from "../Define/Port";
 import { Vector2 } from "../Vector2";
 import { ConnectorEditor } from "./ConnectorEditor";
-import { BlockPortRegData } from "../Define/BlockDef";
+import { BlockPortRegData, BlockParameterTypeRegData } from "../Define/BlockDef";
 import { BlockGraphVariable, BlockGraphDocunment } from "../Define/BlockDocunment";
 import { EventHandler } from "../../utils/EventHandler";
 
@@ -29,13 +29,17 @@ export class BlockEditorOwner {
   showBlockRightMenu : (pos : Vector2) => void;
   deleteBlock: (block : BlockEditor, rm ?: boolean) => void;
 
+  chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void) => void;
+
   //编辑器事件回调
   graphVariableChange : {
     onVariableAdd : (graph : BlockGraphDocunment, variable : BlockGraphVariable) => void,
     onVariableRemove : (graph : BlockGraphDocunment, variable : BlockGraphVariable) => void,
     onVariableUpdate : (graph : BlockGraphDocunment, variableOldName : string, variable : BlockGraphVariable) => void,
   };
-  //编辑器事件回调
+  graphChange : {
+    onVGraphUpdate : (graph : BlockGraphDocunment) => void,
+  };
   graphPortChange : {
     onPortAdd : (graph : BlockGraphDocunment, port : BlockPortRegData) => void,
     onPortRemove : (graph : BlockGraphDocunment, port : BlockPortRegData) => void,
@@ -54,6 +58,8 @@ export class BlockEditorOwner {
     onVariableAdd: EventHandler<BlockGraphVariableChangeCallback>,
     onVariableRemove: EventHandler<BlockGraphVariableChangeCallback>,
     onVariableUpdate: EventHandler<BlockGraphVariableFullChangeCallback>,
+    onGraphDelete : EventHandler<BlockGraphChangeCallback>,
+    onGraphUpdate : EventHandler<BlockGraphChangeCallback>,
   } = {
     onGraphPortAdd: null,
     onGraphPortUpdate: null,
@@ -63,6 +69,8 @@ export class BlockEditorOwner {
     onVariableAdd: null,
     onVariableRemove: null,
     onVariableUpdate: null,
+    onGraphDelete: null,
+    onGraphUpdate: null,
   };
 
 }
@@ -70,6 +78,7 @@ export class BlockEditorOwner {
 export type BlockPortRegDataCallback = (port: BlockPortRegData) => void;
 export type BlockPortRegDataMoveCallback = (port: BlockPortRegData, index: number) => void;
 
+export type BlockGraphChangeCallback = (graph: BlockGraphDocunment) => void;
 export type BlockGraphPortChangeCallback = (graph: BlockGraphDocunment, port: BlockPortRegData) => void;
 export type BlockGraphVariableChangeCallback = (graph: BlockGraphDocunment, variable : BlockGraphVariable) => void;
 export type BlockGraphVariableFullChangeCallback = (graph: BlockGraphDocunment, variableOldName: string, variable : BlockGraphVariable) => void;

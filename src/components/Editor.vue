@@ -84,6 +84,8 @@
           @update-clipboard-state="(v) => isClipboardFilled = v"
           @update-multi-selecting="(v) => isMultiSelecting = v"
           @update-block-owner-data="(d) => blockOwnerData = d"
+          @choose-custom-type="onChooseCustomType"
+          @on-want-save="saveFile"
         ></BlockDrawer>
         <!--属性栏-->
         <div slot="right" class="prop">
@@ -229,9 +231,9 @@ export default class Editor extends Vue {
     this.menuItemStepNext = new MenuData('单步调试', () => this.stepNext(), '');
     this.menuItemStartRunAndStepNext = new MenuData('单步前进', () => this.startRunAndStepNext(), '', false, false);
 
-    this.menuItemCut = new MenuData('剪切', () => {}, 'Ctrl+X');
-    this.menuItemCopy = new MenuData('复制', () => {}, 'Ctrl+C');
-    this.menuItemPatse = new MenuData('粘贴', () => {}, 'Ctrl+V');
+    this.menuItemCut = new MenuData('剪切', () => this.editorControl.clipboardCutSelect(), 'Ctrl+X');
+    this.menuItemCopy = new MenuData('复制', () => this.editorControl.clipboardCopySelect(), 'Ctrl+C');
+    this.menuItemPatse = new MenuData('粘贴', () => this.editorControl.clipboardPaste(), 'Ctrl+V');
     this.menuItemDelete = new MenuData('删除', () => this.showDeleteModalClick(), 'Delete');
 
     this.menuMain = [
@@ -242,8 +244,8 @@ export default class Editor extends Vue {
         new MenuData('导出JSON', () => this.newFile()),
       ]),
       new MenuData('编辑', [
-        new MenuData('撤销', () => {}, 'Ctrl+Z'),
-        new MenuData('重做', () => {}, 'Ctrl+Y'),
+        new MenuData('撤销', () => this.undo(), 'Ctrl+Z'),
+        new MenuData('重做', () => this.redo(), 'Ctrl+Y'),
         new MenuSeparator(),
         this.menuItemCut,
         this.menuItemCopy,
@@ -271,12 +273,12 @@ export default class Editor extends Vue {
         this.menuItemStepNext,
         this.menuItemStartRunAndStepNext,
         new MenuSeparator(),
-        new MenuData('启用所有断点', () => {}, ''),
-        new MenuData('禁用所有断点', () => {}, ''),
+        new MenuData('启用所有断点', () => this.disableAllBreakPoint(), ''),
+        new MenuData('禁用所有断点', () => this.enableAllBreakPoint(), ''),
       ]),
       new MenuData('帮助', [
-        new MenuData('使用文档', () => {}, ''),
-        new MenuData('关于', () => {}, ''),
+        new MenuData('使用文档', () => this.showHelp(), ''),
+        new MenuData('关于', () => this.showAbout(), ''),
       ]),
     ];
 
@@ -303,6 +305,11 @@ export default class Editor extends Vue {
   }
   showBlockMenu() { this.$contextmenu(this.menuBlock);  }
   showDeleteModalClick() { this.editorControl.showDeleteModalClick() }
+
+  //公共方法
+
+  public redo() { this.editorControl.redo(); }
+  public undo() { this.editorControl.undo(); }
 
   graphBreadcrumb : Array<{
     text: string,
@@ -422,7 +429,7 @@ export default class Editor extends Vue {
   showChooseTypePanel = false;
   showChooseTypePanelPos = new Vector2();
   showChooseTypePanelMaxHeight = 500;
-  showChooseTypePanelCallback : Function = null;
+  showChooseTypePanelCallback : (type: BlockParameterTypeRegData, isBaseType : boolean) => void = null;
 
   onChooseTypeItemClick(choosedType : BlockParameterTypeRegData, isBaseType : boolean) {
     if(typeof this.showChooseTypePanelCallback == 'function') {
@@ -444,6 +451,10 @@ export default class Editor extends Vue {
     (<AddPanel>this.$refs.ChooseTypePanel).focus();
   }
 
+  onChooseCustomType(pos : Vector2, callback) {
+    this.showChooseTypePanelCallback = callback;
+    this.showChooseTypePanelAt(pos);
+  }
   onChooseGraphVariableType(v, pos : Vector2) {
     this.showChooseTypePanelCallback = v;
     this.showChooseTypePanelAt(pos);
@@ -760,15 +771,17 @@ export default class Editor extends Vue {
     });
   }
 
-  disableAllBreakPoint() {
-    
-  }
-  enableAllBreakPoint() {
-    
-  }
+  disableAllBreakPoint() { this.editorControl.enableOrdisableAllBreakPoint('disable') }
+  enableAllBreakPoint() { this.editorControl.enableOrdisableAllBreakPoint('enable') }
+
   //#endregion
 
+  showAbout() {
+    
+  }
+  showHelp() {
 
+  }
 }
 
 </script>

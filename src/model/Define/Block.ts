@@ -53,6 +53,7 @@ export class Block {
     if(this.regData) {
       this.guid = this.regData.guid;
       this.type = this.regData.type;
+      this.data = this.regData.settings.data;
 
       if(typeof this.regData.callbacks.onCreate == 'function') 
         this.onCreate.addListener(this,this.regData.callbacks.onCreate);
@@ -109,6 +110,8 @@ export class Block {
   public onPortAdd = new EventHandler<OnPortEventCallback>();
   public onPortRemove = new EventHandler<OnPortEventCallback>();
 
+  public portUpdateLock = false;
+
   //节点操作
   //===========================
 
@@ -142,6 +145,8 @@ export class Block {
     newPort.paramDefaultValue = data.paramDefaultValue ? data.paramDefaultValue : null;
     newPort.paramUserSetValue = initialValue;
     newPort.forceNoEditorControl = data.forceNoEditorControl;
+    newPort.forceEditorControlOutput = data.forceEditorControlOutput;
+    newPort.data = typeof data.data != 'undefined' ? data.data : {};
 
     if(newPort.direction == 'input') {
       this.inputPorts[newPort.guid] = newPort;
@@ -165,24 +170,24 @@ export class Block {
    * @param guid 端口GUID
    * @param direction 端口方向
    */
-  public deletePort(guid : string, direction ?: BlockPortDirection) {
-    let oldData = this.getPort(guid, direction);
+  public deletePort(guid : string|BlockPort, direction ?: BlockPortDirection) {
+    let oldData = typeof guid == 'string' ? this.getPort(guid, direction) : guid;
     if(oldData == null || oldData == undefined) {
       console.warn("[deletePort] " + guid + " port not exist !");
       return;
     }
 
-
     this.allPorts.remove(oldData);
     this.onRemovePortElement.invoke(this, oldData);
     this.onPortRemove.invoke(this, oldData);
 
+
     if(direction == 'input') {
-      delete(this.inputPorts[guid]);
+      delete(this.inputPorts[typeof guid == 'string' ? guid : guid.guid]);
       this.inputPortCount--;
     }
     else if(direction == 'output') {
-      delete(this.outputPorts[guid]);
+      delete(this.outputPorts[typeof guid == 'string' ? guid : guid.guid]);
       this.outputPortCount--;
     }
   }
@@ -219,8 +224,8 @@ export class Block {
    * 获取输入参数端口的数据
    * @param guid 参数端口GUID
    */
-  public getInputParamValue(guid : string) {
-    let port = <BlockPort>this.inputPorts[guid];
+  public getInputParamValue(guid : string|BlockPort) {
+    let port = typeof guid == 'string' ? <BlockPort>this.inputPorts[guid] : guid;
     if(port && port.paramType != 'execute')
       return port.paramValue;
     return undefined;
@@ -229,8 +234,8 @@ export class Block {
    * 更新输出参数端口的数据
    * @param guid 参数端口GUID
    */
-  public setOutputParamValue(guid : string, value : any) {
-    let port = <BlockPort>this.outputPorts[guid];
+  public setOutputParamValue(guid : string|BlockPort, value : any) {
+    let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
     if(port && port.paramType != 'execute') {
       port.paramValue = value;
       port.update();
@@ -240,8 +245,8 @@ export class Block {
    * 在当前上下文激活某一个输出行为端口
    * @param guid 行为端口GUID
    */
-  public activeOutputPort(guid : string) {
-    let port = <BlockPort>this.outputPorts[guid];
+  public activeOutputPort(guid : string|BlockPort) {
+    let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
     if(port)
       port.active(this.currentRunningContext);
   }
@@ -249,8 +254,8 @@ export class Block {
    * 在新的上下文中激活某一个输出行为端口（适用于接收事件）
    * @param guid 行为端口GUID
    */
-  public activeOutputPortInNewContext(guid : string) {
-    let port = <BlockPort>this.outputPorts[guid];
+  public activeOutputPortInNewContext(guid : string|BlockPort) {
+    let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
     if(port)
       port.activeInNewContext();
   }

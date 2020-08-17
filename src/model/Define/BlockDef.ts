@@ -1,4 +1,4 @@
-import { BlockParameterType, BlockPortDirection } from "./Port";
+import { BlockParameterType, BlockPortDirection, BlockPort } from "./Port";
 import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 
@@ -85,6 +85,7 @@ export class BlockRegData {
     },  
     parametersChangeSettings : BlockParametersChangeSettings,
     oneBlockOnly: boolean,
+    data: any,
   } = {
     /**
      * 端口动态配置
@@ -105,6 +106,7 @@ export class BlockRegData {
      * 获取或者设置当前单元是否只能在一个图表中出现一次
      */
     oneBlockOnly: false,
+    data: {}
   }
 
   /**
@@ -151,6 +153,10 @@ export class BlockRegData {
      */
     onCreateCustomEditor : BlockEditorComponentCreateFn,
     /**
+     * 创建单元自定义编辑器的回调（仅编辑器模式调用）
+     */
+    onCreatePortCustomEditor : BlockPortEditorComponentCreateFn,
+    /**
      * 用户创建端口时的回调（仅编辑器模式调用）
      */
     onUserAddPort: OnUserAddPortCallback,
@@ -164,6 +170,7 @@ export class BlockRegData {
     onPortRemove : null,
     onPortUpdate : null,
     onCreateCustomEditor : null,
+    onCreatePortCustomEditor: null,
     onUserAddPort: null,
   }
 
@@ -189,6 +196,10 @@ export class BlockStyleSettings  {
    * 单元左下角的小图标 16x16
    */
   public logoBottom = "";
+  /**
+   * 单元左下角的小图标 16x16
+   */
+  public logoBackground = "";
   /**
    * 单元标题背景颜色
    */
@@ -256,6 +267,12 @@ export interface BlockPortRegData {
    * 是否强制不显示编辑参数控件
    */
   forceNoEditorControl ?: boolean;
+  /**
+   * 是否强制在输出端口显示编辑参数控件
+   */
+  forceEditorControlOutput ?: boolean;
+
+  data ?: any;
 }
 
 
@@ -334,6 +351,7 @@ export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
 
 export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
 export type BlockParameterEditorValueChangedFn = (newVal : any, editorEle : HTMLElement) => void;
-export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, 
-  regData : BlockRegData) => void;
+export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData) => void;
+export type BlockPortEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, port : BlockPort) => HTMLElement;
+  
 

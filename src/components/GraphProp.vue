@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div class="prop-item">
+    <div class="prop-item" @dragstart="onGraphChildGraphDrag(graph, $event)" draggable="true">
       <span>图表名称</span>
-      <input class="prop-item-editor" type="text" v-model="graph.name" />
+      <input class="prop-item-editor" type="text" v-model="graph.name" @blur="onUpdateGraph(graph)" />
     </div>
     <div class="prop-item">
       <span>注释</span>
-      <textarea class="prop-item-editor" v-model="graph.comment" placeholder="这个图表的说明文字...">
+      <textarea class="prop-item-editor" v-model="graph.comment" placeholder="这个图表的说明文字..." @blur="onUpdateGraph(graph)">
       </textarea>
     </div>
     <!--图表输入与输出-->
@@ -119,11 +119,11 @@
             <InputCanCheck type="text" 
               v-model="childGraph.name" placeholder="输入图表名称" 
               :checkCallback="(o, n) => (o != n && checkChildGraphExists(n)) ? '已存在相同名称的子图表':true"
-              @blur="$emit('on-update-graph', childGraph)"></InputCanCheck>
+              @blur="onUpdateGraph(childGraph)"></InputCanCheck>
           </div>
           <div class="prop-item">
             <span>图表注释</span>
-            <input type="text" v-model="childGraph.comment" placeholder="这个图表的说明文字..." @blur="$emit('on-update-graph', childGraph)" />
+            <input type="text" v-model="childGraph.comment" placeholder="这个图表的说明文字..." @blur="onUpdateGraph(childGraph)" />
           </div>
           <div class="prop-item mt-1">
             <span> </span>
@@ -137,7 +137,6 @@
         <div class="prop-list-item flex-center cursor-pointer" @click="onAddChildGraph">
           <i class="iconfont icon-pluss-2 mr-3"></i> 添加子图表
         </div>
-
       </div>
     </CollapsePropHeader>
   </div>
@@ -313,14 +312,16 @@ export default class GraphProp extends Vue {
   //===========================
 
   checkChildGraphExists(name : string) {
+    if(name == this.graph.name)
+      return;
     for(let i = this.graph.children.length - 1; i >= 0; i--)
       if(this.graph.children[i].name == name)
         return true;
     return false;
   }
 
-  onGraphChildGraphDrag(v, e : DragEvent) {
-    if(CommonUtils.isEventInControl(e)) e.preventDefault();
+  onGraphChildGraphDrag(v : BlockGraphDocunment, e : DragEvent) {
+    if(CommonUtils.isEventInControl(e) || v.isMainGraph) e.preventDefault();
     else e.dataTransfer.setData('text/plain', 'drag:graph:' + v.name);
   }
   onAddChildGraph() {
@@ -350,6 +351,9 @@ export default class GraphProp extends Vue {
         this.$emit('on-delete-graph', g);
       },
     });
+  }
+  onUpdateGraph(g : BlockGraphDocunment) {
+    this.blockOwnerData.graphChange.onVGraphUpdate(g);
   }
   onOpenGraph(g : BlockGraphDocunment) {
     this.$emit('on-open-graph', g);

@@ -99,7 +99,14 @@ export class BlockPort {
   public paramDefaultValue : any = null;
 
   public forceNoEditorControl = false;
+  public forceEditorControlOutput = false;
 
+  /**
+   * 自定义单元数据供代码使用（不会保存至文件中）
+   */
+  public data = {
+
+  };
   /**
    * 自定义参数端口属性供代码使用（会保存至文件中）
    */
@@ -121,7 +128,8 @@ export class BlockPort {
     if(this.direction == 'input') {
       if(typeof source != 'undefined')
         this.paramValue = source.paramValue;
-      this.parent.onPortUpdate.invoke(this.parent, this);
+      if(!this.parent.portUpdateLock) 
+        this.parent.onPortUpdate.invoke(this.parent, this);
       if(this.parent.isEditorBlock) 
         //更新编辑器状态
         (<BlockEditor>this.parent).updatePortParamVal(this);
@@ -154,7 +162,7 @@ export class BlockPort {
     if(this.paramType == 'execute') 
       return sourcePort.paramType == 'execute';
     if(this.paramType == "any") 
-      return true;
+      return sourcePort.paramType != 'execute';
     return (this.paramType == sourcePort.paramType && this.paramType != 'custom') || 
       (this.paramType == 'custom' && sourcePort.paramType == 'custom' && this.paramCustomType == sourcePort.paramCustomType) || 
       (this.paramType == 'enum' && sourcePort.paramType == 'enum' && this.paramCustomType == sourcePort.paramCustomType);
@@ -226,6 +234,7 @@ export class BlockPortEditorData {
   public elDot : HTMLElement = null;
   public elSpan : HTMLSpanElement = null;
   public elEditor : HTMLElement = null;
+  public elCustomEditor : HTMLElement = null;
   public elDeleteButton : HTMLElement = null;
 
   public forceDotErrorState = false;
@@ -236,8 +245,8 @@ export class BlockPortEditorData {
 
   public editor : BlockParameterEditorRegData = null;
 
-  public oldParamType : BlockParameterType = 'any';
-  public oldParamCustomType = '';
+  public oldParamType : BlockParameterType = null;
+  public oldParamCustomType = null;
 
   private pos = new Vector2();
   

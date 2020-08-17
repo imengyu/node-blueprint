@@ -8,6 +8,10 @@ export default {
   isNullOrEmpty(str){
     return StringUtils.isNullOrEmpty(str);
   },
+  isDefinedAndNotNull(v) {
+    return v != null && typeof v != 'undefined';
+  },
+
   isJSON,
   isArray,
   mergeJSON,
@@ -166,7 +170,8 @@ export default {
   },
   hideElement(el : HTMLElement) {
     el.style.display = 'none';
-  }
+  },
+  createOptionElement,
 }
 
 /**
@@ -245,6 +250,14 @@ function mergeJsonArray(a, b) {
   }
   return r;
 }
+
+
+function createOptionElement(value : string, text : string) {
+  let e = document.createElement('option');
+  e.value = value;
+  e.text = text;
+  return e;
+} 
 
 //数组操作
 //================

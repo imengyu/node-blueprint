@@ -2,6 +2,8 @@ import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { BlockParameterType } from "../Define/Port";
 import BlockServiceInstance from "../../sevices/BlockService";
 import { Block } from "../Define/Block";
+import { BlockEditor } from "../Editor/BlockEditor";
+import CommonUtils from "../../utils/CommonUtils";
 
 export default {
   register() {
@@ -16,7 +18,6 @@ function registerCalcBase() {
   let blockSubstract = new BlockRegData("1B0A8EDC-D8FE-C6D1-0DD6-803BC08562EB", "减");
   let blockMultiply = new BlockRegData("49984155-77D8-3C54-AEB1-24F4695C0609", "乘");
   let blockDivide = new BlockRegData("FFCA28BB-B182-0D05-5ECE-AF2F7B549B6B", "除");
-  let blockModulo = new BlockRegData("ECD228AA-D88D-E02D-51FB-DAEE67ABA31C", "求余");
 
   let CalcBase_onCreate = (block : Block) => {
     if(typeof block.options['opType'] == 'undefined') {
@@ -30,17 +31,17 @@ function registerCalcBase() {
     }
   };
   let CalcBase_onUserAddPort = (block : Block, dirction, type) => {
+    block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 1 : block.inputPortCount;
     return {
-      name: '参数' + (block.inputPortCount),
-      guid: 'PI' + (block.inputPortCount),
+      guid: 'PI' + block.data['portCount'],
       paramType: type == 'execute' ? 'execute' : block.options['opType'],
       direction: dirction,
     };
   };
-  let CalcBase_onCreateCustomEditor = (parentEle, block : Block, regData) => {
+  let CalcBase_onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => {
     let el = document.createElement('div');
     let typeSelector = document.createElement('select');
-    typeSelector.innerHTML = '<option value="number">number</option><option value="any">any</option>' + 
+    typeSelector.innerHTML = '<option value="number">number</option><option value="bigint">bigint</option><option value="any">any</option>' + 
       (block.regData == blockAddition ? '<option value="string">string</option>' : '');
     typeSelector.value = block.options['opType'];
     typeSelector.onchange = () => {
@@ -54,10 +55,13 @@ function registerCalcBase() {
       }
       block.options['opType'] = newType;
       //更换数据类型
+      block.portUpdateLock = true;
       block.allPorts.forEach((port) => {
         if(port.paramType != 'execute')
           block.changePortParamType(port, newType);
       });
+      block.portUpdateLock = false;
+      block.updateAllParamPort();
     };
     el.innerText = '类型：';
     el.appendChild(typeSelector);
@@ -76,20 +80,17 @@ function registerCalcBase() {
       paramType: 'execute'
     },
     {
-      name: "参数1",
       direction: 'input',
       guid: 'PI1',
       paramType: 'any'
     },
     {
-      name: "参数2",
       description: '',
       direction: 'input',
       guid: 'PI2',
       paramType: 'any'
     },
     {
-      name: "结果",
       description: '',
       direction: 'output',
       guid: 'PO1',
@@ -120,7 +121,8 @@ function registerCalcBase() {
   };
   blockAddition.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockAddition.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
-  blockAddition.blockStyle.smallTitle = true;
+  blockAddition.blockStyle.logoBackground = blockAddition.baseInfo.logo;
+  blockAddition.blockStyle.noTitle = true;
   blockAddition.blockStyle.minWidth = '150px';
 
   //#endregion
@@ -148,7 +150,8 @@ function registerCalcBase() {
   };
   blockSubstract.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockSubstract.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
-  blockSubstract.blockStyle.smallTitle = true;
+  blockSubstract.blockStyle.logoBackground = blockSubstract.baseInfo.logo;
+  blockSubstract.blockStyle.noTitle = true;
   blockSubstract.blockStyle.minWidth = '150px';
 
   //#endregion
@@ -176,7 +179,8 @@ function registerCalcBase() {
   };
   blockMultiply.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockMultiply.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
-  blockMultiply.blockStyle.smallTitle = true;
+  blockMultiply.blockStyle.logoBackground = blockMultiply.baseInfo.logo;
+  blockMultiply.blockStyle.noTitle = true;
   blockMultiply.blockStyle.minWidth = '150px';
 
   //#endregion
@@ -204,50 +208,25 @@ function registerCalcBase() {
   };
   blockDivide.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockDivide.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
-  blockDivide.blockStyle.smallTitle = true;
+  blockDivide.blockStyle.noTitle = true;
+  blockDivide.blockStyle.logoBackground = blockDivide.baseInfo.logo;
   blockDivide.blockStyle.minWidth = '150px';
 
   //#endregion
-
-  //#region 求余
-
-  blockModulo.baseInfo.author = 'imengyu';
-  blockModulo.baseInfo.description = "求余单元，相减两个参数";
-  blockModulo.baseInfo.category = '运算';
-  blockModulo.baseInfo.version = '2.0';
-  blockModulo.baseInfo.logo = require('../../assets/images/BlockIcon/modulo.svg');
-  blockModulo.ports = CalcBase_cm_ports;
-  blockModulo.callbacks.onCreate = CalcBase_onCreate;
-  blockModulo.callbacks.onPortActive = (block, port) => { 
-    let rs = null;
-    Object.keys(block.inputPorts).forEach(guid => {
-      let v = block.getInputParamValue(guid);
-      if(typeof v != 'undefined')
-        if(rs == null) rs = v;
-        else rs -= v;
-    });
-    block.setOutputParamValue('PO1', rs);
-    block.activeOutputPort('BO');
-  };
-  blockModulo.callbacks.onUserAddPort = CalcBase_onUserAddPort;
-
-  //#endregion
-
 
   BlockServiceInstance.registerBlock(blockAddition, false);
   BlockServiceInstance.registerBlock(blockSubstract, false);
   BlockServiceInstance.registerBlock(blockMultiply, false);
   BlockServiceInstance.registerBlock(blockDivide, false);
-  BlockServiceInstance.registerBlock(blockModulo, false);
 }
 
 function registerCalcScalar() {
 
   let CalcScalar_onUserAddPort = (block, dirction, type) : BlockPortRegData => {
+    block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 1 : block.inputPortCount;
     return {
-      name: '参数' + (block.inputPortCount),
-      guid: 'PI' + (block.inputPortCount),
-      paramType: type == 'execute' ? 'execute' : 'any',
+      guid: 'PI' + block.data['portCount'],
+      paramType: type == 'execute' ? 'execute' : 'number',
       direction: dirction,
     };
   };
@@ -266,19 +245,16 @@ function registerCalcScalar() {
   ];
   let CalcScalar_cm_param_ports : Array<BlockPortRegData> = [
     {
-      name: "参数1",
       direction: 'input',
       guid: 'PI1',
       paramType: 'number'
     },
     {
-      name: "参数2",
       direction: 'input',
       guid: 'PI2',
       paramType: 'number'
     },
     {
-      name: "结果",
       direction: 'output',
       guid: 'PO1',
       paramType: 'number'
@@ -292,6 +268,7 @@ function registerCalcScalar() {
   let blockAverage = new BlockRegData("C71EB51A-A0D8-9C12-A5F2-0D3CAE3111FC", '平均值', '求一些数的平均值');
   let blockMaximum = new BlockRegData("62FCF10F-1891-9DD7-1C53-129F5F580E18", '最大值', '获取一些数中的最大值');
   let blockMinimum  = new BlockRegData("FA97A675-A872-0967-715D-57F0E0FFB75B", '最小值', '获取一些数中的最小值');
+  let blockModulo = new BlockRegData("ECD228AA-D88D-E02D-51FB-DAEE67ABA31C", "求余");
 
   //#region 最小值
 
@@ -388,7 +365,7 @@ function registerCalcScalar() {
   ]);
   blockRound.callbacks.onCreate = (block) => {
     if(typeof block.options['opType'] == 'undefined')
-      block.options['opType'] = 'any';
+      block.options['opType'] = 'floor';
   };
   blockRound.callbacks.onPortActive = (block, port) => { 
     let rs = block.getInputParamValue('PI1');
@@ -522,7 +499,24 @@ function registerCalcScalar() {
 
   //#endregion
       
+  //#region 求余
 
+  blockModulo.baseInfo.author = 'imengyu';
+  blockModulo.baseInfo.description = "求余单元，对两个参数求余";
+  blockModulo.baseInfo.category = '运算';
+  blockModulo.baseInfo.version = '2.0';
+  blockModulo.baseInfo.logo = require('../../assets/images/BlockIcon/modulo.svg');
+  blockModulo.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
+  blockModulo.callbacks.onPortActive = (block, port) => { 
+    let v1 = block.getInputParamValue('PI1') , v2 = block.getInputParamValue('PI2');
+    if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
+      block.setOutputParamValue('PO1', v1 % v2);
+    block.activeOutputPort('BO');
+  };
+
+  //#endregion
+
+  BlockServiceInstance.registerBlock(blockModulo, false);
   BlockServiceInstance.registerBlock(blockMaximum, false);
   BlockServiceInstance.registerBlock(blockMinimum, false);
   BlockServiceInstance.registerBlock(blockExponentiate, false);

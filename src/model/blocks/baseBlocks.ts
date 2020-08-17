@@ -8,6 +8,9 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
 import logger from "../../utils/Logger";
+import { BlockGraphDocunment } from "../Define/BlockDocunment";
+import ControlBlocks from "./ControlBlocks";
+import LogicBlocks from "./LogicBlocks";
 
 export default { 
   register,
@@ -15,6 +18,7 @@ export default {
   getScriptBaseBlockOut() { return blockOut;  },
   getScriptBaseGraphIn() { return graphIn; },
   getScriptBaseGraphOut() { return graphOut;  },
+  getScriptBaseGraphCall() { return graphCall;  },
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
 }
@@ -27,12 +31,15 @@ function register() {
   registerTypeBase();
 
   OperatorBlocks.register();
+  ControlBlocks.register();
+  LogicBlocks.register();
 }
 
 let blockIn : BlockRegData;
 let blockOut : BlockRegData;
 let graphIn : BlockRegData;
 let graphOut : BlockRegData;
+let graphCall : BlockRegData;
 let variableGet : BlockRegData;
 let variableSet : BlockRegData;
 
@@ -240,13 +247,17 @@ function registerScriptVariableBase()  {
       let portIn = block.getPortByGUID(block.data['portInGuid']);
       let portOut = block.getPortByGUID(block.data['portOutGuid']);
 
+      let variable = block.currentGraph.findGraphVariable(block.options['variable']);
+      block.name = '设置变量 ' + variable.name + ' 的值';
+      block.blockStyleSettings.titleBakgroundColor = ParamTypeServiceInstance.getTypeColor(variable.type);
+
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
           block.editor.deleteBlock(block, true);
       });
       block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(this, (graph, variableOldName, variable) => {
         if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
-          block.options['variable'] = variable.name;
+          block.options['variable'] = variable.name
 
           portIn.paramType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
           portIn.paramCustomType = variable.type;
@@ -260,6 +271,10 @@ function registerScriptVariableBase()  {
           portOut.name = variable.name;
 
           block.updatePort(portOut);
+
+          block.name = '设置变量 ' + variable.name + ' 的值';
+          block.blockStyleSettings.titleBakgroundColor = ParamTypeServiceInstance.getTypeColor(variable.type);
+          block.updateContent();
         }
       });
 
@@ -300,6 +315,7 @@ function registerScriptGraphBase()  {
 
   graphIn = new BlockRegData("CC4BE0CB-AA1D-7FD9-DF29-71701BE69254", "输入");
   graphOut = new BlockRegData("6BA2899B-BD12-1E0B-D958-EB5C8C698319", "输出");
+  graphCall = new BlockRegData("9EA376CE-492D-7EDD-4531-9B043CBAC707", "调用");
 
   //输入
 
@@ -419,8 +435,94 @@ function registerScriptGraphBase()  {
   graphOut.settings.oneBlockOnly = true;
   graphOut.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
 
+  //输出
+
+  graphCall.baseInfo.author = 'imengyu';
+  graphCall.baseInfo.description = "调用子图表";
+  graphCall.baseInfo.category = '基础/脚本';
+  graphCall.baseInfo.version = '2.0';
+  graphCall.type = 'normal';
+  graphCall.callbacks.onCreate = (block) => {
+    let currentGraph : BlockGraphDocunment = block.options['graph'] == block.currentGraph.name ? 
+      block.currentGraph : block.currentGraph.findChildGraph(block.options['graph']); 
+    block.data['currentGraph'] = currentGraph;
+    if(currentGraph == null)
+      return;
+
+    currentGraph.inputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'input'));
+    currentGraph.outputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'output'));
+  };
+  graphCall.callbacks.onEditorCreate = (block) => {
+
+    let currentGraph = (<BlockGraphDocunment>block.data['currentGraph']);
+    
+    if(currentGraph == null) {
+      block.addBottomTip('icon-error-1','没有找到子图表 ' + block.options['graph'],'text-warning');
+      return;
+    }
+
+    block.name = '调用子图表 ' + currentGraph.name;
+    block.description = '调用一个子图表，并返回值\n' + currentGraph.name + '\n' + currentGraph.comment;
+
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+      if(graph == currentGraph) 
+        block.addPort(port, false, port.paramDefaultValue, 'input');
+    });
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+      if(graph == currentGraph) 
+        block.deletePort(port.guid);
+    });
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+      if(graph == currentGraph) {
+        let portReal = block.getPortByGUID(port.guid);
+        portReal.paramType = port.paramType;
+        portReal.paramCustomType = port.paramCustomType;
+        portReal.paramDefaultValue = port.paramDefaultValue;
+        block.updatePort(portReal);
+      }
+    });
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+      if(graph == currentGraph) 
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
+    });
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+      if(graph == currentGraph) 
+        block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
+    });
+    block.data['onGraphUpdate'] = block.editor.editorEvents.onGraphUpdate.addListener(this, (graph) => {
+      if(graph == currentGraph) {
+        block.name = '调用子图表 ' + currentGraph.name;
+        block.description = '调用一个子图表，并返回值\n' + currentGraph.name + '\n' + currentGraph.comment;
+      }
+    });
+    block.data['onGraphDelete'] = block.editor.editorEvents.onGraphDelete.addListener(this, (graph) => {
+      if(graph == currentGraph) 
+        block.editor.deleteBlock(block, true);
+    });
+  };
+  graphCall.callbacks.onPortActive = (block, port) => {
+    
+  };
+  graphCall.callbacks.onPortUpdate = (block, port) => {
+
+  };
+  graphCall.callbacks.onDestroy = (block) => {
+    
+    if(block.isEditorBlock) {
+      let blockEditor = (<BlockEditor>block);
+      blockEditor.editor.editorEvents.onGraphPortAdd.removeListener(<number>blockEditor.data['onGraphPortAdd']);
+      blockEditor.editor.editorEvents.onGraphPortRemove.removeListener(<number>blockEditor.data['onGraphPortRemove']);
+      blockEditor.editor.editorEvents.onGraphPortUpdate.removeListener(<number>blockEditor.data['onGraphPortUpdate']);
+      blockEditor.editor.editorEvents.onGraphPortMoveDown.removeListener(<number>blockEditor.data['onGraphPortMoveDown']);
+      blockEditor.editor.editorEvents.onGraphPortMoveUp.removeListener(<number>blockEditor.data['onGraphPortMoveUp']);
+      blockEditor.editor.editorEvents.onGraphDelete.removeListener(<number>blockEditor.data['onGraphDelete']);
+    }
+  };
+  graphCall.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+
   BlockServiceInstance.registerBlock(graphIn, false);
   BlockServiceInstance.registerBlock(graphOut, false);
+  BlockServiceInstance.registerBlock(graphCall, false);
 }
 function registerDebugBase() {
 

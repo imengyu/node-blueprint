@@ -98,6 +98,13 @@ export class BlockGraphDocunment {
       name = this.findGraphVariable(name);
     name.set(newV);
   }
+  public findChildGraph(name : string) {
+    for (let index = 0; index < this.variables.length; index++) {
+      if(this.children[index].name == name)
+        return this.children[index];
+    }
+    return null;
+  }
 
   /**
    * 父图表

@@ -21,6 +21,10 @@
   background-color: rgba(0, 0, 0, 0.466);
   box-shadow: 0 0 8px 1px rgba(0,0,0,0.3);
 
+  background-size: 55px;
+  background-position: center;
+  background-repeat: no-repeat;
+
   color: #fff;
 
   &.selected {
@@ -53,23 +57,15 @@
     background-color: rgba(255,255,255,0.3);
 
     &.small {
-      
       position: absolute;
-      z-index: -1;
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
-      border-radius: 5px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: transparent;
-
-      .logo {
-        width: 60px;
-        height: 60px;
-      }
+      height: 1px;
+      padding: 0;
+    }
+    &.hide {
+      display: none;
     }
 
     .sub-title {
@@ -242,12 +238,17 @@
     }
 
     .port-dot {
+      display: inline-block;
       font-size: 12px;
       margin: 0 5px;
       cursor: crosshair;
 
       &.error {
         color: #ff7562!important;
+      }
+
+      &.icon-search2 {
+        transform: rotate(90deg);
       }
     }
     span {
@@ -264,6 +265,36 @@
   }
 
 
+  //控件样式
+
+  input, textarea, select, .prop-box {
+    display: inline-block;
+    padding: 2px 5px;
+    background-color: rgba(104, 104, 104, 0.5);
+    color: rgb(255, 255, 255);
+    outline: none;
+    border: none;
+    border-radius: 6px;
+
+    &::-webkit-input-placeholder {
+      color: #bbbbbb;
+    }
+
+    &:disabled {
+      background-color: rgba(75, 75, 75, 0.514);
+      color: #919191;
+
+      &:hover , &:active {
+        background-color: #686868;
+        color: #e7e7e7;
+      }
+    }
+
+    &:hover , &:active {
+      background-color: #fff;
+      color: #000;
+    }
+  }
 }
 
 .flow-block-comment {

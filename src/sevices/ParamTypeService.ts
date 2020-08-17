@@ -46,6 +46,13 @@ export class ParamTypeService {
     this.allCustomTypes.remove(old);
   }
 
+  public getCustomTypeEditor(name : string) {
+    for(let i = 0, c = this.allCustomTypes.length; i < c; i++){
+      if(this.allCustomTypes[i].name == name)
+        return this.allCustomTypes[i].editor;
+    }
+    return null;
+  }
   public getTypeColor(name : string) {
     switch(name) {
       case 'execute': return 'rgb(246,246,246)';
