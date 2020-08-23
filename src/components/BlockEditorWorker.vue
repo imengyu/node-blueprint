@@ -38,10 +38,9 @@ import { Vector2 } from "../model/Vector2";
 import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
 import { BlockRunner } from "../model/WorkProvider/Runner";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
-import { MenuItem } from "iview";
-import { MenuOptions } from "../types/vue-contextmenujs";
-import CommonUtils from "../utils/CommonUtils";
+import { MenuOptions, MenuItem } from "../model/Menu";
 import { Connector } from "../model/Define/Connector";
+import CommonUtils from "../utils/CommonUtils";
 
 /**
  * 编辑器逻辑控制
@@ -71,12 +70,14 @@ export default class BlockEditorWorker extends Vue {
   isMultiSelected = false;
   isMoveedBlock = false;
 
-  // 鼠标逻辑控制
-  //=======================
-
   selectedBlocks : Array<BlockEditor> = [];
   selectedConnectors : Array<ConnectorEditor> = [];
   multiSelectedBlocks : Array<BlockEditor> = [];
+
+  // 鼠标逻辑控制
+  //=======================
+
+  isMouseMoved = false;
 
   multiSelectRect : Rect = null;
   @Prop({ default: false }) mouseLeftMove : boolean;
@@ -141,20 +142,34 @@ export default class BlockEditorWorker extends Vue {
       if(this.connectors[i].hover){
         this.connectors[i].selected = true;
         this.selectedConnectors.push(this.connectors[i]);
-        break;
+        return true;
       }
     }
+    return false;
   }
   private testCastConnector() {
     for(let i = 0, c= this.connectors.length;i<c;i++)
       this.connectors[i].hover = (this.connectors[i].testInRect(this.mouseCurrentPosInViewPort, this.viewZoom));
   }
+  private updateAllSelectedElements() {
+    //Updste all MultiSelect eles
+    this.selectedBlocks.empty();
+    for(var i=0;i<this.blocks.length;i++)
+      if(this.blocks[i].selected){
+        this.blocks[i].updateLastPos();
+        this.selectedBlocks.push(this.blocks[i]);
+      }
+    this.selectedConnectors.empty()
+    for(let i = 0, c= this.connectors.length;i<c;i++)
+      if(this.connectors[i].hover)
+        this.selectedConnectors.push(this.connectors[i]);
+  }
 
   public updateMousePos(e : MouseEvent) {
     this.mouseCurrentPos.x = e.x - this.toolBarWidth;
     this.mouseCurrentPos.y = e.y - this.toolBarHeight;
-    this.mouseCurrentPosInViewPort.x = this.viewPort.x + e.x - this.toolBarWidth;
-    this.mouseCurrentPosInViewPort.y = this.viewPort.y + e.y - this.toolBarHeight;
+    this.mouseCurrentPosInViewPort.x = this.viewPort.x + (e.x - this.toolBarWidth);
+    this.mouseCurrentPosInViewPort.y = this.viewPort.y + (e.y - this.toolBarHeight);
   }
   public getMouseCurrentPos() {
     return this.mouseCurrentPos;
@@ -602,6 +617,7 @@ export default class BlockEditorWorker extends Vue {
 
     this.isMultiSelected = false;
     this.isMoveedBlock = false;
+    this.isMouseMoved = false;
 
     this.mouseDownViewPortPos.x = this.viewPort.x;
     this.mouseDownViewPortPos.y = this.viewPort.y;
@@ -618,11 +634,15 @@ export default class BlockEditorWorker extends Vue {
     }else if(e.buttons == 2) //移动视图
       this.isDragView = true;
     
-
-    document.addEventListener('mouseup', this.onMouseUp.bind(this));
-    document.addEventListener('mousemove', this.onMouseMove.bind(this));
+    document.addEventListener('mouseup', <any>this.onMouseUpFn);
+    document.addEventListener('mousemove', <any>this.onMouseMoveFn);
   }
   private onMouseUp(e : MouseEvent) {
+
+    this.updateMousePos(e);
+
+    document.removeEventListener('mouseup', <any>this.onMouseUpFn);
+    document.removeEventListener('mousemove', <any>this.onMouseMoveFn);
 
     if(this.mouseDowned) {
       if(!this.isMultiSelected) {
@@ -630,26 +650,18 @@ export default class BlockEditorWorker extends Vue {
         this.unSelectAllConnectors();
         this.multiSelectedBlocks.empty();
         this.multiSelectRect.Set(0,0,0,0);
-        this.selectOneConnector();
 
-        if(e.button == 2 && !this.isDragView) {
-          this.$emit('set-add-block-inpos', this.mouseDownViewPortPos);
-          this.$emit('clear-add-block-panel-filter');
-          this.$emit('show-add-block-panel-at-pos', this.mouseCurrentPos);
-        }
+        if(this.selectOneConnector()) {
 
-      }else {
-        this.selectedBlocks.empty();
-        for(var i=0;i<this.blocks.length;i++)
-          if(this.blocks[i].selected){
-            this.blocks[i].updateLastPos();
-            this.selectedBlocks.push(this.blocks[i]);
+        } else {
+          if(e.button == 2 && !this.isMouseMoved) {
+            this.$emit('set-add-block-inpos', this.mouseCurrentPosInViewPort);
+            this.$emit('clear-add-block-panel-filter');
+            this.$emit('show-add-block-panel-at-pos', this.mouseCurrentPos);
           }
-        this.selectedConnectors.empty()
-        for(let i = 0, c= this.connectors.length;i<c;i++)
-          if(this.connectors[i].hover)
-            this.selectedConnectors.push(this.connectors[i]);
-          
+        }
+      }else {   
+        this.updateAllSelectedElements();
         this.$emit('update-select-state');
       }
 
@@ -657,17 +669,17 @@ export default class BlockEditorWorker extends Vue {
       this.isMoveBlock = false;
       this.isMultiSelecting = false;
       this.isDragView = false;
-      
-      this.updateMousePos(e);
+      this.isMouseMoved = false;
     }
-    
-    document.removeEventListener('mouseup', this.onMouseUp.bind(this));
-    document.removeEventListener('mousemove', this.onMouseMove.bind(this));
+
   }
   private onMouseMove(e : MouseEvent) {
     this.updateMousePos(e);
 
-    if(this.mouseDowned) { 
+    if(!this.mouseCurrentPos.equal(this.mouseDownPos))
+      this.isMouseMoved = true;
+
+    if(this.mouseDowned && this.isMouseMoved) { 
       if(this.isMultiSelecting) {
         //多选框的方向处理
         if(this.mouseCurrentPosInViewPort.x > this.mouseDownPosInViewPort.x) {
@@ -781,6 +793,9 @@ export default class BlockEditorWorker extends Vue {
       this.multiSelectRect = new Rect();
       this.connectingEndPos = new Vector2();
     }, 300);
+
+    this.onMouseUpFn = this.onMouseUp.bind(this);
+    this.onMouseMoveFn = this.onMouseMove.bind(this);
   }
   beforeDestroy() {
     this.editorHost.removeEventListener('mousedown', this.onMouseDown);
@@ -812,6 +827,11 @@ export default class BlockEditorWorker extends Vue {
   @Watch('connectingEndPos') update_connectingEndPos(v) { this.$emit('update-connectingEndPos', v); }
   @Watch('multiSelectRect') update_multiSelectRect(v) { this.$emit('update-multiSelectRect', v); }
   @Watch('currentHoverPort') update_currentHoverPort(v) { this.$emit('update-currentHoverPort', v); }
+
+
+  onMouseUpFn : Function;
+  onMouseMoveFn : Function;
+
 }
 
 </script>

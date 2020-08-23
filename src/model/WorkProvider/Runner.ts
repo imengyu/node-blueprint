@@ -10,11 +10,11 @@ export class BlockRunner {
   /**
    * 队列 FIFO
    */
-  public queue : Array<BlockRunLoopData> = [];
+  public queue : Array<BlockRunContextData> = [];
   /**
    * 当前运行上下文
    */
-  public currentRunningContext : BlockRunLoopData = null;
+  public currentRunningContext : BlockRunContextData = null;
   /**
    * 运行器状态
    */
@@ -49,8 +49,8 @@ export class BlockRunner {
    * @param startPort 起始节点
    * @param workType 执行方式
    */
-  public push(startPort : BlockPort, workType : RunnerWorkType = 'connector') {
-    return this.queue.push(new BlockRunLoopData(this, startPort, workType));
+  public push(startPort : BlockPort, parentContext : BlockRunContextData, workType : RunnerWorkType = 'connector') {
+    return this.queue.push(new BlockRunContextData(this, startPort, parentContext, workType));
   }
 
   private shift() {
@@ -58,7 +58,7 @@ export class BlockRunner {
       return this.queue.shift(); 
     return null;
   }
-  private endRunningContext(runningContext : BlockRunLoopData) {
+  private endRunningContext(runningContext : BlockRunContextData) {
     if(runningContext.currentBlock != null) {
       runningContext.currentBlock.currentRunningContext = null;
       runningContext.currentBlock = null;
@@ -97,7 +97,7 @@ export class BlockRunner {
       }
     }else {
       //队列周期已用完，任务将在下一个队列任务中运行
-      this.queue.push(new BlockRunLoopData(this, currentPort));
+      this.queue.push(this.currentRunningContext);
     }
 
   }
@@ -107,7 +107,7 @@ export class BlockRunner {
    * @param runningContext 当前运行上下文
    * @param currentPort 当前连接节点
    */
-  public callNextConnectedPort(runningContext : BlockRunLoopData, currentPort : BlockPort) {
+  public callNextConnectedPort(runningContext : BlockRunContextData, currentPort : BlockPort) {
     if(currentPort.paramType == 'execute') {
       if(runningContext.loopLifeTime > 0) {
         runningContext.loopLifeTime--;
@@ -123,7 +123,7 @@ export class BlockRunner {
         }
       }else {
         this.endRunningContext(runningContext);
-        this.queue.push(new BlockRunLoopData(this, currentPort));
+        this.queue.push(runningContext);
       }
     }
   }
@@ -132,7 +132,7 @@ export class BlockRunner {
    * @param block 断点所在块
    * @return 如果断点已处理返回，true
    */
-  public markInterrupt(runningContext : BlockRunLoopData, currentPort : BlockPort, block : Block) : boolean {
+  public markInterrupt(runningContext : BlockRunContextData, currentPort : BlockPort, block : Block) : boolean {
     if(currentPort.direction == 'input') {
       if(typeof this.onRunnerBreakPoint == 'function') {
         this.stop();
@@ -179,7 +179,7 @@ export type RunnerWorkType = 'connector'|'activator';
 /**
  * 运行上下文数据
  */
-export class BlockRunLoopData {
+export class BlockRunContextData {
 
   public startPort : BlockPort = null;
   public currentPort : BlockPort = null;
@@ -191,10 +191,18 @@ export class BlockRunLoopData {
   public loopLifeTime = 5;
   public workType : RunnerWorkType = 'connector';
 
-  public constructor(runner : BlockRunner, startPort : BlockPort, workType : RunnerWorkType = 'connector') {
+  public constructor(runner : BlockRunner, startPort : BlockPort, parentContext : BlockRunContextData,  workType : RunnerWorkType = 'connector') {
     this.runner = runner;
     this.startPort = startPort;
     this.currentPort = startPort;
     this.workType = workType;
+    this.parentContext = parentContext;
+    
   }
+
+
+  public parentContext : BlockRunContextData = null;
+
+
+
 }

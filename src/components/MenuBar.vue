@@ -19,6 +19,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { MenuData } from "../model/Menu";
 
 @Component
 export default class MenuBar extends Vue {
@@ -77,36 +78,6 @@ export default class MenuBar extends Vue {
 
   mounted() {
     this.onMenusChanged();
-  }
-}
-
-export class MenuData {
-  public name = '';
-  public enable = true;
-  public checked = false;
-  public show = true;
-  public shortcut = '';
-  public separator = false;
-  public callback : MenuCallback = null;
-  public childs : Array<MenuData> = null;
-  public enter = true;
-
-  public constructor(name : string, callbackOrChild : MenuCallback | Array<MenuData> , shortcut = '', checked = false, enabled = true) {
-    this.name = name;
-    if(typeof callbackOrChild == 'function')
-      this.callback = callbackOrChild;
-    else 
-      this.childs = callbackOrChild;
-    this.shortcut = shortcut;
-    this.checked = checked;
-    this.enable = enabled;
-  }
-}
-export type MenuCallback = (menu : MenuData) => void;
-export class MenuSeparator extends MenuData {
-  public constructor() {
-    super('Separator', null);
-    this.separator = true;
   }
 }
 

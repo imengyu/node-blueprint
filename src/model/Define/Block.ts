@@ -2,7 +2,7 @@ import { BlockPortRegData, BlockRegData, } from "./BlockDef";
 import { BlockPortDirection, BlockPort, BlockParameterType } from "./Port";
 
 import CommonUtils from "../../utils/CommonUtils";
-import { BlockRunLoopData, BlockRunner } from "../WorkProvider/Runner";
+import { BlockRunContextData, BlockRunner } from "../WorkProvider/Runner";
 import { EventHandler } from "../../utils/EventHandler";
 import logger from "../../utils/Logger";
 import { BlockGraphDocunment } from "./BlockDocunment";
@@ -87,7 +87,7 @@ export class Block {
   /**
    * 当前单元所在的运行上下文
    */
-  public currentRunningContext : BlockRunLoopData = null;
+  public currentRunningContext : BlockRunContextData = null;
   /**
    * 当前单元所在的运行器
    */
@@ -141,6 +141,10 @@ export class Block {
     newPort.direction = typeof forceChangeDirection == 'undefined' ? data.direction : forceChangeDirection;
     newPort.regData = data;
     newPort.paramType = data.paramType;
+    if(typeof data.paramRefPassing != 'undefined')
+      newPort.paramRefPassing = data.paramRefPassing;
+    if(typeof data.executeInNewContext != 'undefined')
+      newPort.executeInNewContext = data.executeInNewContext;
     newPort.paramCustomType = data.paramCustomType ? data.paramCustomType : '';
     newPort.paramDefaultValue = data.paramDefaultValue ? data.paramDefaultValue : null;
     newPort.paramUserSetValue = initialValue;
@@ -227,7 +231,7 @@ export class Block {
   public getInputParamValue(guid : string|BlockPort) {
     let port = typeof guid == 'string' ? <BlockPort>this.inputPorts[guid] : guid;
     if(port && port.paramType != 'execute')
-      return port.paramValue;
+      return port.getValue();
     return undefined;
   }
   /**
@@ -237,7 +241,7 @@ export class Block {
   public setOutputParamValue(guid : string|BlockPort, value : any) {
     let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
     if(port && port.paramType != 'execute') {
-      port.paramValue = value;
+      port.setValue(value);
       port.update();
     }
   }
@@ -293,8 +297,6 @@ export class Block {
   protected onUpdatePortElement = new EventHandler<OnPortEventCallback>();
   protected onRemovePortElement = new EventHandler<OnPortEventCallback>();
 }
-
-
 
 export type OnBlockEventCallback = (block : Block) => void;
 export type OnPortEventCallback = (block : Block, port : BlockPort) => void;

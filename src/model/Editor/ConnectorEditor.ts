@@ -60,7 +60,7 @@ export class ConnectorEditor extends Connector {
     this.dotPos = 0.8;
 
     if(port && port.paramType != 'execute') 
-      this.updateValueText(port.paramValue);
+      this.updateValueText(port.getValue());
   }
   public clearActive() {
     this.actived = false;

@@ -6,6 +6,7 @@ export default {
   drawConnectorBezierCurve,
   threeOrderBezier,
   drawTextBox,
+  colorStrWithAlpha,
 }
 
 /**
@@ -132,4 +133,22 @@ function drawTextBox(ctx : CanvasRenderingContext2D, x : number, y : number, tex
       i++;
     });
   }
+}
+
+function colorStrWithAlpha(str : string, alpha : number) {
+  if(str.startsWith('rgb(') && str.endsWith(')')) {
+    let v = str.substring(4, str.length - 2);
+    return 'rgba(' + v + ',' + alpha + ')';
+  }else if(str.startsWith('rgba(') && str.endsWith(')')) {
+    let v = str.substring(5, str.length - 2);
+    v = v.substring(0, v.lastIndexOf(','));
+    return v + alpha + ')';
+  }else if(str.startsWith('#')) {
+    let r = parseInt(str.length == 7 ? str.substring(1, 2) : str.substring(1, 1), 16);
+    let g = parseInt(str.length == 7 ? str.substring(3, 2) : str.substring(2, 1), 16);
+    let b = parseInt(str.length == 7 ? str.substring(5, 2) : str.substring(3, 1), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+    
+  return str;
 }

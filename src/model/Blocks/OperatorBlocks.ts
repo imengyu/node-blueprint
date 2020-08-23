@@ -71,16 +71,6 @@ function registerCalcBase() {
   let CalcBase_cm_ports : Array<BlockPortRegData> = [
     {
       direction: 'input',
-      guid: 'BI',
-      paramType: 'execute'
-    },
-    {
-      direction: 'output',
-      guid: 'BO',
-      paramType: 'execute'
-    },
-    {
-      direction: 'input',
       guid: 'PI1',
       paramType: 'any'
     },
@@ -108,7 +98,7 @@ function registerCalcBase() {
   blockAddition.ports = CalcBase_cm_ports;
   blockAddition.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockAddition.callbacks.onCreate = CalcBase_onCreate;
-  blockAddition.callbacks.onPortActive = (block, port) => { 
+  blockAddition.callbacks.onPortUpdate = (block, port) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
@@ -117,13 +107,11 @@ function registerCalcBase() {
         else rs += v;
     });
     block.setOutputParamValue('PO1', rs);
-    block.activeOutputPort('BO');
   };
   blockAddition.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockAddition.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockAddition.blockStyle.logoBackground = blockAddition.baseInfo.logo;
   blockAddition.blockStyle.noTitle = true;
-  blockAddition.blockStyle.minWidth = '150px';
 
   //#endregion
 
@@ -137,7 +125,7 @@ function registerCalcBase() {
   blockSubstract.ports = CalcBase_cm_ports;
   blockSubstract.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockSubstract.callbacks.onCreate = CalcBase_onCreate;
-  blockSubstract.callbacks.onPortActive = (block, port) => { 
+  blockSubstract.callbacks.onPortUpdate = (block, port) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
@@ -146,13 +134,11 @@ function registerCalcBase() {
         else rs -= v;
     });
     block.setOutputParamValue('PO1', rs);
-    block.activeOutputPort('BO');
   };
   blockSubstract.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockSubstract.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockSubstract.blockStyle.logoBackground = blockSubstract.baseInfo.logo;
   blockSubstract.blockStyle.noTitle = true;
-  blockSubstract.blockStyle.minWidth = '150px';
 
   //#endregion
 
@@ -166,7 +152,7 @@ function registerCalcBase() {
   blockMultiply.ports = CalcBase_cm_ports;
   blockMultiply.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMultiply.callbacks.onCreate = CalcBase_onCreate;
-  blockMultiply.callbacks.onPortActive = (block, port) => { 
+  blockMultiply.callbacks.onPortUpdate = (block, port) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
@@ -175,13 +161,11 @@ function registerCalcBase() {
         else rs *= v;
     });
     block.setOutputParamValue('PO1', rs);
-    block.activeOutputPort('BO');
   };
   blockMultiply.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockMultiply.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockMultiply.blockStyle.logoBackground = blockMultiply.baseInfo.logo;
   blockMultiply.blockStyle.noTitle = true;
-  blockMultiply.blockStyle.minWidth = '150px';
 
   //#endregion
 
@@ -195,7 +179,7 @@ function registerCalcBase() {
   blockDivide.ports = CalcBase_cm_ports;
   blockDivide.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockDivide.callbacks.onCreate = CalcBase_onCreate;
-  blockDivide.callbacks.onPortActive = (block, port) => { 
+  blockDivide.callbacks.onPortUpdate = (block, port) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
@@ -204,13 +188,11 @@ function registerCalcBase() {
         else rs /= v;
     });
     block.setOutputParamValue('PO1', rs);
-    block.activeOutputPort('BO');
   };
   blockDivide.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockDivide.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockDivide.blockStyle.noTitle = true;
   blockDivide.blockStyle.logoBackground = blockDivide.baseInfo.logo;
-  blockDivide.blockStyle.minWidth = '150px';
 
   //#endregion
 

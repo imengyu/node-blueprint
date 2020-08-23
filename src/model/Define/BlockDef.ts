@@ -1,6 +1,7 @@
 import { BlockParameterType, BlockPortDirection, BlockPort } from "./Port";
 import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
+import { MenuItem } from "../Menu";
 
 /**
  * 单元信息结构
@@ -38,7 +39,7 @@ export class BlockRegData {
     /**
      * 单元图标 20x20 
      */
-    logo : "",
+    logo : require('../../assets/images/BlockIcon/function.svg'),
     /**
      * 单元所属类别。可以用 / 来归到子类里面
      */
@@ -74,6 +75,11 @@ export class BlockRegData {
     }
     return false;
   }
+
+  /**
+   * 是否在添加单元菜单中隐藏
+   */
+  public hideInAddPanel = false;
 
   /**
    * 单元的配置
@@ -179,6 +185,11 @@ export class BlockRegData {
    */
   public blockStyle = new BlockStyleSettings();
 
+  /**
+   * 单元的自定义菜单
+   */
+  public blockMenu = new BlockMenuSettings();
+
   show = true;
   filterShow = true;
 }
@@ -186,6 +197,9 @@ export class BlockRegData {
 export type BlockParametersChangeSettings = {
   userCanAddInputParameter: boolean,
   userCanAddOutputParameter: boolean
+}
+export class BlockMenuSettings  {
+  public items : Array<MenuItem> = [];
 }
 export class BlockStyleSettings  {
   /**
@@ -203,7 +217,7 @@ export class BlockStyleSettings  {
   /**
    * 单元标题背景颜色
    */
-  public titleBakgroundColor = '';
+  public titleBakgroundColor = 'rgba(255,255,255,0.3)';
   /**
    * 单元标题颜色
    */
@@ -250,6 +264,14 @@ export interface BlockPortRegData {
    * 设置是否默认连接至此节点。最好只有一个设置为true，如果有多个，先添加的为默认连接。
    */
   defaultConnectPort?: boolean,
+
+  /**
+   * 对于这个执行端口，是否在新上下文执行端口。
+   * 只有新上下文执行才能延迟执行或在回调中执行。
+   * 默认为 false。
+   */
+  executeInNewContext?: boolean,
+
   /**
    * 端口的类型，execute为执行端口，如果设置为 custom 你可以设置 paramCustomType 来设置参数为自己的类型
    */
@@ -262,6 +284,11 @@ export interface BlockPortRegData {
    * 参数的默认值
    */
   paramDefaultValue ?: any;
+
+  /**
+   * 是否引用传递参数值，默认为 false
+   */
+  paramRefPassing ?: boolean;
 
   /**
    * 是否强制不显示编辑参数控件

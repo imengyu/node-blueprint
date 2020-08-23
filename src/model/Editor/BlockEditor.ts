@@ -1,6 +1,6 @@
 import { Vector2 } from "../Vector2"
 import { Rect } from "../Rect";
-import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn } from "../Define/BlockDef";
+import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings } from "../Define/BlockDef";
 import { BlockPort, BlockPortEditorData } from "../Define/Port";
 
 import CommonUtils from "../../utils/CommonUtils";
@@ -10,6 +10,7 @@ import { Block, OnUserAddPortCallback } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
+import { threadId } from "worker_threads";
 
 
 /**
@@ -60,6 +61,7 @@ export class BlockEditor extends Block {
   }
 
   public blockStyleSettings = new BlockStyleSettings();
+  public blockMenuSettings = new BlockMenuSettings();
 
   public getRect() { 
     this.rect.setPos(this.position);
@@ -83,6 +85,7 @@ export class BlockEditor extends Block {
       this.description = this.regData.baseInfo.description;
       this.logo = this.regData.baseInfo.logo;
       this.blockStyleSettings = this.regData.blockStyle;
+      this.blockMenuSettings = this.regData.blockMenu;
 
       this.onCreateCustomEditor = this.regData.callbacks.onCreateCustomEditor;
       this.onUserAddPort = this.regData.callbacks.onUserAddPort;
@@ -331,7 +334,7 @@ export class BlockEditor extends Block {
 
     this.allPorts.forEach(port => {
       if(port.isDyamicAdd)
-        blockEditor.addPort(port.regData, true, port.paramValue);
+        blockEditor.addPort(port.regData, true, port.getValue());
     });
 
     return blockEditor;
@@ -385,10 +388,10 @@ export class BlockEditor extends Block {
     if(!this.created) return;
 
     if(this.blockStyleSettings.smallTitle || this.blockStyleSettings.noTitle)
-      this.el.setAttribute('title', this.name + '\n' + this.description);
+      this.el.setAttribute('data-title', this.name + '\n' + this.description);
     else{
       this.els.elTitleText.innerText = this.name;
-      this.els.elTitle.setAttribute('title', this.description);
+      this.els.elTitle.setAttribute('data-title', this.description);
     }
     this.el.setAttribute('data-guid', this.guid);
 
@@ -494,7 +497,7 @@ export class BlockEditor extends Block {
     this.createOrRecreateParamPortEditor(port, true);
 
     port.editorData.el.addEventListener('mousedown', (e) => this.onPortMouseDown(port, e));
-    port.editorData.el.addEventListener('mouseenter', () => this.onPortMouseEnter(port));
+    port.editorData.el.addEventListener('mouseenter', (e) => this.onPortMouseEnter(port, e));
     port.editorData.el.addEventListener('mouseleave', () => this.onPortMouseLeave(port));
 
     //switch port and text's direction
@@ -554,7 +557,7 @@ export class BlockEditor extends Block {
     }
 
     if(port.editorData.oldParamCustomType == port.paramCustomType && port.editorData.oldParamType == port.paramType) {
-      this.updatePortParamVal(port);
+      this.updatePortParamDisplayVal(port);
       return;
     }
 
@@ -587,7 +590,7 @@ export class BlockEditor extends Block {
     port.editorData.el.setAttribute('data-param-custom-type', portParameter.paramCustomType);
     port.editorData.elEditor = null;
 
-    this.updatePortParamVal(port);
+    this.updatePortParamDisplayVal(port);
 
     if(customType != null)
       port.editorData.elDot.style.color = customType.color;
@@ -599,7 +602,7 @@ export class BlockEditor extends Block {
       //创建编辑器和更新回调
       port.editorData.elEditor = editor.editorCreate(port.editorData.el, (v) => {
         portParameter.paramUserSetValue = v;
-        portParameter.paramValue = v;
+        portParameter.setValue(v);
         portParameter.update();
         return v;
       }, portParameter.paramUserSetValue, portParameter.paramDefaultValue, customType);
@@ -630,15 +633,6 @@ export class BlockEditor extends Block {
       port.name
       + '\n' + port.description);
   }
-  public updatePortParamVal(port : BlockPort) {
-    if(!this.created) return;
-
-    port.editorData.el.setAttribute('title', 
-      port.name
-      + '\n' + port.description
-      + '\n类型：' + port.editorData.el.getAttribute('data-param-type-name')
-      + '\n值：' + CommonUtils.valueToStr(port.paramValue));
-  }
   public updateAllPortElement() {
     this.allPorts.forEach((p) => this.updatePort(p));
   }
@@ -646,14 +640,14 @@ export class BlockEditor extends Block {
     this.allPorts.forEach((p) => {
       if(p.paramType != 'execute') {
         p.update();
-        this.updatePortParamVal(p);
+        this.updatePortParamDisplayVal(p);
       }
     });
   }
   public updatePort(port : BlockPort) {
     this.updatePortElement(port);
     this.updatePortConnectStatusElement(port);
-    if(port.paramType != 'execute') this.updatePortParamVal(port);
+    if(port.paramType != 'execute') this.updatePortParamDisplayVal(port);
     else this.updatePortExecuteVal(port);
   }
   public flushAllPortElementCreateState() {
@@ -662,6 +656,11 @@ export class BlockEditor extends Block {
         this.addPortElement(port);
       }
     })
+  }
+  public updatePortParamDisplayVal(port : BlockPort) {
+    if(this.currentShowPortTooltip == port) {
+      this.editor.updateTooltip(this.getPortParamValStr(this.currentShowPortTooltip));
+    }
   }
 
   private updatePortElement(port : BlockPort) {
@@ -690,6 +689,15 @@ export class BlockEditor extends Block {
   }
   private onPortRemoveCallback(block, port : BlockPort) {
     this.unConnectPort(port);
+  }
+  private getPortParamValStr(port : BlockPort) {
+    if(!this.created) 
+      return '未创建';
+
+    return '<h5>' + port.name
+      + '</h5><span class="text-secondary">' + port.description
+      + '</span><br/>类型：' + port.editorData.el.getAttribute('data-param-type-name')
+      + '<br/>值：' + CommonUtils.valueToStr(port.getValue());
   }
 
   public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {
@@ -835,13 +843,26 @@ export class BlockEditor extends Block {
   public mouseDownInPort = false;
   public mouseConnectingPort = false;
 
-  private onPortMouseEnter(port : BlockPort) {
+  private currentShowPortTooltip = null;
+
+  private onPortMouseEnter(port : BlockPort, e : MouseEvent) {
     this.mouseDownInPort = true;
     this.editor.updateCurrentHoverPort(port);
+
+    let tooltipPos = port.editorData.getPosition();
+    tooltipPos.x += 30;
+
+    this.editor.showTooltip(
+      this.getPortParamValStr(port),
+      this.editor.viewPortPosToWindowPos(tooltipPos),
+    );
+    this.currentShowPortTooltip = port;
   }
   private onPortMouseLeave(port : BlockPort) {
     this.editor.updateCurrentHoverPortLeave(port);
     this.mouseDownInPort = false;
+    this.currentShowPortTooltip = null;
+    this.editor.hideTooltip();
   }
   private onPortMouseMove(e : MouseEvent) {
     this.mouseConnectingPort = true;
@@ -887,12 +908,17 @@ export class BlockEditor extends Block {
 
   private onMouseEnter(e : MouseEvent) {
     this.hover = true;
+    this.editor.showTooltip(
+      this.el.getAttribute('data-title'),
+      new Vector2(e.x, e.y)
+    );
   }
   private onMouseOut(e : MouseEvent) {
     this.hover = false;
+    this.editor.hideTooltip();
   }
   private onMouseMove(e : MouseEvent) {
-    if(this.mouseDown && e.button == 0 && this.hover && !this.mouseDownInPort && !this.mouseConnectingPort) {
+    if(this.mouseDown && e.button == 0 && !this.mouseDownInPort && !this.mouseConnectingPort) {
       let pos = new Vector2(
         this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
         this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)

@@ -11,6 +11,8 @@ import logger from "../../utils/Logger";
 import { BlockGraphDocunment } from "../Define/BlockDocunment";
 import ControlBlocks from "./ControlBlocks";
 import LogicBlocks from "./LogicBlocks";
+import CanvasUtils from "../../utils/CanvasUtils";
+import { Block } from "../Define/Block";
 
 export default { 
   register,
@@ -58,7 +60,7 @@ function registerScriptBase()  {
       name: "脚本开始",
       description: '脚本在这里开始运行',
       direction: 'output',
-      guid: '00000000',
+      guid: 'START',
       defaultConnectPort: true,
       paramType: 'execute',
     },
@@ -80,7 +82,7 @@ function registerScriptBase()  {
       name: "结束脚本",
       description: '',
       direction: 'input',
-      guid: '00000001',
+      guid: 'END',
       defaultConnectPort: false,
       paramType: 'execute',
     },
@@ -128,7 +130,7 @@ function registerScriptVariableBase()  {
       }, false, variable.defaultValue);
 
       block.data['variable_changeCallback'] = variable.changeCallbacks.addListener(this, (v) => {
-        port.paramValue = v.value;
+        port.setValue(v.value);
         port.update();
       });
 
@@ -139,7 +141,10 @@ function registerScriptVariableBase()  {
     if(block.data['variable_canuse']) {
 
       let port = block.getPortByGUID(block.data['portGuid']);
+      let variable = block.currentGraph.findGraphVariable(block.options['variable']);
 
+      block.name = '获取变量 ' + variable.name + ' 的值';
+      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
           block.editor.deleteBlock(block, true);
@@ -164,7 +169,7 @@ function registerScriptVariableBase()  {
     let portGuid = StringUtils.strToHexCharCode(block.options['variable'], false);
     let port = block.getPortByGUID(portGuid);
     if(variable != null && port != null)  {
-      port.paramValue = variable.value;
+      port.setValue(variable.value);
       port.update();
     }
   };
@@ -183,6 +188,7 @@ function registerScriptVariableBase()  {
   };
   variableGet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
   variableGet.blockStyle.noTitle = true;
+  variableGet.hideInAddPanel = true;
 
   //设置变量
 
@@ -233,7 +239,7 @@ function registerScriptVariableBase()  {
       }, false, variable.defaultValue);
 
       block.data['variable_changeCallback'] = variable.changeCallbacks.addListener(this, (v) => {
-        portOut.paramValue = v.value;
+        portOut.setValue(v.value);
         portOut.update();
       });
     }
@@ -249,7 +255,7 @@ function registerScriptVariableBase()  {
 
       let variable = block.currentGraph.findGraphVariable(block.options['variable']);
       block.name = '设置变量 ' + variable.name + ' 的值';
-      block.blockStyleSettings.titleBakgroundColor = ParamTypeServiceInstance.getTypeColor(variable.type);
+      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
 
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
@@ -305,8 +311,7 @@ function registerScriptVariableBase()  {
       }
     }
   };
-
-  variableSet.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  variableSet.hideInAddPanel = true;
 
   BlockServiceInstance.registerBlock(variableSet, false);
   BlockServiceInstance.registerBlock(variableGet, false);
@@ -329,6 +334,11 @@ function registerScriptGraphBase()  {
     block.currentGraph.inputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'output'));
   };
   graphIn.callbacks.onEditorCreate = (block) => {
+
+    if(block.currentGraph.isMainGraph) {
+      block.addBottomTip('icon-error-1', '主图表不能有输入输出', 'text-warning');
+      return;
+    }
 
     block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') 
@@ -389,6 +399,12 @@ function registerScriptGraphBase()  {
     block.currentGraph.outputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'input'));
   };
   graphOut.callbacks.onEditorCreate = (block) => {
+
+    if(block.currentGraph.isMainGraph) {
+      block.addBottomTip('icon-error-1', '主图表不能有输入输出', 'text-warning');
+      return;
+    }
+
     block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') 
         block.addPort(port, false, port.paramDefaultValue, 'input');
@@ -461,6 +477,17 @@ function registerScriptGraphBase()  {
       return;
     }
 
+    block.blockMenuSettings.items = [
+      {
+        label: '编辑 ' + currentGraph.name,
+        onClick: () => block.editor.openGraph(currentGraph)
+      }
+    ];
+    block.el.addEventListener('dblclick ', (e : MouseEvent) => {
+      if(e.button == 0)
+        block.editor.openGraph(currentGraph);
+    });
+
     block.name = '调用子图表 ' + currentGraph.name;
     block.description = '调用一个子图表，并返回值\n' + currentGraph.name + '\n' + currentGraph.comment;
 
@@ -519,6 +546,7 @@ function registerScriptGraphBase()  {
     }
   };
   graphCall.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  graphCall.hideInAddPanel = true;
 
   BlockServiceInstance.registerBlock(graphIn, false);
   BlockServiceInstance.registerBlock(graphOut, false);
@@ -583,20 +611,20 @@ function registerDebugBase() {
   blockDebug.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       defaultConnectPort: false,
       paramType: 'execute',
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       defaultConnectPort: false,
       paramType: 'execute',
     },
     {
       name: "输出",
       direction: 'input',
-      guid: '00000003',
+      guid: 'PRINT',
       paramType: 'any',
       paramCustomType: 'any',
       paramDefaultValue: null,
@@ -605,7 +633,7 @@ function registerDebugBase() {
     {
       name: "等级",
       direction: 'input',
-      guid: '00000004',
+      guid: 'LEVEL',
       paramType: 'enum',
       paramCustomType: 'DebugLogLevel',
       paramDefaultValue: 'log',
@@ -613,35 +641,34 @@ function registerDebugBase() {
     },
   ];
   blockDebug.callbacks.onCreate = (block) => {
-    block.data['paramInput'] = block.getPortByGUID('00000003');
-    block.data['paramLevel'] = block.getPortByGUID('00000004');
-    block.data['portOut'] = block.getPortByGUID('00000002');
   };
   blockDebug.callbacks.onPortActive = (block, port) => {
-    let paramInput = <BlockPort>block.data['paramInput'];
-    let paramLevel = <BlockPort>block.data['paramLevel'];
-    let portOut = <BlockPort>block.data['portOut'];
+    let paramInput = block.getInputParamValue('PRINT');
+    let paramLevel = block.getInputParamValue('LEVEL');
 
-    switch(<string>paramLevel.paramValue) {
+    switch(paramLevel) {
       case 'log':
-        console.log(paramInput.paramValue);
+        console.log(paramInput);
         break;
       case 'info':
-        console.info(paramInput.paramValue);
+        console.info(paramInput);
         break; 
       case 'warn':
-        console.warn(paramInput.paramValue);
+        console.warn(paramInput);
         break;
       case 'error':
-        console.error(paramInput.paramValue);
+        console.error(paramInput);
         break;
     }
 
-    portOut.active(block.currentRunningContext);
+    block.activeOutputPort('OUT');
   };
   blockDebug.callbacks.onPortUpdate = (block, port) => {};
   blockDebug.callbacks.onCreateCustomEditor = null;
   blockDebug.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
+
+  //blockModal
+  //===================
 
   blockModal.baseInfo.author = 'imengyu';
   blockModal.baseInfo.description = "显示一个对话框";
@@ -650,34 +677,34 @@ function registerDebugBase() {
   blockModal.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       defaultConnectPort: false,
       paramType: 'execute',
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       defaultConnectPort: false,
       paramType: 'execute',
     },
     {
       name: "标题",
       direction: 'input',
-      guid: '00000003',
+      guid: 'TITLE',
       paramType: 'string',
       defaultConnectPort: false,
     },
     {
       name: "文字",
       direction: 'input',
-      guid: '00000004',
+      guid: 'TEXT',
       paramType: 'string',
       defaultConnectPort: false,
     },
     {
       name: "等级",
       direction: 'input',
-      guid: '00000005',
+      guid: 'LEVEL',
       paramType: 'enum',
       paramCustomType: 'DebugLogLevel',
       paramDefaultValue: 'log',
@@ -685,24 +712,22 @@ function registerDebugBase() {
     },
   ];
   blockModal.callbacks.onCreate = (block) => {
-    block.data['paramTitle'] = block.getPortByGUID('00000003');
-    block.data['paramText'] = block.getPortByGUID('00000004');
-    block.data['paramLevel'] = block.getPortByGUID('00000005');
-    block.data['portOut'] = block.getPortByGUID('00000002');
   };
   blockModal.callbacks.onPortActive = (block, port) => {
-    let paramText = <BlockPort>block.data['paramText'];
-    let paramTitle = <BlockPort>block.data['paramTitle'];
-    let paramLevel = <BlockPort>block.data['paramLevel'];
-    let portOut = <BlockPort>block.data['portOut'];
+    let paramText = block.getInputParamValue('TEXT');
+    let paramTitle = block.getInputParamValue('TITLE');
+    let paramLevel = block.getInputParamValue('LEVEL');
 
-    DebugWorkProviderInstance.ModalProvider(<string>paramLevel.paramValue, <string>paramTitle.paramValue, <string>paramText.paramValue, () => {
-      portOut.activeInNewContext();
+    DebugWorkProviderInstance.ModalProvider(<string>paramLevel, <string>paramTitle, <string>paramText, () => {
+      block.activeOutputPortInNewContext('OUT');
     });
   };
   blockModal.callbacks.onPortUpdate = (block, port) => {};
   blockModal.callbacks.onCreateCustomEditor = null;
   blockModal.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
+
+  //Confirm
+  //====================
 
   blockConfirm.baseInfo.author = 'imengyu';
   blockConfirm.baseInfo.description = "显示一个确认对话框，用户可选择确认或取消";
@@ -711,7 +736,7 @@ function registerDebugBase() {
   blockConfirm.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       defaultConnectPort: true,
       paramType: 'execute',
     },
@@ -719,7 +744,7 @@ function registerDebugBase() {
       name: "点击确认",
       description: '用户点击了确认按钮',
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUTCON',
       defaultConnectPort: false,
       paramType: 'execute',
     },
@@ -728,20 +753,20 @@ function registerDebugBase() {
       description: '用户点击了取消按钮',
       paramType: 'execute',
       direction: 'output',
-      guid: '00000003',
+      guid: 'OUTCAN',
       defaultConnectPort: false,
     },
     {
       name: "标题",
       direction: 'input',
-      guid: '00000004',
+      guid: 'TITLE',
       paramType: 'string',
       defaultConnectPort: false,
     },
     {
       name: "文字",
       direction: 'input',
-      guid: '00000005',
+      guid: 'TEXT',
       paramType: 'string',
       defaultConnectPort: false,
     },
@@ -750,11 +775,11 @@ function registerDebugBase() {
   };
   blockConfirm.callbacks.onPortActive = (block, port) => {
     
-    DebugWorkProviderInstance.ConfirmModalProvider(<string>block.getInputParamValue('00000004'), 
-      <string>block.getInputParamValue('00000005'), () => {
-        block.activeOutputPortInNewContext('00000002');
+    DebugWorkProviderInstance.ConfirmModalProvider(<string>block.getInputParamValue('TITLE'), 
+      <string>block.getInputParamValue('TEXT'), () => {
+        block.activeOutputPortInNewContext('OUTCON');
       }, () => {
-        block.activeOutputPortInNewContext('00000003');
+        block.activeOutputPortInNewContext('OUTCAN');
       });
 
   };

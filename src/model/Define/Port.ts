@@ -4,7 +4,7 @@ import { Connector } from "./Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockPortRegData, BlockParameterEditorRegData } from "./BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
-import { BlockRunLoopData } from "../WorkProvider/Runner";
+import { BlockRunContextData } from "../WorkProvider/Runner";
 import logger from "../../utils/Logger";
 
 /**
@@ -94,9 +94,28 @@ export class BlockPort {
 
   public paramType : BlockParameterType = 'any';
   public paramCustomType = '';
-  public paramValue : any = null;
   public paramUserSetValue : any = null;
   public paramDefaultValue : any = null;
+  public paramRefPassing = false;
+
+  public executeInNewContext = false;
+  public executeInNewContextParentContext : BlockRunContextData = null;
+  public portStackIndex = 0;
+
+
+  /**
+   * 获取当前端口变量在栈中的数据。
+   */
+  public getValue() : any {
+
+  }
+  /**
+   * 设置当前端口变量在栈中的数据。
+   * 设置后必须调用 update 才能更新下一级。
+   */
+  public setValue(value) {
+
+  }
 
   public forceNoEditorControl = false;
   public forceEditorControlOutput = false;
@@ -114,6 +133,9 @@ export class BlockPort {
 
   };
 
+
+
+
   /**
    * 循环更新参数端口
    * @param source 来源端口
@@ -126,21 +148,18 @@ export class BlockPort {
     }
 
     if(this.direction == 'input') {
-      if(typeof source != 'undefined')
-        this.paramValue = source.paramValue;
-      if(!this.parent.portUpdateLock) 
-        this.parent.onPortUpdate.invoke(this.parent, this);
-      if(this.parent.isEditorBlock) 
-        //更新编辑器状态
-        (<BlockEditor>this.parent).updatePortParamVal(this);
+      if(typeof source != 'undefined') this.setValue(source.getValue());
+      if(!this.parent.portUpdateLock) this.parent.onPortUpdate.invoke(this.parent, this);
+      if(this.parent.isEditorBlock) (<BlockEditor>this.parent).updatePortParamDisplayVal(this);//更新编辑器状态
     }
     //更新下一级
     else if(this.direction == 'output' && this.connectedToPort.length > 0) {
+      if(this.parent.isEditorBlock)
+        (<BlockEditor>this.parent).updatePortParamDisplayVal(this);
       this.connectedToPort.forEach(element => {
-        element.port.update(this);
-        if(this.parent.isEditorBlock)
-          (<BlockEditor>this.parent).updatePortParamVal(this);
-          //激活编辑器状态
+        if(!element.port.paramRefPassing)
+          element.port.update(this);
+        //激活编辑器状态
         if(this.parent.currentRunner && this.parent.isEditorBlock && this.parent.currentRunner.state != 'stopped') 
           (<ConnectorEditor>element.connector).active(this);
       });
@@ -180,13 +199,13 @@ export class BlockPort {
       return;
     }
     if(this.direction == 'output')
-      this.parent.currentRunner.push(this, 'connector');
+      this.parent.currentRunner.push(this, this.executeInNewContextParentContext, 'connector');
   }
   /**
    * 在当前队列中激活当前执行端口
    * @param runningContext 当前运行上下文
    */
-  public active(runningContext : BlockRunLoopData) {
+  public active(runningContext : BlockRunContextData) {
 
     if(this.paramType != 'execute') {
       logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');

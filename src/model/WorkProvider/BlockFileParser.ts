@@ -200,7 +200,7 @@ export class BlockFileParser {
             paramPort.paramUserSetValue = port.value;
         }
         if(paramPort != null) {
-          paramPort.paramValue = port.value;
+          paramPort.paramUserSetValue = port.value;
           paramPort.options = port.options;
         }
       }

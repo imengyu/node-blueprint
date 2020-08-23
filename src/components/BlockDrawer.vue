@@ -9,6 +9,13 @@
       <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i></span>
       <span v-else><i class="iconfont icon-close- text-danger mr-1"></i>{{connectingFailedText}}</span>
     </div>
+    <!--节点提示-->
+    <div class="common-tip"
+      v-show="isShowTooltip"
+      v-html="showTooltipText"
+      :style="{ left: (showTooltipPos.x) + 'px', top:  (showTooltipPos.y) + 'px' }"
+    >
+    </div>
     <!--背景画布-->
     <BlockEditorCanvasDrawer ref="editorCanvas" 
       :connectors="connectors"
@@ -65,6 +72,8 @@
       @on-editor-key="onEditorKey"
       :toolBarHeight="toolBarHeight"
       :toolBarWidth="toolBarWidth"
+      @show-tooltip="onShowTooltip"
+      @hide-tooltip="onHideTooltip"
       >
     </BlockEditorWorker>
     <!--剪贴板-->
@@ -92,6 +101,7 @@ import { Rect } from "../model/Rect";
 
 import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
 import BlockEditorWorker from "./BlockEditorWorker.vue";
+import BlockEditorClipBoard from "./BlockEditorClipBoard.vue";
 import { BlockPort } from "../model/Define/Port";
 import { BlockRunner } from "../model/WorkProvider/Runner";
 import { BlockRegData, BlockPortRegData } from "../model/Define/BlockDef";
@@ -99,11 +109,12 @@ import { BlockEditorOwner, BlockGraphVariableChangeCallback, BlockPortRegDataMov
 import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
 import { BlockEditor, BlockBreakPoint } from "../model/Editor/BlockEditor";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
-import BlockEditorClipBoard from "./BlockEditorClipBoard.vue";
 import { EditorSettings } from "../model/Editor/EditorSettings";
+import { EventHandler } from "../utils/EventHandler";
+import { MenuItem } from "../model/Menu";
 import BaseBlocks from "../model/Blocks/BaseBlocks";
 import CommonUtils from "../utils/CommonUtils";
-import { EventHandler } from "../utils/EventHandler";
+
 
 @Component({
   components: {
@@ -272,7 +283,10 @@ export default class BlockDrawer extends Vue {
   addBlockInPos : Vector2 = new Vector2();
   isAddBlockInPos = false;
 
-  setAddBlockInpos(pos : Vector2) {
+  public setNoAddBlockInpos() {
+    this.isAddBlockInPos = false;
+  }
+  public setAddBlockInpos(pos : Vector2) {
     this.isAddBlockInPos = true;
     this.addBlockInPos = pos;
   }
@@ -289,11 +303,15 @@ export default class BlockDrawer extends Vue {
     }
     let newBlock = new BlockEditor(blockData);
     if(this.isAddBlockInPos) { //在指定位置添加单元
-      
-      this.addBlockInPos.x -= newBlock.size.x / 2;
-      this.addBlockInPos.y -= newBlock.size.y / 2;
-      this.isAddBlockInPos = false;
+
       this.editorWorker.addBlock(newBlock, this.addBlockInPos)
+
+      let pos = new Vector2(newBlock.position.x, newBlock.position.y);
+      pos.x -= newBlock.size.x / 2;
+      pos.y -= newBlock.size.y / 2;
+
+      newBlock.setPos(pos);
+      
     } else if(this.isConnectingToNew) { //添加单元并连接
 
       this.editorWorker.addBlock(newBlock, this.connectingEndPos);
@@ -472,6 +490,7 @@ export default class BlockDrawer extends Vue {
         showBlockRightMenu: this.showBlockRightMenu,
         deleteBlock: this.editorWorker.deleteBlock,
         chooseType: (p, c) => { this.$emit('choose-custom-type', p, c); },
+        openGraph: (g) => { this.$emit('on-open-graph', g); },
         graphVariableChange: {
           onVariableAdd: (g, v) => this.blockOwnerData.editorEvents.onVariableAdd.invoke(g, v),
           onVariableRemove: (g, v) => this.blockOwnerData.editorEvents.onVariableRemove.invoke(g, v),
@@ -500,6 +519,10 @@ export default class BlockDrawer extends Vue {
           onGraphUpdate: new EventHandler<BlockGraphChangeCallback>(),
         },
         getVue: () => this,
+        showTooltip: (t, v) => this.onShowTooltip(t, v),
+        hideTooltip: () => this.onHideTooltip(),
+        updateTooltip: (t, v) => this.updateTooltip(t, v),
+        viewPortPosToWindowPos: (v) => this.viewPortPosToWindowPos(v),
       };
       this.$emit('update-block-owner-data', this.blockOwnerData);
       this.onWindowSizeChanged();
@@ -555,6 +578,27 @@ export default class BlockDrawer extends Vue {
     })
   }
 
+
+  //弹出提示
+  //========================
+
+  isShowTooltip = false;
+  showTooltipPos = new Vector2();
+  showTooltipText = '';
+
+  onShowTooltip(text : string, pos : Vector2) {
+    this.isShowTooltip = true;
+    this.showTooltipPos = pos;
+    this.showTooltipText = text;
+  }
+  updateTooltip(text : string, pos ?: Vector2) {
+    if(typeof pos != 'undefined')
+      this.showTooltipPos = pos;
+    this.showTooltipText = text;
+  }
+  onHideTooltip() {
+    this.isShowTooltip = false;
+  }
 
   //组件数据共享
   //========================
@@ -660,7 +704,7 @@ export default class BlockDrawer extends Vue {
       Object.keys(block.inputPorts).forEach((guid) => {
         let params = <BlockPort>block.inputPorts[guid];
         if(params.paramType!= 'execute' && params.paramUserSetValue != null) {
-          params.paramValue = params.paramUserSetValue;
+          params.setValue(params.paramUserSetValue);
           params.update();
         }
       });
@@ -785,16 +829,17 @@ export default class BlockDrawer extends Vue {
   }
   showBlockRightMenu(screenPos : Vector2) {
     let selectedCount = this.editorWorker.getSelecteBlockCount();
-    this.$contextmenu({
-      x: screenPos.x,
-      y: screenPos.y,
-      items: [
-        { label: "删除", onClick: () => this.deleteSelectedBlocks() },
+    let selectedBlocks = this.editorWorker.getSelectedBlocks();
+    let menuItems = (selectedCount == 1 ? selectedBlocks[0].blockMenuSettings.items : []).concat(
+      <MenuItem[]>[
+        { label: "删除", onClick: () => this.deleteSelectedBlocks(), divided: true },
         { label: "剪切", onClick: () => this.clipboardCutSelect() },
         { label: "复制", onClick: () => this.clipboardCopySelect() },
-        { label: "粘贴", disabled: !this.editoClipboard.getBlocksClipboardState(), onClick: () => this.clipboardPaste(this.editorWorker.getMouseCurrentPosInViewPort()) },
-        { label: "刷新节点", divided: true, onClick: () => this.editorWorker.refreshSelectedBlock() },
-        { label: "断开连接", onClick: () => this.editorWorker.unConnectSelectedBlock() },
+        { label: "粘贴", disabled: !this.editoClipboard.getBlocksClipboardState(), 
+          onClick: () => this.clipboardPaste(this.editorWorker.getMouseCurrentPosInViewPort()),
+          divided: true },
+        { label: "刷新节点", onClick: () => this.editorWorker.refreshSelectedBlock() },
+        { label: "断开连接", onClick: () => this.editorWorker.unConnectSelectedBlock(), divided: true },
         { label: "对齐", disabled: selectedCount < 2, children: [
           { label: "左对齐", onClick: () => this.editorWorker.alignSelectedBlock('left') },
           { label: "上对齐", onClick: () => this.editorWorker.alignSelectedBlock('top') },
@@ -806,7 +851,13 @@ export default class BlockDrawer extends Vue {
           { label: "启用", onClick: () => this.editorWorker.setSelectedBlockBreakpointState('enable') },
           { label: "禁用", onClick: () => this.editorWorker.setSelectedBlockBreakpointState('disable') },
         ] },
-      ],
+      ]
+    );
+
+    this.$contextmenu({
+      x: screenPos.x,
+      y: screenPos.y,
+      items: menuItems,
       zIndex: 100,
       customClass: 'menu-context',
     });

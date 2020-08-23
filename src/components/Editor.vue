@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div oncontextmenu="return false">
     <!--进入遮罩-->
     <div :class="'editor-intro'+(showIntro?' show':'')" v-show="showIntroE">
       <h1>Easy blueprint</h1>
@@ -86,7 +86,9 @@
           @update-block-owner-data="(d) => blockOwnerData = d"
           @choose-custom-type="onChooseCustomType"
           @on-want-save="saveFile"
+          @on-open-graph="goGraph"
         ></BlockDrawer>
+
         <!--属性栏-->
         <div slot="right" class="prop">
           <Split v-model="split2" mode="vertical">
@@ -160,13 +162,13 @@ import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 import SettingsServiceInstance from "../sevices/SettingsService";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 import { BlockPortType, BlockParameterType, BlockPortDirection } from "../model/Define/Port";
-import { BlockRunner, BlockRunLoopData } from "../model/WorkProvider/Runner";
+import { BlockRunner, BlockRunContextData } from "../model/WorkProvider/Runner";
 import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { EditorSettings } from "../model/Editor/EditorSettings";
-import { MenuOptions, MenuItem } from "../types/vue-contextmenujs";
+import { MenuOptions, MenuItem, MenuData, MenuSeparator } from "../model/Menu";
 import ConnectorProp from "../components/ConnectorProp.vue";
 import BlockDrawer from "../components/BlockDrawer.vue";
-import MenuBar, { MenuData, MenuSeparator } from "../components/MenuBar.vue";
+import MenuBar from "../components/MenuBar.vue";
 import GraphProp from "../components/GraphProp.vue";
 import DocunmentProp from "../components/DocunmentProp.vue";
 import ChooseTypePanel from "../components/ChooseTypePanel.vue";
@@ -402,7 +404,7 @@ export default class Editor extends Vue {
     setTimeout(() => (<AddPanel>this.$refs.AddBlockPanel).doFilter(), 150);
   }
   public showAddBlockPanelAt(pos : Vector2) {
-    this.showAddBlockPanelPos = pos;
+    this.showAddBlockPanelPos.Set(pos);
     this.showAddBlockPanel = true;
     this.showAddBlockPanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
     if(this.showAddBlockPanelMaxHeight > 500) this.showAddBlockPanelMaxHeight = 500;
@@ -413,6 +415,7 @@ export default class Editor extends Vue {
     (<AddPanel>this.$refs.AddBlockPanel).focus();
   }
   showAddBlockPanelBar(e : HTMLElement) {
+    this.editorControl.setNoAddBlockInpos();
     this.clearAddBlockPanelFilter();
     
     if(this.showAddBlockPanel) this.showAddBlockPanel = false;
@@ -438,7 +441,7 @@ export default class Editor extends Vue {
     }
   }
   public showChooseTypePanelAt(pos : Vector2) {
-    this.showChooseTypePanelPos = pos;
+    this.showChooseTypePanelPos.Set(pos);
     this.showChooseTypePanel = true;
     this.showChooseTypePanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
     if(this.showChooseTypePanelPos.x + 300 > window.innerWidth)
@@ -731,7 +734,7 @@ export default class Editor extends Vue {
         this.editorControl.updateAllBlockPrams();
 
         //激活入口单元
-        this.runner.push(this.startBlock.outputPorts['00000000'], 'connector');
+        this.runner.push(this.startBlock.outputPorts['START'], null, 'connector');
         this.runner.start();
         this.runningState = 'running';
 

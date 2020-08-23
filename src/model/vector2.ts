@@ -28,6 +28,9 @@ export class Vector2 {
     this.y /= v;
     return this;
   }
+  public equal(another : Vector2) {
+    return this.x == another.x && this.y == another.y;
+  }
 }
 
 export var ZeroVector2 = new Vector2();
