@@ -2,7 +2,8 @@
 ---
 一个类似于UE蓝图的脚本设计软件的HTML实现.
 
-![image](https://raw.githubusercontent.com/imengyu/blueprint/master/preview.png)
+![image](https://github.com/imengyu/blueprint/raw/master/preview.png)
+
 
 ### 这是什么？
 
