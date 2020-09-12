@@ -32,9 +32,7 @@ export class BlockEditorOwner {
   chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void) => void;
   openGraph: (graph : BlockGraphDocunment) => void;
 
-  showTooltip: (text : string, pos : Vector2) => void;
-  updateTooltip: (text : string, pos ?: Vector2) => void;
-  hideTooltip: () => void;
+
 
   viewPortPosToWindowPos: (pos : Vector2) => Vector2;
 

@@ -1,5 +1,5 @@
 import { BlockParameterType, BlockPortDirection, BlockPort } from "./Port";
-import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback } from "./Block";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 
@@ -166,6 +166,11 @@ export class BlockRegData {
      * 用户创建端口时的回调（仅编辑器模式调用）
      */
     onUserAddPort: OnUserAddPortCallback,
+    /**
+     * 添加单元时的回调，在这个回调中检查能否添加单元，
+     * 返回null可以添加，返回一个字符串表示不能添加，字符串会显示给用户。（仅编辑器模式调用）
+     */
+    onAddCheck: OnAddBlockCheckCallback,
   } = {
     onCreate: null,
     onDestroy: null,
@@ -178,6 +183,7 @@ export class BlockRegData {
     onCreateCustomEditor : null,
     onCreatePortCustomEditor: null,
     onUserAddPort: null,
+    onAddCheck: null,
   }
 
   /**

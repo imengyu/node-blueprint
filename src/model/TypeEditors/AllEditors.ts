@@ -84,6 +84,7 @@ let numberEditor : BlockParameterEditorRegData = {
     let errSpan = document.createElement('i');
     div.classList.add('display-inline-block');
     ele.classList.add('input-border');
+    ele.type = 'text';
     errSpan.classList.add('text-warning','iconfont','icon-error-1', 'ml-2');
     errSpan.style.display = 'none';
 
@@ -139,6 +140,7 @@ let bigintEditor : BlockParameterEditorRegData = {
     let errSpan = document.createElement('i');
     div.classList.add('display-inline-block');
     ele.classList.add('input-border');
+    ele.type = 'text';
     errSpan.classList.add('text-warning','iconfont','icon-error-1');
     errSpan.style.display = 'none';
 
@@ -193,7 +195,7 @@ let stringEditor : BlockParameterEditorRegData = {
     ele.style.width = '50px';
     if(nowVal != null && typeof nowVal == 'string')
       ele.value = <string>nowVal;
-    ele.setAttribute('type', "text");
+    ele.type = 'text';
     ele.onblur = () => changeCallBack(ele.value);
     return ele
   },

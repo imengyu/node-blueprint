@@ -68,6 +68,17 @@ export class ParamTypeService {
         return type ? type.color : 'rgb(250,250,250)';
     }
   }
+  public getTypeDefaultValue(type : BlockParameterType) {
+    switch(type) {
+      case 'execute': return undefined;
+      case 'boolean': return false;
+      case 'bigint': return 0;
+      case 'number': return 0;
+      case 'string': return '';
+      default:
+        return null;
+    }
+  }
 }
 
 let ParamTypeServiceInstance = new ParamTypeService();

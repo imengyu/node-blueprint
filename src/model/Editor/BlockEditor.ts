@@ -10,8 +10,8 @@ import { Block, OnUserAddPortCallback } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
-import { threadId } from "worker_threads";
-
+import HtmlUtils from "../../utils/HtmlUtils";
+import ToolTipUtils from "../../utils/ToolTipUtils";
 
 /**
  * 编辑器模式下的单元。
@@ -46,7 +46,14 @@ export class BlockEditor extends Block {
     this.onAddPortElement.addListener(this, (block, port) => this.addPortElement(port));
     this.onRemovePortElement.addListener(this, (block, port) => this.removePortElement(port));
     this.onUpdatePortElement.addListener(this, (block, port) => this.updatePortElement(port));
+    this.onPortValueUpdate.addListener(this, (block, port) => this.updatePortParamDisplayVal(port));
+    this.onPortConnectorActive.addListener(this, (port, connector) => {
+      if(this.currentRunner && this.currentRunner.state != 'stopped') 
+        (<ConnectorEditor>connector).active(port);
+    });
     this.onPortRemove.addListener(this, this.onPortRemoveCallback);
+    this.onEnterBlock.addListener(this, (block) => this.markActive());
+    this.onLeaveBlock.addListener(this, (block) => this.markDective());
   }
 
   public portIcons = {
@@ -119,8 +126,10 @@ export class BlockEditor extends Block {
     this.els.elAddOutputBehaviorPort = document.createElement('a');
     this.els.elAddInputBehaviorPort.classList.add('port-add','iconfont', 'Behavior', this.portIcons.portBehaviorAddIcon);
     this.els.elAddOutputBehaviorPort.classList.add('port-add','iconfont', 'Behavior',this.portIcons.portBehaviorAddIcon);
-    this.els.elAddInputBehaviorPort.setAttribute('title', '添加入端口');
-    this.els.elAddOutputBehaviorPort.setAttribute('title', '添加出端口');
+    this.els.elAddInputBehaviorPort.setAttribute('data-title', '添加入端口');
+    this.els.elAddOutputBehaviorPort.setAttribute('data-title', '添加出端口');
+    ToolTipUtils.registerElementTooltip(this.els.elAddInputBehaviorPort);
+    ToolTipUtils.registerElementTooltip(this.els.elAddOutputBehaviorPort);
     this.els.elAddInputBehaviorPort.onclick = this.onUserAddInputPort.bind(this);
     this.els.elAddOutputBehaviorPort.onclick = this.onUserAddOutputPort.bind(this);
 
@@ -129,8 +138,10 @@ export class BlockEditor extends Block {
 
     this.els.elAddInputParamPort.classList.add('port-add','iconfont', 'Param', this.portIcons.portParamAddIcon);
     this.els.elAddOutputParamPort.classList.add('port-add','iconfont', 'Param', this.portIcons.portParamAddIcon);
-    this.els.elAddInputParamPort.setAttribute('title', '添加入参数');
-    this.els.elAddOutputParamPort.setAttribute('title', '添加出参数');
+    this.els.elAddInputParamPort.setAttribute('data-title', '添加入参数');
+    this.els.elAddOutputParamPort.setAttribute('data-title', '添加出参数');
+    ToolTipUtils.registerElementTooltip(this.els.elAddInputParamPort);
+    ToolTipUtils.registerElementTooltip(this.els.elAddOutputParamPort);
     this.els.elAddInputParamPort.onclick = this.onUserAddInputParam.bind(this);
     this.els.elAddOutputParamPort.onclick = this.onUserAddOutputParam.bind(this);
 
@@ -153,7 +164,9 @@ export class BlockEditor extends Block {
 
     this.els.elTitle = document.createElement('div');
     this.els.elTitle.classList.add("title");
-    this.els.elTitle.setAttribute('title', this.description);
+    this.els.elTitle.setAttribute('data-title', this.description);
+    ToolTipUtils.registerElementTooltip(this.els.elTitle);
+
     if(!CommonUtils.isNullOrEmpty(this.blockStyleSettings.titleColor))
       this.els.elTitle.style.color = this.blockStyleSettings.titleColor;
     if(!CommonUtils.isNullOrEmpty(this.blockStyleSettings.titleBakgroundColor))
@@ -184,8 +197,9 @@ export class BlockEditor extends Block {
 
       titleSmall.classList.add('title-small');
       titleSmallSpan.innerText = this.name
-      titleSmall.setAttribute('title', this.description);
+      titleSmall.setAttribute('data-title', this.description);
       titleSmall.appendChild(titleSmallSpan);
+      ToolTipUtils.registerElementTooltip(titleSmall);
       this.el.appendChild(titleSmall);
     }
   
@@ -235,11 +249,13 @@ export class BlockEditor extends Block {
     this.els.elCommentPlaceHolder.classList.add('flow-block-comment-place-holder');
     this.els.elCommentPlaceHolder.innerText = '点击添加注释';
     this.els.elCommentOpen = document.createElement('a');
-    this.els.elCommentOpen.setAttribute('title', '打开注释气泡');
+    this.els.elCommentOpen.setAttribute('data-title', '打开注释气泡');
     this.els.elCommentOpen.classList.add('flow-block-comment-open','iconfont','icon-qipao');
+    ToolTipUtils.registerElementTooltip(this.els.elCommentOpen);
     this.els.elCommentClose = document.createElement('a');
     this.els.elCommentClose.classList.add('iconfont','icon-close-');
-    this.els.elCommentClose.setAttribute('title', '隐藏注释气泡');
+    this.els.elCommentClose.setAttribute('data-title', '隐藏注释气泡');
+    ToolTipUtils.registerElementTooltip(this.els.elCommentClose);
 
     this.els.elCommentOpen.onclick = () => {
       this.markOpen = true;
@@ -285,6 +301,8 @@ export class BlockEditor extends Block {
     this.el.addEventListener('resize', this.onResize.bind(this));
     this.el.addEventListener('wheel', this.onMouseWhell.bind(this));
     this.el.addEventListener('contextmenu', this.onContextMenu.bind(this));
+
+    ToolTipUtils.registerElementTooltip(this.el);
 
     //load port elements
     this.allPorts.forEach(port => {
@@ -430,13 +448,13 @@ export class BlockEditor extends Block {
         this.els.elBreakPointStatus.style.display = 'inline-block';
         this.els.elBreakPointStatus.classList.add('icon-tx-babianxing');
         this.els.elBreakPointStatus.classList.remove('icon-tx-fill-babianxing');
-        this.els.elBreakPointStatus.setAttribute('title', '此单元已禁用断点');
+        this.els.elBreakPointStatus.setAttribute('data-title', '此单元已禁用断点');
         break;
       case 'enable':
         this.els.elBreakPointStatus.style.display = 'inline-block';
         this.els.elBreakPointStatus.classList.remove('icon-tx-babianxing');
         this.els.elBreakPointStatus.classList.add('icon-tx-fill-babianxing');
-        this.els.elBreakPointStatus.setAttribute('title', '此单元已启用断点');
+        this.els.elBreakPointStatus.setAttribute('data-title', '此单元已启用断点');
         break;
       case 'none':
         this.els.elBreakPointStatus.style.display = 'none';
@@ -475,7 +493,7 @@ export class BlockEditor extends Block {
     port.editorData.parent = port;
     port.editorData.block = this;
     port.editorData.el = document.createElement('div');
-    port.editorData.el.classList.add("port", "iconfont");
+    port.editorData.el.classList.add("port");
     port.editorData.elDot = document.createElement('i');
     port.editorData.elSpan = document.createElement('span');
     port.editorData.elDeleteButton = document.createElement('a');
@@ -483,7 +501,8 @@ export class BlockEditor extends Block {
 
     port.editorData.elDeleteButton.classList.add("port-delete", "iconfont", this.portIcons.portPortDeleteIcon);
     port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
-    port.editorData.elDeleteButton.setAttribute('title', '删除参数');
+    port.editorData.elDeleteButton.setAttribute('data-title', '删除参数');
+    ToolTipUtils.registerElementTooltip(port.editorData.elDeleteButton);
 
     port.editorData.el.setAttribute('data-param-type', port.paramType);
     port.editorData.el.setAttribute('data-param-custom-type', port.paramCustomType);
@@ -499,6 +518,7 @@ export class BlockEditor extends Block {
     port.editorData.el.addEventListener('mousedown', (e) => this.onPortMouseDown(port, e));
     port.editorData.el.addEventListener('mouseenter', (e) => this.onPortMouseEnter(port, e));
     port.editorData.el.addEventListener('mouseleave', () => this.onPortMouseLeave(port));
+    ToolTipUtils.registerElementTooltip(port.editorData.el);
 
     //switch port and text's direction
     if(port.direction == 'input') {
@@ -552,7 +572,7 @@ export class BlockEditor extends Block {
     if(!this.created) return;
 
     if(port.paramType == 'execute') {
-      port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
+      port.editorData.el.setAttribute('data-title', port.name + (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n' + port.description)));
       return;
     }
 
@@ -626,29 +646,16 @@ export class BlockEditor extends Block {
     port.editorData.oldParamType = port.paramType;
   }
 
-  public updatePortExecuteVal(port : BlockPort) {
-    if(!this.created) return;
-
-    port.editorData.el.setAttribute('title', 
-      port.name
-      + '\n' + port.description);
-  }
   public updateAllPortElement() {
     this.allPorts.forEach((p) => this.updatePort(p));
   }
   public updateAllParamPort() {
     this.allPorts.forEach((p) => {
-      if(p.paramType != 'execute') {
-        p.update();
-        this.updatePortParamDisplayVal(p);
-      }
+      if(p.paramType != 'execute') p.update();
     });
   }
   public updatePort(port : BlockPort) {
     this.updatePortElement(port);
-    this.updatePortConnectStatusElement(port);
-    if(port.paramType != 'execute') this.updatePortParamDisplayVal(port);
-    else this.updatePortExecuteVal(port);
   }
   public flushAllPortElementCreateState() {
     this.allPorts.forEach((port) => {
@@ -658,9 +665,7 @@ export class BlockEditor extends Block {
     })
   }
   public updatePortParamDisplayVal(port : BlockPort) {
-    if(this.currentShowPortTooltip == port) {
-      this.editor.updateTooltip(this.getPortParamValStr(this.currentShowPortTooltip));
-    }
+    ToolTipUtils.updateElementTooltip(port.editorData.el, this.getPortParamValStr(port));   
   }
 
   private updatePortElement(port : BlockPort) {
@@ -669,7 +674,7 @@ export class BlockEditor extends Block {
     port.editorData.elSpan.innerText = port.name;
     port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
     if(port.paramType == 'execute'){
-      port.editorData.el.setAttribute('title', port.name + '\n' + port.description);
+      port.editorData.el.setAttribute('data-title', port.name + (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n' + port.description)));
       port.editorData.elDot.classList.remove('icon-yuan1','icon-search2');
     } else {
       port.editorData.elDot.classList.remove('icon-sanjiaoxing','icon-zuo');
@@ -677,6 +682,7 @@ export class BlockEditor extends Block {
       port.editorData.el.setAttribute('data-param-custom-type', port.paramCustomType);
 
       this.createOrRecreateParamPortEditor(port);
+      this.updatePortParamDisplayVal(port);
     }
 
     this.updatePortConnectStatusElement(port);
@@ -691,13 +697,12 @@ export class BlockEditor extends Block {
     this.unConnectPort(port);
   }
   private getPortParamValStr(port : BlockPort) {
-    if(!this.created) 
-      return '未创建';
+    if(!this.created) return '变量未创建';
 
     return '<h5>' + port.name
       + '</h5><span class="text-secondary">' + port.description
       + '</span><br/>类型：' + port.editorData.el.getAttribute('data-param-type-name')
-      + '<br/>值：' + CommonUtils.valueToStr(port.getValue());
+      + '<br/>值：' + (CommonUtils.valueToStr(this.currentRunningContext == null ? port.getUserSetValue() : port.getValue()));
   }
 
   public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {
@@ -843,26 +848,15 @@ export class BlockEditor extends Block {
   public mouseDownInPort = false;
   public mouseConnectingPort = false;
 
-  private currentShowPortTooltip = null;
-
   private onPortMouseEnter(port : BlockPort, e : MouseEvent) {
-    this.mouseDownInPort = true;
     this.editor.updateCurrentHoverPort(port);
-
-    let tooltipPos = port.editorData.getPosition();
-    tooltipPos.x += 30;
-
-    this.editor.showTooltip(
-      this.getPortParamValStr(port),
-      this.editor.viewPortPosToWindowPos(tooltipPos),
-    );
-    this.currentShowPortTooltip = port;
+    
+    if(port.paramType != 'execute') {
+      ToolTipUtils.updateElementTooltip(port.editorData.el, this.getPortParamValStr(port));   
+    }
   }
   private onPortMouseLeave(port : BlockPort) {
     this.editor.updateCurrentHoverPortLeave(port);
-    this.mouseDownInPort = false;
-    this.currentShowPortTooltip = null;
-    this.editor.hideTooltip();
   }
   private onPortMouseMove(e : MouseEvent) {
     this.mouseConnectingPort = true;
@@ -908,16 +902,12 @@ export class BlockEditor extends Block {
 
   private onMouseEnter(e : MouseEvent) {
     this.hover = true;
-    this.editor.showTooltip(
-      this.el.getAttribute('data-title'),
-      new Vector2(e.x, e.y)
-    );
   }
   private onMouseOut(e : MouseEvent) {
     this.hover = false;
-    this.editor.hideTooltip();
   }
   private onMouseMove(e : MouseEvent) {
+  
     if(this.mouseDown && e.button == 0 && !this.mouseDownInPort && !this.mouseConnectingPort) {
       let pos = new Vector2(
         this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
@@ -984,7 +974,7 @@ export class BlockEditor extends Block {
 
   private testIsDownInControl(e : MouseEvent){
     let target = (<HTMLElement>e.target);
-    return (CommonUtils.isEventInControl(e)
+    return (HtmlUtils.isEventInControl(e)
       || target.classList.contains('flow-block-no-move') 
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
@@ -1008,8 +998,9 @@ export class BlockEditor extends Block {
   public onUserAddPort : OnUserAddPortCallback = null;
 }
 
-export type BlockBreakPoint = 'enable'|'disable'|'none';
-
+/**
+ * 单元的编辑器使用数据
+ */
 export class BlockEditorHTMLData {
 
   elInputPorts : HTMLDivElement = null;

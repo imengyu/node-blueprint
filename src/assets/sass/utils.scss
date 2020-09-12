@@ -11,6 +11,10 @@
   display: inline;
 }
 
+.no-mouse-event {
+  pointer-events: none;
+}
+
 .flex-center {
   display: flex;
   justify-content: center;

@@ -12,7 +12,6 @@ import { BlockGraphDocunment } from "../Define/BlockDocunment";
 import ControlBlocks from "./ControlBlocks";
 import LogicBlocks from "./LogicBlocks";
 import CanvasUtils from "../../utils/CanvasUtils";
-import { Block } from "../Define/Block";
 
 export default { 
   register,
@@ -47,51 +46,46 @@ let variableSet : BlockRegData;
 
 function registerScriptBase()  {
 
-  blockIn = new BlockRegData("0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F", "脚本入口");
-  blockOut = new BlockRegData("77885802-92C8-569B-1E7F-48938943A549", "脚本出口");
+  blockIn = new BlockRegData('0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F', '脚本入口', '脚本在这里开始运行');
+  blockOut = new BlockRegData('77885802-92C8-569B-1E7F-48938943A549', '脚本出口', '调用此单元结束整个脚本的运行');
 
   blockIn.baseInfo.author = 'imengyu';
-  blockIn.baseInfo.description = "脚本入口，脚本在这里开始运行";
   blockIn.baseInfo.category = '基础/脚本';
   blockIn.baseInfo.version = '2.0';
   blockIn.baseInfo.logo = require('../../assets/images/BlockIcon/entry_go.svg');
   blockIn.ports = [
     {
       name: "脚本开始",
-      description: '脚本在这里开始运行',
       direction: 'output',
       guid: 'START',
       defaultConnectPort: true,
       paramType: 'execute',
     },
   ]
-  blockIn.callbacks.onCreate = () => {};
-  blockIn.callbacks.onPortActive = (block, port) => {};
-  blockIn.callbacks.onPortUpdate = (block, port) => {};
+  blockIn.callbacks.onAddCheck = (blockRegData, graph) => {
+    if(!graph.isMainGraph)
+      return '只能在主图表中添加脚本开始单元';
+    return null;
+  };
   blockIn.settings.oneBlockOnly = true;
   blockIn.type = 'base';
   blockIn.blockStyle.titleBakgroundColor = "rgba(25,25,112,0.6)";
 
   blockOut.baseInfo.author = 'imengyu';
-  blockOut.baseInfo.description = "脚本出口，调用此单元结束整个脚本的运行";
   blockOut.baseInfo.category = '基础/脚本';
   blockOut.baseInfo.version = '2.0';
   blockOut.baseInfo.logo = require('../../assets/images/BlockIcon/entry_exit.svg');
   blockOut.ports = [
     {
       name: "结束脚本",
-      description: '',
       direction: 'input',
       guid: 'END',
       defaultConnectPort: false,
       paramType: 'execute',
     },
   ]
-  blockOut.callbacks.onCreate = () => {};
-  blockOut.callbacks.onPortActive = (block, port) => block.currentRunningContext.runner.notifyEnd();
-  blockOut.callbacks.onPortUpdate = (block, port) => {};
+  blockOut.callbacks.onPortActive = (block, port) => block.currentRunner.notifyEnd(block.currentRunningContext);
   blockOut.type = 'base';
-  blockOut.settings.oneBlockOnly = true;
   blockOut.blockStyle.titleBakgroundColor = "rgba(112,30,133,0.6)";
 
   BlockServiceInstance.registerBlock(blockIn, false);
@@ -213,7 +207,6 @@ function registerScriptVariableBase()  {
     
     //添加端口
     let variable = block.currentGraph.findGraphVariable(block.options['variable']);
-    let portIn : BlockPort = null;
     let portOut : BlockPort = null;
 
     let portInGuid = StringUtils.strToHexCharCode(block.options['variable'] + '_I', false);
@@ -223,7 +216,7 @@ function registerScriptVariableBase()  {
     block.data['portOutGuid'] = portOutGuid;
 
     if(variable != null) {
-      portIn = block.addPort({
+      block.addPort({
         guid: portInGuid,
         direction: 'input',
         paramType: ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type),
@@ -291,7 +284,7 @@ function registerScriptVariableBase()  {
       let variable = block.currentGraph.findGraphVariable(block.options['variable']);
       if(variable != null) {
         let val = block.getInputParamValue(block.data['portInGuid']);
-        variable.set(val);
+        variable.set(block.currentRunningContext, val);
       }else {
         logger.error('[Set variable] variable ' + block.options['variable'] + ' not found !');
       }
@@ -451,7 +444,7 @@ function registerScriptGraphBase()  {
   graphOut.settings.oneBlockOnly = true;
   graphOut.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
 
-  //输出
+  //调用
 
   graphCall.baseInfo.author = 'imengyu';
   graphCall.baseInfo.description = "调用子图表";
@@ -573,7 +566,7 @@ function registerDebugBase() {
       name: "",
       description: '',
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       defaultConnectPort: false,
       paramType: 'execute',
     },
@@ -581,7 +574,7 @@ function registerDebugBase() {
       name: "",
       description: '',
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       defaultConnectPort: false,
       paramType: 'execute',
     },
@@ -589,7 +582,7 @@ function registerDebugBase() {
       name: "时长",
       description: '延迟时长（毫秒）',
       direction: 'input',
-      guid: '00000003',
+      guid: 'TIME',
       paramType: 'number',
       paramCustomType: '',
       paramDefaultValue: 1000,
@@ -598,8 +591,8 @@ function registerDebugBase() {
   ];
   blockDelay.callbacks.onCreate = (block) => {};
   blockDelay.callbacks.onPortActive = (block, port) => {
-    let v = block.getInputParamValue('00000003');
-    setTimeout(() => block.activeOutputPortInNewContext('00000002'), v ? v : 1000);
+    let v = block.getInputParamValue('TIME');
+    setTimeout(() => block.activeOutputPortInNewContext('OUT'), v ? v : 1000);
   };
   blockDelay.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
   blockDelay.blockStyle.logoRight = blockDelay.baseInfo.logo;
@@ -795,7 +788,7 @@ function registerDebugBase() {
 function registerTypeBase() {
 
   let comUppdateFn = (block, port) => {
-    block.setOutputParamValue('00000002', block.getInputParamValue('00000001'));
+    block.setOutputParamValue('OUT', block.getInputParamValue('IN'));
   };
 
   let block = new BlockRegData("A81899CF-766B-F511-B179-90A81BBB088B", "字符串", "字符串 string 类型参数");
@@ -806,12 +799,12 @@ function registerTypeBase() {
   block.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       paramType: 'string',
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       paramType: 'string',
     },
   ];
@@ -831,13 +824,13 @@ function registerTypeBase() {
   block.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       paramType: 'number',
       paramDefaultValue: 0,
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       paramType: 'number',
     },
   ];
@@ -857,13 +850,13 @@ function registerTypeBase() {
   block.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       paramType: 'bigint',
       paramDefaultValue: 0,
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       paramType: 'bigint',
     },
   ];
@@ -883,13 +876,13 @@ function registerTypeBase() {
   block.ports = [
     {
       direction: 'input',
-      guid: '00000001',
+      guid: 'IN',
       paramType: 'boolean',
       paramDefaultValue: true,
     },
     {
       direction: 'output',
-      guid: '00000002',
+      guid: 'OUT',
       paramType: 'boolean',
     },
   ];

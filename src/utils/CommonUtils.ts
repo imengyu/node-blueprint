@@ -8,8 +8,19 @@ export default {
   isNullOrEmpty(str){
     return StringUtils.isNullOrEmpty(str);
   },
+  /**
+   * 判断是否定义并且不为null
+   * @param v 要判断的数值
+   */
   isDefinedAndNotNull(v) {
     return v != null && typeof v != 'undefined';
+  },
+  /**
+   * 判断是否定义并且不为null
+   * @param v 要判断的数值
+   */
+  isDefined(v) {
+    return typeof v != 'undefined';
   },
 
   isJSON,
@@ -18,8 +29,7 @@ export default {
   mergeJsonArray,
   exportRaw,
 
-  getTop,
-  getLeft,
+
 
   valueToStr(val) {
     if(typeof val == 'string') 
@@ -27,7 +37,9 @@ export default {
     else 
       return val + ''
   },
-
+  genRandom(minNum, maxNum){
+    return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
+  },
   /**
    * 生成不重复随机数
    * @param randomLength 字符长度
@@ -74,7 +86,7 @@ export default {
     else return "晚上"
   },
 
-  getElementIndex,
+
 
   /**
    * 在 value/label 的数组中查找
@@ -99,15 +111,7 @@ export default {
   upData,
   downData,
 
-  /**
-   * 检查事件是否处于控件内（input\select）
-   * @param e 事件
-   */
-  isEventInControl(e) {
-    let target = (<HTMLElement>e.target);
-    return (target.tagName == 'INPUT' 
-      || target.tagName == 'SELECT');
-  },
+  
 
   calcTimeSurplus,
   /**
@@ -164,14 +168,6 @@ export default {
       if(!el.classList.contains(class1))el.classList.add(class1);
     }
   },
-
-  showElement(el : HTMLElement) {
-    el.style.display = '';
-  },
-  hideElement(el : HTMLElement) {
-    el.style.display = 'none';
-  },
-  createOptionElement,
 }
 
 /**
@@ -252,12 +248,7 @@ function mergeJsonArray(a, b) {
 }
 
 
-function createOptionElement(value : string, text : string) {
-  let e = document.createElement('option');
-  e.value = value;
-  e.text = text;
-  return e;
-} 
+
 
 //数组操作
 //================
@@ -341,31 +332,4 @@ function exportRaw(name, data) {
   save_link.href = URL.createObjectURL(export_blob);
   save_link.setAttribute('download', name);
   fakeClick(save_link);
-}
-
-
-/**
- * 获取元素的绝对纵坐标
- * @param e 
- */
-function getTop(e : HTMLElement) {
-  var offset = e.offsetTop;
-  if (e.offsetParent != null) offset += getTop(<HTMLElement>e.offsetParent);
-  return offset;
-}
-/**
- * 获取元素的绝对横坐标
- * @param e 元素
- */
-function getLeft(e : HTMLElement) {
-  var offset = e.offsetLeft;
-  if (e.offsetParent != null) offset += getLeft(<HTMLElement>e.offsetParent);
-  return offset;
-} 
-
-function getElementIndex(element : HTMLElement) {
-  for(let i = 0, c = element.parentNode.childNodes.length; i < c; i++)
-    if(element.parentNode.childNodes.item(i) == element)
-      return i;
-  return -1;
 }

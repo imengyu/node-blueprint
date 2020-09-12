@@ -211,8 +211,9 @@ export class BlockFileParser {
       let startPort = graph.blocks[connector.startBlock].getPortByGUID(connector.startPort);
       let endPort = graph.blocks[connector.endBlock].getPortByGUID(connector.endPort);
       
-      graph.connectors.push(readToEditor ? 
-        new ConnectorEditor(startPort, endPort) : new Connector(startPort, endPort));
+      if(startPort != null && endPort != null)
+        graph.connectors.push(readToEditor ? 
+          new ConnectorEditor(startPort, endPort) : new Connector(startPort, endPort));
     }); 
 
     //child graph

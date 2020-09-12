@@ -717,28 +717,17 @@ export default class Editor extends Vue {
         this.runnerStopByBreakPoint = false;
 
       }else {
-
-        //查找入口单元
-        this.startBlock = this.editorControl.getOneBlockByGUID(BaseBlocks.getScriptBaseBlockIn().guid);
-        if(this.startBlock == null) {
-          this.$Modal.info({
+       
+        //开始执行文档
+        if(this.runner.executeStart(this.currentDocunment)){
+          this.runningState = 'running';
+          console.log('[DebugRunner] 开始运行脚本');
+        }else {
+          this.$Modal.warning({
             title: '错误',
-            content: '没有找到入口单元，无法运行脚本<br>请先添加一个入口单元'
+            content: this.runner.lastError
           });
-          return false;
         }
-
-        //变量初始化以仅参数
-        this.editorControl.prepareGraphVariables(this.currentDocunment);
-        this.editorControl.invokeStartRun();
-        this.editorControl.updateAllBlockPrams();
-
-        //激活入口单元
-        this.runner.push(this.startBlock.outputPorts['START'], null, 'connector');
-        this.runner.start();
-        this.runningState = 'running';
-
-        console.log('[DebugRunner] 开始运行脚本');
       }
       return true;
     }

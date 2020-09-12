@@ -176,6 +176,7 @@ function registerControl() {
   blockSwitch.callbacks.onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => { 
     let el = document.createElement('div');
     let typeSelector = document.createElement('input');
+    typeSelector.type = 'text';
     typeSelector.value = block.options['opType'];
     typeSelector.style.width = '111px';
     typeSelector.readOnly = true;
@@ -348,6 +349,7 @@ function registerControl() {
     let el = document.createElement('div');
     let typeSelector = document.createElement('input');
     typeSelector.value = block.options['opType'];
+    typeSelector.type = 'text';
     typeSelector.style.width = '111px';
     typeSelector.readOnly = true;
     typeSelector.onclick = (e) => {
@@ -442,32 +444,31 @@ function registerControl() {
       name: '循环体',
     },
   ];
-  blockWhile.callbacks.onCreate = (block) => {
-    block.options['breakActived'] = false;
-  }
   blockWhile.callbacks.onStartRun = (block) => {
-    block.options['breakActived'] = false;
+    block.variables()['breakActived'] = false;
   }
   blockWhile.callbacks.onPortActive = (block, port) => { 
+
+    var variables = block.variables();
     if(port.guid == 'PI') {
       let POLOOP = block.getPortByGUID('POLOOP');
       let POEXIT = block.getPortByGUID('POEXIT');
       let condition = <boolean>block.getInputParamValue('PICON');
-      let breakActived = block.options['breakActived'];
+      let breakActived = variables['breakActived'];
       while(condition) {
 
         block.activeOutputPort(POLOOP);
 
         //update
         condition = <boolean>block.getInputParamValue('PICON');
-        breakActived = block.options['breakActived']; if(breakActived) break;
+        breakActived = variables['breakActived']; if(breakActived) break;
       }
 
-      block.options['breakActived'] = false;
+      variables['breakActived'] = false;
       block.activeOutputPort(POEXIT);
 
     }else if(port.guid == 'PIBREAK') {
-      block.options['breakActived'] = true;
+      variables['breakActived'] = true;
     }
   };
 
@@ -505,21 +506,20 @@ function registerControl() {
       name: '是否是A'
     },
   ];
-  blockFlipFlop.callbacks.onCreate = (block) => {
-    block.options['isA'] = true;
-  }
   blockFlipFlop.callbacks.onStartRun = (block) => {
-    block.options['isA'] = true;
+    block.variables()['isA'] = true;
   }
   blockFlipFlop.callbacks.onPortActive = (block, port) => { 
+
+    var variables = block.variables();
 
     let POA = block.getPortByGUID('POA');
     let POB = block.getPortByGUID('POB');
     let POC = block.getPortByGUID('POC');
     
-    block.options['isA'] = !block.options['isA'];
-    block.setOutputParamValue(POC, block.options['isA']);
-    block.activeOutputPort(block.options['isA'] ? POA : POB);
+    variables['isA'] = !variables['isA'];
+    block.setOutputParamValue(POC, variables['isA']);
+    block.activeOutputPort(variables['isA'] ? POA : POB);
   };
 
   //#endregion
@@ -567,23 +567,16 @@ function registerControl() {
       direction: 'output',
     },
   ];
-  blockToggle.callbacks.onCreate = (block) => {
-    block.options['isOn'] = true;
-  }
   blockToggle.callbacks.onStartRun = (block) => {
-    block.options['isOn'] = !block.getInputParamValue('PISTARTOFF');
+    block.variables()['isOn'] = !block.getInputParamValue('PISTARTOFF');
   }
   blockToggle.callbacks.onPortActive = (block, port) => { 
+    var variables = block.variables();
     if(port.guid == 'PI') {
-      if(block.options['isOn'])
-        block.activeOutputPort('PO');
-    }else if(port.guid == 'PION') {
-      block.options['isOn'] = true;
-    }else if(port.guid == 'PIOFF') {
-      block.options['isOn'] = false;
-    }else if(port.guid == 'PITOGGGLE') {
-      block.options['isOn'] = !block.options['isOn'];
-    }
+      if(variables['isOn']) block.activeOutputPort('PO');
+    } else if(port.guid == 'PION') variables['isOn'] = true;
+    else if(port.guid == 'PIOFF') variables['isOn'] = false;
+    else if(port.guid == 'PITOGGGLE') variables['isOn'] = !variables['isOn'];
   };
 
   //#endregion
@@ -649,14 +642,14 @@ function registerControl() {
       name: '循环体',
     },
   ];
-  blockFor.callbacks.onCreate = (block) => {
-    block.options['breakActived'] = false;
-  }
   blockFor.callbacks.onStartRun = (block) => {
     block.options['breakActived'] = false;
   }
   blockFor.callbacks.onPortActive = (block, port) => { 
     if(port.guid == 'PI') {
+
+      var variables = block.variables();
+      variables['breakActived'] = false;
 
       let POLOOP = block.getPortByGUID('POLOOP');
       let POEXIT = block.getPortByGUID('POEXIT');
@@ -673,7 +666,7 @@ function registerControl() {
           block.setOutputParamValue(POINDEX, i);
           block.activeOutputPort(POLOOP);
 
-          breakActived = block.options['breakActived']; if(breakActived) break;
+          breakActived = variables['breakActived']; if(breakActived) break;
         }
       else if(stepIndex < 0) {
         for(let i = startIndex; i > endIndex; i += stepIndex) {
@@ -681,13 +674,14 @@ function registerControl() {
           block.setOutputParamValue(POINDEX, i);
           block.activeOutputPort(POLOOP);
 
-          breakActived = block.options['breakActived']; if(breakActived) break;
+          breakActived = variables['breakActived']; if(breakActived) break;
         }
       }
 
       block.activeOutputPort(POEXIT);
     }else if(port.guid == 'PIBREAK') {
-      block.options['breakActived'] = true;
+      var variables = block.variables();
+      variables['breakActived'] = true;
     }
   };
 
@@ -730,25 +724,23 @@ function registerControl() {
       name: '当前计数',
     },
   ];
-  blockDoN.callbacks.onCreate = (block) => {
-    block.options['count'] = 0;
-  }
   blockDoN.callbacks.onStartRun = (block) => {
-    block.options['count'] = 0;
+    block.variables()['count'] = 0;
   }
   blockDoN.callbacks.onPortActive = (block, port) => { 
 
+    var variables = block.variables();
     if(port.guid == 'PI') {
 
       let N = <number>block.getInputParamValue('PIN');
-      if(N < block.options['count']) {
+      if(N < variables['count']) {
 
-        block.options['count']++;
-        block.setOutputParamValue('POCOUNT', block.options['count']);
+        variables['count']++;
+        block.setOutputParamValue('POCOUNT', variables['count']);
         block.activeOutputPort('PO');
       }
     } else if(port.guid == 'PIRESET') {
-      block.options['count'] = 0;
+      variables['count'] = 0;
       block.setOutputParamValue('POCOUNT', 0);
     }
   };
@@ -786,22 +778,20 @@ function registerControl() {
       direction: 'output',
     },
   ];
-  blockDoOnce.callbacks.onCreate = (block) => {
-    block.options['isOn'] = 0;
-  }
   blockDoOnce.callbacks.onStartRun = (block) => {
-    block.options['isOn'] = !block.getInputParamValue('PISTARTOFF');
+    block.variables()['isOn'] = !block.getInputParamValue('PISTARTOFF');
   }
   blockDoOnce.callbacks.onPortActive = (block, port) => { 
 
+    var variables = block.variables();
     if(port.guid == 'PI') {
-      if(block.options['isOn']) {
+      if(variables['isOn']) {
 
-        block.options['isOn'] = false;
+        variables['isOn'] = false;
         block.activeOutputPort('PO');
       }
     } else if(port.guid == 'PIRESET')
-      block.options['isOn'] = true;
+      variables['isOn'] = true;
   };
 
   //#endregion

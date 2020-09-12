@@ -35,7 +35,7 @@
               <i class="iconfont icon-close-1"></i>
             </a>
             <div v-if="port && port.paramType!='execute'" class="prop-item">
-              <span>变量默认值: </span>
+              <span>输入默认值: </span>
               <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
             </div>
           </div> 
@@ -68,7 +68,7 @@
               <i class="iconfont icon-close-1"></i>
             </a>
             <div v-if="port && port.paramType!='execute'" class="prop-item">
-              <span>变量默认值: </span>
+              <span>输出默认值: </span>
               <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
             </div>
           </div> 
@@ -100,6 +100,16 @@
           <div class="prop-item">
             <span>变量默认值</span>
             <VariableTypeEditor class="prop-item-editor" v-model="variable.defaultValue" :variableType="variable.type"></VariableTypeEditor>
+          </div>
+          <div class="prop-item">
+            <span>静态</span>
+            <div class="prop-item-editor">
+              <input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
+            </div>
+          </div>
+          <div class="prop-item">
+            <span>当前值</span>
+            <VariableViewer class="prop-item-editor" :variable="variable" :graph="graph"></VariableViewer>
           </div>
           <a href="javascript:;" class="prop-delete" title="删除子变量" @click="onDeleteGraphVariable(variable)">
             <i class="iconfont icon-close-1"></i>
@@ -154,10 +164,13 @@ import CommonUtils from "../utils/CommonUtils";
 import InputCanCheck from "./InputCanCheck.vue";
 import CollapsePropHeader from "./CollapsePropHeader.vue";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
+import VariableViewer from "./VariableViewer.vue";
+import HtmlUtils from "../utils/HtmlUtils";
 
 @Component({
   components: {
     'VariableTypeEditor': VariableTypeEditor,
+    'VariableViewer': VariableViewer,
     'InputCanCheck': InputCanCheck,
     'CollapsePropHeader': CollapsePropHeader
   }
@@ -209,7 +222,7 @@ export default class GraphProp extends Vue {
     this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, vNameOld, v);
   }
   onGraphVariableDrag(v : BlockGraphVariable, e : DragEvent) {
-    if(CommonUtils.isEventInControl(e)) { 
+    if(HtmlUtils.isEventInControl(e)) { 
       e.preventDefault(); 
       e.stopPropagation(); 
     }
@@ -321,7 +334,7 @@ export default class GraphProp extends Vue {
   }
 
   onGraphChildGraphDrag(v : BlockGraphDocunment, e : DragEvent) {
-    if(CommonUtils.isEventInControl(e) || v.isMainGraph) e.preventDefault();
+    if(HtmlUtils.isEventInControl(e) || v.isMainGraph) e.preventDefault();
     else e.dataTransfer.setData('text/plain', 'drag:graph:' + v.name);
   }
   onAddChildGraph() {

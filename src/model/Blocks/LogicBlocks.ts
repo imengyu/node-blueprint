@@ -4,6 +4,7 @@ import { BlockParameterType } from "../Define/Port";
 import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockEditor } from "../Editor/BlockEditor";
+import HtmlUtils from "../../utils/HtmlUtils";
 
 export default {
   register() {
@@ -49,12 +50,12 @@ function registerLogicBlocks() {
     let el = document.createElement('div');
     let typeSelector = document.createElement('select');
 
-    typeSelector.options.add(CommonUtils.createOptionElement('number', 'number'));
-    typeSelector.options.add(CommonUtils.createOptionElement('bigint', 'bigint'));
+    typeSelector.options.add(HtmlUtils.createOptionElement('number', 'number'));
+    typeSelector.options.add(HtmlUtils.createOptionElement('bigint', 'bigint'));
 
     if(!block.data['requireNumber']) {
-      typeSelector.options.add(CommonUtils.createOptionElement('boolean', 'boolean'));
-      typeSelector.options.add(CommonUtils.createOptionElement('any', 'any'));
+      typeSelector.options.add(HtmlUtils.createOptionElement('boolean', 'boolean'));
+      typeSelector.options.add(HtmlUtils.createOptionElement('any', 'any'));
     }
 
     typeSelector.value = block.options['opType'];

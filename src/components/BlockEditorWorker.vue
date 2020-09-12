@@ -33,7 +33,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Rect } from "../model/Rect";
 import { BlockPort, BlockPortDirection, BlockParameterType, BlockPortType } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
-import { BlockEditor, BlockBreakPoint } from "../model/Editor/BlockEditor";
+import { BlockEditor } from "../model/Editor/BlockEditor";
 import { Vector2 } from "../model/Vector2";
 import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
 import { BlockRunner } from "../model/WorkProvider/Runner";
@@ -41,6 +41,8 @@ import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import { MenuOptions, MenuItem } from "../model/Menu";
 import { Connector } from "../model/Define/Connector";
 import CommonUtils from "../utils/CommonUtils";
+import { BlockBreakPoint } from "../model/Define/Block";
+import HtmlUtils from "../utils/HtmlUtils";
 
 /**
  * 编辑器逻辑控制
@@ -600,7 +602,7 @@ export default class BlockEditorWorker extends Vue {
 
   private testEventInControl(e : Event){
     let target = (<HTMLElement>e.target);
-    return (CommonUtils.isEventInControl(e)
+    return (HtmlUtils.isEventInControl(e)
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
       || target.classList.contains('port')

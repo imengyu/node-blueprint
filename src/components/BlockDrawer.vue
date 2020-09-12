@@ -10,10 +10,15 @@
       <span v-else><i class="iconfont icon-close- text-danger mr-1"></i>{{connectingFailedText}}</span>
     </div>
     <!--节点提示-->
-    <div class="common-tip"
+    <div class="common-tip no-mouse-event"
       v-show="isShowTooltip"
       v-html="showTooltipText"
-      :style="{ left: (showTooltipPos.x) + 'px', top:  (showTooltipPos.y) + 'px' }"
+      :style="{ 
+        left: (showTooltipPos.x > 0 ? showTooltipPos.x + 'px': ''), 
+        top: (showTooltipPos.y > 0 ? showTooltipPos.y + 'px' : ''),
+        right: (showTooltipPos.x < 0 ? -showTooltipPos.x + 'px': ''), 
+        bottom: (showTooltipPos.y < 0 ? -showTooltipPos.y + 'px' : '') ,
+      }"
     >
     </div>
     <!--背景画布-->
@@ -107,13 +112,16 @@ import { BlockRunner } from "../model/WorkProvider/Runner";
 import { BlockRegData, BlockPortRegData } from "../model/Define/BlockDef";
 import { BlockEditorOwner, BlockGraphVariableChangeCallback, BlockPortRegDataMoveCallback, BlockPortRegDataCallback, BlockGraphPortChangeCallback, BlockGraphVariableFullChangeCallback, BlockGraphChangeCallback } from "../model/Editor/BlockEditorOwner";
 import { BlockGraphDocunment, BlockDocunment } from "../model/Define/BlockDocunment";
-import { BlockEditor, BlockBreakPoint } from "../model/Editor/BlockEditor";
+import { BlockEditor } from "../model/Editor/BlockEditor";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { EditorSettings } from "../model/Editor/EditorSettings";
 import { EventHandler } from "../utils/EventHandler";
 import { MenuItem } from "../model/Menu";
-import BaseBlocks from "../model/Blocks/BaseBlocks";
 import CommonUtils from "../utils/CommonUtils";
+import HtmlUtils from "../utils/HtmlUtils";
+import ToolTipUtils from "../utils/ToolTipUtils";
+import { BlockBreakPoint } from "../model/Define/Block";
+import BaseBlocks from "../model/Blocks/BaseBlocks";
 
 
 @Component({
@@ -156,7 +164,6 @@ export default class BlockDrawer extends Vue {
     }
   }
 
-
   private unloadGraph() {
     if(this.currentGraph != null) {
       this.blocks.forEach(element => element.hide());
@@ -166,6 +173,9 @@ export default class BlockDrawer extends Vue {
   private loadGraph() {
     
     if(this.currentGraph.isEditor) {
+
+      this.editorCanvas.drawStop();
+
       this.blocks = <BlockEditor[]>this.currentGraph.blocks;
       this.connectors = <ConnectorEditor[]>this.currentGraph.connectors;
 
@@ -216,6 +226,8 @@ export default class BlockDrawer extends Vue {
         element.updateAllPortElement();
       });
 
+      //开始绘制
+      this.editorCanvas.draw();
     }else {
       this.$Modal.error({
         title: '加载失败',
@@ -223,6 +235,7 @@ export default class BlockDrawer extends Vue {
       });
       this.currentGraph = null;
     }
+  
   }
 
   public doDeleteGraph(graph : BlockGraphDocunment) {
@@ -252,30 +265,7 @@ export default class BlockDrawer extends Vue {
    * 获取当前绘制器中所有连接
    */
   public getConnectors() { return this.connectors;}
-  /**
-   * 根据单元GUID获取当前绘制器中的所有单元
-   * @param guid 单元GUID
-   */
-  public getBlocksByGUID(guid : string) { 
-    let arr = [];
-    this.blocks.forEach(element => {
-      if(element.guid==guid)
-        arr.push(element);
-    });
-    return arr;
-  }
-  /**
-   * 根据单元GUID获取当前绘制器中的一个单元
-   * @param guid 单元GUID
-   */
-  public getOneBlockByGUID(guid : string) { 
-    for (let index = 0; index < this.blocks.length; index++) {
-      if(this.blocks[index].guid==guid)
-        return this.blocks[index];
-    }
-    return null;
-  }
-
+  
   onDeleteBlock(block : BlockEditor) {
     this.loadedBlocks.remove(block);
   }
@@ -291,16 +281,27 @@ export default class BlockDrawer extends Vue {
     this.addBlockInPos = pos;
   }
   public userAddBlock(blockData : BlockRegData) {
+    
     //检查单元是否只能有一个
-    if(blockData.settings.oneBlockOnly || blockData.type == 'base') {
-      if(this.getBlocksByGUID(blockData.guid).length > 0) {
-        this.$Modal.info({
+    if(blockData.settings.oneBlockOnly && this.currentGraph.getBlocksByGUID(blockData.guid).length > 0) {
+      this.$Modal.info({
+        title: '提示',
+        content: '当前文档中已经有 ' + blockData.baseInfo.name + ' 了哦，此单元只能有一个'
+      });
+      return;
+    }
+    //自定义检查回调
+    if(typeof blockData.callbacks.onAddCheck == 'function') {
+      let err = blockData.callbacks.onAddCheck(blockData, this.currentGraph);
+      if(err != null) {
+        this.$Modal.warning({
           title: '提示',
-          content: '当前文档中已经有 ' + blockData.baseInfo.name + ' 了哦，此单元只能有一个'
+          content: err
         });
         return;
       }
     }
+
     let newBlock = new BlockEditor(blockData);
     if(this.isAddBlockInPos) { //在指定位置添加单元
 
@@ -312,7 +313,8 @@ export default class BlockDrawer extends Vue {
 
       newBlock.setPos(pos);
       
-    } else if(this.isConnectingToNew) { //添加单元并连接
+    } 
+    else if(this.isConnectingToNew) { //添加单元并连接
 
       this.editorWorker.addBlock(newBlock, this.connectingEndPos);
 
@@ -323,7 +325,8 @@ export default class BlockDrawer extends Vue {
       pos.y = this.connectingEndPos.y - (pos.y - newBlock.position.y);
 
       newBlock.setPos(pos);
-    } else { //在屏幕中央位置添加单元
+    } 
+    else { //在屏幕中央位置添加单元
       let center = this.viewPort.calcCenter();
 
       center.x -= newBlock.size.x / 2;
@@ -464,14 +467,19 @@ export default class BlockDrawer extends Vue {
 
       window.addEventListener('resize', () => this.onWindowSizeChanged);
 
+      ToolTipUtils.setTooltipProvider({
+        showTooltip: (t, v) => this.onShowTooltip(t, v),
+        hideTooltip: (id) => this.onHideTooltip(id),
+      });
+
       this.editorWorker = <BlockEditorWorker>this.$refs.editorWorker;
       this.editorCanvas = <BlockEditorCanvasDrawer>this.$refs.editorCanvas;
       this.editoClipboard = <BlockEditorClipBoard>this.$refs.editoClipboard;
 
       this.editorHost = <HTMLDivElement>this.$refs.editorHost;
       this.editorHost.addEventListener('resize', () => this.onWindowSizeChanged);
-      this.toolBarHeight = CommonUtils.getTop(this.editorHost);
-      this.toolBarWidth = CommonUtils.getLeft(this.editorHost);
+      this.toolBarHeight = HtmlUtils.getTop(this.editorHost);
+      this.toolBarWidth = HtmlUtils.getLeft(this.editorHost);
 
       this.blockOwnerData = {
         onBlockDelete: this.editorWorker.onBlockDelete,
@@ -519,9 +527,6 @@ export default class BlockDrawer extends Vue {
           onGraphUpdate: new EventHandler<BlockGraphChangeCallback>(),
         },
         getVue: () => this,
-        showTooltip: (t, v) => this.onShowTooltip(t, v),
-        hideTooltip: () => this.onHideTooltip(),
-        updateTooltip: (t, v) => this.updateTooltip(t, v),
         viewPortPosToWindowPos: (v) => this.viewPortPosToWindowPos(v),
       };
       this.$emit('update-block-owner-data', this.blockOwnerData);
@@ -585,19 +590,24 @@ export default class BlockDrawer extends Vue {
   isShowTooltip = false;
   showTooltipPos = new Vector2();
   showTooltipText = '';
+  showTooltipId = 0;
 
   onShowTooltip(text : string, pos : Vector2) {
-    this.isShowTooltip = true;
-    this.showTooltipPos = pos;
-    this.showTooltipText = text;
-  }
-  updateTooltip(text : string, pos ?: Vector2) {
-    if(typeof pos != 'undefined')
+    this.isShowTooltip = !CommonUtils.isNullOrEmpty(text);
+    if (CommonUtils.isDefinedAndNotNull(pos)) {
+      pos.x -= this.toolBarWidth;
+      pos.y -= this.toolBarHeight - 30;
+      if(pos.x > this.viewRealSize.w - 200) pos.x = -20;
+      if(pos.y > this.viewRealSize.h - 50) pos.y = -20;
       this.showTooltipPos = pos;
+      this.showTooltipId = CommonUtils.genRandom(0, 1024);
+    }
     this.showTooltipText = text;
+    return this.showTooltipId;
   }
-  onHideTooltip() {
-    this.isShowTooltip = false;
+  onHideTooltip(id : number) {
+    if(this.showTooltipId == id)
+      this.isShowTooltip = false;
   }
 
   //组件数据共享
@@ -695,32 +705,6 @@ export default class BlockDrawer extends Vue {
       element.markBreakPointActiveState(false); 
     });
     this.connectors.forEach(element =>  element.clearActive());
-  }
-  public updateAllBlockPrams() {
-    //变量初始化以仅参数赋值
-    this.blocks.forEach((block) => {
-      block.currentRunner = this.runner;
-      
-      Object.keys(block.inputPorts).forEach((guid) => {
-        let params = <BlockPort>block.inputPorts[guid];
-        if(params.paramType!= 'execute' && params.paramUserSetValue != null) {
-          params.setValue(params.paramUserSetValue);
-          params.update();
-        }
-      });
-    });
-  }
-  public prepareGraphVariables(doc : BlockDocunment) {
-    let loopForGraph = (graph : BlockGraphDocunment) => {
-      graph.variables.forEach((variable) => variable.value = variable.defaultValue ? variable.defaultValue : null);
-      graph.children.forEach((g) => loopForGraph(g));
-    }
-    loopForGraph(doc.mainGraph);
-  }
-  public invokeStartRun() {
-    this.blocks.forEach((block) => {
-      block.onStartRun.invoke(block);
-    });
   }
   public showDeleteModalClick() { this.editorWorker.showDeleteModalClick(); }
 

@@ -3,6 +3,7 @@ import { Block } from "./Block";
 import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
+import { BlockRunContextData } from "../WorkProvider/Runner";
 
 /**
  * 文档结构
@@ -31,7 +32,9 @@ export class BlockDocunment {
    * 编辑器版本
    */
   openEditorVersion : number = 0
-
+  /**
+   * 是否是编辑器模式
+   */
   isEditor = false;
 }
 
@@ -60,11 +63,36 @@ export class BlockGraphDocunment {
   /**
    * 当前图的缩放比例
    */
-  scale: number = 100;
+  scale = 100;
   /**
    * 单元
    */
   blocks : Array<Block> = [];
+
+  /**
+   * 根据单元GUID获取当前文档中的所有单元
+   * @param guid 单元GUID
+   */
+  public getBlocksByGUID(guid : string) { 
+    let arr = [];
+    this.blocks.forEach(element => {
+      if(element.guid==guid)
+        arr.push(element);
+    });
+    return arr;
+  }
+  /**
+   * 根据单元GUID获取当前文档中的一个单元
+   * @param guid 单元GUID
+   */
+  public getOneBlockByGUID(guid : string) { 
+    for (let index = 0; index < this.blocks.length; index++) {
+      if(this.blocks[index].guid==guid)
+        return this.blocks[index];
+    }
+    return null;
+  }
+
   /**
    * 连接
    */
@@ -93,10 +121,10 @@ export class BlockGraphDocunment {
     }
     return null;
   }
-  public setGraphVariable(name : string|BlockGraphVariable, newV : any) {
+  public setGraphVariable(runningContext : BlockRunContextData, name : string|BlockGraphVariable, newV : any) {
     if(typeof name == 'string') 
       name = this.findGraphVariable(name);
-    name.set(newV);
+    name.set(runningContext, newV);
   }
   public findChildGraph(name : string) {
     for (let index = 0; index < this.children.length; index++) {
@@ -111,10 +139,18 @@ export class BlockGraphDocunment {
    */
   parent : BlockGraphDocunment = null;
 
-
+  /**
+   * 是否是主图表
+   */
   isMainGraph = false;
-
+  /**
+   * 是否是编辑器模式
+   */
   isEditor = false;
+
+
+  lastRunContext : BlockRunContextData = null;
+  blockPrepared = false;
 }
 
 /**
@@ -124,15 +160,40 @@ export class BlockGraphVariable {
 
   name = '';
   type = '';
-  defaultValue = null;
-  value = null;
+  defaultValue : any = null;
+  value : any = null;
+  static = false;
+  stack = -1;
 
+  /**
+   * 变量更改回调
+   */
   changeCallbacks : EventHandler<(v : BlockGraphVariable)=>void> = new EventHandler();
 
-  set(newV) {
-    if(this.value != newV) {
-      this.value = newV;
-      this.changeCallbacks.invoke(this);
+  /**
+   * 设置变量
+   * @param runningContext 当前运行上下文 
+   * @param newV 数值
+   */
+  set(runningContext : BlockRunContextData, newV) {
+    if(this.static) {
+      if(this.value != newV) {
+        this.value = newV;
+        this.changeCallbacks.invoke(this);
+      }
+    }else if(this.stack > 0) {
+      if(runningContext.graphParamStack[this.stack] != newV) {
+        runningContext.graphParamStack[this.stack] = newV;
+        this.changeCallbacks.invoke(this);
+      }
     }
+  }
+  /**
+   * 获取变量
+   * @param runningContext 当前运行上下文 
+   */
+  get(runningContext : BlockRunContextData) {
+    if(this.static) return this.value;
+    else if(this.stack > 0) return runningContext.graphParamStack[this.stack];
   }
 }
