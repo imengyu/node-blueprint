@@ -1,10 +1,10 @@
-import { BlockParameterType } from "../Define/Port";
+import { BlockParameterBaseType, BlockParameterType } from "../Define/Port";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData } from "../Define/BlockDef";
 import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
 
 export default {
-  getBaseEditors(type : BlockParameterType) {
+  getBaseEditors(type : BlockParameterBaseType) {
     switch(type) {
       case 'any':
       case 'object':

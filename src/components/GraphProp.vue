@@ -16,12 +16,9 @@
           <div v-for="(port,i) in graph.inputPorts" :key="i" class="prop-list-item">
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)" />
             <div v-if="port" class="prop-box">
-              <span v-if="port.paramType=='custom'||port.paramType=='enum'">
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramCustomType)}"></i>
-                {{port.paramCustomType}}</span>
-              <span v-else>
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType)}"></i>
-                {{port.paramType}}
+              <span>
+                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType.getType())}"></i>
+                {{port.paramType.getType()}}
               </span>
               <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输入类型"></a>
             </div>
@@ -49,12 +46,9 @@
           <div v-for="(port,i) in graph.outputPorts" :key="i" class="prop-list-item">
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)"  />
             <div v-if="port" class="prop-box">
-              <span v-if="port.paramType=='custom'||port.paramType=='enum'">
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramCustomType)}"></i>
-                {{port.paramCustomType}}</span>
-              <span v-else>
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType)}"></i>
-                {{port.paramType}} 
+              <span>
+                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType.getType())}"></i>
+                {{port.paramType.getType()}}
               </span>
               <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输出类型"></a>
             </div>
@@ -159,7 +153,7 @@ import { Vector2 } from "../model/Vector2";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import VariableTypeEditor from "./VariableTypeEditor.vue";
 import { BlockParameterTypeRegData, BlockPortRegData } from "../model/Define/BlockDef";
-import { BlockPort, BlockParameterType, BlockPortDirection } from "../model/Define/Port";
+import { BlockPort, BlockParameterType, BlockPortDirection, BlockParameterBaseType } from "../model/Define/Port";
 import CommonUtils from "../utils/CommonUtils";
 import InputCanCheck from "./InputCanCheck.vue";
 import CollapsePropHeader from "./CollapsePropHeader.vue";
@@ -243,16 +237,14 @@ export default class GraphProp extends Vue {
   //端口
   //===========================
 
-  lastSetParamType = 'execute';
-  lastSetParamCustomType = '';
+  lastSetParamType : BlockParameterType = null;
 
   onAddGraphPort(direction : BlockPortDirection) {
     let port : BlockPortRegData = {
       guid: (direction == 'input' ? 'PI' : 'PO') + CommonUtils.genNonDuplicateIDHEX(6),
       name: '新端口' + (direction == 'input' ? this.graph.inputPorts.length : this.graph.outputPorts.length),
       direction: direction,
-      paramType: <BlockParameterType>this.lastSetParamType,
-      paramCustomType: this.lastSetParamCustomType,
+      paramType: this.lastSetParamType,
       forceNoEditorControl: true,
     };
     if(direction == 'input') this.graph.inputPorts.push(port);
@@ -305,14 +297,11 @@ export default class GraphProp extends Vue {
   onChooseGraphPortType(port : BlockPortRegData, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData, isBaseType : boolean) => {
       if(isBaseType) {
-        port.paramType = <BlockParameterType>type.name;
-        port.paramCustomType = '';
+        port.paramType = new BlockParameterType(<BlockParameterBaseType>type.name);
       } else {
-        port.paramType = type.prototypeName == 'enum' ? 'enum' : 'custom';
-        port.paramCustomType = type.name;
+        port.paramType = new BlockParameterType(type.prototypeName == 'enum' ? 'enum' : 'custom', type.name);
       }
       this.lastSetParamType = port.paramType;
-      this.lastSetParamCustomType = port.paramType;
       this.onUpdateGraphPort(port);
     }, 
     new Vector2(

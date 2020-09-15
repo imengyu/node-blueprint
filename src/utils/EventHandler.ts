@@ -19,11 +19,23 @@ export class EventHandler<T> {
         break;
       }
   }
-  public invoke(...args) {
-    let _args = arguments;
-    this.listener.forEach((callback) => {
-      if(typeof callback.callback == 'function')
-        callback.callback.apply(callback._this, _args)
-    });
+  public hasListener(callback : T) {
+    for(let i = this.listener.length - 1; i >= 0; i--)
+      if(this.listener[i].callback == <any>callback) {
+        this.listener.remove(i);
+        return false;
+      }
+    return true;
+  }
+  public invoke(...args) { 
+    if(this.listener.length > 0) {
+      let _args = arguments;
+      this.listener.forEach((callback) => {
+        if(typeof callback.callback == 'function')
+          callback.callback.apply(callback._this, _args)
+      });
+    }
   }
 }
+
+export type VoidDelegate = () => void; 

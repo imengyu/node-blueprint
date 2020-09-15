@@ -27,8 +27,9 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
-import { BlockPortDirection, BlockParameterType } from "../model/Define/Port";
+import { BlockPortDirection, BlockParameterType, BlockParameterSetType } from "../model/Define/Port";
 import { BlockRegData } from "../model/Define/BlockDef";
+import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 
 @Component({
   components: {
@@ -46,7 +47,7 @@ export default class AddPanel extends Vue {
 
   @Prop({ default: null }) filterByPortDirection : BlockPortDirection;
   @Prop({ default: null }) filterByPortType : BlockParameterType;
-  @Prop({ default: null }) filterByPortCustomType : string;
+  @Prop({ default: null }) filterByPortSetType : BlockParameterSetType;
 
   @Watch('show')
   onShowChanged(newV) {
@@ -88,11 +89,10 @@ export default class AddPanel extends Vue {
   doFilter() {
     if(this.filterByPortType != null) {
       this.doFilterLoop((b) => b.hasOnePortByDirectionAndType(this.filterByPortDirection,
-        this.filterByPortType, this.filterByPortCustomType, true));
+        this.filterByPortType, this.filterByPortSetType, true));
 
       this.filterText = (this.filterByPortDirection == 'input' ? '获取 ' : '输出 ') + 
-        ((this.filterByPortType == 'custom' || this.filterByPortType == 'enum') ?
-          this.filterByPortCustomType : this.filterByPortType) + ' 的单元';
+        ParamTypeServiceInstance.getTypeNameForUserMapping(this.filterByPortType.getType()) + ' 的单元';
     }
     else this.clearFilter();
   }

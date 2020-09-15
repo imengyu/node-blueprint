@@ -6,7 +6,7 @@
 
     <Input v-model="searchValue" placeholder="搜索类型..." clearable size="small" suffix="ios-search" :style="{margin:'5px 0'}" />
 
-    <div class="block-list">
+    <div v-if="allBaseTypes" class="block-list">
       <div class="block-item" v-for="(item, index) in allBaseTypes" :key="'D'+index" @click="onItemClick(item)" v-show="searchValue==''||item.name.contains(searchValue)">
         <i class="iconfont icon-yuan1" :style="{ marginRight: '5px', color: item.color }"></i>
         {{ item.name }}
@@ -53,7 +53,7 @@ export default class ChooseTypePanel extends Vue {
   @Prop({ default: null }) showPos : Vector2;
   @Prop({ default: false }) show : boolean;
   
-  allCustomTypes : BlockParameterTypeRegData[] = [];
+  allCustomTypes : Map<string, BlockParameterTypeRegData> = null;
   allBaseTypes = [];
 
   mounted() {

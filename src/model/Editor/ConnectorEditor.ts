@@ -59,8 +59,8 @@ export class ConnectorEditor extends Connector {
     this.activeCount = 0;
     this.dotPos = 0.8;
 
-    if(port && port.paramType != 'execute') 
-      this.updateValueText(port.getValue());
+    if(port && !port.paramType.isExecute()) 
+      this.updateValueText(port.getValue(port.parent.currentRunningContext));
   }
   public clearActive() {
     this.actived = false;

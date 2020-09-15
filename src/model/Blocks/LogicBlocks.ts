@@ -1,6 +1,6 @@
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { Block } from "../Define/Block";
-import { BlockParameterType } from "../Define/Port";
+import { BlockParameterBaseType, BlockParameterType } from "../Define/Port";
 import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockEditor } from "../Editor/BlockEditor";
@@ -33,7 +33,7 @@ function registerLogicBlocks() {
     
     //更换数据类型
     block.allPorts.forEach((port) => {
-      if(port.paramType != 'execute')
+      if(port.paramType.isExecute())
         block.changePortParamType(port, block.options['opType']);
     });
     
@@ -60,7 +60,7 @@ function registerLogicBlocks() {
 
     typeSelector.value = block.options['opType'];
     typeSelector.onchange = () => {
-      let newType : BlockParameterType;
+      let newType : BlockParameterBaseType;
       switch(typeSelector.value) {
         case 'number': newType = 'number'; break;
         case 'bigint': newType = 'bigint'; break;
@@ -72,8 +72,8 @@ function registerLogicBlocks() {
       //更换数据类型
       block.portUpdateLock = true;
       block.allPorts.forEach((port) => {
-        if(port.paramType != 'execute')
-          block.changePortParamType(port, newType);
+        if(port.paramType.isExecute())
+          block.changePortParamType(port, new BlockParameterType(newType));
       });
       block.portUpdateLock = false;
       block.updateAllParamPort();
@@ -113,13 +113,13 @@ function registerLogicBlocks() {
   And.blockStyle.noTitle = true;
   And.blockStyle.logoBackground = And.baseInfo.logo;
   And.ports = LogicBase_cm_ports;
-  And.callbacks.onCreate =LogicBase_onCreate;
+  And.callbacks.onCreate = LogicBase_onCreate;
   And.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   And.callbacks.onUserAddPort = LogicBase_onUserAddPort;
-  And.callbacks.onPortUpdate = (block, port) => { 
+  And.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
-      let v = block.getInputParamValue(guid);
+      let v = block.getInputParamValue(guid, context);
       if(!CommonUtils.isDefinedAndNotNull(v))
         return;
       
@@ -133,7 +133,7 @@ function registerLogicBlocks() {
       
     });
 
-    if(rs != null) block.setOutputParamValue('PO1', rs);
+    if(rs != null) block.setOutputParamValue('PO1', rs, context);
   };
 
   //#endregion
@@ -151,10 +151,10 @@ function registerLogicBlocks() {
   Or.callbacks.onCreate =LogicBase_onCreate;
   Or.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   Or.callbacks.onUserAddPort = LogicBase_onUserAddPort;
-  Or.callbacks.onPortUpdate = (block, port) => { 
+  Or.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
-      let v = block.getInputParamValue(guid);
+      let v = block.getInputParamValue(guid, context);
       if(!CommonUtils.isDefinedAndNotNull(v))
         return;
       
@@ -168,7 +168,7 @@ function registerLogicBlocks() {
       
     });
 
-    if(rs != null) block.setOutputParamValue('PO1', rs);
+    if(rs != null) block.setOutputParamValue('PO1', rs, context);
   };
 
 
@@ -197,10 +197,10 @@ function registerLogicBlocks() {
   ];
   Not.callbacks.onCreate = LogicBase_onCreate;
   Not.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  Not.callbacks.onPortUpdate = (block, port) => { 
-    let v = block.getInputParamValue('PI1');    
+  Not.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v = block.getInputParamValue('PI1', context);    
     if(CommonUtils.isDefinedAndNotNull(v))
-      block.setOutputParamValue('PO1', (block.options['opType'] == 'boolean' ? !v : ~v));
+      block.setOutputParamValue('PO1', (block.options['opType'] == 'boolean' ? !v : ~v), context);
   };
 
   //#endregion
@@ -232,11 +232,11 @@ function registerLogicBlocks() {
   ];
   ExclusiveOr.callbacks.onCreate = LogicBase_onCreate;
   ExclusiveOr.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  ExclusiveOr.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1');
-    let v2 = block.getInputParamValue('PI2');    
+  ExclusiveOr.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context);
+    let v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO1', v1 ^ v2);
+      block.setOutputParamValue('PO1', v1 ^ v2, context);
   };
 
   //#endregion
@@ -270,10 +270,10 @@ function registerLogicBlocks() {
   Equal.settings.data['requireNumber'] = true;
   Equal.callbacks.onCreate = LogicBase_onCreate;
   Equal.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  Equal.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  Equal.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 == v2);
+      block.setOutputParamValue('PO', v1 == v2, context);
   };
 
   //#endregion
@@ -306,10 +306,10 @@ function registerLogicBlocks() {
   ];
   NotEqual.callbacks.onCreate = LogicBase_onCreate;
   NotEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  NotEqual.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  NotEqual.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 != v2);
+      block.setOutputParamValue('PO', v1 != v2, context);
   };
 
   //#endregion
@@ -342,10 +342,10 @@ function registerLogicBlocks() {
   ];
   Less.callbacks.onCreate = LogicBase_onCreate;
   Less.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  Less.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  Less.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 < v2);
+      block.setOutputParamValue('PO', v1 < v2, context);
   };
 
   //#endregion
@@ -378,10 +378,10 @@ function registerLogicBlocks() {
   ];
   Greater.callbacks.onCreate = LogicBase_onCreate;
   Greater.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  Greater.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  Greater.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 > v2);
+      block.setOutputParamValue('PO', v1 > v2, context);
   };
 
   //#endregion
@@ -414,10 +414,10 @@ function registerLogicBlocks() {
   ];
   LessOrEqual.callbacks.onCreate = LogicBase_onCreate;
   LessOrEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  LessOrEqual.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  LessOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 <= v2);
+      block.setOutputParamValue('PO', v1 <= v2, context);
   };
 
   //#endregion
@@ -450,10 +450,10 @@ function registerLogicBlocks() {
   ];
   GreaterOrEqual.callbacks.onCreate = LogicBase_onCreate;
   GreaterOrEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  GreaterOrEqual.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  GreaterOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 >= v2);
+      block.setOutputParamValue('PO', v1 >= v2, context);
   };
 
   //#endregion
@@ -486,10 +486,10 @@ function registerLogicBlocks() {
   ];
   LeftMove.callbacks.onCreate = LogicBase_onCreate;
   LeftMove.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  LeftMove.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  LeftMove.callbacks.onPortParamRequest = (block, port, context) => { 
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 << v2);
+      block.setOutputParamValue('PO', v1 << v2, context);
   };
 
   //#endregion
@@ -522,10 +522,10 @@ function registerLogicBlocks() {
   ];
   RightMove.callbacks.onCreate = LogicBase_onCreate;
   RightMove.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
-  RightMove.callbacks.onPortUpdate = (block, port) => { 
-    let v1 = block.getInputParamValue('PI1'), v2 = block.getInputParamValue('PI2');    
+  RightMove.callbacks.onPortParamRequest = (block, port, context) => {
+    let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 >> v2);
+      block.setOutputParamValue('PO', v1 >> v2, context);
   };
 
   //#endregion

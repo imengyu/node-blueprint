@@ -15,7 +15,7 @@
     <div class="block-list">
       <div class="block-item" v-for="(item, index) in categoryData.blocks" :key="index" @click="$emit('on-block-item-click', item)"
         :title="item.baseInfo.description"
-        v-show="item.show && item.filterShow && !item.hideInAddPanel">
+        v-show="item.show && item.filterShow && !item.settings.hideInAddPanel">
         <div class="logo" v-if="item.baseInfo.logo!=''&&item.baseInfo.logo.indexOf('<')==0" v-html="item.baseInfo.logo"></div>
         <img v-else-if="item.baseInfo.logo!=''" :src="item.baseInfo.logo" />
         {{ item.baseInfo.name }}

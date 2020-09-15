@@ -277,7 +277,7 @@
       }
     }
 
-    &:hover , &:active {
+    &:hover, &:active, &:focus {
       background-color: #fff;
       color: #000;
     }
@@ -590,4 +590,9 @@
 }
 .input-warn {
   border: 1px solid #daa000!important;
+}
+
+
+.ivu-split-trigger-con {
+  z-index: 300;
 }

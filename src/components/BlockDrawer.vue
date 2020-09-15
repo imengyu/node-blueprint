@@ -38,6 +38,7 @@
       :gridShow="settings.gridShow"
       :drawDebugInfo="settings.drawDebugInfo"
       @contextmenu="onCanvasContextmenu"
+      @late-tick="onLateTick"
       >
     </BlockEditorCanvasDrawer>
     <!--主控制区域-->
@@ -45,6 +46,7 @@
       :viewPort="viewPort"
       :viewZoom="viewZoom"
       :viewScale.sync="viewScale"
+      :editorCanvas="editorCanvas"
       @update-isDragView="(v) => isDragView = v"
       @update-isConnecting="(v) => isConnecting = v"
       @update-isConnectingToNew="(v) => isConnectingToNew = v"
@@ -156,7 +158,10 @@ export default class BlockDrawer extends Vue {
   }
   public unloadDocunment() {
     if(this.currentDocunment != null) {
-      this.loadedBlocks.forEach((block) => block.destroy());
+      this.loadedBlocks.forEach((block) => {
+        block.forceNotUnConnect = true;
+        block.destroy();
+      });
       this.loadedBlocks.empty();
       this.loadedConnectors.forEach((connector) => connector.inited = false);
       this.loadedConnectors.empty();
@@ -166,6 +171,7 @@ export default class BlockDrawer extends Vue {
 
   private unloadGraph() {
     if(this.currentGraph != null) {
+      this.saveViewPort();
       this.blocks.forEach(element => element.hide());
       this.currentGraph = null;
     }
@@ -186,7 +192,10 @@ export default class BlockDrawer extends Vue {
       else
         this.viewPort.setPos(2048, 2048);
 
-      if(this.currentGraph.scale != null && this.currentGraph.scale != 100) this.zoomUpdate(this.currentGraph.scale);
+      if(this.currentGraph.scale != null && this.currentGraph.scale != 100) {
+        this.viewScale = this.currentGraph.scale;
+        this.viewZoom = this.currentGraph.scale / 100;
+      }
       else this.zoomUpdate(100);
 
       this.recalcViewPort();
@@ -432,7 +441,7 @@ export default class BlockDrawer extends Vue {
 
     this.viewPort.setPos(pos);
   }
-  private onWindowSizeChanged() {
+  public onWindowSizeChanged() {
     this.viewRealSize.w = this.editorHost.offsetWidth;
     this.viewRealSize.h = this.editorHost.offsetHeight;
     this.recalcViewPort();
@@ -453,6 +462,11 @@ export default class BlockDrawer extends Vue {
         this.$emit('on-want-save');
         break; 
     }
+  }
+
+  private onLateTick() {
+    if(this.viewRealSize.w != this.editorHost.offsetWidth || this.viewRealSize.h != this.editorHost.offsetHeight)
+      this.onWindowSizeChanged();
   }
 
   editorHost : HTMLDivElement = null;
@@ -480,6 +494,10 @@ export default class BlockDrawer extends Vue {
       this.editorHost.addEventListener('resize', () => this.onWindowSizeChanged);
       this.toolBarHeight = HtmlUtils.getTop(this.editorHost);
       this.toolBarWidth = HtmlUtils.getLeft(this.editorHost);
+
+      this.editorCanvas.addDebugInfoItem(() =>
+        'viewPort : x' + this.viewPort.x + ' y: ' + this.viewPort.y + ' w: ' + this.viewPort.w + ' h: ' + this.viewPort.h
+      );
 
       this.blockOwnerData = {
         onBlockDelete: this.editorWorker.onBlockDelete,
@@ -707,6 +725,10 @@ export default class BlockDrawer extends Vue {
     this.connectors.forEach(element =>  element.clearActive());
   }
   public showDeleteModalClick() { this.editorWorker.showDeleteModalClick(); }
+  public saveViewPort() {
+    this.currentGraph.viewPort = this.viewPort;
+    this.currentGraph.scale = this.viewScale;
+  }
 
   //剪贴板控制
   //=======================

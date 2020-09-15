@@ -1,5 +1,5 @@
-import { BlockParameterType, BlockPortDirection, BlockPort } from "./Port";
-import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback } from "./Block";
+import { BlockParameterType, BlockPortDirection, BlockPort, BlockParameterSetType } from "./Port";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 
@@ -8,10 +8,12 @@ import { MenuItem } from "../Menu";
  */
 export class BlockRegData {
 
-  public constructor(guid : string, name : string, description?:string) {
+  public constructor(guid : string, name : string, description?:string, author?:string, category?:string) {
     this.guid = guid;
     this.baseInfo.name = name;
     if(description) this.baseInfo.description = description;
+    if(author) this.baseInfo.author = author;
+    if(category) this.baseInfo.category = category;
   }
 
   /**
@@ -59,27 +61,35 @@ export class BlockRegData {
    */
   public ports : Array<BlockPortRegData> = [];
 
-  public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, customType = '', includeAny = false) {
-    if(type == 'execute') {
+  public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, setType : BlockParameterSetType = 'variable', includeAny = false) {
+    if(type.isExecute()) {
       for(let i = 0, c = this.ports.length; i < c;i++)
-        if(this.ports[i].direction == direction && this.ports[i].paramType == 'execute')
-          return true;
+        if(this.ports[i].direction == direction){ 
+          if(typeof this.ports[i].paramType == 'string' && this.ports[i].paramType == 'execute')
+            return true;
+          else if(typeof this.ports[i].paramType != 'string' && (<BlockParameterType>this.ports[i].paramType).isExecute())
+            return true;
+        }
     }else {
       for(let i = 0, c = this.ports.length; i < c;i++)
-        if(this.ports[i].direction == direction
-          && (
-            (type == 'any' && includeAny)
-            || (this.ports[i].paramType == type && this.ports[i].paramCustomType == customType)
-            || (this.ports[i].paramType == 'any' && includeAny))) 
-          return true;
+        if(this.ports[i].direction == direction) {
+          if(type.baseType == 'any' && includeAny && this.ports[i].paramSetType == setType) return true;
+          if(
+            (
+              (typeof this.ports[i].paramType == 'string' && this.ports[i].paramType == type.baseType) 
+              || (typeof this.ports[i].paramType != 'string' && (<BlockParameterType>this.ports[i].paramType).equals(type)))
+            
+            && this.ports[i].paramSetType == setType) return true;
+          
+            if(includeAny && 
+              (
+                (typeof this.ports[i].paramType == 'string' && this.ports[i].paramType == 'any') 
+               || (typeof this.ports[i].paramType != 'string' && (<BlockParameterType>this.ports[i].paramType).equals(type))) 
+              && this.ports[i].paramSetType == setType) return true;
+        }
     }
     return false;
   }
-
-  /**
-   * 是否在添加单元菜单中隐藏
-   */
-  public hideInAddPanel = false;
 
   /**
    * 单元的配置
@@ -92,6 +102,7 @@ export class BlockRegData {
     parametersChangeSettings : BlockParametersChangeSettings,
     oneBlockOnly: boolean,
     data: any,
+    hideInAddPanel: boolean,
   } = {
     /**
      * 端口动态配置
@@ -112,7 +123,11 @@ export class BlockRegData {
      * 获取或者设置当前单元是否只能在一个图表中出现一次
      */
     oneBlockOnly: false,
-    data: {}
+    data: {},
+    /**
+     * 是否在添加单元菜单中隐藏
+     */
+    hideInAddPanel: false,
   }
 
   /**
@@ -137,10 +152,16 @@ export class BlockRegData {
      */
     onStartRun : OnBlockEventCallback,
     /**
-     * 单元工作处理函数。行为节点激活时的回调。
+     * 单元工作处理函数。入方向的执行端口激活时的回调。
      * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
      */
-    onPortActive : OnPortEventCallback,
+    onPortExecuteIn : OnPortEventCallback,
+    /**
+     * 单元端口更新处理函数。
+     * 下一级单元请求本单元输出参数时发生的回调。
+     */
+    onPortParamRequest : OnPortRequestCallback,
+
     /**
      * 用户添加了一个端口时的回调。
      */
@@ -149,11 +170,6 @@ export class BlockRegData {
      * 用户删除了一个端口时的回调。
      */
     onPortRemove : OnPortEventCallback,
-    /**
-     * 单元工作处理函数。参数更新时的回调。
-     * 通常在这个回调里面进行参数更新，请不要在这里调用行为节点。
-     */
-    onPortUpdate : OnPortEventCallback,
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
      */
@@ -176,10 +192,10 @@ export class BlockRegData {
     onDestroy: null,
     onEditorCreate: null,
     onStartRun : null,
-    onPortActive : null,
+    onPortExecuteIn : null,
+    onPortParamRequest : null,
     onPortAdd : null,
     onPortRemove : null,
-    onPortUpdate : null,
     onCreateCustomEditor : null,
     onCreatePortCustomEditor: null,
     onUserAddPort: null,
@@ -279,22 +295,30 @@ export interface BlockPortRegData {
   executeInNewContext?: boolean,
 
   /**
-   * 端口的类型，execute为执行端口，如果设置为 custom 你可以设置 paramCustomType 来设置参数为自己的类型
+   * 端口的类型
    */
-  paramType : BlockParameterType;
+  paramType : BlockParameterType|string;
   /**
-   * 自定义参数类型
+   * 端口的集合类型
    */
-  paramCustomType ?: string;
+  paramSetType ?: BlockParameterSetType;
   /**
    * 参数的默认值
    */
   paramDefaultValue ?: any;
+  /**
+   * 当端口为Dictionary时的键类型
+   */
+  paramDictionaryKeyType ?: BlockParameterType|string;
 
   /**
    * 是否引用传递参数值，默认为 false
    */
   paramRefPassing ?: boolean;
+  /**
+   * 参数值是否为全局变量，默认为 false
+   */
+  paramStatic ?: boolean;
 
   /**
    * 是否强制不显示编辑参数控件
@@ -347,6 +371,11 @@ export class BlockParameterTypeRegData {
    * 类型的颜色
    */
   public color : string = 'rgb(253,253,253)';
+
+  /**
+   * 显示给用户的名称
+   */
+  public nameForUser = "";
 }
 
 /**

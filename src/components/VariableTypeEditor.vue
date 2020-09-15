@@ -10,7 +10,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import AllEditors from "../model/TypeEditors/AllEditors";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterType } from "../model/Define/Port";
+import { BlockParameterBaseType, BlockParameterType } from "../model/Define/Port";
 
 @Component
 export default class VariableTypeEditor extends Vue {
@@ -40,7 +40,7 @@ export default class VariableTypeEditor extends Vue {
 
     let customType : BlockParameterTypeRegData = null;
     if(this.variableType != 'any') {
-      this.currentEditor = AllEditors.getBaseEditors(<BlockParameterType>this.variableType);
+      this.currentEditor = AllEditors.getBaseEditors(<BlockParameterBaseType>this.variableType);
       if(this.currentEditor == null) {
         customType = ParamTypeServiceInstance.getCustomType(this.variableType);
         if(customType != null) this.currentEditor = customType.editor;

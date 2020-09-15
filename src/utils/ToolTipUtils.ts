@@ -40,7 +40,7 @@ function closeElementTooltip(el : HTMLElement) {
   if(StringUtils.isNumber(id))
     tooltipProvider.hideTooltip(parseInt(el.getAttribute('data-tooltip-id')));
 
-  el.setAttribute('data-tooltip-id', undefined);
+  el.removeAttribute('data-tooltip-id');
 }
 
 

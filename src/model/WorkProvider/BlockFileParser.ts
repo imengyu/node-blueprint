@@ -83,7 +83,7 @@ export class BlockFileParser {
             regData: port.regData,
           }) - 1;
 
-        if(port.paramType != 'execute' || port.isDyamicAdd)
+        if(!port.paramType.isExecute() || port.isDyamicAdd)
           data.ports.push({
             blockMap: blocksIndex,            
             guidMap: portData[0],
@@ -104,7 +104,7 @@ export class BlockFileParser {
             regData: port.regData,
           }) - 1;
 
-        if(port.paramType != 'execute' || port.isDyamicAdd)
+        if(!port.paramType.isExecute() || port.isDyamicAdd)
           data.ports.push({
             blockMap: blocksIndex,            
             guidMap: portData[0],
@@ -112,7 +112,7 @@ export class BlockFileParser {
             direction: 'output',
             options: port.options,
             value: port.paramUserSetValue,
-            type: port.paramType,
+            type: port.paramType.getType(),
           })
       }
     });
@@ -242,7 +242,6 @@ export class BlockFileParser {
     data.mainGraph = this.saveGraph(doc.mainGraph, data, saveToEditor);
     return JSON.stringify(data);
   }
-
   /**
    * 从字符串加载流图文档
    * @param str 字符串

@@ -60,7 +60,7 @@ function registerControl() {
       direction: 'output'
     },
   ];
-  blockBranch.callbacks.onPortActive = (block, port) => { 
+  blockBranch.callbacks.onPortExecuteIn = (block, port) => { 
     let condition = <boolean>block.getInputParamValue('PICON');
     block.activeOutputPort(condition ? 'POTRUE' : 'POFALSE');
   };
@@ -71,7 +71,7 @@ function registerControl() {
 
   let changeBlockOutputPortsEditor = function(block : Block, newType : string) {
     block.allPorts.forEach((port) => {
-      if(port.direction == 'output' && port.paramType == 'execute' && port.guid != 'PO0') {
+      if(port.direction == 'output' && port.paramType.isExecute() && port.guid != 'PO0') {
         port.data["customEditorType"] = ParamTypeServiceInstance.getBaseTypeForCustomType(newType);
         (<BlockEditor>block).createOrReCreatePortCustomEditor(port);
       }
@@ -96,6 +96,9 @@ function registerControl() {
       case 'string':
         changeBlockOutputPortsEditor(block, 'string');
         break;
+      case 'boolean':
+        changeBlockOutputPortsEditor(block, 'boolean');
+        break;  
       case 'number':
         changeBlockOutputPortsEditor(block, 'number');
         break;
@@ -150,7 +153,8 @@ function registerControl() {
       name: '输入',
       guid: 'PICON',
       paramType: 'any',
-      direction: 'input'
+      direction: 'input',
+      forceNoEditorControl: true,
     },
     {
       name: '默认',
@@ -161,7 +165,7 @@ function registerControl() {
     },
   ];
   blockSwitch.settings.portsChangeSettings.userCanAddOutputPort = true;
-  blockSwitch.callbacks.onPortActive = (block, port) => { 
+  blockSwitch.callbacks.onPortExecuteIn = (block, port) => { 
     let inCoon = block.getInputParamValue('PICON');
     let keys = Object.keys(block.outputPorts);
     for (let i = 0; i < keys.length; i++) {
@@ -184,6 +188,7 @@ function registerControl() {
       block.editor.chooseType(new Vector2(e.x, e.y), (type, isBaseType) => {
         if(block.options['opType'] != type.name) {
           block.options['opType'] = type.name;
+          block.changePortParamType(block.getPortByGUID('PICON'), type.name);
           typeSelector.value = type.name;
           reloadSwitchBlockPorts(block);
         }
@@ -229,7 +234,7 @@ function registerControl() {
 
   let changeBlockInputPortsEditor = function(block : Block, newType : string) {
     block.allPorts.forEach((port) => {
-      if(port.direction == 'input' && port.paramType != 'execute' && port.guid != 'PICON' && port.guid != 'PIDEF') {
+      if(port.direction == 'input' && !port.paramType.isExecute() && port.guid != 'PICON' && port.guid != 'PIDEF') {
         port.data["customEditorType"] = ParamTypeServiceInstance.getBaseTypeForCustomType(newType);
         (<BlockEditor>block).createOrReCreatePortCustomEditor(port);
       }
@@ -241,7 +246,7 @@ function registerControl() {
     if(block.isEditorBlock)
       (<BlockEditor>block).parametersChangeSettings.userCanAddInputParameter = true;
     
-    block.changePortParamType(block.getPortByGUID('PICON'), ParamTypeServiceInstance.getBaseTypeForCustomType(type), type);
+    block.changePortParamType(block.getPortByGUID('PICON'), ParamTypeServiceInstance.createTypeFromString(type), 'variable');
 
     //Delete old ports
     if(block.data['lastIsEnum'] || type == 'enum') {
@@ -253,6 +258,9 @@ function registerControl() {
     }
 
     switch(type) {
+      case 'boolean':
+        changeBlockInputPortsEditor(block, 'boolean');
+        break;
       case 'string':
         changeBlockInputPortsEditor(block, 'string');
         break;
@@ -307,17 +315,18 @@ function registerControl() {
       direction: 'input'
     },
     {
-      name: '输入',
-      guid: 'PICON',
-      paramType: 'any',
-      direction: 'input'
-    },
-    {
       name: '默认',
       description: '如果没有匹配的输入条件，则输出默认端口参数',
       guid: 'PIDEF',
       paramType: 'any',
       direction: 'input'
+    },
+    {
+      name: '输入',
+      guid: 'PICON',
+      paramType: 'any',
+      direction: 'input',
+      forceNoEditorControl: true,
     },
     {
       guid: 'PO0',
@@ -332,7 +341,7 @@ function registerControl() {
     },
     
   ];
-  blockSelect.callbacks.onPortActive = (block, port) => { 
+  blockSelect.callbacks.onPortExecuteIn = (block, port) => { 
     let inCoon = block.getInputParamValue('PICON');
     let keys = Object.keys(block.outputPorts);
     for (let i = 0; i < keys.length; i++) {
@@ -397,7 +406,6 @@ function registerControl() {
       guid: 'PO' + block.data['portCount'],
       direction: 'input',
       paramType: 'any',
-      paramCustomType: '',
       data: { "customEditorType": ParamTypeServiceInstance.getBaseTypeForCustomType(block.options['opType']) }
     }
   };
@@ -447,7 +455,7 @@ function registerControl() {
   blockWhile.callbacks.onStartRun = (block) => {
     block.variables()['breakActived'] = false;
   }
-  blockWhile.callbacks.onPortActive = (block, port) => { 
+  blockWhile.callbacks.onPortExecuteIn = (block, port) => { 
 
     var variables = block.variables();
     if(port.guid == 'PI') {
@@ -464,7 +472,6 @@ function registerControl() {
         breakActived = variables['breakActived']; if(breakActived) break;
       }
 
-      variables['breakActived'] = false;
       block.activeOutputPort(POEXIT);
 
     }else if(port.guid == 'PIBREAK') {
@@ -509,7 +516,7 @@ function registerControl() {
   blockFlipFlop.callbacks.onStartRun = (block) => {
     block.variables()['isA'] = true;
   }
-  blockFlipFlop.callbacks.onPortActive = (block, port) => { 
+  blockFlipFlop.callbacks.onPortExecuteIn = (block, port) => { 
 
     var variables = block.variables();
 
@@ -570,7 +577,7 @@ function registerControl() {
   blockToggle.callbacks.onStartRun = (block) => {
     block.variables()['isOn'] = !block.getInputParamValue('PISTARTOFF');
   }
-  blockToggle.callbacks.onPortActive = (block, port) => { 
+  blockToggle.callbacks.onPortExecuteIn = (block, port) => { 
     var variables = block.variables();
     if(port.guid == 'PI') {
       if(variables['isOn']) block.activeOutputPort('PO');
@@ -642,10 +649,7 @@ function registerControl() {
       name: '循环体',
     },
   ];
-  blockFor.callbacks.onStartRun = (block) => {
-    block.options['breakActived'] = false;
-  }
-  blockFor.callbacks.onPortActive = (block, port) => { 
+  blockFor.callbacks.onPortExecuteIn = (block, port) => { 
     if(port.guid == 'PI') {
 
       var variables = block.variables();
@@ -658,7 +662,7 @@ function registerControl() {
       let startIndex = <number>block.getInputParamValue('PISTINX');
       let endIndex = <number>block.getInputParamValue('PIENINX');
       let stepIndex = <number>block.getInputParamValue('PISTEP');
-      let breakActived = block.options['breakActived'];
+      let breakActived = variables['breakActived'];
 
       if(stepIndex > 0)
         for(let i = startIndex; i < endIndex; i += stepIndex) {
@@ -727,7 +731,7 @@ function registerControl() {
   blockDoN.callbacks.onStartRun = (block) => {
     block.variables()['count'] = 0;
   }
-  blockDoN.callbacks.onPortActive = (block, port) => { 
+  blockDoN.callbacks.onPortExecuteIn = (block, port) => { 
 
     var variables = block.variables();
     if(port.guid == 'PI') {
@@ -781,7 +785,7 @@ function registerControl() {
   blockDoOnce.callbacks.onStartRun = (block) => {
     block.variables()['isOn'] = !block.getInputParamValue('PISTARTOFF');
   }
-  blockDoOnce.callbacks.onPortActive = (block, port) => { 
+  blockDoOnce.callbacks.onPortExecuteIn = (block, port) => { 
 
     var variables = block.variables();
     if(port.guid == 'PI') {
@@ -813,8 +817,8 @@ function registerControl() {
     {
       guid: 'PO',
       paramType: 'execute',
-      direction: 'input',
-      name: '执行1'
+      direction: 'output',
+      name: '执行0'
     },
   ];
   blockSequence.callbacks.onUserAddPort = (block, direction, type) => {
@@ -827,7 +831,7 @@ function registerControl() {
       data: { "customEditorType": ParamTypeServiceInstance.getBaseTypeForCustomType(block.options['opType']) }
     }
   };
-  blockSequence.callbacks.onPortActive = (block, port) => { 
+  blockSequence.callbacks.onPortExecuteIn = (block, port) => { 
     if(port.guid == 'PI') {
       block.allPorts.forEach((port) => {
         block.activeOutputPort(port);

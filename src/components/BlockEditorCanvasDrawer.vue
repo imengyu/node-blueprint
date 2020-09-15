@@ -22,12 +22,18 @@ export default class BlockEditorCanvasDrawer extends Vue {
   ctx : CanvasRenderingContext2D = null;
   canvas : HTMLCanvasElement = null;
 
+  drawTick = 0;
+  drawFps = 0;
   drawId = 0;
   @Prop({default: false}) drawDebugInfo : boolean;
-  @Prop({default: () => []}) drawDebugInfoItems : Array<{
-    pos: number,
-    text: string,
-  }>;
+  drawDebugInfoItems : Array<() => string> = [];
+
+  public addDebugInfoItem(v : () => string) {
+    return this.drawDebugInfoItems.push(v) - 1;
+  }
+  public removeDebugInfoItem(index : number) {
+    this.drawDebugInfoItems.remove(index);
+  }
 
   public drawStop() {
     cancelAnimationFrame(this.drawId);
@@ -47,18 +53,29 @@ export default class BlockEditorCanvasDrawer extends Vue {
       this.ctx.fillStyle = "#fff";
       this.ctx.strokeStyle = "#fff";
       
+      
       let h = 20;
-      this.ctx.fillText("fps : " + this.calculateFps().toFixed(2), 30, h);
+      this.ctx.fillText(this.drawFpsShow, 30, h);
       this.drawDebugInfoItems.forEach((k) => {
         h += 10;
-        this.ctx.fillText(k.text, k.pos, h);
+        this.ctx.fillText(k(), 20, h);
       });
     }
 
+    if(this.drawTick < Number.MAX_SAFE_INTEGER) this.drawTick++;
+    else this.drawTick = 0;
+    
+    if(this.drawTick % 5 == 0) 
+      this.drawFpsShow = "fps : " + this.drawFps.toFixed(2);
+    if(this.drawTick % 50 == 0) 
+      this.$emit('late-tick');
+
+    this.drawFps = this.calculateFps();
     this.drawId = requestAnimationFrame(this.draw);
   }
 
   lastTime = 0;
+  drawFpsShow = '';
 
   calculateFps() {
     var now = (+new Date), fps = 1000/(now - this.lastTime);
@@ -77,6 +94,14 @@ export default class BlockEditorCanvasDrawer extends Vue {
   @Prop({default: false}) connectingIsFail : boolean;
   @Prop({default: null}) connectingConnector : ConnectorEditor;
   @Prop({default: null}) multiSelectRect : Rect;
+
+  @Watch('viewRealSize')
+  onViewRealSizeChanged() {
+    if(this.canvas != null) {
+      this.canvas.width = this.viewRealSize.w;
+      this.canvas.height = this.viewRealSize.h;
+    }
+  }
 
   @Prop({default: true}) gridShow : boolean;
   @Prop({default: 20}) gridSize : number;

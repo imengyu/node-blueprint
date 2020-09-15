@@ -6,6 +6,7 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import { BlockRunContextData } from "../WorkProvider/Runner";
 import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
+import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 
 /**
  * 单元端口
@@ -100,11 +101,16 @@ export class BlockPort {
   /**
    * 参数类型
    */
-  public paramType : BlockParameterType = 'any';
+  public paramType = new BlockParameterType('any');
   /**
-   * 参数自定义类型
+   * 参数集合类型
    */
-  public paramCustomType = '';
+  public paramSetType : BlockParameterSetType = 'variable';
+  /**
+   * 当端口为Dictionary时的键类型
+   */
+  public paramDictionaryKeyType = new BlockParameterType('any');
+
   /**
    * 参数用户设置的值
    */
@@ -114,17 +120,34 @@ export class BlockPort {
    */
   public paramDefaultValue : any = null;
   /**
-   * 参数是否引用传递
+   * 参数是否引用传递(仅入端口)
    */
   public paramRefPassing = false;
+  /**
+   * 参数值是否为全局变量
+   */
+  public paramStatic = false;
+
+  private paramStaticValue : any = null;
 
   public getUserSetValue() {
     if(CommonUtils.isDefined(this.paramUserSetValue))
       return this.paramUserSetValue;
     return this.paramDefaultValue;
   }
-
-  private paramRefPassingPort : BlockPort = null;
+  public getTypeFriendlyString() {
+    let str = '';
+    let typeName = ParamTypeServiceInstance.getTypeNameForUserMapping(this.paramType.getType());
+    if(this.paramSetType == 'dictionary')
+      str = this.paramDictionaryKeyType.getType() + ' 映射到 ' + typeName;
+    else if(this.paramSetType == 'array')
+      str = typeName + '数组';
+    else if(this.paramSetType == 'map')
+      str = typeName + '集';
+    else 
+      str = typeName;
+    return str;
+  }
 
   /**
    * 对于这个执行端口，是否在新上下文执行端口。
@@ -139,37 +162,44 @@ export class BlockPort {
   /**
    * 获取当前端口变量在栈中的数据。
    */
-  public getValue() : any {
-    
-    if(this.paramRefPassingPort != null) //引用传递，直接获取数据
-      return this.paramRefPassingPort.getValue();
-    if(this.parent.currentRunningContext == null)
-      return undefined;
+  public getValue(runningContext: BlockRunContextData) : any {
+    if(this.paramStatic) return this.paramStaticValue;
     //遍历调用栈，找到数据
-    let context = this.parent.currentRunningContext;
+    let context = runningContext;
+    if(context == null)
+      return undefined;
     do {
       if(this.stack < context.graphBlockParamStack.length) 
         return context.graphBlockParamStack[this.stack];
-      else context = context.parentContext.graph == context.graph ? context.parentContext : null;
-    } while(context ! = null);
+      else if(context != null && context.parentContext != null) 
+        context = context.parentContext.graph == context.graph ? context.parentContext : null;  
+      else context = null;                                                                           
+    } while(context != null);
 
     return undefined;
   }
   /**
    * 设置当前端口变量在栈中的数据。
-   * 设置后必须调用 update 才能更新下一级。
+   * 设置后必须调用 updateOnputValue 才能更新下一级。
    */
-  public setValue(value) {
-    if(this.parent.currentRunningContext == null)
+  public setValue(runningContext: BlockRunContextData, value) {
+    if(this.paramStatic) {
+      let oldV = this.paramStaticValue;
+      if(oldV != value) this.paramStaticValue = value;
+      return oldV;
+    }
+    let context = runningContext;
+    if(context == null)
       return undefined;
-    let context = this.parent.currentRunningContext;
     do {
       if(this.stack < context.graphBlockParamStack.length) {
         let oldV = context.graphBlockParamStack[this.stack];
         if(oldV != value)
           context.graphBlockParamStack[this.stack] = value;
         return oldV;
-      } else context = context.parentContext.graph == context.graph ? context.parentContext : null;
+      } else if(context != null && context.parentContext != null) 
+        context = context.parentContext.graph == context.graph ? context.parentContext : null;
+      else context = null;
     } while(context != null);
     return undefined;
   }
@@ -196,63 +226,98 @@ export class BlockPort {
 
   };
 
-
   /**
-   * 循环更新参数端口。
-   * 如果当前端口是入端口，则更新当前端口。
-   * 如果当前端口是出端口，则更新已经连接的下一级端口。
-   * @param source 来源端口
-   * @param forceRef 是否强制引用传递。方向为output时无效。
+   * 获取当前端口已缓存的参数
+   * @param runningContext 正在运行的上下文
    */
-  public update(source ?: BlockPort, forceRef = false) {
-
-    if(this.paramType == 'execute') {
-      logger.warning('[Port.update] Cannot update port '+ this.parent.guid + '-' + this.guid +' because it is execute port.');
-      return;
-    }
-
-    //上一级更新下来
+  public getValueCached(runningContext: BlockRunContextData) {
     if(this.direction == 'input') {
-      if(CommonUtils.isDefinedAndNotNull(source)) {
-        if(forceRef || this.paramRefPassing) this.paramRefPassingPort = source;
-        else {
-          this.setValue(source.getValue());
-          this.paramRefPassingPort = null;
-        }
-      }else this.paramRefPassingPort = null;
-
-      if(!this.parent.portUpdateLock) this.parent.onPortUpdate.invoke(this.parent, this);
-      if(this.parent.isEditorBlock) this.parent.onPortValueUpdate.invoke(this.parent, this);//更新事件
-    }
-    //更新下一级
-    else if(this.direction == 'output' && this.connectedToPort.length > 0) {
-      this.parent.onPortValueUpdate.invoke(this.parent, this);//更新事件
-      this.connectedToPort.forEach(element => {
-        element.port.update(this, element.port.paramRefPassing);//更新下一级
-        this.parent.onPortConnectorActive.invoke(this, element.connector);//更新事件
-      });
+      if(this.connectedFromPort.length == 0)
+        return this.getValue(runningContext);
+      let port = this.connectedFromPort[0].port;
+      if(this.paramRefPassing || port.paramRefPassing)
+        return port.getValue(runningContext);
+      return this.getValue(runningContext);
+    }else if(this.direction == 'output') {
+      return this.getValue(runningContext);
     }
   }
   /**
-   * 获取端口类型
+   * 强制请求出端口参数
+   * @param runningContext 正在运行的上下文
    */
-  public getParamType() {
-    if(this.paramType == 'custom' || this.paramType == 'enum') 
-      return this.paramCustomType;
-    return this.paramType;
+  public rquestOutputValue(runningContext: BlockRunContextData) {
+    this.parent.onPortParamRequest.invoke(this.parent, this, runningContext);
+    return this.getValueCached(runningContext);
   }
+  /**
+   * 请求当前入端口参数
+   * @param runningContext 正在运行的上下文
+   */
+  public rquestInputValue(runningContext: BlockRunContextData) {
+    if(this.direction != 'input') {
+      logger.warning('[port.rquestInputValue] Can not rquestInputValue on a non-input port.');
+      return undefined;
+    }
+    if(this.connectedFromPort.length == 0)
+      return this.getValue(runningContext);
+
+    let port = this.connectedFromPort[0].port;
+    port.parent.onPortParamRequest.invoke(port.parent, port, runningContext);
+
+    if(this.paramRefPassing || port.paramRefPassing)
+      return port.getValue(runningContext);
+
+    let connector = this.connectedFromPort[0].connector;
+    let iChangedChangedContext = connector.checkParamChangedChangedContext(runningContext);
+    if(iChangedChangedContext >= 0) {
+      let v = port.getValue(runningContext);
+      this.setValue(runningContext, v);
+      connector.deleteParamChangedChangedContext(iChangedChangedContext);
+      return v;
+    } else if(!CommonUtils.isDefinedAndNotNull(this.getValue(runningContext))) {
+      let v = port.getValue(runningContext);
+      this.setValue(runningContext, v);
+      return v;
+    } else 
+      return this.getValue(runningContext);
+  }
+  /**
+   * 更新当前出端口参数值
+   * @param runningContext 正在运行的上下文
+   * @param v 参数值
+   */
+  public updateOnputValue(runningContext: BlockRunContextData, v) {
+    if(this.direction != 'output') {
+      logger.warning('[port.updateOnputValue] Can not updateOnputValue on a non-output port.');
+      return undefined;
+    }
+    if(CommonUtils.isDefined(v))
+      this.setValue(runningContext, v);
+    this.connectedToPort.forEach((p) => {
+      p.connector.paramChangedContext.addOnce(runningContext);
+    });
+  }
+  /**
+   * 检查当前入端口参数是否更改
+   * @param runningContext 正在运行的上下文
+   */
+  public checkInputValueChanged(runningContext: BlockRunContextData) {
+    let connector = this.connectedFromPort[0].connector;
+    return connector.checkParamChangedChangedContext(runningContext) >= 0;
+  }
+
   /**
    * 检查目标端口参数类型是否与本端口匹配
    * @param sourcePort 目标端口
    */
   public checkTypeAllow(sourcePort : BlockPort) : boolean {
-    if(this.paramType == 'execute') 
-      return sourcePort.paramType == 'execute';
-    if(this.paramType == "any") 
-      return sourcePort.paramType != 'execute';
-    return (this.paramType == sourcePort.paramType && this.paramType != 'custom') || 
-      (this.paramType == 'custom' && sourcePort.paramType == 'custom' && this.paramCustomType == sourcePort.paramCustomType) || 
-      (this.paramType == 'enum' && sourcePort.paramType == 'enum' && this.paramCustomType == sourcePort.paramCustomType);
+    if(this.paramType.isExecute()) 
+      return sourcePort.paramType.isExecute();
+    if(this.paramType.baseType == "any") 
+      return !sourcePort.paramType.isExecute() && this.paramSetType == sourcePort.paramSetType;
+
+    return this.paramType.equals(sourcePort.paramType) && this.paramSetType == sourcePort.paramSetType;
   }
 
   //执行激活
@@ -262,7 +327,7 @@ export class BlockPort {
    * （通常用于延时任务完成后的回调）
    */
   public activeInNewContext() {
-    if(this.paramType != 'execute') {
+    if(!this.paramType.isExecute()) {
       logger.warning('[Port.activeInNewContext] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
       return;
     }
@@ -282,7 +347,7 @@ export class BlockPort {
    */
   public active(runningContext ?: BlockRunContextData) {
 
-    if(this.paramType != 'execute') {
+    if(!this.paramType.isExecute()) {
       logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
       return;
     }
@@ -304,7 +369,7 @@ export class BlockPort {
       runningContext.currentBlock = this.parent;
 
       this.parent.enterBlock(this, runningContext);
-      this.parent.onPortActive.invoke(this.parent, this);
+      this.parent.onPortExecuteIn.invoke(this.parent, this);
       
     }
     else if(this.direction == 'output') {
@@ -313,7 +378,7 @@ export class BlockPort {
         this.activeInNewContext();
       else {
         if(!CommonUtils.isDefinedAndNotNull(runningContext)) {
-          logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because runningContext was not provided.');
+          logger.error('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because runningContext was not provided.');
           return;
         }
 
@@ -326,9 +391,6 @@ export class BlockPort {
     }            
   }
 }
-
-
-
 
 /**
  * 连接数据
@@ -343,6 +405,8 @@ export class BlockPortConnectorData {
 export class BlockPortEditorData {
   public el : HTMLDivElement = null;
   public elDot : HTMLElement = null;
+  public elDotIconLeft : HTMLElement = null;
+  public elDotIconRight : HTMLElement = null;
   public elSpan : HTMLSpanElement = null;
   public elEditor : HTMLElement = null;
   public elCustomEditor : HTMLElement = null;
@@ -357,7 +421,6 @@ export class BlockPortEditorData {
   public editor : BlockParameterEditorRegData = null;
 
   public oldParamType : BlockParameterType = null;
-  public oldParamCustomType = null;
 
   private pos = new Vector2();
   
@@ -372,6 +435,55 @@ export class BlockPortEditorData {
   }
 }
 
-export type BlockPortType = 'Behavior'|'Parameter';
+/**
+ * 端口的方向
+ * 
+ * input：入端口，
+ * output：出端口
+ */
 export type BlockPortDirection = 'input'|'output';
-export type BlockParameterType = 'execute'|'bigint'|'number'|'string'|'boolean'|'function'|'object'|'any'|'enum'|'custom';
+/**
+ * 端口参数基本类型
+ * 
+ * execute：执行
+ * custom：自定义
+ */
+export type BlockParameterBaseType = 'execute'|'bigint'|'number'|'string'|'boolean'|'function'|'object'|'any'|'enum'|'custom';
+/**
+ * 端口参数的集合类型
+ * 
+ * variable：单个变量
+ * array：数组
+ * map：集合
+ * dictionary：字典（映射）
+ */
+export type BlockParameterSetType = 'variable'|'array'|'map'|'dictionary';
+
+/**
+ * 端口参数类型
+ */
+export class BlockParameterType {
+
+  public baseType : BlockParameterBaseType = 'any';
+  public customType = '';
+
+  public constructor(baseType : BlockParameterBaseType, customType = '') {
+    this.baseType = baseType;
+    this.customType = customType;
+  }
+
+  public getType() {
+    return this.isCustom() ? this.customType : this.baseType;
+  }
+  public isExecute() {
+    return this.baseType == 'execute';
+  }
+  public isCustom() {
+    return (this.baseType == 'custom' || this.baseType == 'enum');
+  }
+  public equals(otherType : BlockParameterType) {
+    if(otherType == null) return false;
+    if(otherType == this) return true;
+    return this.baseType == otherType.baseType && this.customType == otherType.customType;
+  }
+}

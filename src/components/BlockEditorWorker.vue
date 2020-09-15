@@ -31,7 +31,7 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Rect } from "../model/Rect";
-import { BlockPort, BlockPortDirection, BlockParameterType, BlockPortType } from "../model/Define/Port";
+import { BlockPort, BlockPortDirection, BlockParameterType, BlockParameterSetType } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 import { Vector2 } from "../model/Vector2";
@@ -43,6 +43,7 @@ import { Connector } from "../model/Define/Connector";
 import CommonUtils from "../utils/CommonUtils";
 import { BlockBreakPoint } from "../model/Define/Block";
 import HtmlUtils from "../utils/HtmlUtils";
+import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
 
 /**
  * 编辑器逻辑控制
@@ -61,7 +62,8 @@ export default class BlockEditorWorker extends Vue {
   @Prop({ default: null }) blocks : Array<BlockEditor>;
   @Prop({ default: null }) connectors : Array<ConnectorEditor>;
   @Prop({ default: null }) runner : BlockRunner;
- 
+  @Prop({ default: null }) editorCanvas : BlockEditorCanvasDrawer;
+
   // 逻辑控制
   //=======================
 
@@ -220,7 +222,8 @@ export default class BlockEditorWorker extends Vue {
       this.selectedBlocks.remove(block);
       this.$emit('update-select-state');
     }
-    block.allPorts.forEach((p) => p.unconnectAllConnector());
+    if(!block.forceNotUnConnect)
+      block.allPorts.forEach((p) => p.unconnectAllConnector());
   }
 
   // 块控制
@@ -277,9 +280,9 @@ export default class BlockEditorWorker extends Vue {
   connectingCanConnect : boolean = false;
   connectingFailedText : string = '';
 
-  private connectingOtherSideRequireType : BlockParameterType = 'any';
+  private connectingOtherSideRequireType : BlockParameterType = null;
   private connectingOtherSideRequireDirection : BlockPortDirection = null;
-  private connectingOtherSideRequireParamCustomType : string = null;
+  private connectingOtherSideRequireParamSetType : BlockParameterSetType = null;
 
   currentHoverPort : BlockPort = null;
 
@@ -306,10 +309,10 @@ export default class BlockEditorWorker extends Vue {
       connector = new ConnectorEditor();
 
       //如果是行为端口，只能输出一条线路。取消连接之前的线路
-      if(startPort.paramType == 'execute' && startPort.connectedToPort.length >= 0)
+      if(startPort.paramType.isExecute() && startPort.connectedToPort.length >= 0)
         startPort.connectedToPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
       //如果是参数端口，只能输入一条线路。取消连接之前的线路
-      if(startPort.paramType != 'execute' && endPort.connectedFromPort.length >= 0) 
+      if(!startPort.paramType.isExecute() && endPort.connectedFromPort.length >= 0) 
         endPort.connectedFromPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
 
       startPort.connectedToPort.push({
@@ -339,10 +342,10 @@ export default class BlockEditorWorker extends Vue {
       connector = new ConnectorEditor();
 
       //如果是行为端口，只能输出一条线路。
-      if(endPort.paramType == 'execute' && endPort.connectedToPort.length > 0) 
+      if(endPort.paramType.isExecute() && endPort.connectedToPort.length > 0) 
         endPort.connectedToPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
       //如果是参数端口，只能输入一条线路。
-      if(startPort.paramType != 'execute' && startPort.connectedFromPort.length > 0) 
+      if(!startPort.paramType.isExecute() && startPort.connectedFromPort.length > 0) 
         startPort.connectedFromPort.forEach((d) => this.unConnectConnector(<ConnectorEditor>d.connector));
 
       endPort.connectedToPort.push({
@@ -390,7 +393,7 @@ export default class BlockEditorWorker extends Vue {
     let port : BlockPort = null;
     if(typeof block != 'undefined') {
       port = block.getOnePortByDirectionAndType(this.connectingOtherSideRequireDirection,
-          this.connectingOtherSideRequireType, this.connectingOtherSideRequireParamCustomType, true);
+          this.connectingOtherSideRequireType, this.connectingOtherSideRequireParamSetType, true);
       if(port != null)
         this.connectConnector(this.connectingStartPort, port);
     }
@@ -416,7 +419,7 @@ export default class BlockEditorWorker extends Vue {
 
     this.connectingOtherSideRequireDirection = port.direction == 'input' ? 'output' : 'input';
     this.connectingOtherSideRequireType = port.paramType;
-    this.connectingOtherSideRequireParamCustomType = port.paramType == 'execute' ? null : port.paramCustomType;
+    this.connectingOtherSideRequireParamSetType = port.paramSetType;
   }
   public endConnect(port : BlockPort) {
 
@@ -426,7 +429,7 @@ export default class BlockEditorWorker extends Vue {
       this.$emit('update-add-block-panel-filter', {
         filterByPortDirection: this.connectingOtherSideRequireDirection,
         filterByPortType : this.connectingOtherSideRequireType,
-        filterByPortCustomType : this.connectingOtherSideRequireParamCustomType
+        filterByPortCustomType : this.connectingOtherSideRequireParamSetType
       })
 
       this.$emit('show-add-block-panel-view-port-pos', this.connectingEndPos);
@@ -504,7 +507,8 @@ export default class BlockEditorWorker extends Vue {
           this.connectingCanConnect = this.connectingStartPort.checkTypeAllow(this.currentHoverPort);
 
         if(!this.connectingCanConnect) 
-          this.connectingFailedText = this.connectingStartPort.getParamType() + ' 与 ' + this.currentHoverPort.getParamType() + ' 不兼容';
+          this.connectingFailedText = this.connectingStartPort.getTypeFriendlyString() + ' 与 ' + 
+            this.currentHoverPort.getTypeFriendlyString() + ' 不兼容';
       }
     }
 
@@ -539,10 +543,6 @@ export default class BlockEditorWorker extends Vue {
     this.$emit('update-set-file-changed');
   }
   public refreshBlock(block : BlockEditor) {
-    block.allPorts.forEach((p) => {
-      if(p.paramType != 'execute') 
-        p.update();
-    });
   }
   public unConnectSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.unConnectBlock(b));
@@ -654,7 +654,7 @@ export default class BlockEditorWorker extends Vue {
         this.multiSelectRect.Set(0,0,0,0);
 
         if(this.selectOneConnector()) {
-
+          this.$emit('update-select-state');
         } else {
           if(e.button == 2 && !this.isMouseMoved) {
             this.$emit('set-add-block-inpos', this.mouseCurrentPosInViewPort);
@@ -675,7 +675,7 @@ export default class BlockEditorWorker extends Vue {
     }
 
   }
-  private onMouseMove(e : MouseEvent) {
+  private onMouseMoveAndDown(e : MouseEvent) {
     this.updateMousePos(e);
 
     if(!this.mouseCurrentPos.equal(this.mouseDownPos))
@@ -724,7 +724,11 @@ export default class BlockEditorWorker extends Vue {
         if(this.viewPort.y < 0) this.viewPort.y = 0;
         this.$emit('update-viewport');
       }
-    } else {
+    }
+  }
+  private onMouseMove(e : MouseEvent) {
+    if(!this.mouseDowned) {
+      this.updateMousePos(e);
       this.testCastConnector();
     }
   }
@@ -789,19 +793,30 @@ export default class BlockEditorWorker extends Vue {
       this.blockHost = <HTMLDivElement>this.$refs.blockHost;
       this.editorHost.addEventListener('mousedown', this.onMouseDown);
       this.editorHost.addEventListener('mouseup', this.onMouseUp);
+      this.editorHost.addEventListener('mousemove', this.onMouseMove);
       this.editorHost.addEventListener('wheel', this.onMouseWhell);
       document.addEventListener('keyup', this.onKeyUp);
       document.addEventListener('keydown', this.onKeyDown);
       this.multiSelectRect = new Rect();
       this.connectingEndPos = new Vector2();
+      
     }, 300);
+    setTimeout(() => {
+      this.editorCanvas.addDebugInfoItem(() => 
+        'mouseCurrentPos x: ' + this.mouseCurrentPos.x + ' y: ' + this.mouseCurrentPos.y
+      );
+      this.editorCanvas.addDebugInfoItem(() => 
+        'mouseCurrentPosInViewPort x: ' + this.mouseCurrentPosInViewPort.x + ' y: ' + this.mouseCurrentPosInViewPort.y
+      );
+    }, 1000);
 
     this.onMouseUpFn = this.onMouseUp.bind(this);
-    this.onMouseMoveFn = this.onMouseMove.bind(this);
+    this.onMouseMoveFn = this.onMouseMoveAndDown.bind(this);
   }
   beforeDestroy() {
     this.editorHost.removeEventListener('mousedown', this.onMouseDown);
     this.editorHost.removeEventListener('mouseup', this.onMouseUp);
+    this.editorHost.removeEventListener('mousemove', this.onMouseMove);
     this.editorHost.removeEventListener('wheel', this.onMouseWhell);
     document.removeEventListener('keyup', this.onKeyUp);
     document.removeEventListener('keydown', this.onKeyDown);

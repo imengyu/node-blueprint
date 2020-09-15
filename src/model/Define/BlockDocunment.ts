@@ -181,7 +181,7 @@ export class BlockGraphVariable {
         this.value = newV;
         this.changeCallbacks.invoke(this);
       }
-    }else if(this.stack > 0) {
+    }else if(this.stack >= 0) {
       if(runningContext.graphParamStack[this.stack] != newV) {
         runningContext.graphParamStack[this.stack] = newV;
         this.changeCallbacks.invoke(this);
@@ -194,6 +194,6 @@ export class BlockGraphVariable {
    */
   get(runningContext : BlockRunContextData) {
     if(this.static) return this.value;
-    else if(this.stack > 0) return runningContext.graphParamStack[this.stack];
+    else if(this.stack >= 0) return runningContext.graphParamStack[this.stack];
   }
 }

@@ -161,7 +161,7 @@ import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 import SettingsServiceInstance from "../sevices/SettingsService";
 import { BlockEditor } from "../model/Editor/BlockEditor";
-import { BlockPortType, BlockParameterType, BlockPortDirection } from "../model/Define/Port";
+import { BlockParameterType, BlockPortDirection } from "../model/Define/Port";
 import { BlockRunner, BlockRunContextData } from "../model/WorkProvider/Runner";
 import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { EditorSettings } from "../model/Editor/EditorSettings";
@@ -194,6 +194,11 @@ export default class Editor extends Vue {
   mouseLeftMove = false;
   splitOff = 0.8;
   split2 = 0.28;
+
+  @Watch('splitOff') 
+  onSplitOffChanged() {
+    this.editorControl.onWindowSizeChanged();
+  }
 
   showIntro = true;
   showIntroE = true;
@@ -658,6 +663,7 @@ export default class Editor extends Vue {
     else this.doNewFile();
   }
   public saveFile() {
+    this.editorControl.saveViewPort();
     let str = this.parser.saveToString(this.currentDocunment, true);
     CommonUtils.exportRaw(this.currentDocunment.name + '.json', str);
   }
