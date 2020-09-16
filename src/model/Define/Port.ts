@@ -86,7 +86,7 @@ export class BlockPort {
     if(this.parent.isEditorBlock)
       (<BlockEditor>this.parent).unConnectPort(this);
   }
-  public isPortConnected() { 
+  public isConnected() { 
     if(this.direction == 'input')
       return this.connectedFromPort.length > 0;
     else if(this.direction == 'output')
@@ -129,6 +129,7 @@ export class BlockPort {
   public paramStatic = false;
 
   private paramStaticValue : any = null;
+  public portAnyFlexable = {};
 
   public getUserSetValue() {
     if(CommonUtils.isDefined(this.paramUserSetValue))
@@ -139,11 +140,11 @@ export class BlockPort {
     let str = '';
     let typeName = ParamTypeServiceInstance.getTypeNameForUserMapping(this.paramType.getType());
     if(this.paramSetType == 'dictionary')
-      str = this.paramDictionaryKeyType.getType() + ' 映射到 ' + typeName;
+      str = '<i>' + ParamTypeServiceInstance.getTypeNameForUserMapping(this.paramDictionaryKeyType.getType()) + '</i>到<i>' + typeName + '</i><b>的映射</b>';
     else if(this.paramSetType == 'array')
-      str = typeName + '数组';
-    else if(this.paramSetType == 'map')
-      str = typeName + '集';
+      str = typeName + '<b>数组</b>';
+    else if(this.paramSetType == 'set')
+      str = typeName + '<b>集</b>';
     else 
       str = typeName;
     return str;
@@ -457,7 +458,7 @@ export type BlockParameterBaseType = 'execute'|'bigint'|'number'|'string'|'boole
  * map：集合
  * dictionary：字典（映射）
  */
-export type BlockParameterSetType = 'variable'|'array'|'map'|'dictionary';
+export type BlockParameterSetType = 'variable'|'array'|'set'|'dictionary';
 
 /**
  * 端口参数类型
@@ -468,10 +469,20 @@ export class BlockParameterType {
   public customType = '';
 
   public constructor(baseType : BlockParameterBaseType, customType = '') {
-    this.baseType = baseType;
-    this.customType = customType;
+    this.set(baseType, customType);
   }
 
+  public static Any = new BlockParameterType('any');
+
+  public set(baseType : string, customType = '') {
+    if(CommonUtils.isNullOrEmpty(customType)) {
+      this.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(baseType);
+      this.customType = baseType;
+    }else {
+      this.baseType = <BlockParameterBaseType>baseType;
+      this.customType = customType;
+    }
+  }
   public getType() {
     return this.isCustom() ? this.customType : this.baseType;
   }
@@ -486,4 +497,10 @@ export class BlockParameterType {
     if(otherType == this) return true;
     return this.baseType == otherType.baseType && this.customType == otherType.customType;
   }
+
+  public toString() {
+    return this.getType();
+  }
 }
+
+

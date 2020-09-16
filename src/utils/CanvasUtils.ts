@@ -73,8 +73,8 @@ function drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, x1 : number, y
   let xOff = xAbs > 200 ? 200 : xAbs;
 
   if(x2 < x1 && xOff < 100) xOff = 100;
-  else if(xAbs > 30 && xAbs < 200 && yAbs < 30) xOff = xAbs / 2;
-  else if(xAbs < 30 && yAbs >= 30) xOff = 100;
+  else if(yAbs < 30) xOff = xAbs / 2;
+  else if(xAbs <= 66 && yAbs >= 30) xOff = 100;
 
   let pos = [
     x1 - viewPort.x, y1 - viewPort.y,

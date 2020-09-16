@@ -55,8 +55,11 @@
       :allBlocksGrouped="allBlocksGrouped" 
       :showPos="showAddBlockPanelPos"
       :style="{ maxHeight: showAddBlockPanelMaxHeight + 'px' }"
+      :isAddDirectly="addBlockPanelAddDirectly"
       :filterByPortDirection="filterByPortDirection"
       :filterByPortType="filterByPortType" 
+      :filterByPortKeyType="filterByPortKeyType" 
+      :filterSrcPort="filterSrcPort" 
       :filterByPortCustomType="filterByPortCustomType" 
       @onBlockItemClick="onBlockAddItemClick"
       @onClose="showAddBlockPanel=false" />
@@ -388,30 +391,38 @@ export default class Editor extends Vue {
   showAddBlockPanelPos = new Vector2();
   showAddBlockPanel = false;
   showAddBlockPanelMaxHeight = 500;
+  addBlockPanelAddDirectly = false;
 
   filterByPortDirection : BlockPortDirection = null;
   filterByPortType : BlockParameterType = null;
+  filterByPortKeyType : BlockParameterType = null;
+  filterSrcPort = null;
   filterByPortCustomType : string = '';
 
   updateAddBlockPanelFilter(filter) {
     this.filterByPortDirection = filter.filterByPortDirection;
     this.filterByPortType = filter.filterByPortType;
+    this.filterByPortKeyType = filter.filterByPortKeyType;
+    this.filterSrcPort = filter.filterSrcPort;
     this.filterByPortCustomType = filter.filterByPortCustomType;
     this.addBlockPanelDoFilter();
   }
   clearAddBlockPanelFilter() {
     this.filterByPortDirection = null;
     this.filterByPortType = null;
+    this.filterByPortKeyType = null;
+    this.filterSrcPort = null;
     this.filterByPortCustomType = null;
     (<AddPanel>this.$refs.AddBlockPanel).clearFilter();
   }
   addBlockPanelDoFilter() {
     setTimeout(() => (<AddPanel>this.$refs.AddBlockPanel).doFilter(), 150);
   }
-  public showAddBlockPanelAt(pos : Vector2) {
+  public showAddBlockPanelAt(pos : Vector2, showAddDirectly = true) {
     this.showAddBlockPanelPos.Set(pos);
     this.showAddBlockPanel = true;
     this.showAddBlockPanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
+    this.addBlockPanelAddDirectly = showAddDirectly;
     if(this.showAddBlockPanelMaxHeight > 500) this.showAddBlockPanelMaxHeight = 500;
     else if(this.showAddBlockPanelMaxHeight < 222) {
       this.showAddBlockPanelPos.y -= 222 - this.showAddBlockPanelMaxHeight;
@@ -422,12 +433,12 @@ export default class Editor extends Vue {
   showAddBlockPanelBar(e : HTMLElement) {
     this.editorControl.setNoAddBlockInpos();
     this.clearAddBlockPanelFilter();
-    
+
     if(this.showAddBlockPanel) this.showAddBlockPanel = false;
     else this.showAddBlockPanelAt(new Vector2(
       e.offsetLeft + this.editorControl.toolBarWidth,
       e.offsetTop + this.editorControl.toolBarHeight + 3
-    ));
+    ), false);
   }
 
   //#endregion

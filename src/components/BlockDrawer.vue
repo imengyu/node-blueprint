@@ -7,7 +7,7 @@
       :style="{ left: (connectingEndPos.x - viewPort.x) + 'px', top:  (connectingEndPos.y - viewPort.y) + 'px' }">
       <span v-if="currentHoverPort==null"><i class="iconfont icon-calendar-1 mr-1"></i>连接至新的单元</span>
       <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i></span>
-      <span v-else><i class="iconfont icon-close- text-danger mr-1"></i>{{connectingFailedText}}</span>
+      <span v-else><i class="iconfont icon-close- text-danger mr-1"></i><span v-html="connectingFailedText"></span></span>
     </div>
     <!--节点提示-->
     <div class="common-tip no-mouse-event"
@@ -124,6 +124,7 @@ import HtmlUtils from "../utils/HtmlUtils";
 import ToolTipUtils from "../utils/ToolTipUtils";
 import { BlockBreakPoint } from "../model/Define/Block";
 import BaseBlocks from "../model/Blocks/BaseBlocks";
+import BlockServiceInstance from "../sevices/BlockService";
 
 
 @Component({
@@ -572,6 +573,11 @@ export default class BlockDrawer extends Vue {
           let block = new BlockEditor(BaseBlocks.getScriptBaseGraphCall());
           block.options['graph'] = datav[2];
           this.editorWorker.addBlock(block, this.editorWorker.getMouseCurrentPosInViewPort());
+          break;
+        }
+        case 'block': {
+          this.setAddBlockInpos(this.editorWorker.getMouseCurrentPosInViewPort());
+          this.userAddBlock(BlockServiceInstance.getRegisteredBlock(datav[2]));
           break;
         }
       }

@@ -2,7 +2,7 @@
   <div ref="block-add-panel" class="block-add-panel" 
     :style="{ left: (showPos != null ? showPos.x : 0) + 'px', top: (showPos != null ? showPos.y : 0) + 'px' }"
     @click="onClick($event)">
-    <div class="text-center">添加{{ filterText }}</div>
+    <div class="text-center">添加<span v-html="filterText"></span></div>
 
     <Input v-model="searchValue" placeholder="搜索单元..." clearable size="small" suffix="ios-search" :style="{margin:'5px 0'}" />
 
@@ -12,7 +12,7 @@
         <i :class="'collapse-arrow iconfont ' + (item.open ? 'icon-arrow-down-1' : 'icon-arrow-right-')"></i>
         {{ item.category }}
       </span>
-      <BlockCategory v-show="item.open" :categoryData="item" 
+      <BlockCategory v-show="item.open" :categoryData="item" :isAddDirectly="isAddDirectly"
         @on-block-item-click="onBlockItemClick">
       </BlockCategory>
     </div>
@@ -27,7 +27,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
-import { BlockPortDirection, BlockParameterType, BlockParameterSetType } from "../model/Define/Port";
+import { BlockPortDirection, BlockParameterType, BlockParameterSetType, BlockPort } from "../model/Define/Port";
 import { BlockRegData } from "../model/Define/BlockDef";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 
@@ -42,11 +42,14 @@ export default class AddPanel extends Vue {
   @Prop({ default: null }) allBlocksGrouped : Array<CategoryData>;
   @Prop({ default: null }) showPos : Vector2;
   @Prop({ default: false }) show : boolean;
+  @Prop({ default: false }) isAddDirectly : boolean;
 
   filterText = '所有可用单元';
 
+  @Prop({ default: null }) filterSrcPort : BlockPort;
   @Prop({ default: null }) filterByPortDirection : BlockPortDirection;
   @Prop({ default: null }) filterByPortType : BlockParameterType;
+  @Prop({ default: null }) filterByPortKeyType : BlockParameterType;
   @Prop({ default: null }) filterByPortSetType : BlockParameterSetType;
 
   @Watch('show')
@@ -89,10 +92,10 @@ export default class AddPanel extends Vue {
   doFilter() {
     if(this.filterByPortType != null) {
       this.doFilterLoop((b) => b.hasOnePortByDirectionAndType(this.filterByPortDirection,
-        this.filterByPortType, this.filterByPortSetType, true));
+        this.filterByPortType, this.filterByPortKeyType, this.filterByPortSetType, true));
 
       this.filterText = (this.filterByPortDirection == 'input' ? '获取 ' : '输出 ') + 
-        ParamTypeServiceInstance.getTypeNameForUserMapping(this.filterByPortType.getType()) + ' 的单元';
+        this.filterSrcPort.getTypeFriendlyString() + ' 的单元';
     }
     else this.clearFilter();
   }

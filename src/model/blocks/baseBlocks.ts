@@ -15,6 +15,8 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
 import { BlockRunContextData } from "../WorkProvider/Runner";
 import ArrayBlocks from "./ArrayBlocks";
+import SetBlocks from "./SetBlocks";
+import DictionaryBlocks from "./DictionaryBlocks";
 
 export default { 
   register,
@@ -38,6 +40,8 @@ function register() {
   ControlBlocks.register();
   LogicBlocks.register();
   ArrayBlocks.register();
+  SetBlocks.register();
+  DictionaryBlocks.register();
 }
 
 let blockIn : BlockRegData;
@@ -124,6 +128,8 @@ function registerScriptVariableBase()  {
         guid: block.data['portGuid'],
         direction: 'output',
         paramType: variable.type,
+        paramDictionaryKeyType: variable.dictionaryKeyType,
+        paramSetType: variable.setType,
         paramRefPassing: true,
         paramStatic: true,
         name: block.options['variable'],
@@ -148,9 +154,10 @@ function registerScriptVariableBase()  {
         if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
           block.options['variable'] = variable.name;
 
-          port.paramType.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
-          port.paramType.customType = variable.type;
+          port.paramType.set(variable.type);
           port.paramDefaultValue = variable.defaultValue;
+          port.paramDictionaryKeyType.set(variable.dictionaryKeyType);
+          port.paramSetType = variable.setType;
           port.name = variable.name;
           
           block.updatePort(port);
@@ -215,11 +222,15 @@ function registerScriptVariableBase()  {
         direction: 'input',
         paramType: variable.type,
         paramDefaultValue: variable.defaultValue,
+        paramDictionaryKeyType: variable.dictionaryKeyType,
+        paramSetType: variable.setType,
       }, false, variable.defaultValue);
       portOut = block.addPort({
         guid: portOutGuid,
         direction: 'output',
         paramType: variable.type,
+        paramDictionaryKeyType: variable.dictionaryKeyType,
+        paramSetType: variable.setType,
         paramRefPassing: true,
         name: block.options['variable'],
       }, false, variable.defaultValue);
@@ -246,15 +257,15 @@ function registerScriptVariableBase()  {
         if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
           block.options['variable'] = variable.name
 
-          portIn.paramType.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
-          portIn.paramType.customType = variable.type;
+          portIn.paramType.set(variable.type);
           portIn.paramDefaultValue = variable.defaultValue;
+          portIn.paramDictionaryKeyType.set(variable.dictionaryKeyType);
 
           block.updatePort(portIn);
 
-          portOut.paramType.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(variable.type);
-          portOut.paramType.customType = variable.type;
+          portOut.paramType.set(variable.type);
           portOut.paramDefaultValue = variable.defaultValue;
+          portOut.paramDictionaryKeyType.set(variable.dictionaryKeyType);
           portOut.name = variable.name;
 
           block.updatePort(portOut);

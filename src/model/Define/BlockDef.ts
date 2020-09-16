@@ -1,5 +1,5 @@
-import { BlockParameterType, BlockPortDirection, BlockPort, BlockParameterSetType } from "./Port";
-import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback } from "./Block";
+import { BlockParameterType, BlockPortDirection, BlockPort, BlockParameterSetType, BlockParameterBaseType } from "./Port";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback, OnPortConnectCallback, OnPortEditorEventCallback, OnPortConnectCheckCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 
@@ -61,7 +61,7 @@ export class BlockRegData {
    */
   public ports : Array<BlockPortRegData> = [];
 
-  public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, setType : BlockParameterSetType = 'variable', includeAny = false) {
+  public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, keyType : BlockParameterType, setType : BlockParameterSetType = 'variable', includeAny = false) {
     if(type.isExecute()) {
       for(let i = 0, c = this.ports.length; i < c;i++)
         if(this.ports[i].direction == direction){ 
@@ -73,19 +73,20 @@ export class BlockRegData {
     }else {
       for(let i = 0, c = this.ports.length; i < c;i++)
         if(this.ports[i].direction == direction) {
-          if(type.baseType == 'any' && includeAny && this.ports[i].paramSetType == setType) return true;
-          if(
-            (
-              (typeof this.ports[i].paramType == 'string' && this.ports[i].paramType == type.baseType) 
-              || (typeof this.ports[i].paramType != 'string' && (<BlockParameterType>this.ports[i].paramType).equals(type)))
-            
-            && this.ports[i].paramSetType == setType) return true;
-          
-            if(includeAny && 
-              (
-                (typeof this.ports[i].paramType == 'string' && this.ports[i].paramType == 'any') 
-               || (typeof this.ports[i].paramType != 'string' && (<BlockParameterType>this.ports[i].paramType).equals(type))) 
-              && this.ports[i].paramSetType == setType) return true;
+          if(setType == 'dictionary' && this.ports[i].paramSetType == 'dictionary') {
+            if(
+              (this.ports[i].paramType == type.getType()
+                || (type.baseType == 'any' && includeAny) || (this.ports[i].paramType == 'any' && includeAny))
+              
+              && (this.ports[i].paramDictionaryKeyType == type.getType() 
+                || (keyType.baseType == 'any' && includeAny) || (this.ports[i].paramDictionaryKeyType == 'any' && includeAny))
+
+            ) return true;
+
+          }else if(type.baseType == 'any' && includeAny && this.ports[i].paramSetType == setType) return true;
+          else if(
+            this.ports[i].paramType == type.getType() && this.ports[i].paramSetType == setType) return true;
+            if(includeAny && this.ports[i].paramType == 'any' && this.ports[i].paramSetType == setType) return true;   
         }
     }
     return false;
@@ -187,6 +188,19 @@ export class BlockRegData {
      * 返回null可以添加，返回一个字符串表示不能添加，字符串会显示给用户。（仅编辑器模式调用）
      */
     onAddCheck: OnAddBlockCheckCallback,
+    /**
+     * 当的端口连接检查时的回调，在这个回调中检查能否连接端口，
+     * 返回null可以添加，返回一个字符串表示不能连接，字符串会显示给用户。（仅编辑器模式调用）
+     */
+    onPortConnectCheck: OnPortConnectCheckCallback,
+    /**
+     * 当端口连接时的回调。（仅编辑器模式调用）
+     */
+    onPortConnect: OnPortConnectCallback,
+    /**
+     * 当端口断开连接时的回调。（仅编辑器模式调用）
+     */
+    onPortUnConnect: OnPortEditorEventCallback,
   } = {
     onCreate: null,
     onDestroy: null,
@@ -200,6 +214,9 @@ export class BlockRegData {
     onCreatePortCustomEditor: null,
     onUserAddPort: null,
     onAddCheck: null,
+    onPortConnectCheck: null,
+    onPortConnect: null,
+    onPortUnConnect: null,
   }
 
   /**
@@ -211,6 +228,8 @@ export class BlockRegData {
    * 单元的自定义菜单
    */
   public blockMenu = new BlockMenuSettings();
+
+  public portAnyFlexables = {};
 
   show = true;
   filterShow = true;
@@ -257,6 +276,10 @@ export class BlockStyleSettings  {
    */
   public minWidth = '';
   /**
+   * 单元最小高度
+   */
+  public minHeight = '';
+  /**
    * 是否隐logo
    */
   public hideLogo = false;
@@ -297,7 +320,7 @@ export interface BlockPortRegData {
   /**
    * 端口的类型
    */
-  paramType : BlockParameterType|string;
+  paramType : BlockParameterType|string|BlockParameterBaseType;
   /**
    * 端口的集合类型
    */
@@ -319,6 +342,8 @@ export interface BlockPortRegData {
    * 参数值是否为全局变量，默认为 false
    */
   paramStatic ?: boolean;
+
+  portAnyFlexable ?: {};
 
   /**
    * 是否强制不显示编辑参数控件
@@ -376,6 +401,11 @@ export class BlockParameterTypeRegData {
    * 显示给用户的名称
    */
   public nameForUser = "";
+
+  /**
+   * getHashCode 获取哈希码函数.
+   */
+  public getHashCode : (v) => string = null;
 }
 
 /**

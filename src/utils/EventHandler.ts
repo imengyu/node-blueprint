@@ -28,13 +28,15 @@ export class EventHandler<T> {
     return true;
   }
   public invoke(...args) { 
+    let rs = undefined;
     if(this.listener.length > 0) {
       let _args = arguments;
       this.listener.forEach((callback) => {
         if(typeof callback.callback == 'function')
-          callback.callback.apply(callback._this, _args)
+          rs = callback.callback.apply(callback._this, _args)
       });
     }
+    return rs;
   }
 }
 

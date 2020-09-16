@@ -20,6 +20,7 @@ function registerControl() {
   let blockSwitch = new BlockRegData("BC9184EA-2866-3C9A-5A22-75E79DA5AF181", "分支");
   let blockSelect = new BlockRegData("144AB2CC-F807-7021-1442-A8E7CD1FF1BE", "选择");
   let blockWhile = new BlockRegData("28ADE8D9-50E9-FA84-0BFB-A48AF754D1FD", "While 循环");
+  let blockDoWhile = new BlockRegData("18CD0C99-C47C-525F-D757-0712441B794E", "Do While 循环");
   let blockFor = new BlockRegData("949F91AA-D35E-E9E8-8B4B-36EDBD5B1AAD", "For 循环");
   let blockSequence = new BlockRegData("4253F127-DEDB-D1BE-AF0E-9795E421DFF0", "顺序执行");
   let blockDoOnce = new BlockRegData("79EC0B90-F5B7-BAA3-C3C5-1D2371E8AF0F", "Do Once");
@@ -471,6 +472,73 @@ function registerControl() {
         condition = <boolean>block.getInputParamValue('PICON');
         breakActived = variables['breakActived']; if(breakActived) break;
       }
+
+      block.activeOutputPort(POEXIT);
+
+    }else if(port.guid == 'PIBREAK') {
+      variables['breakActived'] = true;
+    }
+  };
+
+  //#endregion
+
+  //#region DoWhile
+
+  blockDoWhile.baseInfo.author = 'imengyu';
+  blockDoWhile.baseInfo.description = "先执行循环体，然后再判断条件是否为真, 如果为真则继续循环";
+  blockDoWhile.baseInfo.category = '控制';
+  blockDoWhile.baseInfo.version = '2.0';
+  blockDoWhile.baseInfo.logo = require('../../assets/images/BlockIcon/loop.svg');
+  blockDoWhile.ports = [
+    {
+      guid: 'PI',
+      paramType: 'execute',
+      direction: 'input'
+    },
+    {
+      guid: 'PIBREAK',
+      paramType: 'execute',
+      direction: 'input',
+      name: '终止',
+      description: '终止循环',
+    },
+    {
+      guid: 'PICON',
+      paramType: 'boolean',
+      paramDefaultValue: true,
+      direction: 'input',
+      name: '条件',
+    },
+    {
+      guid: 'POEXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
+    },
+    {
+      guid: 'POLOOP',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环体',
+    },
+  ];
+  blockDoWhile.callbacks.onStartRun = (block) => {
+    block.variables()['breakActived'] = false;
+  }
+  blockDoWhile.callbacks.onPortExecuteIn = (block, port) => { 
+
+    var variables = block.variables();
+    if(port.guid == 'PI') {
+      let POLOOP = block.getPortByGUID('POLOOP');
+      let POEXIT = block.getPortByGUID('POEXIT');
+      let condition = <boolean>block.getInputParamValue('PICON');
+      let breakActived = variables['breakActived'];
+      do {
+        block.activeOutputPort(POLOOP);
+        //update
+        condition = <boolean>block.getInputParamValue('PICON');
+        breakActived = variables['breakActived']; if(breakActived) break;
+      } while(condition);
 
       block.activeOutputPort(POEXIT);
 

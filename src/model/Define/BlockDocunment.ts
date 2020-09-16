@@ -4,6 +4,7 @@ import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockRunContextData } from "../WorkProvider/Runner";
+import { BlockParameterSetType } from "./Port";
 
 /**
  * 文档结构
@@ -160,6 +161,9 @@ export class BlockGraphVariable {
 
   name = '';
   type = '';
+  dictionaryKeyType = '';
+  setType : BlockParameterSetType = 'variable';
+
   defaultValue : any = null;
   value : any = null;
   static = false;

@@ -36,55 +36,31 @@ function registerCalcBase() {
       guid: 'PI' + block.data['portCount'],
       paramType: type == 'execute' ? 'execute' : block.options['opType'],
       direction: dirction,
+      portAnyFlexable: { flexable: true }
     };
   };
-  let CalcBase_onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => {
-    let el = document.createElement('div');
-    let typeSelector = document.createElement('select');
-    typeSelector.innerHTML = '<option value="number">number</option><option value="bigint">bigint</option><option value="any">any</option>' + 
-      (block.regData == blockAddition ? '<option value="string">string</option>' : '');
-    typeSelector.value = block.options['opType'];
-    typeSelector.onchange = () => {
-      let newType : BlockParameterBaseType;
-      switch(typeSelector.value) {
-        case 'string': newType = 'string'; break;
-        case 'number': newType = 'number'; break;
-        case 'bigint': newType = 'bigint'; break;
-        case 'any': 
-        default: newType = 'any'; break;
-      }
-      block.options['opType'] = newType;
-      //更换数据类型
-      block.portUpdateLock = true;
-      block.allPorts.forEach((port) => {
-        if(port.paramType.isExecute())
-          block.changePortParamType(port, new BlockParameterType(newType));
-      });
-      block.portUpdateLock = false;
-      block.updateAllParamPort();
-    };
-    el.innerText = '类型：';
-    el.appendChild(typeSelector);
-    parentEle.appendChild(el);
-  };
+  let CalcBase_portAnyFlexables = { flexable: { setResultToOptions: 'opType' } };
 
   let CalcBase_cm_ports : Array<BlockPortRegData> = [
     {
       direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
+      guid: 'PI0',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true },
     },
     {
       description: '',
       direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
+      guid: 'PI1',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true },
     },
     {
       description: '',
       direction: 'output',
       guid: 'PO1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true },
     },
   ];
 
@@ -94,6 +70,7 @@ function registerCalcBase() {
   blockAddition.baseInfo.logo = require('../../assets/images/BlockIcon/add.svg');
   blockAddition.ports = CalcBase_cm_ports;
   blockAddition.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockAddition.portAnyFlexables = CalcBase_portAnyFlexables;
   blockAddition.callbacks.onCreate = CalcBase_onCreate;
   blockAddition.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
@@ -106,7 +83,6 @@ function registerCalcBase() {
     block.setOutputParamValue('PO1', rs, context);
   };
   blockAddition.callbacks.onUserAddPort = CalcBase_onUserAddPort;
-  blockAddition.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockAddition.blockStyle.logoBackground = blockAddition.baseInfo.logo;
   blockAddition.blockStyle.noTitle = true;
 
@@ -118,6 +94,7 @@ function registerCalcBase() {
   blockSubstract.baseInfo.logo = require('../../assets/images/BlockIcon/sub.svg');
   blockSubstract.ports = CalcBase_cm_ports;
   blockSubstract.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockSubstract.portAnyFlexables = CalcBase_portAnyFlexables;
   blockSubstract.callbacks.onCreate = CalcBase_onCreate;
   blockSubstract.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
@@ -130,7 +107,6 @@ function registerCalcBase() {
     block.setOutputParamValue('PO1', rs, context);
   };
   blockSubstract.callbacks.onUserAddPort = CalcBase_onUserAddPort;
-  blockSubstract.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockSubstract.blockStyle.logoBackground = blockSubstract.baseInfo.logo;
   blockSubstract.blockStyle.noTitle = true;
 
@@ -142,6 +118,7 @@ function registerCalcBase() {
   blockMultiply.baseInfo.logo = require('../../assets/images/BlockIcon/multiply.svg');
   blockMultiply.ports = CalcBase_cm_ports;
   blockMultiply.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockDivide.portAnyFlexables = CalcBase_portAnyFlexables;
   blockMultiply.callbacks.onCreate = CalcBase_onCreate;
   blockMultiply.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
@@ -154,7 +131,6 @@ function registerCalcBase() {
     block.setOutputParamValue('PO1', rs, context);
   };
   blockMultiply.callbacks.onUserAddPort = CalcBase_onUserAddPort;
-  blockMultiply.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockMultiply.blockStyle.logoBackground = blockMultiply.baseInfo.logo;
   blockMultiply.blockStyle.noTitle = true;
 
@@ -166,6 +142,7 @@ function registerCalcBase() {
   blockDivide.baseInfo.logo = require('../../assets/images/BlockIcon/divide.svg');
   blockDivide.ports = CalcBase_cm_ports;
   blockDivide.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockDivide.portAnyFlexables = CalcBase_portAnyFlexables;
   blockDivide.callbacks.onCreate = CalcBase_onCreate;
   blockDivide.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
@@ -178,7 +155,6 @@ function registerCalcBase() {
     block.setOutputParamValue('PO1', rs, context);
   };
   blockDivide.callbacks.onUserAddPort = CalcBase_onUserAddPort;
-  blockDivide.callbacks.onCreateCustomEditor = CalcBase_onCreateCustomEditor;
   blockDivide.blockStyle.noTitle = true;
   blockDivide.blockStyle.logoBackground = blockDivide.baseInfo.logo;
 

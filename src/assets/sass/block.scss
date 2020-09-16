@@ -21,14 +21,11 @@
   background-color: rgba(0, 0, 0, 0.466);
   box-shadow: 0 0 8px 1px rgba(0,0,0,0.3);
 
-  background-size: 55px;
-  background-position: center;
-  background-repeat: no-repeat;
-
   color: #fff;
 
   &.selected {
     border: 3px solid rgb(231, 157, 0);
+    z-index: 200;
   }
   &.actived {
     border: 3px solid rgb(72, 203, 255);
@@ -41,6 +38,7 @@
   }
 
   &:hover {
+
     .flow-block-comment-open {
       display: inline-block;
     }
@@ -116,6 +114,28 @@
     top: 2px;
     padding: 6px 8px;
     font-size: 13px;
+  }
+
+  .background {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-size: 55px;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    .big-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
   }
 
 

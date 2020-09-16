@@ -281,8 +281,10 @@ export default class BlockEditorWorker extends Vue {
   connectingFailedText : string = '';
 
   private connectingOtherSideRequireType : BlockParameterType = null;
+  private connectingOtherSideRequireKeyType : BlockParameterType = null;
   private connectingOtherSideRequireDirection : BlockPortDirection = null;
   private connectingOtherSideRequireParamSetType : BlockParameterSetType = null;
+  private connectingSrcPort : BlockPort = null;
 
   currentHoverPort : BlockPort = null;
 
@@ -320,16 +322,19 @@ export default class BlockEditorWorker extends Vue {
         connector: connector
       });
       startPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>startPort.parent).invokeOnPortConnect(startPort, endPort);
       endPort.connectedFromPort.push({
         port: startPort,
         connector: connector
       });
       endPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>endPort.parent).invokeOnPortConnect(endPort, startPort);
 
       connector.startPort = startPort;
       connector.endPort = endPort;
-    }else if(endPort.direction == 'output') {
-  
+    }
+    else if(endPort.direction == 'output') {
+
       //如果已经链接上了，取消链接
       let connData = startPort.isConnectByPort(endPort);
       if(connData != null) {
@@ -353,11 +358,13 @@ export default class BlockEditorWorker extends Vue {
         connector: connector
       });
       endPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>endPort.parent).invokeOnPortConnect(endPort, startPort);
       startPort.connectedFromPort.push({
         port: endPort,
         connector: connector
       });
       startPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>startPort.parent).invokeOnPortConnect(startPort, endPort);
 
       connector.startPort = endPort;
       connector.endPort = startPort;
@@ -378,12 +385,17 @@ export default class BlockEditorWorker extends Vue {
   public unConnectConnector(connector : ConnectorEditor) {
     this.connectors.remove(connector);
     this.selectedConnectors.remove(connector);
-        
-    connector.startPort.removeConnectToPort(connector.endPort);
-    connector.startPort.editorData.updatePortConnectStatusElement();
-    connector.endPort.removeConnectByPort(connector.startPort);
-    connector.endPort.editorData.updatePortConnectStatusElement();
 
+    if(connector.startPort != null) {
+      connector.startPort.removeConnectToPort(connector.endPort);
+      connector.startPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>connector.startPort.parent).invokeOnPortUnConnect(connector.startPort);
+    }
+    if(connector.endPort != null) {
+      connector.endPort.removeConnectByPort(connector.startPort);
+      connector.endPort.editorData.updatePortConnectStatusElement();
+      (<BlockEditor>connector.endPort.parent).invokeOnPortUnConnect(connector.endPort);
+    }
     this.$emit('update-set-file-changed');
   }
   public getCanConnect() { 
@@ -393,7 +405,7 @@ export default class BlockEditorWorker extends Vue {
     let port : BlockPort = null;
     if(typeof block != 'undefined') {
       port = block.getOnePortByDirectionAndType(this.connectingOtherSideRequireDirection,
-          this.connectingOtherSideRequireType, this.connectingOtherSideRequireParamSetType, true);
+          this.connectingOtherSideRequireType, this.connectingOtherSideRequireKeyType, this.connectingOtherSideRequireParamSetType, true);
       if(port != null)
         this.connectConnector(this.connectingStartPort, port);
     }
@@ -419,7 +431,9 @@ export default class BlockEditorWorker extends Vue {
 
     this.connectingOtherSideRequireDirection = port.direction == 'input' ? 'output' : 'input';
     this.connectingOtherSideRequireType = port.paramType;
+    this.connectingOtherSideRequireKeyType = port.paramDictionaryKeyType;
     this.connectingOtherSideRequireParamSetType = port.paramSetType;
+    this.connectingSrcPort = port;
   }
   public endConnect(port : BlockPort) {
 
@@ -429,6 +443,8 @@ export default class BlockEditorWorker extends Vue {
       this.$emit('update-add-block-panel-filter', {
         filterByPortDirection: this.connectingOtherSideRequireDirection,
         filterByPortType : this.connectingOtherSideRequireType,
+        filterByPortKeyType : this.connectingOtherSideRequireKeyType,
+        filterSrcPort: this.connectingSrcPort,
         filterByPortCustomType : this.connectingOtherSideRequireParamSetType
       })
 
@@ -509,6 +525,19 @@ export default class BlockEditorWorker extends Vue {
         if(!this.connectingCanConnect) 
           this.connectingFailedText = this.connectingStartPort.getTypeFriendlyString() + ' 与 ' + 
             this.currentHoverPort.getTypeFriendlyString() + ' 不兼容';
+        else {
+          let err = null;
+          if(this.currentHoverPort.direction == 'input') {
+            err = this.currentHoverPort.parent.onPortConnectCheck.invoke(this.currentHoverPort.parent, this.currentHoverPort, this.connectingStartPort); 
+            this.connectingCanConnect = !CommonUtils.isDefinedAndNotNull(err);
+          }else if(this.connectingStartPort.direction == 'input') {
+            err = this.connectingStartPort.parent.onPortConnectCheck.invoke(this.connectingStartPort.parent, this.connectingStartPort, this.currentHoverPort); 
+            this.connectingCanConnect = !CommonUtils.isDefinedAndNotNull(err);
+          }
+
+          if(!this.connectingCanConnect) 
+            this.connectingFailedText = err;
+        }
       }
     }
 

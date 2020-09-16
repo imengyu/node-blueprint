@@ -1,6 +1,6 @@
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { Block } from "../Define/Block";
-import { BlockParameterBaseType, BlockParameterType } from "../Define/Port";
+import { BlockParameterBaseType, BlockParameterType, BlockPort } from "../Define/Port";
 import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockEditor } from "../Editor/BlockEditor";
@@ -44,64 +44,58 @@ function registerLogicBlocks() {
       guid: 'PI' + block.data['portCount'],
       paramType: type == 'execute' ? 'execute' : block.options['opType'],
       direction: dirction,
+      portAnyFlexable: { flexable: true }
     };
   };
-  let LogicBase_onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => {
-    let el = document.createElement('div');
-    let typeSelector = document.createElement('select');
-
-    typeSelector.options.add(HtmlUtils.createOptionElement('number', 'number'));
-    typeSelector.options.add(HtmlUtils.createOptionElement('bigint', 'bigint'));
-
-    if(!block.data['requireNumber']) {
-      typeSelector.options.add(HtmlUtils.createOptionElement('boolean', 'boolean'));
-      typeSelector.options.add(HtmlUtils.createOptionElement('any', 'any'));
-    }
-
-    typeSelector.value = block.options['opType'];
-    typeSelector.onchange = () => {
-      let newType : BlockParameterBaseType;
-      switch(typeSelector.value) {
-        case 'number': newType = 'number'; break;
-        case 'bigint': newType = 'bigint'; break;
-        case 'boolean': newType = 'boolean'; break;
-        case 'any': 
-        default: newType = 'any'; break;
-      }
-      block.options['opType'] = newType;
-      //更换数据类型
-      block.portUpdateLock = true;
-      block.allPorts.forEach((port) => {
-        if(port.paramType.isExecute())
-          block.changePortParamType(port, new BlockParameterType(newType));
-      });
-      block.portUpdateLock = false;
-      block.updateAllParamPort();
-    };
-    el.innerText = '类型：';
-    el.appendChild(typeSelector);
-    parentEle.appendChild(el);
+  let LogicBase_onPortConnectCheck = (block : BlockEditor, port : BlockPort, portSource : BlockPort) => {
+    if(portSource.paramType.baseType == 'number' || portSource.paramType.baseType == 'boolean' || portSource.paramType.baseType == 'bigint')
+      return null;
+    return '与 ' + portSource.getTypeFriendlyString() + ' 不兼容，无法连接';
   };
+
+  let LogicBase_portAnyFlexables = { flexable: { setResultToOptions: 'opType' } };
 
   let LogicBase_cm_ports : Array<BlockPortRegData> = [
     {
       direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
+      guid: 'PI0',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
     {
       description: '',
       direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
+      guid: 'PI1',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
     {
       description: '',
       direction: 'output',
       guid: 'PO1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
   ];
+  let LogicBase_compare_ports : Array<BlockPortRegData> = [
+    {
+      direction: 'input',
+      guid: 'PI1',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
+    },
+    {
+      direction: 'input',
+      guid: 'PI2',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
+    },
+    {
+      direction: 'output',
+      guid: 'PO',
+      paramType: 'boolean'
+    },
+  ]
 
   //#region And
 
@@ -114,8 +108,8 @@ function registerLogicBlocks() {
   And.blockStyle.logoBackground = And.baseInfo.logo;
   And.ports = LogicBase_cm_ports;
   And.callbacks.onCreate = LogicBase_onCreate;
-  And.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   And.callbacks.onUserAddPort = LogicBase_onUserAddPort;
+  And.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   And.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
@@ -135,6 +129,7 @@ function registerLogicBlocks() {
 
     if(rs != null) block.setOutputParamValue('PO1', rs, context);
   };
+  And.portAnyFlexables = LogicBase_portAnyFlexables;
 
   //#endregion
 
@@ -149,8 +144,8 @@ function registerLogicBlocks() {
   Or.settings.parametersChangeSettings.userCanAddInputParameter = true;
   Or.ports = LogicBase_cm_ports;
   Or.callbacks.onCreate =LogicBase_onCreate;
-  Or.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   Or.callbacks.onUserAddPort = LogicBase_onUserAddPort;
+  Or.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   Or.callbacks.onPortParamRequest = (block, port, context) => { 
     let rs = null;
     Object.keys(block.inputPorts).forEach(guid => {
@@ -170,7 +165,7 @@ function registerLogicBlocks() {
 
     if(rs != null) block.setOutputParamValue('PO1', rs, context);
   };
-
+  Or.portAnyFlexables = LogicBase_portAnyFlexables;
 
   //#endregion
 
@@ -182,21 +177,26 @@ function registerLogicBlocks() {
   Not.baseInfo.logo = require('../../assets/images/BlockIcon/not.svg');
   Not.blockStyle.noTitle = true;
   Not.blockStyle.logoBackground = Not.baseInfo.logo;
+  Not.blockStyle.minWidth = '111px';
+  Not.blockStyle.minHeight = '50px';
+  Not.portAnyFlexables = LogicBase_portAnyFlexables;
   Not.ports = [
     {
       direction: 'input',
       guid: 'PI1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
     {
       description: '',
       direction: 'output',
       guid: 'PO1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
   ];
   Not.callbacks.onCreate = LogicBase_onCreate;
-  Not.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  Not.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   Not.callbacks.onPortParamRequest = (block, port, context) => { 
     let v = block.getInputParamValue('PI1', context);    
     if(CommonUtils.isDefinedAndNotNull(v))
@@ -213,31 +213,37 @@ function registerLogicBlocks() {
   ExclusiveOr.baseInfo.logo = require('../../assets/images/BlockIcon/xor.svg');
   ExclusiveOr.blockStyle.noTitle = true;
   ExclusiveOr.blockStyle.logoBackground = ExclusiveOr.baseInfo.logo;
+  ExclusiveOr.blockStyle.minWidth = '111px';
+  ExclusiveOr.portAnyFlexables = LogicBase_portAnyFlexables;
   ExclusiveOr.ports = [
     {
       direction: 'input',
       guid: 'PI1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
     {
       direction: 'input',
       guid: 'PI2',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
     {
       direction: 'output',
       guid: 'PO1',
-      paramType: 'any'
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
     },
   ];
   ExclusiveOr.callbacks.onCreate = LogicBase_onCreate;
-  ExclusiveOr.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  ExclusiveOr.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   ExclusiveOr.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context);
     let v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
       block.setOutputParamValue('PO1', v1 ^ v2, context);
   };
+  
 
   //#endregion
 
@@ -250,26 +256,9 @@ function registerLogicBlocks() {
   Equal.baseInfo.logo = require('../../assets/images/BlockIcon/equal.svg');
   Equal.blockStyle.noTitle = true;
   Equal.blockStyle.logoBackground = Equal.baseInfo.logo;
-  Equal.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
-  Equal.settings.data['requireNumber'] = true;
+  Equal.ports = LogicBase_compare_ports;
+  Equal.portAnyFlexables = LogicBase_portAnyFlexables;
   Equal.callbacks.onCreate = LogicBase_onCreate;
-  Equal.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   Equal.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -286,26 +275,9 @@ function registerLogicBlocks() {
   NotEqual.baseInfo.logo = require('../../assets/images/BlockIcon/not_equal.svg');
   NotEqual.blockStyle.noTitle = true;
   NotEqual.blockStyle.logoBackground = NotEqual.baseInfo.logo;
-  NotEqual.settings.data['requireNumber'] = true;
-  NotEqual.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  NotEqual.portAnyFlexables = LogicBase_portAnyFlexables;
+  NotEqual.ports = LogicBase_compare_ports;
   NotEqual.callbacks.onCreate = LogicBase_onCreate;
-  NotEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
   NotEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -322,26 +294,10 @@ function registerLogicBlocks() {
   Less.baseInfo.logo = require('../../assets/images/BlockIcon/less.svg');
   Less.blockStyle.noTitle = true;
   Less.blockStyle.logoBackground = Less.baseInfo.logo;
-  Less.settings.data['requireNumber'] = true;
-  Less.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  Less.portAnyFlexables = LogicBase_portAnyFlexables;
+  Less.ports = LogicBase_compare_ports;
   Less.callbacks.onCreate = LogicBase_onCreate;
-  Less.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  Less.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   Less.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -358,26 +314,10 @@ function registerLogicBlocks() {
   Greater.baseInfo.logo = require('../../assets/images/BlockIcon/greater.svg');
   Greater.blockStyle.noTitle = true;
   Greater.blockStyle.logoBackground = Greater.baseInfo.logo;
-  Greater.settings.data['requireNumber'] = true;
-  Greater.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  Greater.portAnyFlexables = LogicBase_portAnyFlexables;
+  Greater.ports = LogicBase_compare_ports;
   Greater.callbacks.onCreate = LogicBase_onCreate;
-  Greater.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  Greater.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   Greater.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -394,26 +334,10 @@ function registerLogicBlocks() {
   LessOrEqual.baseInfo.logo = require('../../assets/images/BlockIcon/less_or_equal.svg');
   LessOrEqual.blockStyle.noTitle = true;
   LessOrEqual.blockStyle.logoBackground = LessOrEqual.baseInfo.logo;
-  LessOrEqual.settings.data['requireNumber'] = true;
-  LessOrEqual.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  LessOrEqual.portAnyFlexables = LogicBase_portAnyFlexables;
+  LessOrEqual.ports = LogicBase_compare_ports;
   LessOrEqual.callbacks.onCreate = LogicBase_onCreate;
-  LessOrEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  LessOrEqual.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   LessOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -430,26 +354,10 @@ function registerLogicBlocks() {
   GreaterOrEqual.baseInfo.logo = require('../../assets/images/BlockIcon/greater_or_equal.svg');
   GreaterOrEqual.blockStyle.noTitle = true;
   GreaterOrEqual.blockStyle.logoBackground = GreaterOrEqual.baseInfo.logo;
-  GreaterOrEqual.settings.data['requireNumber'] = true;
-  GreaterOrEqual.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  GreaterOrEqual.portAnyFlexables = LogicBase_portAnyFlexables;
+  GreaterOrEqual.ports = LogicBase_compare_ports;
   GreaterOrEqual.callbacks.onCreate = LogicBase_onCreate;
-  GreaterOrEqual.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  GreaterOrEqual.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   GreaterOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -466,26 +374,10 @@ function registerLogicBlocks() {
   LeftMove.baseInfo.logo = require('../../assets/images/BlockIcon/left_move.svg');
   LeftMove.blockStyle.noTitle = true;
   LeftMove.blockStyle.logoBackground = LeftMove.baseInfo.logo;
-  LeftMove.settings.data['requireNumber'] = true;
-  LeftMove.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  LeftMove.portAnyFlexables = LogicBase_portAnyFlexables;
+  LeftMove.ports = LogicBase_compare_ports;
   LeftMove.callbacks.onCreate = LogicBase_onCreate;
-  LeftMove.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  LeftMove.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   LeftMove.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
@@ -502,26 +394,10 @@ function registerLogicBlocks() {
   RightMove.baseInfo.logo = require('../../assets/images/BlockIcon/right_move.svg');
   RightMove.blockStyle.noTitle = true;
   RightMove.blockStyle.logoBackground = RightMove.baseInfo.logo;
-  RightMove.settings.data['requireNumber'] = true;
-  RightMove.ports = [
-    {
-      direction: 'input',
-      guid: 'PI1',
-      paramType: 'any'
-    },
-    {
-      direction: 'input',
-      guid: 'PI2',
-      paramType: 'any'
-    },
-    {
-      direction: 'output',
-      guid: 'PO',
-      paramType: 'boolean'
-    },
-  ];
+  RightMove.portAnyFlexables = LogicBase_portAnyFlexables;
+  RightMove.ports = LogicBase_compare_ports;
   RightMove.callbacks.onCreate = LogicBase_onCreate;
-  RightMove.callbacks.onCreateCustomEditor = LogicBase_onCreateCustomEditor;
+  RightMove.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   RightMove.callbacks.onPortParamRequest = (block, port, context) => {
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))

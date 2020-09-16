@@ -87,19 +87,17 @@
           <div class="prop-item">
             <span>变量类型</span>
             <div class="prop-item-editor">
-              <i class="iconfont icon-11 mr-2" :style="{color:getVariableTypeColor(variable.type)}"></i><span>{{variable.type}}</span>
+
+              <a v-if="variable.setType=='dictionary'" class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" title="选择映射键类型"></a>
               <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableType(variable, $event)" title="选择变量类型"></a>
+              <VariableSetTypeEditor class="prop-item-editor" v-model="variable.setType"></VariableSetTypeEditor>
+
+              <span class="ml-2">静态</span><input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
             </div>
           </div>
           <div class="prop-item">
             <span>变量默认值</span>
             <VariableTypeEditor class="prop-item-editor" v-model="variable.defaultValue" :variableType="variable.type"></VariableTypeEditor>
-          </div>
-          <div class="prop-item">
-            <span>静态</span>
-            <div class="prop-item-editor">
-              <input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
-            </div>
           </div>
           <div class="prop-item">
             <span>当前值</span>
@@ -157,6 +155,7 @@ import { BlockPort, BlockParameterType, BlockPortDirection, BlockParameterBaseTy
 import CommonUtils from "../utils/CommonUtils";
 import InputCanCheck from "./InputCanCheck.vue";
 import CollapsePropHeader from "./CollapsePropHeader.vue";
+import VariableSetTypeEditor from "./VariableSetTypeEditor.vue";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import VariableViewer from "./VariableViewer.vue";
 import HtmlUtils from "../utils/HtmlUtils";
@@ -166,7 +165,8 @@ import HtmlUtils from "../utils/HtmlUtils";
     'VariableTypeEditor': VariableTypeEditor,
     'VariableViewer': VariableViewer,
     'InputCanCheck': InputCanCheck,
-    'CollapsePropHeader': CollapsePropHeader
+    'CollapsePropHeader': CollapsePropHeader,
+    'VariableSetTypeEditor': VariableSetTypeEditor,
   }
 })
 export default class GraphProp extends Vue {
