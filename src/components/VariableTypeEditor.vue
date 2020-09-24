@@ -44,7 +44,7 @@ export default class VariableTypeEditor extends Vue {
       if(this.currentEditor == null) {
         customType = ParamTypeServiceInstance.getCustomType(this.variableType);
         if(customType != null) this.currentEditor = customType.editor;
-        if(this.currentEditor == null && customType.prototypeName == 'enum')
+        if(this.currentEditor == null && (customType && customType.prototypeName == 'enum'))
           this.currentEditor = AllEditors.getDefaultEnumEditor(<BlockParameterEnumRegData>customType);
       }
       //创建

@@ -12,7 +12,7 @@ import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
 import HtmlUtils from "../../utils/HtmlUtils";
 import ToolTipUtils from "../../utils/ToolTipUtils";
-import { testAndChangeFlexablePortType, testAndResetFlexablePortType } from "../Blocks/BlockUtils";
+import BlockUtils from "../Blocks/BlockUtils";
 
 const BlockPortIcons = {
   portBehaviorIcon: 'icon-sanjiaoxing',
@@ -600,11 +600,13 @@ export class BlockEditor extends Block {
     if(!this.created) return;
 
     if(port.paramType.isExecute()) {
-      port.editorData.el.setAttribute('data-title', port.name + (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n' + port.description)));
+      port.editorData.el.setAttribute('data-title', port.name + (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n<small>' + port.description + '</small>')));
       return;
     }
 
-    if(port.paramType.equals(port.editorData.oldParamType)) {
+    if(port.paramType.equals(port.editorData.oldParamType)
+      && port.paramDictionaryKeyType.equals(port.editorData.oldParamKeyType)
+      && port.paramSetType == port.editorData.oldParamSetType) {
       this.updatePortParamDisplayVal(port);
       return;
     }
@@ -630,6 +632,7 @@ export class BlockEditor extends Block {
       }
       else editor = AllEditors.getBaseEditors(portParameter.paramType.baseType);
     }
+    if(editor != null && editor.useInSetType.indexOf(portParameter.paramSetType) < 0) editor = null;
     
     //类型说明
     port.editorData.elEditor = null;
@@ -668,20 +671,18 @@ export class BlockEditor extends Block {
     }
 
     port.editorData.editor = editor;
-    port.editorData.oldParamType = port.paramType;
+    port.editorData.oldParamType = port.paramType.getType();
+    port.editorData.oldParamKeyType = port.paramDictionaryKeyType.getType();
+    port.editorData.oldParamSetType = port.paramSetType;
   }
 
-  public updateAllPortElement() {
-    this.allPorts.forEach((p) => this.updatePortElement(p));
-  }
+  public updateAllPortElement() { this.allPorts.forEach((p) => this.updatePortElement(p)); }
   public updateAllParamPort() {
     this.allPorts.forEach((p) => {
       if(!p.paramType.isExecute()) p.updateOnputValue(this.currentRunningContext, undefined);
     });
   }
-  public updatePort(port : BlockPort) {
-    this.updatePortElement(port);
-  }
+  public updatePort(port : BlockPort) { this.updatePortElement(port); }
   public updatePortParamDisplayVal(port : BlockPort) {
     ToolTipUtils.updateElementTooltip(port.editorData.el, this.getPortParamValStr(port));   
   }
@@ -695,7 +696,7 @@ export class BlockEditor extends Block {
       port.editorData.el.setAttribute('data-title', '<h5 class="text-secondary">' + (CommonUtils.isNullOrEmpty(port.name) ? (
         port.direction == 'input' ? '入口' : '出口'
       ) : port.name) + '</h5>执行' + 
-        (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n' + port.description)));
+        (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n<small>' + port.description + '</small>')));
       
       HtmlUtils.hideElement(port.editorData.elDotIconLeft);
       HtmlUtils.hideElement(port.editorData.elDotIconRight);
@@ -730,8 +731,8 @@ export class BlockEditor extends Block {
     if(!this.created) return '变量未创建';
 
     let str = '<h5>' + (CommonUtils.isNullOrEmpty(port.name) ? (port.direction == 'input' ? '参数' : '返回值') : port.name)
-      + '</h5><span class="text-secondary">' + port.description
-      + '</span><br/>类型：' + port.getTypeFriendlyString();
+      + '</h5><span class="text-secondary"><small>' + port.description
+      + '</small></span><br/>类型：' + port.getTypeFriendlyString();
 
     if(this.currentRunner != null) {
       str += '<br/>当前值：';
@@ -815,9 +816,8 @@ export class BlockEditor extends Block {
             break
           }
           case 'dictionary': {
-            HtmlUtils.showElement(port.editorData.elDotIconRight);
-
             port.editorData.elDotIconLeft.setAttribute('style', 'width: 8px;display: inline-block;margin-left: -5px;');
+            port.editorData.elDotIconRight.setAttribute('style', 'margin-left: -2px;');
             port.editorData.elDotIconRight.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType.getType(), 'rgb(129,122,122)');
             port.editorData.elDotIconLeft.style.color = ParamTypeServiceInstance.getTypeColor(port.paramDictionaryKeyType.getType(), 'rgb(129,122,122)');
 
@@ -1088,6 +1088,7 @@ export class BlockEditor extends Block {
   public onCreatePortCustomEditor : BlockPortEditorComponentCreateFn = null;
   public onUserAddPort : OnUserAddPortCallback = null;
 
+  //#region 端口连接处理事件
 
   public connectedPortCount = 0;
   public portAnyFlexables = {};
@@ -1096,12 +1097,27 @@ export class BlockEditor extends Block {
   public invokeOnPortConnect(port : BlockPort, portSource : BlockPort) {
     this.onPortConnect.invoke(this, port, portSource);
     this.connectedPortCount ++;
+  }
+  public invokeOnPortUnConnect(port : BlockPort) {
+    this.onPortUnConnect.invoke(this, port);
+    this.connectedPortCount--;
 
+    if(!port.paramType.isExecute()) {
+      let flexableKeys = Object.keys(this.portAnyFlexables);
+      flexableKeys.forEach((key) => 
+        BlockUtils.testAndResetFlexablePortType(<BlockEditor><any>this, key)
+      );
+    }
+  }
+
+  //弹性端口的参数变更
+
+  public doChangeBlockFlexablePort(port : BlockPort) {
     if(!port.paramType.isExecute()) {
       let flexableKeys = Object.keys(this.portAnyFlexables);
       for(let i = 0; i < flexableKeys.length; i++) {
         let key = flexableKeys[i];
-        let v = testAndChangeFlexablePortType(<BlockEditor><any>this, port, portSource, key); 
+        let v = BlockUtils.doChangeBlockFlexablePort(this, port, key); 
         if(CommonUtils.isDefined(v)) {
           if(typeof this.portAnyFlexables[key].setResultToData == 'string')
             this.data[this.portAnyFlexables[key].setResultToData] = v;
@@ -1110,19 +1126,37 @@ export class BlockEditor extends Block {
         }
       };
     }
-    
   }
-  public invokeOnPortUnConnect(port : BlockPort) {
-    this.onPortUnConnect.invoke(this, port);
-    this.connectedPortCount--;
+  public testAndChangeFlexablePortType(portCurent: BlockPort, portTarget: BlockPort) {
+    let currentIsAny = (portCurent.paramType.isAny() || (portCurent.paramSetType == 'dictionary' && portCurent.paramDictionaryKeyType.isAny()));
+    let targetIsAny = (portTarget.paramType.isAny() || (portTarget.paramSetType == 'dictionary' && portTarget.paramDictionaryKeyType.isAny()));
 
-    if(!port.paramType.isExecute()) {
-      let flexableKeys = Object.keys(this.portAnyFlexables);
-      flexableKeys.forEach((key) => {
-        let v = testAndResetFlexablePortType(<BlockEditor><any>this, key); 
-      });
+    if(currentIsAny && !targetIsAny) { //目标 》 当前
+
+      if(portCurent.paramSetType == 'dictionary')
+        portCurent.paramDictionaryKeyType.set(portTarget.paramDictionaryKeyType);
+
+      this.changePortParamType(portCurent, portTarget.paramType);
+      this.doChangeBlockFlexablePort(portCurent);
+
+      return true;
+
+    } else if(!currentIsAny && targetIsAny) { //当前 》 目标
+
+      if(portTarget.paramSetType == 'dictionary')
+        portTarget.paramDictionaryKeyType.set(portCurent.paramDictionaryKeyType);
+      portTarget.paramType.set(portCurent.paramType);
+
+      (<BlockEditor>portTarget.parent).changePortParamType(portTarget, portCurent.paramType);
+      (<BlockEditor>portTarget.parent).doChangeBlockFlexablePort(portTarget);
+
+      return true;
     }
+
+    return false;
   }
+
+  //#endregion
 }
 
 /**

@@ -7,6 +7,7 @@ import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import { Vector2 } from "../Vector2";
+import { BlockParameterType } from "../Define/Port";
 
 export default {
   register() {
@@ -83,6 +84,8 @@ function registerControl() {
 
     if(block.isEditorBlock)
       (<BlockEditor>block).portsChangeSettings.userCanAddOutputPort = true;
+
+    block.changePortParamType(block.getPortByGUID('PICON'), type);
     
     //Delete old ports
     if(block.data['lastIsEnum'] || type == 'enum') {
@@ -189,7 +192,6 @@ function registerControl() {
       block.editor.chooseType(new Vector2(e.x, e.y), (type, isBaseType) => {
         if(block.options['opType'] != type.name) {
           block.options['opType'] = type.name;
-          block.changePortParamType(block.getPortByGUID('PICON'), type.name);
           typeSelector.value = type.name;
           reloadSwitchBlockPorts(block);
         }
@@ -247,7 +249,7 @@ function registerControl() {
     if(block.isEditorBlock)
       (<BlockEditor>block).parametersChangeSettings.userCanAddInputParameter = true;
     
-    block.changePortParamType(block.getPortByGUID('PICON'), ParamTypeServiceInstance.createTypeFromString(type), 'variable');
+    block.changePortParamType(block.getPortByGUID('PICON'), BlockParameterType.createTypeFromString(type), 'variable');
 
     //Delete old ports
     if(block.data['lastIsEnum'] || type == 'enum') {

@@ -20,6 +20,9 @@ export class ConnectorEditor extends Connector {
   public valText = '';
   public inited = false;
 
+  public static flexableCoonSource = 1;
+  public flexableCoonIndex = 0;
+
   private rect : Rect = new Rect();
   private dotPos = -1;
   private valTextRows = [];

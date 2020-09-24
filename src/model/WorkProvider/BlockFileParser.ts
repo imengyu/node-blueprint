@@ -26,7 +26,7 @@ export class BlockFileParser {
       comment: graph.comment,
       inputPorts: graph.inputPorts,
       outputPorts: graph.outputPorts,
-      variables: graph.variables,
+      variables: [],
       
       blocks: [],
       ports: [],
@@ -124,8 +124,21 @@ export class BlockFileParser {
         startPort: connector.startPort.guid,
         endBlock: findBlockIndex(connector.endPort.parent.uid),
         endPort: connector.endPort.guid,
+        flexableCoonIndex: saveToEditor ? (<ConnectorEditor>connector).flexableCoonIndex : 0,
       });
     });
+
+    //variables
+    graph.variables.forEach(variable => {     
+      data.variables.push({
+        defaultValue: variable.defaultValue,
+        value: variable.value,
+        name: variable.name,
+        type: variable.type,
+        setType: variable.setType,
+        dictionaryKeyType: variable.dictionaryKeyType,
+      });
+    }); 
 
     if(saveToEditor) {
 
@@ -164,6 +177,8 @@ export class BlockFileParser {
       v.value = variable.value;
       v.name = variable.name;
       v.type = variable.type;
+      v.setType = variable.setType;
+      v.dictionaryKeyType = variable.dictionaryKeyType;
       graph.variables.push(v);
     }); 
     
@@ -211,9 +226,13 @@ export class BlockFileParser {
       let startPort = graph.blocks[connector.startBlock].getPortByGUID(connector.startPort);
       let endPort = graph.blocks[connector.endBlock].getPortByGUID(connector.endPort);
       
-      if(startPort != null && endPort != null)
-        graph.connectors.push(readToEditor ? 
-          new ConnectorEditor(startPort, endPort) : new Connector(startPort, endPort));
+      if(startPort != null && endPort != null){        
+        if(readToEditor) {
+          let c = new ConnectorEditor(startPort, endPort);
+          c.flexableCoonIndex = connector.flexableCoonIndex;
+          graph.connectors.push(c);
+        }else graph.connectors.push(new Connector(startPort, endPort));
+      }
     }); 
 
     //child graph

@@ -260,6 +260,7 @@ function registerScriptVariableBase()  {
           portIn.paramType.set(variable.type);
           portIn.paramDefaultValue = variable.defaultValue;
           portIn.paramDictionaryKeyType.set(variable.dictionaryKeyType);
+          portIn.paramSetType = variable.setType;
 
           block.updatePort(portIn);
 
@@ -267,11 +268,12 @@ function registerScriptVariableBase()  {
           portOut.paramDefaultValue = variable.defaultValue;
           portOut.paramDictionaryKeyType.set(variable.dictionaryKeyType);
           portOut.name = variable.name;
+          portOut.paramSetType = variable.setType;
 
           block.updatePort(portOut);
 
           block.name = '设置变量 ' + variable.name + ' 的值';
-          block.blockStyleSettings.titleBakgroundColor = ParamTypeServiceInstance.getTypeColor(variable.type);
+          block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
           block.updateContent();
         }
       });
@@ -305,6 +307,7 @@ function registerScriptVariableBase()  {
       }
     }
   };
+  variableSet.blockStyle.minWidth = '180px';
   variableSet.settings.hideInAddPanel = true;
 
   BlockServiceInstance.registerBlock(variableSet, false);
@@ -338,8 +341,10 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  ParamTypeServiceInstance.createTypeFromString(port.paramType) : <BlockParameterType>port.paramType;
+        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
+        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
+        portReal.paramSetType = port.paramSetType;
         portReal.paramRefPassing = true;
         block.updatePort(portReal);
       }
@@ -410,8 +415,10 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  ParamTypeServiceInstance.createTypeFromString(port.paramType) : <BlockParameterType>port.paramType;
+        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
+        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
+        portReal.paramSetType = port.paramSetType;
         block.updatePort(portReal);
       }
     });
@@ -527,8 +534,10 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
       if(graph == currentGraph) {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  ParamTypeServiceInstance.createTypeFromString(port.paramType) : <BlockParameterType>port.paramType;
+        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
+        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
+        portReal.paramSetType = port.paramSetType;
         block.updatePort(portReal);
       }
     });

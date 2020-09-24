@@ -6,7 +6,8 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import { BlockRunContextData } from "../WorkProvider/Runner";
 import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
-import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
+import ParamTypeServiceInstance, { ParamTypeService } from "../../sevices/ParamTypeService";
+import { homedir } from "os";
 
 /**
  * 单元端口
@@ -310,15 +311,33 @@ export class BlockPort {
 
   /**
    * 检查目标端口参数类型是否与本端口匹配
-   * @param sourcePort 目标端口
+   * @param targetPort 目标端口
    */
-  public checkTypeAllow(sourcePort : BlockPort) : boolean {
-    if(this.paramType.isExecute()) 
-      return sourcePort.paramType.isExecute();
-    if(this.paramType.baseType == "any") 
-      return !sourcePort.paramType.isExecute() && this.paramSetType == sourcePort.paramSetType;
+  public checkTypeAllow(targetPort : BlockPort) : boolean {
 
-    return this.paramType.equals(sourcePort.paramType) && this.paramSetType == sourcePort.paramSetType;
+    //判断是否是执行
+    if(this.paramType.isExecute()) return targetPort.paramType.isExecute();
+    if(targetPort.paramType.isExecute()) return this.paramType.isExecute();
+
+    //判断集合类型是否一致
+    if(this.paramSetType != targetPort.paramSetType) return false;
+
+    //映射特殊处理
+    if(this.paramSetType == 'dictionary') {
+
+      return (this.paramType.equals(targetPort.paramType) || (this.paramType.isAny() || targetPort.paramType.isAny())) 
+        && (this.paramDictionaryKeyType.equals(targetPort.paramDictionaryKeyType) || (this.paramDictionaryKeyType.isAny() || targetPort.paramDictionaryKeyType.isAny())) ;
+    
+    }else {
+
+      //any判断
+      if(this.paramType.isAny() && !targetPort.paramType.isExecute())
+        return true;
+      if(targetPort.paramType.isAny() && !targetPort.paramType.isExecute())
+        return true;
+
+      return this.paramType.equals(targetPort.paramType) && this.paramSetType == targetPort.paramSetType;
+    }
   }
 
   //执行激活
@@ -421,7 +440,9 @@ export class BlockPortEditorData {
 
   public editor : BlockParameterEditorRegData = null;
 
-  public oldParamType : BlockParameterType = null;
+  public oldParamType : string = null;
+  public oldParamKeyType : string = null;
+  public oldParamSetType : BlockParameterSetType = null;
 
   private pos = new Vector2();
   
@@ -472,29 +493,38 @@ export class BlockParameterType {
     this.set(baseType, customType);
   }
 
-  public static Any = new BlockParameterType('any');
+  public static createTypeFromString(name : string) : BlockParameterType {
+    if(name == 'any')
+      return BlockParameterType.Any();
+    if(ParamTypeServiceInstance.isBaseType(name))
+      return new BlockParameterType(<BlockParameterBaseType>name);
+    return new BlockParameterType(ParamTypeServiceInstance.getBaseTypeForCustomType(name), name);
+  }
 
-  public set(baseType : string, customType = '') {
-    if(CommonUtils.isNullOrEmpty(customType)) {
-      this.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(baseType);
-      this.customType = baseType;
+  public static Any() { return new BlockParameterType('any') };
+
+  public set(baseType : string|BlockParameterType, customType = '') {
+    if(typeof baseType == 'string') {
+      if(CommonUtils.isNullOrEmpty(customType)) {
+        this.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(baseType);
+        this.customType = baseType;
+      }else {
+        this.baseType = <BlockParameterBaseType>baseType;
+        this.customType = customType;
+      }
     }else {
-      this.baseType = <BlockParameterBaseType>baseType;
-      this.customType = customType;
+      this.baseType = baseType.baseType;
+      this.customType = baseType.customType;
     }
   }
-  public getType() {
-    return this.isCustom() ? this.customType : this.baseType;
-  }
-  public isExecute() {
-    return this.baseType == 'execute';
-  }
-  public isCustom() {
-    return (this.baseType == 'custom' || this.baseType == 'enum');
-  }
-  public equals(otherType : BlockParameterType) {
+  public getType() { return this.isCustom() ? this.customType : this.baseType; }
+  public isExecute() { return this.baseType == 'execute'; }
+  public isAny() { return this.baseType == 'any'; }
+  public isCustom() { return (this.baseType == 'custom' || this.baseType == 'enum'); }
+  public equals(otherType : BlockParameterType|string) {
     if(otherType == null) return false;
     if(otherType == this) return true;
+    if(typeof otherType == 'string') return otherType == this.getType();
     return this.baseType == otherType.baseType && this.customType == otherType.customType;
   }
 

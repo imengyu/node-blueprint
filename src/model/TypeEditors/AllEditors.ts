@@ -47,7 +47,8 @@ export default {
       },
       forceUpdateValue: (newVal, editorEle) => {
         (<HTMLInputElement>editorEle).value = <string>newVal;
-      }
+      },
+      useInSetType: [ 'variable' ],
     };;
   }
 }
@@ -71,7 +72,8 @@ let booleanEditor : BlockParameterEditorRegData = {
       editorEle.setAttribute('checked', "checked");
     else  
       editorEle.removeAttribute('checked');
-  }
+  },
+  useInSetType: [ 'variable' ],
 };
 let numberEditor : BlockParameterEditorRegData = {
   editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
@@ -127,7 +129,8 @@ let numberEditor : BlockParameterEditorRegData = {
   forceUpdateValue: (newVal, editorEle) => {
     if(newVal != null && typeof newVal == 'number')
       (<HTMLInputElement>editorEle).value = (<number>newVal).toString();
-  }
+  },
+  useInSetType: [ 'variable' ],
 };
 let bigintEditor : BlockParameterEditorRegData = {
   editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
@@ -183,7 +186,8 @@ let bigintEditor : BlockParameterEditorRegData = {
   forceUpdateValue: (newVal, editorEle) => {
     if(newVal != null && typeof newVal == 'bigint')
       (<HTMLInputElement>editorEle).value = (<bigint>newVal).toString();
-  }
+  },
+  useInSetType: [ 'variable' ],
 };
 let stringEditor : BlockParameterEditorRegData = {
   editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
@@ -201,5 +205,6 @@ let stringEditor : BlockParameterEditorRegData = {
   },
   forceUpdateValue: (newVal, editorEle) => {
     (<HTMLInputElement>editorEle).value = newVal;
-  }
+  },
+  useInSetType: [ 'variable' ],
 };

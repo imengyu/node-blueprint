@@ -133,7 +133,7 @@ function register() {
       guid: 'INISREF',
       paramType: 'boolean',
       name: '复制?',
-      description: '如果复制为真，那么将会拷贝\n数组元素的一个副本，对此元素的更改不会在返回数组中。\n如果复制为假，那么对此元素的修改\n将会体现在数组中。',
+      description: '如果复制为真，那么将会拷贝数组元素的一个副本，\n对此元素的更改不会在返回数组中。如果复制\n为假，那么对此元素的修改将会体现在数组中。',
     },
     {
       direction: 'output',

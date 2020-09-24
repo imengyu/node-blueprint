@@ -9,11 +9,11 @@
     <div v-if="allBaseTypes" class="block-list">
       <div class="block-item" v-for="(item, index) in allBaseTypes" :key="'D'+index" @click="onItemClick(item)" v-show="searchValue==''||item.name.contains(searchValue)">
         <i class="iconfont icon-yuan1" :style="{ marginRight: '5px', color: item.color }"></i>
-        {{ item.name }}
+        {{ item.nameForUser }}
       </div>
-      <div class="block-item" v-for="(item, index) in allCustomTypes" :key="'C'+index" @click="onItemClick(item)" :title="item.name+'('+item.prototypeName+')'" v-show="searchValue==''||item.name.contains(searchValue)">
+      <div class="block-item" v-for="(item, index) in allCustomTypes" :key="'C'+index" @click="onItemClick(item)" v-show="searchValue==''||item.name.contains(searchValue)">
         <i :class="'iconfont ' + (item.prototypeName == 'enum' ? 'icon-tx-fill-babianxing' : 'icon-search2')" :style="{ marginRight: '5px', color: item.color }"></i>
-        {{ item.name }}
+        {{ item.nameForUser }}
       </div>
     </div>
 
@@ -25,6 +25,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Vector2 } from "../model/Vector2";
 import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
+import CommonUtils from "../utils/CommonUtils";
 
 @Component({
   name: 'ChooseTypePanel'
@@ -53,13 +54,50 @@ export default class ChooseTypePanel extends Vue {
   @Prop({ default: null }) showPos : Vector2;
   @Prop({ default: false }) show : boolean;
   
-  allCustomTypes : Map<string, BlockParameterTypeRegData> = null;
+  allCustomTypes = [];
   allBaseTypes = [];
 
+  loadCustomTypes(act : 'full'|'add'|'remove', typeName ?: string, reg ?: BlockParameterTypeRegData) {
+    let map = ParamTypeServiceInstance.getAllCustomTypes();
+    if(act == 'full') {
+      this.allCustomTypes.empty();
+      map.forEach((value) => {
+      this.allCustomTypes.push({
+        nameForUser: CommonUtils.isNullOrEmpty(value.nameForUser) ? value.name : value.nameForUser,
+        name: value.name,
+        prototypeName: value.prototypeName,
+        color: ParamTypeServiceInstance.getTypeColor(value.name),
+        isBaseType: false,
+
+      })
+    });
+    }
+    else if(act == 'remove') {
+      for(let i = this.allCustomTypes.length - 1; i >= 0; i--) {
+        if(this.allCustomTypes[i].name == typeName) {
+          this.allCustomTypes.remove(i);
+          break;
+        }
+      }
+    }
+    else if(act == 'add') {
+      this.allCustomTypes.push({
+        nameForUser: CommonUtils.isNullOrEmpty(reg.nameForUser) ? reg.name : reg.nameForUser,
+        name: reg.name,
+        prototypeName: reg.prototypeName,
+        color: ParamTypeServiceInstance.getTypeColor(reg.name),
+        isBaseType: false,
+      })
+    }
+  }
+
   mounted() {
-    this.allCustomTypes = ParamTypeServiceInstance.getAllCustomTypes();
+    setTimeout(() => this.loadCustomTypes('full'), 2000);
+
+    ParamTypeServiceInstance.onTypeChanged.addListener(this, (act, name, reg) => this.loadCustomTypes(act, name, reg));
     ParamTypeServiceInstance.getAllBaseTypes().forEach(type => {
       this.allBaseTypes.push({
+        nameForUser: ParamTypeServiceInstance.getTypeNameForUserMapping(type),
         name: type,
         color: ParamTypeServiceInstance.getTypeColor(type),
         isBaseType: true,

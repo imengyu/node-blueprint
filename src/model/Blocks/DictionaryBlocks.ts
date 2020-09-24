@@ -52,12 +52,13 @@ function register() {
     }
   ];
   CreateDictionary.portAnyFlexables = {
-    flexableA: { setResultToData: 'opTypeA' },
-    flexableB: { setResultToData: 'opTypeB' },
+    flexableA: { setResultToOptions: 'opTypeA' },
+    flexableB: { setResultToOptions: 'opTypeB' },
   }
   CreateDictionary.settings.parametersChangeSettings.userCanAddInputParameter = true;
   CreateDictionary.callbacks.onCreate = (block) => {
-    if(!CommonUtils.isDefined(block.data['opType'])) block.data['opType'] = 'any';
+    if(!CommonUtils.isDefined(block.options['opTypeA'])) block.options['opTypeA'] = 'any';
+    if(!CommonUtils.isDefined(block.options['opTypeB'])) block.options['opTypeB'] = 'any';
   };
   CreateDictionary.callbacks.onPortExecuteIn = (block, port) => {
     if(port.guid == 'IN') {
@@ -90,14 +91,14 @@ function register() {
       {
         guid: 'INKEY' + block.data['portCount'],
         direction: 'input',
-        paramType: block.data['opTypeA'],
+        paramType: block.options['opTypeA'],
         name: '键' + block.data['portCount'],
         portAnyFlexable: { flexableA: true }
       },
       {
         guid: 'INVAL' + block.data['portCount'],
         direction: 'input',
-        paramType: block.data['opTypeB'],
+        paramType: block.options['opTypeB'],
         name: '值' + block.data['portCount'],
         portAnyFlexable: { flexableB: true }
       },
@@ -105,7 +106,15 @@ function register() {
   };
   CreateDictionary.callbacks.onPortRemove = (block, port) => {
     if(port.guid.startsWith('INKEY')) {
-      
+      let id = port.guid.substr(5);
+      let port2 = block.getPortByGUID('INVAL' + id);
+      if(port2)
+        block.deletePort(port2);
+    }else if(port.guid.startsWith('INVAL')) {
+      let id = port.guid.substr(5);
+      let port2 = block.getPortByGUID('INKEY' + id);
+      if(port2)
+        block.deletePort(port2);
     }
   };
 
@@ -122,14 +131,14 @@ function register() {
       paramType: 'any',
       paramSetType: 'dictionary',
       description: '搜索项目的目标映射',
-      portAnyFlexable: { flexable: { get: 'paramType', set: 'paramType' } },
+      portAnyFlexable: { flexableA: { get: 'paramDictionaryKeyType', set: 'paramDictionaryKeyType' }, flexableB: { get: 'paramType', set: 'paramType' } },
     },
     {
       direction: 'input',
-      guid: 'INITEM',
+      guid: 'INKEY',
       paramType: 'any',
-      description: '要检查的元素',
-      portAnyFlexable: { flexable: true },
+      description: '要检查的键值',
+      portAnyFlexable: { flexableA: true },
     },
     {
       direction: 'output',
@@ -139,7 +148,8 @@ function register() {
     },
   ];
   DictionaryHas.portAnyFlexables = {
-    flexable: {},
+    flexableA: {},
+    flexableB: {},
   }
   DictionaryHas.blockStyle.noTitle = true;
   DictionaryHas.blockStyle.logoBackground = '<span class="big-title">映射中存在</span>';
@@ -148,9 +158,9 @@ function register() {
     if(port.guid == 'OUTCONTAINS') {
 
       let map = <ValMap>block.getInputParamValue('INSET', context);
-      let item = block.getInputParamValue('INITEM', context);
+      let key = block.getInputParamValue('INKEY', context);
 
-      block.setOutputParamValue('OUTCONTAINS', map.has(item), context);
+      block.setOutputParamValue('OUTCONTAINS', map.has(key), context);
     }
   };
 
@@ -287,6 +297,7 @@ function register() {
       guid: 'INSET',
       paramType: 'any',
       paramSetType: 'dictionary',
+      portAnyFlexable: { flexable: true }
     },
     {
       direction: 'output',
@@ -301,6 +312,9 @@ function register() {
       block.activeOutputPort('OUT');
     }
   };
+  DictionaryClear.portAnyFlexables = {
+    flexable: {},
+  }
   DictionaryClear.blockStyle.noTitle = true;
   DictionaryClear.blockStyle.logoBackground = '<span class="big-title">清空映射</span>';
   DictionaryClear.blockStyle.minWidth = '140px';
@@ -316,6 +330,7 @@ function register() {
       guid: 'INSET',
       paramType: 'any',
       paramSetType: 'dictionary',
+      portAnyFlexable: { flexable: true }
     },
     {
       direction: 'output',
@@ -330,6 +345,9 @@ function register() {
       block.setOutputParamValue('OUTLEN', map.map.size, context);
     }
   };
+  DictionaryLength.portAnyFlexables = {
+    flexable: {},
+  }
   DictionaryLength.blockStyle.noTitle = true;
   DictionaryLength.blockStyle.logoBackground = '<span class="big-title">映射长度</span>';
   DictionaryLength.blockStyle.minWidth = '150px';

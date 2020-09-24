@@ -1,13 +1,19 @@
 <template>
   <div>
-    <div class="prop-item" @dragstart="onGraphChildGraphDrag(graph, $event)" draggable="true">
-      <span>图表名称</span>
-      <input class="prop-item-editor" type="text" v-model="graph.name" @blur="onUpdateGraph(graph)" />
-    </div>
-    <div class="prop-item">
-      <span>注释</span>
-      <textarea class="prop-item-editor" v-model="graph.comment" placeholder="这个图表的说明文字..." @blur="onUpdateGraph(graph)">
-      </textarea>
+    <div class="position-relative">
+      <div v-if="!graph.isMainGraph" class="prop-list-dragger" @dragstart="onGraphChildGraphDrag(graph, $event)" draggable="true"
+        title="可拖拽此箭头来添加此图表的调用至图表中">
+        <i class="iconfont icon-arrow-left-"></i>
+      </div>
+      <div class="prop-item">
+        <span>图表名称</span>
+        <input class="prop-item-editor" type="text" v-model="graph.name" @blur="onUpdateGraph(graph)" />
+      </div>
+      <div class="prop-item">
+        <span>注释</span>
+        <textarea class="prop-item-editor" v-model="graph.comment" placeholder="这个图表的说明文字..." @blur="onUpdateGraph(graph)">
+        </textarea>
+      </div>
     </div>
     <!--图表输入与输出-->
     <div v-if="!graph.isMainGraph">
@@ -16,11 +22,23 @@
           <div v-for="(port,i) in graph.inputPorts" :key="i" class="prop-list-item">
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)" />
             <div v-if="port" class="prop-box">
+
+              <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
+                {{ getTypeNameRemap(port.paramDictionaryKeyType) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
+              </span> 
+
+              <VariableSetTypeEditor class="prop-item-editor" 
+                v-model="port.paramSetType" 
+                :color="getTypeColor(port.paramType)"
+                :color2="getTypeColor(port.paramDictionaryKeyType)"
+                @change-set-type="onUpdateGraphPort(port)"></VariableSetTypeEditor>
+
               <span>
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType.getType())}"></i>
-                {{port.paramType.getType()}}
+                {{ getTypeNameRemap(port.paramType) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输入类型"></a>
               </span>
-              <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输入类型"></a>
+
             </div>
             <a href="javascript:;" title="上移" @click="onMoveUpGraphPort(port, 'input')">
               <i class="iconfont icon-arrow-up-"></i>
@@ -46,11 +64,23 @@
           <div v-for="(port,i) in graph.outputPorts" :key="i" class="prop-list-item">
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)"  />
             <div v-if="port" class="prop-box">
+
+              <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
+                {{ getTypeNameRemap(port.paramDictionaryKeyType) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
+              </span> 
+
+              <VariableSetTypeEditor class="prop-item-editor" 
+                v-model="port.paramSetType" 
+                :color="getTypeColor(port.paramType)"
+                :color2="getTypeColor(port.paramDictionaryKeyType)"
+                @change-set-type="onUpdateGraphPort(port)"></VariableSetTypeEditor>
+
               <span>
-                <i class="iconfont icon-11 mr-2" :style="{ color: getVariableTypeColor(port.paramType.getType())}"></i>
-                {{port.paramType.getType()}}
+                {{ getTypeNameRemap(port.paramType) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输出类型"></a>
               </span>
-              <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输出类型"></a>
+
             </div>
             <a href="javascript:;" title="上移" @click="onMoveUpGraphPort(port, 'output')">
               <i class="iconfont icon-arrow-up-"></i>
@@ -75,29 +105,50 @@
     <!--图表变量-->
     <CollapsePropHeader title="图表变量">
       <div class="prop-list">
-        <div v-for="(variable,i) in graph.variables" :key="i" class="prop-list-item" @dragstart="onGraphVariableDrag(variable, $event)" draggable="true">
+        <div v-for="(variable,i) in graph.variables" :key="i" class="prop-list-item">
+          <div class="prop-list-dragger" @dragstart="onGraphVariableDrag(variable, $event)" draggable="true"
+            title="可直接拖拽此箭头以添加变量至图表中">
+            <i class="iconfont icon-arrow-left-"></i>
+          </div>
           <div class="prop-item">
             <span>变量名称</span>
             <InputCanCheck 
               type="text" class="prop-item-editor" 
               :value="variable.name" placeholder="请输入变量名称" 
               :checkCallback="(o, n) => (o!=n && checkGraphVariableExists(n)) ? '已存在相同名称的变量':true"
-              @update="(o,n) => {variable.name=n;onUpdateGraphVariableDrag(o,variable)}"></InputCanCheck>
+              @update="(o,n) => {variable.name=n;onUpdateGraphVariable(o,variable)}"></InputCanCheck>
           </div>
           <div class="prop-item">
             <span>变量类型</span>
             <div class="prop-item-editor">
 
-              <a v-if="variable.setType=='dictionary'" class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" title="选择映射键类型"></a>
-              <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableType(variable, $event)" title="选择变量类型"></a>
-              <VariableSetTypeEditor class="prop-item-editor" v-model="variable.setType"></VariableSetTypeEditor>
+              <span v-if="variable.setType=='dictionary'" title="映射键类型">
+                {{ getTypeNameRemap(variable.dictionaryKeyType) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" title="选择映射键类型"></a>
+              </span> 
 
-              <span class="ml-2">静态</span><input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
+              <VariableSetTypeEditor class="prop-item-editor" 
+                v-model="variable.setType" 
+                :color="getTypeColor(variable.type)"
+                :color2="getTypeColor(variable.dictionaryKeyType)"
+                @change-set-type="onUpdateGraphVariable(null,variable)"></VariableSetTypeEditor>
+
+              <span>
+                {{ getTypeNameRemap(variable.type) }}
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableType(variable, $event)" title="选择变量类型"></a>
+              </span>
+
             </div>
           </div>
           <div class="prop-item">
             <span>变量默认值</span>
             <VariableTypeEditor class="prop-item-editor" v-model="variable.defaultValue" :variableType="variable.type"></VariableTypeEditor>
+          </div>
+          <div class="prop-item">
+            <span>静态</span>
+            <div class="prop-item-editor">
+              <input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
+            </div>
           </div>
           <div class="prop-item">
             <span>当前值</span>
@@ -115,7 +166,10 @@
     <!--子图表-->
     <CollapsePropHeader title="子图表">
       <div class="prop-list">
-        <div v-for="(childGraph,i) in graph.children" :key="i" class="prop-list-item" @dragstart="onGraphChildGraphDrag(childGraph, $event)" draggable="true">
+        <div v-for="(childGraph,i) in graph.children" :key="i" class="prop-list-item">
+          <div class="prop-list-dragger" @dragstart="onGraphChildGraphDrag(childGraph, $event)" draggable="true" title="可拖拽此箭头来添加此图表的调用至图表中">
+            <i class="iconfont icon-arrow-left-"></i>
+          </div>
           <div class="prop-item">
             <span>图表名称</span>
             <InputCanCheck type="text" 
@@ -159,6 +213,7 @@ import VariableSetTypeEditor from "./VariableSetTypeEditor.vue";
 import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import VariableViewer from "./VariableViewer.vue";
 import HtmlUtils from "../utils/HtmlUtils";
+import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 
 @Component({
   components: {
@@ -173,11 +228,19 @@ export default class GraphProp extends Vue {
   name = "GraphProp";
 
   @Prop({ default: null }) graph : BlockGraphDocunment;
-
   @Prop({ default: false }) blockOwnerData : BlockEditorOwner;
 
   mounted() {
   }
+
+  getTypeNameRemap(type) {
+    return ParamTypeServiceInstance.getTypeNameForUserMapping(type);
+  }
+  //get color
+  getTypeColor(name) {
+    return ParamTypeServiceInstance.getTypeColor(name);
+  }
+
 
   //变量
   //===========================
@@ -206,13 +269,26 @@ export default class GraphProp extends Vue {
   onChooseGraphVariableType(v : BlockGraphVariable, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData) => {
       v.type = type.name;
-      this.onUpdateGraphVariableDrag(v.name, v);
+      this.onUpdateGraphVariable(v.name, v);
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
       e.y + 10));
   }
-  onUpdateGraphVariableDrag(vNameOld : string, v : BlockGraphVariable) {
+  onChooseGraphVariableKeyType(v : BlockGraphVariable, e : MouseEvent) {
+    this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData) => {
+      if(!ParamTypeServiceInstance.checkTypeCanBeDictionaryKey(type.name)) {
+        DebugWorkProviderInstance.ModalProvider('warn', '提示', '类型 ' + type.name + ' 不可作为键值，键值类型必须含有 getHashCode 函数', () => {});
+        return;
+      }
+      v.dictionaryKeyType = type.name;
+      this.onUpdateGraphVariable(v.name, v);
+    }, 
+    new Vector2(
+      e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
+      e.y + 10));
+  }
+  onUpdateGraphVariable(vNameOld : string, v : BlockGraphVariable) {
     this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, vNameOld, v);
   }
   onGraphVariableDrag(v : BlockGraphVariable, e : DragEvent) {
@@ -229,15 +305,12 @@ export default class GraphProp extends Vue {
         return true;
     return false;
   }
-  //get color
-  getVariableTypeColor(name) {
-    return ParamTypeServiceInstance.getTypeColor(name);
-  }
 
   //端口
   //===========================
 
   lastSetParamType : BlockParameterType = null;
+  lastSetParamKeyType : BlockParameterType = null;
 
   onAddGraphPort(direction : BlockPortDirection) {
     let port : BlockPortRegData = {
@@ -302,6 +375,24 @@ export default class GraphProp extends Vue {
         port.paramType = new BlockParameterType(type.prototypeName == 'enum' ? 'enum' : 'custom', type.name);
       }
       this.lastSetParamType = port.paramType;
+      this.onUpdateGraphPort(port);
+    }, 
+    new Vector2(
+      e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
+      e.y + 10));
+  }
+  onChooseGraphPortKeyType(port : BlockPortRegData, e : MouseEvent) {
+    this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData, isBaseType : boolean) => {
+      if(!ParamTypeServiceInstance.checkTypeCanBeDictionaryKey(type.name)) {
+        DebugWorkProviderInstance.ModalProvider('warn', '提示', '类型 ' + type.name + ' 不可作为键值，键值类型必须含有 getHashCode 函数', () => {});
+        return;
+      }
+      if(isBaseType) {
+        port.paramDictionaryKeyType = new BlockParameterType(<BlockParameterBaseType>type.name);
+      } else {
+        port.paramDictionaryKeyType = new BlockParameterType(type.prototypeName == 'enum' ? 'enum' : 'custom', type.name);
+      }
+      this.lastSetParamKeyType = port.paramDictionaryKeyType;
       this.onUpdateGraphPort(port);
     }, 
     new Vector2(

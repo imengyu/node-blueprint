@@ -374,6 +374,12 @@ export default class BlockEditorWorker extends Vue {
     if(connector != null) {
       connector.currentRunner = this.runner;
       this.connectors.push(connector);
+
+      //更新弹性端口
+      if(startPort.direction == 'input') 
+        connector.flexableCoonIndex = (<BlockEditor>startPort.parent).testAndChangeFlexablePortType(startPort, endPort) ? ConnectorEditor.flexableCoonSource++ : 0;
+      else if(endPort.direction == 'input') 
+        connector.flexableCoonIndex = (<BlockEditor>endPort.parent).testAndChangeFlexablePortType(endPort, startPort) ? ConnectorEditor.flexableCoonSource++ : 0;
     }
     
     return connector;
@@ -397,6 +403,11 @@ export default class BlockEditorWorker extends Vue {
       (<BlockEditor>connector.endPort.parent).invokeOnPortUnConnect(connector.endPort);
     }
     this.$emit('update-set-file-changed');
+  }
+  public flushConnectorFlexablePort(connector : ConnectorEditor) {
+    let startPort = connector.startPort;
+    let endPort = connector.endPort;
+    (<BlockEditor>endPort.parent).testAndChangeFlexablePortType(endPort, startPort);
   }
   public getCanConnect() { 
     return this.connectingCanConnect; 
@@ -509,7 +520,8 @@ export default class BlockEditorWorker extends Vue {
     if(this.currentHoverPort.parent == this.connectingStartPort.parent){
       this.connectingCanConnect = false;
       this.connectingFailedText = '不能连接同一个单元的节点';
-    }else{
+    }
+    else{
       //方向必须不同才能链接
       this.connectingCanConnect = this.currentHoverPort.direction != this.connectingStartPort.direction;
       if(!this.connectingCanConnect) 

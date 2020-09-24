@@ -190,9 +190,9 @@ export class Block {
     newPort.direction = CommonUtils.isDefinedAndNotNull(forceChangeDirection) ? forceChangeDirection : data.direction;
     newPort.regData = data;
     if(typeof data.paramType == 'string') 
-      newPort.paramType = ParamTypeServiceInstance.createTypeFromString(data.paramType);
+      newPort.paramType = BlockParameterType.createTypeFromString(data.paramType);
     else 
-      newPort.paramType = data.paramType;
+      newPort.paramType = CommonUtils.clone(data.paramType);
     if(CommonUtils.isDefinedAndNotNull(data.paramRefPassing)) newPort.paramRefPassing = data.paramRefPassing;
     if(CommonUtils.isDefinedAndNotNull(data.executeInNewContext)) newPort.executeInNewContext = data.executeInNewContext;
     newPort.paramDefaultValue = CommonUtils.isDefinedAndNotNull(data.paramDefaultValue) ? data.paramDefaultValue : ParamTypeServiceInstance.getTypeDefaultValue(newPort.paramType);
@@ -205,8 +205,8 @@ export class Block {
     if(CommonUtils.isDefinedAndNotNull(data.paramStatic)) newPort.paramStatic = data.paramStatic;
     if(!CommonUtils.isNullOrEmpty(data.paramSetType)) newPort.paramSetType = data.paramSetType;
     if(CommonUtils.isDefinedAndNotNull(data.paramDictionaryKeyType)) {
-      if(typeof data.paramDictionaryKeyType == 'string') newPort.paramDictionaryKeyType = ParamTypeServiceInstance.createTypeFromString(data.paramDictionaryKeyType);
-      else newPort.paramDictionaryKeyType = data.paramDictionaryKeyType;
+      if(typeof data.paramDictionaryKeyType == 'string') newPort.paramDictionaryKeyType = BlockParameterType.createTypeFromString(data.paramDictionaryKeyType);
+      else newPort.paramDictionaryKeyType = CommonUtils.clone(data.paramDictionaryKeyType);
     }
 
     newPort.forceEditorControlOutput = data.forceEditorControlOutput;
@@ -294,14 +294,14 @@ export class Block {
       for(let i = 0, c = this.allPorts.length; i < c;i++)
         if(this.allPorts[i].direction == direction)  {
           if(setType == 'dictionary' && this.allPorts[i].paramSetType == 'dictionary') {
-            if(includeAny && type.baseType == 'any' && keyType.baseType == 'any') return this.allPorts[i];
-            if(includeAny && (this.allPorts[i]).paramType.baseType == 'any' && (this.allPorts[i]).paramDictionaryKeyType.baseType == 'any') return this.allPorts[i];
+            if(includeAny && type.isAny() && keyType.isAny()) return this.allPorts[i];
+            if(includeAny && (this.allPorts[i]).paramType.isAny() && (this.allPorts[i]).paramDictionaryKeyType.isAny()) return this.allPorts[i];
             if(this.allPorts[i].paramType.equals(type) && this.allPorts[i].paramDictionaryKeyType.equals(type)) return this.allPorts[i];
 
           } else if(
-            (includeAny && type.baseType == 'any')
+            (includeAny && type.isAny())
             || (this.allPorts[i].paramType.equals(type) && this.allPorts[i].paramSetType == setType)
-            || (includeAny && this.allPorts[i].paramType.baseType == 'any' && this.allPorts[i].paramSetType == setType)      
+            || (includeAny && this.allPorts[i].paramType.isAny() && this.allPorts[i].paramSetType == setType)      
           ) return this.allPorts[i];
         }
     }
@@ -317,11 +317,11 @@ export class Block {
     if(port.parent == this) {
 
       if(CommonUtils.isDefined(newType))
-        if(typeof newType == 'string') port.paramType = ParamTypeServiceInstance.createTypeFromString(newType);
-        else port.paramType = newType;
+        if(typeof newType == 'string') port.paramType = BlockParameterType.createTypeFromString(newType);
+        else port.paramType.set(newType);
       if(CommonUtils.isDefined(newKeyType))
-        if(typeof newKeyType == 'string') port.paramDictionaryKeyType = ParamTypeServiceInstance.createTypeFromString(newKeyType);
-        else port.paramDictionaryKeyType = newKeyType;
+        if(typeof newKeyType == 'string') port.paramDictionaryKeyType = BlockParameterType.createTypeFromString(newKeyType);
+        else port.paramDictionaryKeyType.set(newKeyType);
       if(CommonUtils.isDefined(newSetType))
         port.paramSetType = newSetType;
 

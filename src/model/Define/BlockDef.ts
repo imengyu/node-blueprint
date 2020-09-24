@@ -76,14 +76,14 @@ export class BlockRegData {
           if(setType == 'dictionary' && this.ports[i].paramSetType == 'dictionary') {
             if(
               (this.ports[i].paramType == type.getType()
-                || (type.baseType == 'any' && includeAny) || (this.ports[i].paramType == 'any' && includeAny))
+                || (type.isAny() && includeAny) || (this.ports[i].paramType == 'any' && includeAny))
               
               && (this.ports[i].paramDictionaryKeyType == type.getType() 
-                || (keyType.baseType == 'any' && includeAny) || (this.ports[i].paramDictionaryKeyType == 'any' && includeAny))
+                || (keyType.isAny() && includeAny) || (this.ports[i].paramDictionaryKeyType == 'any' && includeAny))
 
             ) return true;
 
-          }else if(type.baseType == 'any' && includeAny && this.ports[i].paramSetType == setType) return true;
+          }else if(type.isAny() && includeAny && this.ports[i].paramSetType == setType) return true;
           else if(
             this.ports[i].paramType == type.getType() && this.ports[i].paramSetType == setType) return true;
             if(includeAny && this.ports[i].paramType == 'any' && this.ports[i].paramSetType == setType) return true;   
@@ -362,9 +362,15 @@ export class BlockParameterEditorRegData {
   /**
    * 一个函数回调，在这里创建数据类型的对应编辑器，用来编辑此种类型的数据。
    */
-  public editorCreate : BlockParameterEditorComponentCreateFn  = null;
-
-  public forceUpdateValue : BlockParameterEditorValueChangedFn  = null;
+  public editorCreate : BlockParameterEditorComponentCreateFn = null;
+  /**
+   * 当需要强制更新这个编辑器内部显示的数据时发生的回调，更新编辑器显示的数据。
+   */
+  public forceUpdateValue : BlockParameterEditorValueChangedFn = null;
+  /**
+   * 指示这个类型编辑器可用的变量集合类型
+   */
+  public useInSetType : BlockParameterSetType[] = [ 'variable' ];
 }
 
 /**

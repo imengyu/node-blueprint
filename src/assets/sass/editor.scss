@@ -239,7 +239,6 @@
   }
 }
 
-
 //属性列表
 .prop-host {
   position: absolute;
@@ -383,6 +382,31 @@
     &:hover {
       background-color: rgba(255, 255, 255, 0.253);
     }
+  }
+  
+}
+.prop-list-dragger {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  margin-top: -18px;
+  cursor: move;
+  z-index: 1;
+  width: 45px;
+  height: 45px;
+  background-image: url(../images/dragger-bg.svg);
+  background-position: center;
+  background-size: 45px;
+  background-repeat: no-repeat;
+
+  i {
+    position: absolute;
+    top: 50%;
+    margin-top: -11px;
+    left: 5px;
+    width: 18px;
+    height: 18px;
+    font-size: 15px;
   }
 }
 

@@ -1,9 +1,7 @@
 import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
-import { Block } from "../Define/Block";
 import { BlockRegData } from "../Define/BlockDef";
 import { BlockPort } from "../Define/Port";
-import { testAndChangeFlexablePortType, testAndResetFlexablePortType } from "./BlockUtils";
 
 export default { 
   register,

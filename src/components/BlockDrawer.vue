@@ -235,6 +235,21 @@ export default class BlockDrawer extends Vue {
 
         element.updateAllPortElement();
       });
+      this.connectors.sort((a, b) => {
+        if(a.flexableCoonIndex == b.flexableCoonIndex) return 0;
+        return a.flexableCoonIndex > b.flexableCoonIndex ? 1 : -1;
+      })
+      //刷新弹性端口的连接
+      setTimeout(() => {
+        for(let i = 0; i < this.connectors.length; i++) {
+          let connector = this.connectors[i];
+          if(connector.flexableCoonIndex > 0) {
+            this.editorWorker.flushConnectorFlexablePort(connector);
+            if(connector.flexableCoonIndex > ConnectorEditor.flexableCoonSource)
+              ConnectorEditor.flexableCoonSource = connector.flexableCoonIndex + 1;
+          }
+        }
+      }, 666);
 
       //开始绘制
       this.editorCanvas.draw();

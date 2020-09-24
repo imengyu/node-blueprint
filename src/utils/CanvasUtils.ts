@@ -141,10 +141,10 @@ function drawTextBox(ctx : CanvasRenderingContext2D, x : number, y : number, tex
 
 function colorStrWithAlpha(str : string, alpha : number) {
   if(str.startsWith('rgb(') && str.endsWith(')')) {
-    let v = str.substring(4, str.length - 2);
+    let v = str.substring(4, str.length - 1);
     return 'rgba(' + v + ',' + alpha + ')';
   }else if(str.startsWith('rgba(') && str.endsWith(')')) {
-    let v = str.substring(5, str.length - 2);
+    let v = str.substring(5, str.length - 1);
     v = v.substring(0, v.lastIndexOf(','));
     return v + alpha + ')';
   }else if(str.startsWith('#')) {
