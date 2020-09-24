@@ -31,7 +31,7 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Rect } from "../model/Rect";
-import { BlockPort, BlockPortDirection, BlockParameterType, BlockParameterSetType } from "../model/Define/Port";
+import { BlockPort, BlockPortDirection } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 import { Vector2 } from "../model/Vector2";
@@ -44,6 +44,8 @@ import CommonUtils from "../utils/CommonUtils";
 import { BlockBreakPoint } from "../model/Define/Block";
 import HtmlUtils from "../utils/HtmlUtils";
 import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
+import { BlockParameterSetType, BlockParameterType } from "../model/Define/BlockParameterType";
+import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
 
 /**
  * 编辑器逻辑控制
@@ -275,7 +277,7 @@ export default class BlockEditorWorker extends Vue {
   isConnectingToNew = false;
 
   connectingIsFail : boolean = false;
-  connectingStartPort : BlockPort = null;
+  connectingStartPort : BlockPortEditor = null;
   connectingEndPos : Vector2 = null;
   connectingCanConnect : boolean = false;
   connectingFailedText : string = '';
@@ -286,7 +288,7 @@ export default class BlockEditorWorker extends Vue {
   private connectingOtherSideRequireParamSetType : BlockParameterSetType = null;
   private connectingSrcPort : BlockPort = null;
 
-  currentHoverPort : BlockPort = null;
+  currentHoverPort : BlockPortEditor = null;
 
   /**
    * 连接两个端口
@@ -321,17 +323,17 @@ export default class BlockEditorWorker extends Vue {
         port: endPort,
         connector: connector
       });
-      startPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>startPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>startPort.parent).invokeOnPortConnect(startPort, endPort);
       endPort.connectedFromPort.push({
         port: startPort,
         connector: connector
       });
-      endPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>endPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>endPort.parent).invokeOnPortConnect(endPort, startPort);
 
-      connector.startPort = startPort;
-      connector.endPort = endPort;
+      connector.startPort = <BlockPortEditor>startPort;
+      connector.endPort = <BlockPortEditor>endPort;
     }
     else if(endPort.direction == 'output') {
 
@@ -357,17 +359,17 @@ export default class BlockEditorWorker extends Vue {
         port: startPort,
         connector: connector
       });
-      endPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>endPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>endPort.parent).invokeOnPortConnect(endPort, startPort);
       startPort.connectedFromPort.push({
         port: endPort,
         connector: connector
       });
-      startPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>startPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>startPort.parent).invokeOnPortConnect(startPort, endPort);
 
-      connector.startPort = endPort;
-      connector.endPort = startPort;
+      connector.startPort = <BlockPortEditor>endPort;
+      connector.endPort = <BlockPortEditor>startPort;
     }
 
     //添加线段
@@ -394,12 +396,12 @@ export default class BlockEditorWorker extends Vue {
 
     if(connector.startPort != null) {
       connector.startPort.removeConnectToPort(connector.endPort);
-      connector.startPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>connector.startPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>connector.startPort.parent).invokeOnPortUnConnect(connector.startPort);
     }
     if(connector.endPort != null) {
       connector.endPort.removeConnectByPort(connector.startPort);
-      connector.endPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>connector.endPort).editorData.updatePortConnectStatusElement();
       (<BlockEditor>connector.endPort.parent).invokeOnPortUnConnect(connector.endPort);
     }
     this.$emit('update-set-file-changed');
@@ -412,10 +414,10 @@ export default class BlockEditorWorker extends Vue {
   public getCanConnect() { 
     return this.connectingCanConnect; 
   }
-  public endConnectToNew(block ?: BlockEditor) : BlockPort {
-    let port : BlockPort = null;
+  public endConnectToNew(block ?: BlockEditor) : BlockPortEditor {
+    let port : BlockPortEditor = null;
     if(typeof block != 'undefined') {
-      port = block.getOnePortByDirectionAndType(this.connectingOtherSideRequireDirection,
+      port = <BlockPortEditor>block.getOnePortByDirectionAndType(this.connectingOtherSideRequireDirection,
           this.connectingOtherSideRequireType, this.connectingOtherSideRequireKeyType, this.connectingOtherSideRequireParamSetType, true);
       if(port != null)
         this.connectConnector(this.connectingStartPort, port);
@@ -425,14 +427,14 @@ export default class BlockEditorWorker extends Vue {
     this.isConnecting = false;
     
     if(this.connectingStartPort != null) {
-      this.connectingStartPort.editorData.forceDotActiveState = false;
-      this.connectingStartPort.editorData.updatePortConnectStatusElement();
+      (<BlockPortEditor>this.connectingStartPort).editorData.forceDotActiveState = false;
+      (<BlockPortEditor>this.connectingStartPort).editorData.updatePortConnectStatusElement();
       this.connectingStartPort = null;
     }
 
     return port;
   }
-  public startConnect(port : BlockPort) {
+  public startConnect(port : BlockPortEditor) {
 
     this.connectingStartPort = port;
     this.isConnecting = true;
@@ -487,7 +489,7 @@ export default class BlockEditorWorker extends Vue {
       this.connectingEndPos.Set(posDocunment.x + this.viewPort.x - this.toolBarWidth, 
       posDocunment.y + this.viewPort.y - this.toolBarHeight); 
   }
-  public updateCurrentHoverPortLeave(port : BlockPort) {
+  public updateCurrentHoverPortLeave(port : BlockPortEditor) {
     if(this.currentHoverPort == port) {
       if(port != this.connectingStartPort) {
         this.currentHoverPort.editorData.forceDotErrorState = false;
@@ -498,7 +500,7 @@ export default class BlockEditorWorker extends Vue {
       this.currentHoverPort = null;
     }
   }
-  public updateCurrentHoverPort(port : BlockPort) {
+  public updateCurrentHoverPort(port : BlockPortEditor) {
     if(port == this.connectingStartPort && port != null) {
       return;
     }
@@ -565,7 +567,7 @@ export default class BlockEditorWorker extends Vue {
     }
     this.currentHoverPort.editorData.updatePortConnectStatusElement();
   }
-  public getCurrentHoverPort() : BlockPort {
+  public getCurrentHoverPort() : BlockPortEditor {
     return this.currentHoverPort;
   }
   public unConnectBlock(block : BlockEditor) {

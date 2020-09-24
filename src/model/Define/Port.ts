@@ -8,6 +8,15 @@ import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
 import ParamTypeServiceInstance, { ParamTypeService } from "../../sevices/ParamTypeService";
 import { homedir } from "os";
+import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
+
+/**
+ * 端口的方向
+ * 
+ * input：入端口，
+ * output：出端口
+ */
+export type BlockPortDirection = 'input'|'output';
 
 /**
  * 单元端口
@@ -51,7 +60,6 @@ export class BlockPort {
 
   public parent : Block = null;
   public regData : BlockPortRegData = null;
-  public editorData : BlockPortEditorData = null;
 
   public isConnectToPort(port : BlockPort) : BlockPortConnectorData { 
     for(let i = this.connectedToPort.length - 1; i >= 0; i--) {
@@ -214,6 +222,11 @@ export class BlockPort {
    * 是否强制在输出端口显示编辑参数控件
    */
   public forceEditorControlOutput = false;
+
+  /**
+   * 获取当前端口是不是在编辑器模式中
+   */
+  public isEditorPort = false;
 
   /**
    * 自定义单元数据供代码使用（不会保存至文件中）
@@ -418,119 +431,6 @@ export class BlockPort {
 export class BlockPortConnectorData {
   public port : BlockPort = null;
   public connector : Connector = null;
-}
-/**
- * 编辑器使用数据
- */
-export class BlockPortEditorData {
-  public el : HTMLDivElement = null;
-  public elDot : HTMLElement = null;
-  public elDotIconLeft : HTMLElement = null;
-  public elDotIconRight : HTMLElement = null;
-  public elSpan : HTMLSpanElement = null;
-  public elEditor : HTMLElement = null;
-  public elCustomEditor : HTMLElement = null;
-  public elDeleteButton : HTMLElement = null;
-
-  public forceDotErrorState = false;
-  public forceDotActiveState = false;
-
-  public block : BlockEditor = null;
-  public parent : BlockPort = null;
-
-  public editor : BlockParameterEditorRegData = null;
-
-  public oldParamType : string = null;
-  public oldParamKeyType : string = null;
-  public oldParamSetType : BlockParameterSetType = null;
-
-  private pos = new Vector2();
-  
-  public getPosition() {
-    this.pos.Set(this.block.position.x + this.elDot.offsetLeft + this.elDot.offsetWidth / 2,  
-      this.block.position.y + this.elDot.offsetTop + this.elDot.offsetHeight / 2 + 4);
-    return this.pos;
-  }
-
-  public updatePortConnectStatusElement() {
-    this.block.updatePortConnectStatusElement(this.parent);
-  }
-}
-
-/**
- * 端口的方向
- * 
- * input：入端口，
- * output：出端口
- */
-export type BlockPortDirection = 'input'|'output';
-/**
- * 端口参数基本类型
- * 
- * execute：执行
- * custom：自定义
- */
-export type BlockParameterBaseType = 'execute'|'bigint'|'number'|'string'|'boolean'|'function'|'object'|'any'|'enum'|'custom';
-/**
- * 端口参数的集合类型
- * 
- * variable：单个变量
- * array：数组
- * map：集合
- * dictionary：字典（映射）
- */
-export type BlockParameterSetType = 'variable'|'array'|'set'|'dictionary';
-
-/**
- * 端口参数类型
- */
-export class BlockParameterType {
-
-  public baseType : BlockParameterBaseType = 'any';
-  public customType = '';
-
-  public constructor(baseType : BlockParameterBaseType, customType = '') {
-    this.set(baseType, customType);
-  }
-
-  public static createTypeFromString(name : string) : BlockParameterType {
-    if(name == 'any')
-      return BlockParameterType.Any();
-    if(ParamTypeServiceInstance.isBaseType(name))
-      return new BlockParameterType(<BlockParameterBaseType>name);
-    return new BlockParameterType(ParamTypeServiceInstance.getBaseTypeForCustomType(name), name);
-  }
-
-  public static Any() { return new BlockParameterType('any') };
-
-  public set(baseType : string|BlockParameterType, customType = '') {
-    if(typeof baseType == 'string') {
-      if(CommonUtils.isNullOrEmpty(customType)) {
-        this.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(baseType);
-        this.customType = baseType;
-      }else {
-        this.baseType = <BlockParameterBaseType>baseType;
-        this.customType = customType;
-      }
-    }else {
-      this.baseType = baseType.baseType;
-      this.customType = baseType.customType;
-    }
-  }
-  public getType() { return this.isCustom() ? this.customType : this.baseType; }
-  public isExecute() { return this.baseType == 'execute'; }
-  public isAny() { return this.baseType == 'any'; }
-  public isCustom() { return (this.baseType == 'custom' || this.baseType == 'enum'); }
-  public equals(otherType : BlockParameterType|string) {
-    if(otherType == null) return false;
-    if(otherType == this) return true;
-    if(typeof otherType == 'string') return otherType == this.getType();
-    return this.baseType == otherType.baseType && this.customType == otherType.customType;
-  }
-
-  public toString() {
-    return this.getType();
-  }
 }
 
 

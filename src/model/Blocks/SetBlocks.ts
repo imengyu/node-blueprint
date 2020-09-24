@@ -1,10 +1,11 @@
-import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockRegData } from "../Define/BlockDef";
 import { BlockPort } from "../Define/Port";
 
 export default { 
   register,
+  packageName: 'Set',
+  version: 1,
 }
 
 function register() {
@@ -723,17 +724,19 @@ function register() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(CreateSet, false);
-  BlockServiceInstance.registerBlock(SetHas, false);
-  BlockServiceInstance.registerBlock(SetAdd, false);
-  BlockServiceInstance.registerBlock(SetRemove, false);
-  BlockServiceInstance.registerBlock(SetClear, false);
-  BlockServiceInstance.registerBlock(SetLength, false);
-  BlockServiceInstance.registerBlock(SetAddArray, false);
-  BlockServiceInstance.registerBlock(SetRemoveArray, false);
-  BlockServiceInstance.registerBlock(SetAddUnion, false);
-  BlockServiceInstance.registerBlock(SetAddIntersection, false);
-  BlockServiceInstance.registerBlock(SetAddDifference, false);
-  BlockServiceInstance.registerBlock(SetToArray, false);
-  BlockServiceInstance.registerBlock(SetForeach, false);
+  return [
+    CreateSet,
+    SetHas,
+    SetAdd,
+    SetRemove,
+    SetClear,
+    SetLength,
+    SetAddArray,
+    SetRemoveArray,
+    SetAddUnion,
+    SetAddIntersection,
+    SetAddDifference,
+    SetToArray,
+    SetForeach,
+  ];
 }

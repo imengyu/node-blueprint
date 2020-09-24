@@ -1,15 +1,19 @@
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
-import { BlockParameterBaseType, BlockParameterType } from "../Define/Port";
-import BlockServiceInstance from "../../sevices/BlockService";
 import { Block } from "../Define/Block";
-import { BlockEditor } from "../Editor/BlockEditor";
 import CommonUtils from "../../utils/CommonUtils";
+import AllEditors from "../TypeEditors/AllEditors";
+import StringUtils from "../../utils/StringUtils";
+import { BlockPack } from "./Utils/BlockRegister";
+import { BlockPort } from "../Define/Port";
 
 export default {
   register() {
-    registerCalcBase();
-    registerCalcScalar();
-  }
+    return registerCalcBase().concat(
+      registerCalcScalar()).concat(
+      registerOperatorBase());
+  },
+  packageName: 'Operator',
+  version: 1,
 }
 
 function registerCalcBase() {
@@ -160,10 +164,12 @@ function registerCalcBase() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(blockAddition, false);
-  BlockServiceInstance.registerBlock(blockSubstract, false);
-  BlockServiceInstance.registerBlock(blockMultiply, false);
-  BlockServiceInstance.registerBlock(blockDivide, false);
+  return [
+    blockAddition, 
+    blockSubstract, 
+    blockMultiply, 
+    blockDivide, 
+  ]
 }
 
 function registerCalcScalar() {
@@ -453,12 +459,261 @@ function registerCalcScalar() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(blockModulo, false);
-  BlockServiceInstance.registerBlock(blockMaximum, false);
-  BlockServiceInstance.registerBlock(blockMinimum, false);
-  BlockServiceInstance.registerBlock(blockExponentiate, false);
-  BlockServiceInstance.registerBlock(blockAbsolute, false);
-  BlockServiceInstance.registerBlock(blockRoot, false);
-  BlockServiceInstance.registerBlock(blockRound, false);
-  BlockServiceInstance.registerBlock(blockAverage, false);
+  return [   
+    blockModulo, 
+    blockMaximum, 
+    blockMinimum, 
+    blockExponentiate, 
+    blockAbsolute, 
+    blockRoot, 
+    blockRound, 
+    blockAverage, 
+  ];
+}
+
+function registerOperatorBase() {
+
+  let blockAccessObject = new BlockRegData("CDC97AAC-1E4F-3C65-94D8-1566A246D0A2", "访问对象属性", '通过键值访问对象的属性', '', '基础/对象');
+  let blockCreateObject = new BlockRegData("B46A7D4E-3A89-D190-4D15-57A1D176FA8B", "创建对象", '创建一个复合对象', '', '基础/对象');
+  let blockSetObject = new BlockRegData("42CCD2DC-8BA4-C6BC-82B6-A783C58F6804", "设置对象属性", '通过键值设置对象的属性', '', '基础/对象');
+  let blockObjectKeys = new BlockRegData("41A68F58-F8F6-DA97-65C4-0C5D89A6FA46", "获取对象所有键值", '', '', '基础/对象');
+
+  //#region 通过键值访问对象的属性
+
+  blockAccessObject.baseInfo.version = '2.0';
+  blockAccessObject.ports = [
+    {
+      guid: 'IN',
+      direction: 'input',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OBJECT',
+      direction: 'input',
+      paramType: 'object',
+      description: '要访问的对象',
+    },
+    {
+      guid: 'KEY0',
+      direction: 'input',
+      paramType: 'string',
+      description: '要访问的字段键值0',
+    },
+    {
+      guid: 'OUT',
+      direction: 'output',
+      paramType: 'execute'
+    },
+    {
+      guid: 'VALUE0', 
+      direction: 'output',
+      description: '键值0的字段',
+      paramType: 'any'
+    },
+  ]
+  blockAccessObject.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockAccessObject.blockStyle.noTitle = true;
+  blockAccessObject.blockStyle.logoBackground = 'title:通过键值访问对象的属性';
+  blockAccessObject.blockStyle.minWidth = '170px';
+  blockAccessObject.callbacks.onPortExecuteIn = (block, port) => {
+    Object.keys(block.inputPorts).forEach((key) => {
+      let port = block.inputPorts[key];
+      let id = port.guid.substr(3);
+
+      if(port.guid.startsWith('KEY'))
+        block.setOutputParamValue('VALUE' + id, block.getInputParamValue('OBJECT')[block.getInputParamValue('KEY' + id)])
+    });
+   
+    block.activeOutputPort('OUT');
+  };
+  blockAccessObject.callbacks.onUserAddPort = (block, direction, type) => {
+    block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 2 : 1;
+    return [
+      {
+        guid: 'KEY' + block.data['portCount'],
+        direction: 'input',
+        paramType: 'string',
+        description: '要访问的字段键值' + block.data['portCount'],
+      },
+      {
+        guid: 'VALUE' + block.data['portCount'],
+        direction: 'output',
+        paramType: 'any',
+        name: '键值' + block.data['portCount'] + '的字段',
+      },
+    ];
+  };
+  blockAccessObject.callbacks.onPortRemove = (block, port) => {
+    if(port.guid.startsWith('KEY')) {
+      let id = port.guid.substr(3);
+      let port2 = block.getPortByGUID('VALUE' + id);
+      if(port2)
+        block.deletePort(port2);
+    }else if(port.guid.startsWith('VALUE')) {
+      let id = port.guid.substr(5);
+      let port2 = block.getPortByGUID('KEY' + id);
+      if(port2)
+        block.deletePort(port2);
+    }
+  };
+
+  //#endregion
+
+  //#region 通过键值设置对象的属性
+
+  blockSetObject.baseInfo.version = '2.0';
+  blockSetObject.blockStyle.noTitle = true;
+  blockSetObject.blockStyle.logoBackground = 'title:通过键值设置对象的属性';
+  blockSetObject.blockStyle.minWidth = '170px';
+  blockSetObject.ports = [
+    {
+      guid: 'IN',
+      direction: 'input',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OBJECT',
+      direction: 'input',
+      paramType: 'object',
+      description: '要设置的对象',
+    },
+    {
+      guid: 'KEY',
+      direction: 'input',
+      paramType: 'string',
+      description: '要设置的字段键值',
+    },
+    {
+      guid: 'INVAL',
+      direction: 'input',
+      paramType: 'any',
+      description: '要设置的值',
+    },
+    {
+      guid: 'OUT',
+      direction: 'output',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OUTVAL', 
+      direction: 'output',
+      description: '键值的字段',
+      paramType: 'any'
+    },
+  ]
+  blockSetObject.callbacks.onPortExecuteIn = (block, port) => {
+    let val = block.getInputParamValue('INVAL');
+
+    block.getInputParamValue('OBJECT')[block.getInputParamValue('KEY')] = val;
+    block.setOutputParamValue('OUTVAL', val);
+    block.activeOutputPort('OUT');
+  };
+
+  //#endregion
+
+  //#region 创建对象
+
+  blockCreateObject.baseInfo.version = '2.0';
+  blockCreateObject.ports = [
+    {
+      guid: 'IN',
+      direction: 'input',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OUT',
+      direction: 'output',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OUTOBJ',
+      direction: 'output',
+      paramType: 'object'
+    },
+  ];
+  blockCreateObject.settings.parametersChangeSettings.userCanAddInputParameter = true;
+  blockCreateObject.blockStyle.noTitle = true;
+  blockCreateObject.blockStyle.logoBackground = 'title:创建对象';
+  blockCreateObject.blockStyle.minWidth = '160px';
+  blockCreateObject.callbacks.onUserAddPort = (block, direction, type) => {
+    block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 2 : 1;
+    return [
+      {
+        guid: 'KEY' + block.data['portCount'],
+        direction: 'input',
+        paramType: 'any',
+        description: '键' + block.data['portCount'],
+      },
+    ];
+  };
+  blockCreateObject.callbacks.onCreatePortCustomEditor = (parentEle, block, port) => { 
+    let el = document.createElement('div');
+    let input = AllEditors.getBaseEditors('string').editorCreate(parentEle, (newV) => {
+      port.options['key'] = newV;
+      port.description = '键为 ' + StringUtils.valueToStr(newV) +  ' 的值';
+      port.regData.description = port.description;
+      block.updatePort(port);
+      return newV;
+    }, port.options['key'], null, null);
+
+    el.style.display = 'inline-block';
+    el.innerText = '键 = ';
+    el.appendChild(input);
+    return el;
+  };
+  blockCreateObject.callbacks.onPortExecuteIn = (block, port) => {
+    let object = new Object();
+    Object.keys(block.inputPorts).forEach((key) => {
+      let port = <BlockPort>block.inputPorts[key];
+      if(!CommonUtils.isNullOrEmpty(port.options['key']))
+        object[port.options['key']] = port.rquestInputValue(block.currentRunningContext);
+    });
+    block.setOutputParamValue('VALUE', object);
+    block.activeOutputPort('OUTOBJ');
+  };
+
+  //#endregion
+
+  //#region 获取对象所有键值
+
+  blockObjectKeys.blockStyle.noTitle = true;
+  blockObjectKeys.blockStyle.logoBackground = 'title:获取对象所有键值';
+  blockObjectKeys.blockStyle.minWidth = '170px';
+  blockObjectKeys.ports = [
+    {
+      guid: 'IN',
+      direction: 'input',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OUT',
+      direction: 'output',
+      paramType: 'execute'
+    },
+    {
+      guid: 'OBJECT',
+      direction: 'input',
+      paramType: 'object',
+      description: '要获取键值的对象'
+    },
+    {
+      guid: 'KEYS',
+      direction: 'output',
+      paramType: 'string',
+      paramSetType: 'array',
+      description: '对象的所有键值'
+    },
+  ];
+  blockObjectKeys.callbacks.onPortExecuteIn = (block, port) => {
+    block.setOutputParamValue('KEYS', Object.keys(block.getInputParamValue('OBJECT')));
+    block.activeOutputPort('OUT');
+  };
+
+  //#endregion
+
+  return [
+    blockAccessObject,
+    blockSetObject,
+    blockCreateObject,
+  ];
 }

@@ -1,10 +1,11 @@
-import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockRegData } from "../Define/BlockDef";
 import { BlockPort } from "../Define/Port";
 
 export default { 
   register,
+  packageName: 'Array',
+  version: 1,
 }
 
 function register() {
@@ -904,26 +905,28 @@ function register() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(CreateArray, false);
-  BlockServiceInstance.registerBlock(EmptyArray, false);
+  return [
+    CreateArray,
+    EmptyArray,
+    ArrayGetItem,
+    
+    ArrayInsert, 
+    ArrayAdd, 
+    ArrayAddOnce, 
 
-  BlockServiceInstance.registerBlock(ArrayGetItem, false);
-  BlockServiceInstance.registerBlock(ArrayInsert, false);
-  BlockServiceInstance.registerBlock(ArrayAdd, false);
-  BlockServiceInstance.registerBlock(ArrayAddOnce, false);
+    ArrayContains, 
+    ArrayFind, 
+    ArrayFindReverse, 
+    ArrayIndexValid, 
+    ArrayLastIndex, 
+    ArrayRemove, 
+    ArrayRemoveIndex, 
+    
+    ArraySwap, 
+    ArrayLength, 
+    ArrayContact, 
+    ArraySetLength, 
 
-  BlockServiceInstance.registerBlock(ArrayContains, false);
-  BlockServiceInstance.registerBlock(ArrayFind, false);
-  BlockServiceInstance.registerBlock(ArrayFindReverse, false);
-  BlockServiceInstance.registerBlock(ArrayIndexValid, false);
-  BlockServiceInstance.registerBlock(ArrayLastIndex, false);
-  BlockServiceInstance.registerBlock(ArrayRemove, false);
-  BlockServiceInstance.registerBlock(ArrayRemoveIndex, false);
-  
-  BlockServiceInstance.registerBlock(ArraySwap, false);
-  BlockServiceInstance.registerBlock(ArrayLength, false);
-  BlockServiceInstance.registerBlock(ArrayContact, false);
-  BlockServiceInstance.registerBlock(ArraySetLength, false);
-
-  BlockServiceInstance.registerBlock(ArrayForeach, false);
+    ArrayForeach, 
+  ];
 }

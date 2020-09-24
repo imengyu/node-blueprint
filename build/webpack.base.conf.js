@@ -8,12 +8,10 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-
-
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    app: ['babel-polyfill', './src/main.js'],
+    app: ['babel-polyfill', './src/renderer.js'],
   },
   output: {
     path: config.build.assetsRoot,

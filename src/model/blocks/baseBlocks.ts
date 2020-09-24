@@ -1,22 +1,16 @@
-import BlockServiceInstance from "../../sevices/BlockService";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import DebugWorkProviderInstance from "../WorkProvider/DebugWorkProvider";
-import OperatorBlocks from "./OperatorBlocks";
 import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
-import ControlBlocks from "./ControlBlocks";
-import LogicBlocks from "./LogicBlocks";
 import CanvasUtils from "../../utils/CanvasUtils";
 import logger from "../../utils/Logger";
 import { BlockGraphDocunment, BlockGraphVariable } from "../Define/BlockDocunment";
 import { BlockParameterEnumRegData, BlockRegData } from "../Define/BlockDef";
-import { BlockParameterType, BlockPort } from "../Define/Port";
+import { BlockPort } from "../Define/Port";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
 import { BlockRunContextData } from "../WorkProvider/Runner";
-import ArrayBlocks from "./ArrayBlocks";
-import SetBlocks from "./SetBlocks";
-import DictionaryBlocks from "./DictionaryBlocks";
+import { BlockParameterType } from "../Define/BlockParameterType";
 
 export default { 
   register,
@@ -27,21 +21,20 @@ export default {
   getScriptBaseGraphCall() { return graphCall;  },
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
+  packageName: 'Base',
+  version: 1,
 }
 
 function register() {
-  registerScriptBase();
-  registerScriptGraphBase();
-  registerScriptVariableBase();
-  registerDebugBase();
-  registerTypeBase();
-
-  OperatorBlocks.register();
-  ControlBlocks.register();
-  LogicBlocks.register();
-  ArrayBlocks.register();
-  SetBlocks.register();
-  DictionaryBlocks.register();
+  return registerScriptBase().concat(
+    registerScriptGraphBase()
+  ).concat(
+    registerScriptVariableBase()
+  ).concat(
+    registerDebugBase()
+  ).concat(
+    registerTypeBase()
+  );
 }
 
 let blockIn : BlockRegData;
@@ -96,8 +89,7 @@ function registerScriptBase()  {
   blockOut.type = 'base';
   blockOut.blockStyle.titleBakgroundColor = "rgba(112,30,133,0.6)";
 
-  BlockServiceInstance.registerBlock(blockIn, false);
-  BlockServiceInstance.registerBlock(blockOut, false);
+  return [ blockIn, blockOut ];
 }
 function registerScriptVariableBase()  {
 
@@ -310,8 +302,7 @@ function registerScriptVariableBase()  {
   variableSet.blockStyle.minWidth = '180px';
   variableSet.settings.hideInAddPanel = true;
 
-  BlockServiceInstance.registerBlock(variableSet, false);
-  BlockServiceInstance.registerBlock(variableGet, false);
+  return [ variableSet, variableGet ]
 }
 function registerScriptGraphBase()  {
 
@@ -634,9 +625,7 @@ function registerScriptGraphBase()  {
   graphCall.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
   graphCall.settings.hideInAddPanel = true;
 
-  BlockServiceInstance.registerBlock(graphIn, false);
-  BlockServiceInstance.registerBlock(graphOut, false);
-  BlockServiceInstance.registerBlock(graphCall, false);
+  return [ graphIn, graphOut, graphCall ]
 }
 function registerDebugBase() { 
 
@@ -872,16 +861,14 @@ function registerDebugBase() {
   blockConfirm.callbacks.onCreateCustomEditor = null;
   blockConfirm.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  BlockServiceInstance.registerBlock(blockDelay, false);
-  BlockServiceInstance.registerBlock(blockConfirm, false);
-  BlockServiceInstance.registerBlock(blockDebug, false);
-  BlockServiceInstance.registerBlock(blockModal, false);
+  return [ blockDelay, blockConfirm, blockDebug, blockModal ]
 }
 function registerTypeBase() {
 
   let comUppdateFn = (block : Block, port : BlockPort, context : BlockRunContextData) => {
     block.setOutputParamValue('OUT', block.getInputParamValue('IN', context), context);
   };
+  let blocks = [];
 
   let block = new BlockRegData("A81899CF-766B-F511-B179-90A81BBB088B", "字符串", "字符串 string 类型参数", 'imengyu', '基础/类型参数');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/string.svg');
@@ -904,7 +891,7 @@ function registerTypeBase() {
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
 
-  BlockServiceInstance.registerBlock(block, false);
+  blocks.push(block);
 
   block = new BlockRegData("EE8345CE-14FB-3CE5-C5CD-30CF3A102DE5", "数字", "数字 number 类型参数", 'imengyu', '基础/类型参数');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/number.svg');
@@ -928,7 +915,7 @@ function registerTypeBase() {
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
 
-  BlockServiceInstance.registerBlock(block, false);
+  blocks.push(block);
 
   block = new BlockRegData("6CE4CA4F-E2F9-AD97-3F83-1B60289C9290", "BigInt", "BigInt 类型参数", 'imengyu', '基础/类型参数');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/bigint.svg');
@@ -952,7 +939,7 @@ function registerTypeBase() {
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
 
-  BlockServiceInstance.registerBlock(block, false);
+  blocks.push(block);
 
   block = new BlockRegData("90833609-8CF7-2324-A4C0-781344701C06", "布尔值", "布尔 boolean 类型参数", 'imengyu', '基础/类型参数');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/boolean.svg');
@@ -976,5 +963,7 @@ function registerTypeBase() {
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
 
-  BlockServiceInstance.registerBlock(block, false);
+  blocks.push(block);
+
+  return blocks;
 }

@@ -1,7 +1,7 @@
 import { Vector2 } from "../Vector2"
 import { Rect } from "../Rect";
 import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings, BlockPortRegData } from "../Define/BlockDef";
-import { BlockPort, BlockPortDirection, BlockPortEditorData } from "../Define/Port";
+import { BlockPort, BlockPortDirection } from "../Define/Port";
 
 import CommonUtils from "../../utils/CommonUtils";
 import AllEditors from "../TypeEditors/AllEditors";
@@ -12,25 +12,9 @@ import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
 import HtmlUtils from "../../utils/HtmlUtils";
 import ToolTipUtils from "../../utils/ToolTipUtils";
-import BlockUtils from "../Blocks/BlockUtils";
+import BlockUtils from "../Blocks/Utils/BlockUtils";
+import { BlockPortEditor, BlockPortIcons } from "./BlockPortEditor";
 
-const BlockPortIcons = {
-  portBehaviorIcon: 'icon-sanjiaoxing',
-  portBehaviorIconActive: 'icon-zuo',
-  portParamIcon: 'icon-search2',
-  portParamIconActive: 'icon-yuan1',
-
-  portParamIconArray: 'icon-port-array',
-  portParamIconArrayActive: 'icon-port-array-full',
-  portParamIconSet: 'icon-port-set',
-  portParamIconDictionaryLeft: 'icon-port-dictionary-left',
-  portParamIconDictionaryRight: 'icon-port-dictionary-right',
-
-  portFailedIconActive: 'icon-close-',
-  portBehaviorAddIcon: 'icon-add-behavor-port',
-  portParamAddIcon: 'icon-pluss-1',
-  portPortDeleteIcon: 'icon-close-1',
-}
 
 /**
  * 编辑器模式下的单元。
@@ -74,8 +58,6 @@ export class BlockEditor extends Block {
     this.onEnterBlock.addListener(this, (block) => this.markActive());
     this.onLeaveBlock.addListener(this, (block) => this.markDective());
   }
-
-  public portIcons = BlockPortIcons;
 
   public blockStyleSettings = new BlockStyleSettings();
   public blockMenuSettings = new BlockMenuSettings();
@@ -138,8 +120,8 @@ export class BlockEditor extends Block {
 
     this.els.elAddInputBehaviorPort = document.createElement('a');
     this.els.elAddOutputBehaviorPort = document.createElement('a');
-    this.els.elAddInputBehaviorPort.classList.add('port-add','iconfont', 'Behavior', this.portIcons.portBehaviorAddIcon);
-    this.els.elAddOutputBehaviorPort.classList.add('port-add','iconfont', 'Behavior',this.portIcons.portBehaviorAddIcon);
+    this.els.elAddInputBehaviorPort.classList.add('port-add','iconfont', 'Behavior', BlockPortIcons.portBehaviorAddIcon);
+    this.els.elAddOutputBehaviorPort.classList.add('port-add','iconfont', 'Behavior',BlockPortIcons.portBehaviorAddIcon);
     this.els.elAddInputBehaviorPort.setAttribute('data-title', '添加入端口');
     this.els.elAddOutputBehaviorPort.setAttribute('data-title', '添加出端口');
     ToolTipUtils.registerElementTooltip(this.els.elAddInputBehaviorPort);
@@ -150,8 +132,8 @@ export class BlockEditor extends Block {
     this.els.elAddInputParamPort = document.createElement('a');
     this.els.elAddOutputParamPort = document.createElement('a');
 
-    this.els.elAddInputParamPort.classList.add('port-add','iconfont', 'Param', this.portIcons.portParamAddIcon);
-    this.els.elAddOutputParamPort.classList.add('port-add','iconfont', 'Param', this.portIcons.portParamAddIcon);
+    this.els.elAddInputParamPort.classList.add('port-add','iconfont', 'Param', BlockPortIcons.portParamAddIcon);
+    this.els.elAddOutputParamPort.classList.add('port-add','iconfont', 'Param', BlockPortIcons.portParamAddIcon);
     this.els.elAddInputParamPort.setAttribute('data-title', '添加入参数');
     this.els.elAddOutputParamPort.setAttribute('data-title', '添加出参数');
     ToolTipUtils.registerElementTooltip(this.els.elAddInputParamPort);
@@ -242,7 +224,8 @@ export class BlockEditor extends Block {
     else if(!CommonUtils.isNullOrEmpty(this.els.elLogoRight)) this.els.elLogoRight.style.backgroundImage = 'url(' + this.blockStyleSettings.logoRight + ')';
 
     if(!CommonUtils.isNullOrEmpty(this.blockStyleSettings.logoBackground)) {
-      if(this.blockStyleSettings.logoBackground.startsWith('<')) this.els.elBackground.innerHTML = this.blockStyleSettings.logoBackground;
+      if(this.blockStyleSettings.logoBackground.startsWith('title:')) this.els.elBackground.innerHTML = '<span class="big-title">' + this.blockStyleSettings.logoBackground.substr(7) + "</span>";
+      else if(this.blockStyleSettings.logoBackground.startsWith('<')) this.els.elBackground.innerHTML = this.blockStyleSettings.logoBackground;
       else this.els.elBackground.style.backgroundImage = 'url(' + this.blockStyleSettings.logoBackground + ')';
     }
       
@@ -327,13 +310,14 @@ export class BlockEditor extends Block {
 
     //load port elements
     this.allPorts.forEach(port => {
-      if(port.editorData == null)
+      if((<BlockPortEditor>port).editorData == null)
         this.addPortElement(port);
     });
 
     host.appendChild(this.el);
 
-    this.createFn();
+    this.fnonMouseUp = this.onMouseUp.bind(this);
+    this.fnonMouseMove = this.onMouseMove.bind(this);
 
     this.onEditorCreate.invoke(this);
 
@@ -506,175 +490,8 @@ export class BlockEditor extends Block {
     userCanAddOutputParameter: false,
   };
 
-  private addPortElement(port : BlockPort) {
-
-    if(!this.created) return;
-
-    port.editorData = new BlockPortEditorData();
-    port.editorData.parent = port;
-    port.editorData.block = this;
-    port.editorData.el = document.createElement('div');
-    port.editorData.el.classList.add("port");
-    port.editorData.elDot = document.createElement('i');
-    port.editorData.elDotIconLeft = document.createElement('i');
-    port.editorData.elDotIconRight = document.createElement('i');
-    port.editorData.elSpan = document.createElement('span');
-    port.editorData.elDeleteButton = document.createElement('a');
-    port.editorData.elDeleteButton.onclick = () => this.onUserDeletePort(port);
-
-    port.editorData.elDot.appendChild(port.editorData.elDotIconLeft);
-    port.editorData.elDot.appendChild(port.editorData.elDotIconRight);
-
-    port.editorData.elDotIconLeft.classList.add("iconfont", this.portIcons.portParamIconDictionaryLeft);
-    port.editorData.elDotIconRight.classList.add("iconfont", this.portIcons.portParamIconDictionaryRight);
-
-    port.editorData.elDeleteButton.classList.add("port-delete", "iconfont", this.portIcons.portPortDeleteIcon);
-    port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
-    port.editorData.elDeleteButton.setAttribute('data-title', '删除参数');
-    ToolTipUtils.registerElementTooltip(port.editorData.elDeleteButton);
-
-    port.editorData.elDot.style.color = 'rgb(253,253,253)';
-
-    port.editorData.elDot.classList.add("port-dot", "iconfont");
-    port.editorData.el.setAttribute('data-port-guid', port.guid);
-    port.editorData.el.setAttribute('data-block-uid', this.uid);
-    port.editorData.elSpan.innerText = port.name;
-
-    this.createOrRecreateParamPortEditor(port, true);
-
-    port.editorData.el.addEventListener('mousedown', (e) => this.onPortMouseDown(port, e));
-    port.editorData.el.addEventListener('mouseenter', (e) => this.onPortMouseEnter(port, e));
-    port.editorData.el.addEventListener('mouseleave', () => this.onPortMouseLeave(port));
-    ToolTipUtils.registerElementTooltip(port.editorData.el);
-
-    //switch port and text's direction
-    if(port.direction == 'input') {
-      port.editorData.el.appendChild(port.editorData.elDot);
-      port.editorData.el.appendChild(port.editorData.elSpan);
-      if(port.editorData.elEditor != null) port.editorData.el.appendChild(port.editorData.elEditor);
-      port.editorData.el.appendChild(port.editorData.elDeleteButton);
-    }
-    else if(port.direction == 'output') {
-      port.editorData.el.appendChild(port.editorData.elDeleteButton);
-      if(port.editorData.elEditor != null) port.editorData.el.appendChild(port.editorData.elEditor);   
-      port.editorData.el.appendChild(port.editorData.elSpan);
-      port.editorData.el.appendChild(port.editorData.elDot);
-    }
-
-    //add element node
-    if(port.paramType.isExecute())
-      port.editorData.elDot.classList.add(this.portIcons.portBehaviorIcon)
-    else 
-      port.editorData.elDot.classList.add(this.portIcons.portParamIcon);
-
-    if(port.direction == 'input') this.els.elInputPorts.appendChild(port.editorData.el);
-    else if(port.direction == 'output') this.els.elOutputPorts.appendChild(port.editorData.el);
-
-    this.updatePortElement(port);
-    this.createOrReCreatePortCustomEditor(port);
-  }
-  public createOrReCreatePortCustomEditor(port : BlockPort) {
-    if(typeof this.onCreatePortCustomEditor === 'function') {
-
-      if(port.editorData.elCustomEditor != null) {
-        port.editorData.elCustomEditor.parentNode.removeChild(port.editorData.elCustomEditor);
-        port.editorData.elCustomEditor = null;
-      }
-
-      port.editorData.elCustomEditor = this.onCreatePortCustomEditor(port.editorData.el, this, port);
-
-      //添加元素
-      if(port.editorData.elCustomEditor!=null) {
-        port.editorData.elCustomEditor.classList.add('param-editor');
-
-        //switch port and text's direction
-        if(port.direction == 'input')
-          port.editorData.el.insertBefore(port.editorData.elCustomEditor, port.editorData.elDeleteButton);
-        else if(port.direction == 'output')
-          port.editorData.el.insertBefore(port.editorData.elCustomEditor, port.editorData.elSpan);
-      }
-
-    }
-  }
-  private createOrRecreateParamPortEditor(port : BlockPort, isAdd = false) {
-    if(!this.created) return;
-
-    if(port.paramType.isExecute()) {
-      port.editorData.el.setAttribute('data-title', port.name + (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n<small>' + port.description + '</small>')));
-      return;
-    }
-
-    if(port.paramType.equals(port.editorData.oldParamType)
-      && port.paramDictionaryKeyType.equals(port.editorData.oldParamKeyType)
-      && port.paramSetType == port.editorData.oldParamSetType) {
-      this.updatePortParamDisplayVal(port);
-      return;
-    }
-
-    if(port.editorData.elEditor != null) {
-      port.editorData.elEditor.parentNode.removeChild(port.editorData.elEditor);
-      port.editorData.elEditor = null;
-    }
-
-    let portParameter = port;
-    let customType : BlockParameterTypeRegData = null;
-
-    if((portParameter.paramType.isCustom()) && !CommonUtils.isNullOrEmpty(portParameter.paramType.customType)) 
-        customType = ParamTypeServiceInstance.getCustomType(portParameter.paramType.customType);
-
-    //获取类型编辑器
-    let editor : BlockParameterEditorRegData = null;
-    if(port.direction == 'input' || port.forceEditorControlOutput) {
-      if((portParameter.paramType.isCustom()) && customType !=  null){
-        editor = customType.editor;
-        if(editor == null && customType.prototypeName == 'enum')
-          editor = AllEditors.getDefaultEnumEditor(<BlockParameterEnumRegData>customType);
-      }
-      else editor = AllEditors.getBaseEditors(portParameter.paramType.baseType);
-    }
-    if(editor != null && editor.useInSetType.indexOf(portParameter.paramSetType) < 0) editor = null;
-    
-    //类型说明
-    port.editorData.elEditor = null;
-
-    this.updatePortParamDisplayVal(port);
-
-    if(customType != null)
-      port.editorData.elDot.style.color = customType.color;
-    else
-      port.editorData.elDot.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType.baseType);
-    //创建类型编辑器
-    if(!port.forceNoEditorControl && editor != null) {
-
-      //创建编辑器和更新回调
-      port.editorData.elEditor = editor.editorCreate(port.editorData.el, (v) => {
-        portParameter.paramUserSetValue = v;
-        if(portParameter.direction == 'output')
-          portParameter.updateOnputValue(this.currentRunningContext, v);
-        else
-          portParameter.setValue(this.currentRunningContext, v);
-        return v;
-      }, portParameter.paramUserSetValue, portParameter.paramDefaultValue, customType);
-
-      //添加元素
-      if(port.editorData.elEditor!=null) {
-        port.editorData.elEditor.classList.add('param-editor');
-
-        if(!isAdd) {
-          //switch port and text's direction
-          if(port.direction == 'input')
-            port.editorData.el.insertBefore(port.editorData.elEditor, port.editorData.elDeleteButton);
-          else if(port.direction == 'output')
-            port.editorData.el.insertBefore(port.editorData.elEditor, port.editorData.elSpan);
-        }
-      }
-    }
-
-    port.editorData.editor = editor;
-    port.editorData.oldParamType = port.paramType.getType();
-    port.editorData.oldParamKeyType = port.paramDictionaryKeyType.getType();
-    port.editorData.oldParamSetType = port.paramSetType;
-  }
+  private addPortElement(port : BlockPort) { if(this.created) (<BlockPortEditor>port).addPortElement(this); }
+  public createOrReCreatePortCustomEditor(port : BlockPort) { (<BlockPortEditor>port).createOrReCreatePortCustomEditor(); }
 
   public updateAllPortElement() { this.allPorts.forEach((p) => this.updatePortElement(p)); }
   public updateAllParamPort() {
@@ -683,96 +500,40 @@ export class BlockEditor extends Block {
     });
   }
   public updatePort(port : BlockPort) { this.updatePortElement(port); }
-  public updatePortParamDisplayVal(port : BlockPort) {
-    ToolTipUtils.updateElementTooltip(port.editorData.el, this.getPortParamValStr(port));   
-  }
+  public updatePortParamDisplayVal(port : BlockPort) { (<BlockPortEditor>port).updatePortParamDisplayVal(); }
 
-  private updatePortElement(port : BlockPort) {
-    if(!this.created) return;
-
-    port.editorData.elSpan.innerText = port.name;
-    port.editorData.elDeleteButton.style.display = port.isDyamicAdd ? 'inline-block' : 'none';
-    if(port.paramType.isExecute()){
-      port.editorData.el.setAttribute('data-title', '<h5 class="text-secondary">' + (CommonUtils.isNullOrEmpty(port.name) ? (
-        port.direction == 'input' ? '入口' : '出口'
-      ) : port.name) + '</h5>执行' + 
-        (CommonUtils.isNullOrEmpty(port.description) ? '' : ('\n<small>' + port.description + '</small>')));
-      
-      HtmlUtils.hideElement(port.editorData.elDotIconLeft);
-      HtmlUtils.hideElement(port.editorData.elDotIconRight);
-
-      port.editorData.elDot.classList.remove(this.portIcons.portParamIcon, this.portIcons.portParamIconActive, 
-        this.portIcons.portParamIconArray, this.portIcons.portParamIconArrayActive, this.portIcons.portParamIconSet);
-    } else {
-
-      if(port.paramSetType != 'dictionary') {
-        HtmlUtils.hideElement(port.editorData.elDotIconLeft);
-        HtmlUtils.hideElement(port.editorData.elDotIconRight);
-      }
-
-      port.editorData.elDot.classList.remove(this.portIcons.portBehaviorIcon, this.portIcons.portBehaviorIconActive);
-
-      this.createOrRecreateParamPortEditor(port);
-      this.updatePortParamDisplayVal(port);
-    }
-
-    this.updatePortConnectStatusElement(port);
-  }
-  private removePortElement(port : BlockPort) {
-    if(!this.created) return;
-
-    port.editorData.el.parentNode.removeChild(port.editorData.el);
-    port.editorData = null;
-  }
+  private updatePortElement(port : BlockPort) { if(this.created) (<BlockPortEditor>port).updatePortElement(); }
+  private removePortElement(port : BlockPort) { if(this.created) (<BlockPortEditor>port).removePortElement(); }
   private onPortRemoveCallback(block, port : BlockPort) {
     this.unConnectPort(port);
-  }
-  private getPortParamValStr(port : BlockPort) {
-    if(!this.created) return '变量未创建';
-
-    let str = '<h5>' + (CommonUtils.isNullOrEmpty(port.name) ? (port.direction == 'input' ? '参数' : '返回值') : port.name)
-      + '</h5><span class="text-secondary"><small>' + port.description
-      + '</small></span><br/>类型：' + port.getTypeFriendlyString();
-
-    if(this.currentRunner != null) {
-      str += '<br/>当前值：';
-      if(this.currentRunningContext == null) str += CommonUtils.valueToStr(port.getUserSetValue())
-      else str += CommonUtils.valueToStr(
-        port.direction == 'input' ? port.rquestInputValue(this.currentRunningContext) : port.rquestOutputValue(this.currentRunningContext)
-      );
-  
-    } else if(port.direction == 'input' && !port.forceNoEditorControl
-      && port.editorData.editor != null && port.connectedFromPort.length == 0)
-      str += '<br/>设置值：' + CommonUtils.valueToStr(port.getUserSetValue());
-
-    return str;
   }
 
   public flushAllPortElementCreateState() {
     this.allPorts.forEach((port) => {
-      if(port.editorData == null) {
+      if((<BlockPortEditor>port).editorData == null) {
         this.addPortElement(port);
       }
     })
   }
-  public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {
+  public movePortElementUpOrDown(port : BlockPort, move : 'up'|'down') {  
+    let portE = (<BlockPortEditor>port);
     let refEl : Element = null;
-    let parent = port.editorData.el.parentNode;
+    let parent = portE.editorData.el.parentNode;
     if(move == 'up') 
-      refEl = port.editorData.el.previousElementSibling;
+      refEl = portE.editorData.el.previousElementSibling;
     else {
-      let n = port.editorData.el.nextElementSibling;
+      let n = portE.editorData.el.nextElementSibling;
       if(n != null) {
         refEl = n.nextElementSibling;
         if(refEl == null) {
-          parent.removeChild(port.editorData.el);
-          parent.appendChild(port.editorData.el);
+          parent.removeChild(portE.editorData.el);
+          parent.appendChild(portE.editorData.el);
         }
       }
     }
     if(refEl != null) {
-      parent.removeChild(port.editorData.el);
-      parent.insertBefore(port.editorData.el, refEl);
+      parent.removeChild(portE.editorData.el);
+      parent.insertBefore(portE.editorData.el, refEl);
     }
   }
 
@@ -781,65 +542,11 @@ export class BlockEditor extends Block {
   //#region 编辑器显示状态更新
 
   public forceUpdateParamValueToEditor(port : BlockPort) {
-    if(port.editorData.editor != null)
-      port.editorData.editor.forceUpdateValue(port, port.editorData.elEditor);
+    let portE = (<BlockPortEditor>port);
+    if(portE.editorData.editor != null)
+      portE.editorData.editor.forceUpdateValue(port, portE.editorData.elEditor);
   }
-  public updatePortConnectStatusElement(port : BlockPort) {
-
-    //点的状态
-    if(port.editorData.forceDotErrorState){
-      port.editorData.elDot.classList.add("error", this.portIcons.portFailedIconActive);
-      port.editorData.elDot.classList.remove(this.portIcons.portBehaviorIcon, this.portIcons.portBehaviorIconActive, 
-        this.portIcons.portParamIcon, this.portIcons.portParamIconActive);
-
-      HtmlUtils.hideElement(port.editorData.elDotIconLeft);
-      HtmlUtils.hideElement(port.editorData.elDotIconRight);
-    }else {
-      port.editorData.elDot.classList.remove("error", this.portIcons.portFailedIconActive);
-      if(port.paramType.isExecute())
-        CommonUtils.setClassWithSwitch(port.editorData.elDot, port.isConnected() || port.editorData.forceDotActiveState,
-          this.portIcons.portBehaviorIcon, this.portIcons.portBehaviorIconActive);
-      else {
-
-        port.editorData.elDot.classList.remove(this.portIcons.portParamIcon, this.portIcons.portParamIconActive, this.portIcons.portParamIconArray, 
-          this.portIcons.portParamIconArrayActive, this.portIcons.portParamIconSet);
-
-        switch(port.paramSetType) {
-          case 'variable': {
-            CommonUtils.setClassWithSwitch(port.editorData.elDot, port.isConnected() || port.editorData.forceDotActiveState, 
-              this.portIcons.portParamIcon, this.portIcons.portParamIconActive);
-            break
-          }
-          case 'array': {
-            CommonUtils.setClassWithSwitch(port.editorData.elDot, port.isConnected() || port.editorData.forceDotActiveState, 
-              this.portIcons.portParamIconArray, this.portIcons.portParamIconArrayActive);
-            break
-          }
-          case 'dictionary': {
-            port.editorData.elDotIconLeft.setAttribute('style', 'width: 8px;display: inline-block;margin-left: -5px;');
-            port.editorData.elDotIconRight.setAttribute('style', 'margin-left: -2px;');
-            port.editorData.elDotIconRight.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType.getType(), 'rgb(129,122,122)');
-            port.editorData.elDotIconLeft.style.color = ParamTypeServiceInstance.getTypeColor(port.paramDictionaryKeyType.getType(), 'rgb(129,122,122)');
-
-            break
-          }
-          case 'set': {
-            port.editorData.elDot.classList.add(this.portIcons.portParamIconSet);
-            port.editorData.elDot.style.color = ParamTypeServiceInstance.getTypeColor(port.paramType.getType(), 'rgb(129,122,122)');
-            break
-          }
-        }
-        
-      }
-    }
-
-    //数值编辑器状态
-    if(!port.paramType.isExecute()) {
-      if(port.editorData.elEditor != null) {
-        port.editorData.elEditor.style.display = port.isConnected() ? 'none' : 'inline-block';
-      }
-    }
-  }
+  public updatePortConnectStatusElement(port : BlockPort) { (<BlockPortEditor>port).updatePortConnectStatusElement(); }
   public markBreakPointActiveState(active : boolean) {
     if(active) {
       this.el.classList.add('breakpoint-actived');
@@ -899,7 +606,7 @@ export class BlockEditor extends Block {
 
   //#region 其他事件
 
-  private onUserDeletePort(port : BlockPort) {
+  public onUserDeletePort(port : BlockPort) {
     this.editor.getVue().$Modal.confirm({
       title: '提示',
       content: '确定删除此端口？',
@@ -933,56 +640,15 @@ export class BlockEditor extends Block {
 
   //#region 鼠标事件
 
-  //
-  // 节点移动事件
-
-  public mouseDownInPort = false;
-  public mouseConnectingPort = false;
-
-  private onPortMouseEnter(port : BlockPort, e : MouseEvent) {
-    this.editor.updateCurrentHoverPort(port);
-    
-    if(!port.paramType.isExecute()) {
-      ToolTipUtils.updateElementTooltip(port.editorData.el, this.getPortParamValStr(port));   
-    }
-  }
-  private onPortMouseLeave(port : BlockPort) {
-    this.editor.updateCurrentHoverPortLeave(port);
-  }
-  private onPortMouseMove(e : MouseEvent) {
-    this.mouseConnectingPort = true;
-    this.editor.updateConnectEnd(new Vector2(e.x, e.y));
-    return true;
-  }
-  private onPortMouseDown(port : BlockPort, e : MouseEvent) {
-    if(!this.testIsDownInControl(e)) {
-      this.mouseDownInPort = true;
-      this.mouseConnectingPort = false;
-      this.editor.startConnect(port);
-      this.editor.updateConnectEnd(new Vector2(e.x, e.y));
-
-      this.fnonPortMouseUp = () => this.onPortMouseUp(port);
-
-      document.addEventListener('mouseup', this.fnonPortMouseUp);
-      document.addEventListener('mousemove', this.fnonPortMouseMove);
-
-      e.stopPropagation();
-    }
-  }
-  private onPortMouseUp(port : BlockPort) {
-    this.mouseDownInPort = false;
-    this.mouseConnectingPort = false;
-    this.editor.endConnect(port);
-    
-    document.removeEventListener('mouseup', this.fnonPortMouseUp);
-    document.removeEventListener('mousemove', this.fnonPortMouseMove);
-  }
+ 
 
   //#endregion 
 
   //#region 单元移动事件
 
   public mouseDown = false;
+  public mouseConnectingPort = false;
+  public mouseDownInPort = false;
 
   private mouseLastDownPos : Vector2 = new Vector2();
   private lastBlockPos : Vector2 = new Vector2();
@@ -1075,14 +741,6 @@ export class BlockEditor extends Block {
 
   private fnonMouseMove = null;
   private fnonMouseUp = null;
-  private fnonPortMouseMove = null;
-  private fnonPortMouseUp = null;
-
-  private createFn() {
-    this.fnonMouseUp = this.onMouseUp.bind(this);
-    this.fnonMouseMove = this.onMouseMove.bind(this);
-    this.fnonPortMouseMove = this.onPortMouseMove.bind(this);
-  } 
 
   public onCreateCustomEditor : BlockEditorComponentCreateFn = null;
   public onCreatePortCustomEditor : BlockPortEditorComponentCreateFn = null;

@@ -68,6 +68,7 @@
       ref="ChooseTypePanel"
       :show="showChooseTypePanel"
       :showPos="showChooseTypePanelPos"
+      :canbeExecute="showChooseTypePanelCanbeExecute"
       :style="{ maxHeight: showChooseTypePanelMaxHeight + 'px' }"
       @onItemClick="onChooseTypeItemClick"
       @onClose="showChooseTypePanel=false" />
@@ -153,7 +154,6 @@ import { BlockPort } from "../model/Define/Port";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { BlockFileParser } from "../model/WorkProvider/BlockFileParser";
 
-import BaseBlocks from "../model/Blocks/BaseBlocks";
 import CanvasUtils from "../utils/CanvasUtils";
 import CommonUtils from "../utils/CommonUtils";
 import BlockCategory from "../components/BlockCategory.vue";
@@ -164,7 +164,7 @@ import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 import SettingsServiceInstance from "../sevices/SettingsService";
 import { BlockEditor } from "../model/Editor/BlockEditor";
-import { BlockParameterType, BlockPortDirection } from "../model/Define/Port";
+import { BlockPortDirection } from "../model/Define/Port";
 import { BlockRunner, BlockRunContextData } from "../model/WorkProvider/Runner";
 import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { EditorSettings } from "../model/Editor/EditorSettings";
@@ -175,6 +175,9 @@ import MenuBar from "../components/MenuBar.vue";
 import GraphProp from "../components/GraphProp.vue";
 import DocunmentProp from "../components/DocunmentProp.vue";
 import ChooseTypePanel from "../components/ChooseTypePanel.vue";
+import { BlockParameterType } from "../model/Define/BlockParameterType";
+import BlockRegister from "../model/Blocks/Utils/BlockRegister";
+import HtmlUtils from "../utils/HtmlUtils";
 
 export type EditorRunningState = 'editing'|'running'|'runningPaused';
 
@@ -448,6 +451,7 @@ export default class Editor extends Vue {
   showChooseTypePanel = false;
   showChooseTypePanelPos = new Vector2();
   showChooseTypePanelMaxHeight = 500;
+  showChooseTypePanelCanbeExecute = true;
   showChooseTypePanelCallback : (type: BlockParameterTypeRegData, isBaseType : boolean) => void = null;
 
   onChooseTypeItemClick(choosedType : BlockParameterTypeRegData, isBaseType : boolean) {
@@ -456,9 +460,10 @@ export default class Editor extends Vue {
       this.showChooseTypePanelCallback(choosedType, isBaseType);
     }
   }
-  public showChooseTypePanelAt(pos : Vector2) {
+  public showChooseTypePanelAt(pos : Vector2, canbeExecute : boolean) {
     this.showChooseTypePanelPos.Set(pos);
     this.showChooseTypePanel = true;
+    this.showChooseTypePanelCanbeExecute = canbeExecute;
     this.showChooseTypePanelMaxHeight = this.editorControl.getViewPort().h - pos.y;
     if(this.showChooseTypePanelPos.x + 300 > window.innerWidth)
       this.showChooseTypePanelPos.x -= this.showChooseTypePanelPos.x + 300 - window.innerWidth;
@@ -470,13 +475,13 @@ export default class Editor extends Vue {
     (<AddPanel>this.$refs.ChooseTypePanel).focus();
   }
 
-  onChooseCustomType(pos : Vector2, callback) {
+  onChooseCustomType(pos : Vector2, callback, canbeExecute : boolean) {
     this.showChooseTypePanelCallback = callback;
-    this.showChooseTypePanelAt(pos);
+    this.showChooseTypePanelAt(pos, canbeExecute);
   }
-  onChooseGraphVariableType(v, pos : Vector2) {
+  onChooseGraphVariableType(v, pos : Vector2, canbeExecute : boolean) {
     this.showChooseTypePanelCallback = v;
-    this.showChooseTypePanelAt(pos);
+    this.showChooseTypePanelAt(pos, canbeExecute);
   }
 
   //#endregion
@@ -505,6 +510,10 @@ export default class Editor extends Vue {
   
   private init() {  
 
+    let baseLoading = document.getElementById('base-loading');
+    if(baseLoading)
+      HtmlUtils.hideElement(baseLoading);
+
     //获取子控件实例
     setTimeout(() => this.editorControl = <BlockDrawer>this.$refs.BlockDrawer, 100);
 
@@ -518,7 +527,7 @@ export default class Editor extends Vue {
     BlockServiceInstance.init();
     BlockServiceInstance.isEditorMode = true;
     BlockServiceInstance.allBlocksGrouped = this.allBlocksGrouped;
-    BaseBlocks.register();
+    BlockRegister.registerAll();
     ParamTypeServiceInstance.init();
     BlockServiceInstance.updateBlocksList();
 

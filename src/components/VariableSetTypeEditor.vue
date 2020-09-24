@@ -23,8 +23,8 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import AllEditors from "../model/TypeEditors/AllEditors";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterSetType, BlockParameterType } from "../model/Define/Port";
 import { BlockGraphDocunment, BlockGraphVariable } from "../model/Define/BlockDocunment";
+import { BlockParameterSetType } from "../model/Define/BlockParameterType";
 
 @Component
 export default class VariableSetTypeEditor extends Vue {

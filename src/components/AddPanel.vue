@@ -27,9 +27,10 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import BlockCategory from "./BlockCategory.vue";
 import { Vector2 } from "../model/Vector2";
 import { CategoryData } from "../sevices/BlockService";
-import { BlockPortDirection, BlockParameterType, BlockParameterSetType, BlockPort } from "../model/Define/Port";
+import { BlockPortDirection, BlockPort } from "../model/Define/Port";
 import { BlockRegData } from "../model/Define/BlockDef";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
+import { BlockParameterSetType, BlockParameterType } from "../model/Define/BlockParameterType";
 
 @Component({
   components: {

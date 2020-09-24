@@ -1,0 +1,19 @@
+{
+  "name": "blueprint",
+  "version": "1.0.0",
+  "description": "这是一个可视化蓝图（流程图）程序编辑器",
+  "author": "梦欤 <1501076885@qq.com>",
+  "private": true,
+  "main": "main.js",
+  "keywords": [],
+  "license": "ISC",
+  "config": {
+    "arch": "ia32",
+    "registry": "https://registry.npm.taobao.org"
+  },
+  "dependencies": {
+    "electron": "^10.1.2",
+    "log4js": "^6.0.0",
+    "nedb": "^1.8.0"
+  }
+}

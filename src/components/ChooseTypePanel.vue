@@ -53,7 +53,8 @@ export default class ChooseTypePanel extends Vue {
 
   @Prop({ default: null }) showPos : Vector2;
   @Prop({ default: false }) show : boolean;
-  
+  @Prop({ default: true }) canbeExecute : boolean;
+
   allCustomTypes = [];
   allBaseTypes = [];
 
@@ -96,6 +97,9 @@ export default class ChooseTypePanel extends Vue {
 
     ParamTypeServiceInstance.onTypeChanged.addListener(this, (act, name, reg) => this.loadCustomTypes(act, name, reg));
     ParamTypeServiceInstance.getAllBaseTypes().forEach(type => {
+      if(type == 'execute' && !this.canbeExecute) 
+        return;
+      
       this.allBaseTypes.push({
         nameForUser: ParamTypeServiceInstance.getTypeNameForUserMapping(type),
         name: type,

@@ -1,5 +1,5 @@
 import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterBaseType, BlockParameterType } from "../model/Define/Port";
+import { BlockParameterBaseType, BlockParameterType } from "../model/Define/BlockParameterType";
 import CommonUtils from "../utils/CommonUtils";
 import { EventHandler, VoidDelegate } from "../utils/EventHandler";
 

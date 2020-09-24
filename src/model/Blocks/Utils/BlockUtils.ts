@@ -1,6 +1,7 @@
-import CommonUtils from "../../utils/CommonUtils";
-import { BlockParameterType, BlockPort } from "../Define/Port";
-import { BlockEditor } from "../Editor/BlockEditor";
+import CommonUtils from "../../../utils/CommonUtils";
+import { BlockParameterType } from "../../Define/BlockParameterType";
+import { BlockPort } from "../../Define/Port";
+import { BlockEditor } from "../../Editor/BlockEditor";
 
 export default {
   doChangeBlockFlexablePort,

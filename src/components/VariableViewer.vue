@@ -12,7 +12,6 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import AllEditors from "../model/TypeEditors/AllEditors";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterType } from "../model/Define/Port";
 import { BlockGraphDocunment, BlockGraphVariable } from "../model/Define/BlockDocunment";
 
 @Component

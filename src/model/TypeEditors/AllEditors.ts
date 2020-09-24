@@ -1,7 +1,7 @@
-import { BlockParameterBaseType, BlockParameterType } from "../Define/Port";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData } from "../Define/BlockDef";
 import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
+import { BlockParameterBaseType } from "../Define/BlockParameterType";
 
 export default {
   getBaseEditors(type : BlockParameterBaseType) {

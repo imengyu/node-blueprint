@@ -4,7 +4,7 @@ import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockRunContextData } from "../WorkProvider/Runner";
-import { BlockParameterSetType } from "./Port";
+import { BlockParameterSetType } from "./BlockParameterType";
 
 /**
  * 文档结构

@@ -4,6 +4,7 @@ import CommonUtils from "../../utils/CommonUtils";
 import { Vector2 } from "../Vector2";
 import { Connector } from "../Define/Connector";
 import { BlockPort } from "../Define/Port";
+import { BlockPortEditor } from "./BlockPortEditor";
 
 export class ConnectorEditor extends Connector {
 
@@ -11,6 +12,8 @@ export class ConnectorEditor extends Connector {
     super(startPort, endPort);
   }
 
+  public startPort : BlockPortEditor = null;
+  public endPort : BlockPortEditor = null;
   public selected = false;
   public hover = false;
   public actived = false;

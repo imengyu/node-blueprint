@@ -1,7 +1,9 @@
-import { BlockParameterType, BlockPortDirection, BlockPort, BlockParameterSetType, BlockParameterBaseType } from "./Port";
+import { BlockPortDirection, BlockPort } from "./Port";
 import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback, OnPortConnectCallback, OnPortEditorEventCallback, OnPortConnectCheckCallback } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
+import { BlockParameterBaseType, BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
+import { BlockPack } from "../Blocks/Utils/BlockRegister";
 
 /**
  * 单元信息结构
@@ -55,6 +57,11 @@ export class BlockRegData {
      */
     version : ""
   }
+
+  /**
+   * 单元所属的包
+   */
+  public pack : BlockPack = null;
 
   /**
    * 单元的端口

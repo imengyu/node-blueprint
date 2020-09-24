@@ -10,6 +10,7 @@ import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { Rect } from "../model/Rect";
 import { Vector2 } from "../model/Vector2";
 import { BlockPort } from "../model/Define/Port";
+import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
 
 /**
  * 编辑器背景绘制控制
@@ -90,7 +91,7 @@ export default class BlockEditorCanvasDrawer extends Vue {
   @Prop({default: false}) isConnecting : boolean;
   @Prop({default: false}) isMultiSelecting : boolean;
   @Prop({default: null}) connectingEndPos : Vector2;
-  @Prop({default: null}) connectingStartPort : BlockPort;
+  @Prop({default: null}) connectingStartPort : BlockPortEditor;
   @Prop({default: false}) connectingIsFail : boolean;
   @Prop({default: null}) connectingConnector : ConnectorEditor;
   @Prop({default: null}) multiSelectRect : Rect;

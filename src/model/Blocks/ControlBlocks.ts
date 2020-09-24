@@ -1,5 +1,4 @@
 import { BlockRegData, BlockParameterEnumRegData } from "../Define/BlockDef";
-import BlockServiceInstance from "../../sevices/BlockService";
 import { Block } from "../Define/Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
@@ -7,12 +6,14 @@ import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import { Vector2 } from "../Vector2";
-import { BlockParameterType } from "../Define/Port";
+import { BlockParameterType } from "../Define/BlockParameterType";
 
 export default {
   register() {
-    registerControl();
-  }
+    return registerControl();
+  },
+  packageName: 'Control',
+  version: 1,
 }
 
 function registerControl() {
@@ -195,7 +196,7 @@ function registerControl() {
           typeSelector.value = type.name;
           reloadSwitchBlockPorts(block);
         }
-      })
+      }, false)
     };
     el.innerText = '输入条件类型：';
     el.style.whiteSpace = 'nowrap';
@@ -371,7 +372,7 @@ function registerControl() {
           typeSelector.value = type.name;
           reloadSelectBlockPorts(block);
         }
-      })
+      }, false)
     };
     el.innerText = '输入条件类型：';
     el.style.whiteSpace = 'nowrap';
@@ -911,14 +912,16 @@ function registerControl() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(blockBranch, false);
-  BlockServiceInstance.registerBlock(blockSwitch, false);
-  BlockServiceInstance.registerBlock(blockSelect, false);
-  BlockServiceInstance.registerBlock(blockFlipFlop, false);
-  BlockServiceInstance.registerBlock(blockToggle, false);
-  BlockServiceInstance.registerBlock(blockWhile, false);
-  BlockServiceInstance.registerBlock(blockFor, false);
-  BlockServiceInstance.registerBlock(blockDoN, false);
-  BlockServiceInstance.registerBlock(blockDoOnce, false);
-  BlockServiceInstance.registerBlock(blockSequence, false);
+  return [
+    blockBranch, 
+    blockSwitch, 
+    blockSelect, 
+    blockFlipFlop, 
+    blockToggle, 
+    blockWhile, 
+    blockFor, 
+    blockDoN, 
+    blockDoOnce,
+    blockSequence,
+  ];
 }

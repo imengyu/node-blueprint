@@ -1,5 +1,5 @@
 import { BlockPortRegData, BlockRegData, } from "./BlockDef";
-import { BlockPortDirection, BlockPort, BlockParameterType, BlockParameterSetType } from "./Port";
+import { BlockPortDirection, BlockPort } from "./Port";
 
 import { BlockRunContextData, BlockRunner } from "../WorkProvider/Runner";
 import { EventHandler } from "../../utils/EventHandler";
@@ -9,6 +9,8 @@ import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
 import { Connector } from "./Connector";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
+import { BlockPortEditor } from "../Editor/BlockPortEditor";
+import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
 
 /**
  * 基础单元定义
@@ -182,7 +184,7 @@ export class Block {
       return oldData;
     }
 
-    let newPort = new BlockPort(this);
+    let newPort = this.isEditorBlock ? new BlockPortEditor(<BlockEditor><any>this) : new BlockPort(this);
     newPort.name = data.name ? data.name : '';
     newPort.description = data.description ? data.description : '';
     newPort.isDyamicAdd = isDyamicAdd;

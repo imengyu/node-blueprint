@@ -1,8 +1,11 @@
+import { BlockPack } from "../model/Blocks/Utils/BlockRegister";
 import { BlockRegData } from "../model/Define/BlockDef";
+import logger from "../utils/Logger";
 
 export class BlockService {
   public allBlocks = {};
   public allBlocksGrouped : Array<CategoryData> = [];
+  public allPacks = [];
 
   public isEditorMode = false;
 
@@ -15,18 +18,27 @@ export class BlockService {
    * @param BlockDef 单元信息
    * @param updateList 是否刷新列表
    */
-  public registerBlock(BlockDef : BlockRegData, updateList = true) {
+  public registerBlock(BlockDef : BlockRegData, pack : BlockPack, updateList = true) {
+    if(pack != null) {
+      if(!this.allPacks.contains(pack))
+        this.allPacks.push(pack);
+    }
     let oldBlock = this.getRegisteredBlock(BlockDef.guid);
     if(oldBlock != null && oldBlock != undefined) {
-      console.warn("[registerBlock] Block guid " + BlockDef.guid + " alreday registered !");
+      logger.warning("[registerBlock] Block guid " + BlockDef.guid + " alreday registered !");
       return;
     }
+    BlockDef.pack = pack;
     this.allBlocks[BlockDef.guid] = BlockDef;
 
     if(this.isEditorMode && updateList) this.updateBlocksList();
   }
   public getRegisteredBlock(guid : string) {
     return this.allBlocks[guid];
+  }
+  public unregisterBlockPack(pack : BlockPack) {
+    this.allPacks.remove(pack);
+    logger.log(`unregisterBlockPack : ${pack.packageName}`);
   }
   public unregisterBlock(guid : string, updateList = true) {
     let regData : BlockRegData = this.allBlocks[guid]

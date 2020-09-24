@@ -1,4 +1,3 @@
-import BlockServiceInstance from "../../sevices/BlockService";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockRegData } from "../Define/BlockDef";
 import { BlockPort } from "../Define/Port";
@@ -6,6 +5,8 @@ import { ValMap } from "../Define/ValMap";
 
 export default { 
   register,
+  packageName: 'Dictionary',
+  version: 1,
 }
 
 function register() {
@@ -548,13 +549,15 @@ function register() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(CreateDictionary, false);
-  BlockServiceInstance.registerBlock(DictionaryHas, false);
-  BlockServiceInstance.registerBlock(DictionarySet, false);
-  BlockServiceInstance.registerBlock(DictionaryRemove, false);
-  BlockServiceInstance.registerBlock(DictionaryClear, false);
-  BlockServiceInstance.registerBlock(DictionaryLength, false);
-  BlockServiceInstance.registerBlock(DictionaryAllKeys, false);
-  BlockServiceInstance.registerBlock(DictionaryAllValues, false);
-  BlockServiceInstance.registerBlock(DictionaryForeach, false);
+  return [
+    CreateDictionary,
+    DictionaryHas,
+    DictionarySet,
+    DictionaryRemove, 
+    DictionaryClear,
+    DictionaryLength,
+    DictionaryAllKeys, 
+    DictionaryAllValues, 
+    DictionaryForeach, 
+  ];
 }

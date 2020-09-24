@@ -1,5 +1,5 @@
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
-import { BlockParameterType } from "./Port";
+import { BlockParameterType } from "./BlockParameterType";
 
 export class ValMap {
 

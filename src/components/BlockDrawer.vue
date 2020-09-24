@@ -125,6 +125,7 @@ import ToolTipUtils from "../utils/ToolTipUtils";
 import { BlockBreakPoint } from "../model/Define/Block";
 import BaseBlocks from "../model/Blocks/BaseBlocks";
 import BlockServiceInstance from "../sevices/BlockService";
+import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
 
 
 @Component({
@@ -345,7 +346,7 @@ export default class BlockDrawer extends Vue {
 
       let port = this.editorWorker.endConnectToNew(newBlock);
       let pos = new Vector2();
-      pos.Set(port.editorData.getPosition());
+      pos.Set((<BlockPortEditor>port).editorData.getPosition());
       pos.x = this.connectingEndPos.x - (pos.x - newBlock.position.x);
       pos.y = this.connectingEndPos.y - (pos.y - newBlock.position.y);
 
@@ -531,7 +532,7 @@ export default class BlockDrawer extends Vue {
         unConnectConnector: this.editorWorker.unConnectConnector,
         showBlockRightMenu: this.showBlockRightMenu,
         deleteBlock: this.editorWorker.deleteBlock,
-        chooseType: (p, c) => { this.$emit('choose-custom-type', p, c); },
+        chooseType: (p, c, ce) => { this.$emit('choose-custom-type', p, c, ce); },
         openGraph: (g) => { this.$emit('on-open-graph', g); },
         graphVariableChange: {
           onVariableAdd: (g, v) => this.blockOwnerData.editorEvents.onVariableAdd.invoke(g, v),

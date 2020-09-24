@@ -1,18 +1,16 @@
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { Block } from "../Define/Block";
-import { BlockParameterBaseType, BlockParameterType, BlockPort } from "../Define/Port";
-import BlockServiceInstance from "../../sevices/BlockService";
+import { BlockPort } from "../Define/Port";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockEditor } from "../Editor/BlockEditor";
-import HtmlUtils from "../../utils/HtmlUtils";
 
 export default {
-  register() {
-    registerLogicBlocks();
-  }
+  register,
+  packageName: 'Logic',
+  version: 1,
 }
 
-function registerLogicBlocks() {
+function register() {
 
   let And = new BlockRegData("F839DDA4-B666-74B6-E8B7-836D63708B65", "与", '逻辑与运算');
   let Or = new BlockRegData("29D1D2D3-47E1-2B67-C527-9E9274E6C582", "或", '逻辑或运算');
@@ -406,16 +404,18 @@ function registerLogicBlocks() {
 
   //#endregion
 
-  BlockServiceInstance.registerBlock(And, false);
-  BlockServiceInstance.registerBlock(Or, false);
-  BlockServiceInstance.registerBlock(Not, false);
-  BlockServiceInstance.registerBlock(ExclusiveOr, false);
-  BlockServiceInstance.registerBlock(Equal, false);
-  BlockServiceInstance.registerBlock(NotEqual, false);
-  BlockServiceInstance.registerBlock(Less, false);
-  BlockServiceInstance.registerBlock(Greater, false);
-  BlockServiceInstance.registerBlock(LessOrEqual, false);
-  BlockServiceInstance.registerBlock(GreaterOrEqual, false);
-  BlockServiceInstance.registerBlock(LeftMove, false);
-  BlockServiceInstance.registerBlock(RightMove, false);
+  return [
+    And, 
+    Or, 
+    Not, 
+    ExclusiveOr, 
+    Equal, 
+    NotEqual, 
+    Less, 
+    Greater, 
+    LessOrEqual, 
+    GreaterOrEqual, 
+    LeftMove, 
+    RightMove, 
+  ];
 }

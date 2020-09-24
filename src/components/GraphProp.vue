@@ -205,7 +205,7 @@ import { Vector2 } from "../model/Vector2";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import VariableTypeEditor from "./VariableTypeEditor.vue";
 import { BlockParameterTypeRegData, BlockPortRegData } from "../model/Define/BlockDef";
-import { BlockPort, BlockParameterType, BlockPortDirection, BlockParameterBaseType } from "../model/Define/Port";
+import { BlockPort, BlockPortDirection } from "../model/Define/Port";
 import CommonUtils from "../utils/CommonUtils";
 import InputCanCheck from "./InputCanCheck.vue";
 import CollapsePropHeader from "./CollapsePropHeader.vue";
@@ -214,6 +214,7 @@ import { BlockEditorOwner } from "../model/Editor/BlockEditorOwner";
 import VariableViewer from "./VariableViewer.vue";
 import HtmlUtils from "../utils/HtmlUtils";
 import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
+import { BlockParameterBaseType, BlockParameterType } from "../model/Define/BlockParameterType";
 
 @Component({
   components: {
@@ -273,7 +274,7 @@ export default class GraphProp extends Vue {
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
-      e.y + 10));
+      e.y + 10), false);
   }
   onChooseGraphVariableKeyType(v : BlockGraphVariable, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData) => {
@@ -286,7 +287,7 @@ export default class GraphProp extends Vue {
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
-      e.y + 10));
+      e.y + 10), false);
   }
   onUpdateGraphVariable(vNameOld : string, v : BlockGraphVariable) {
     this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, vNameOld, v);
@@ -379,7 +380,7 @@ export default class GraphProp extends Vue {
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
-      e.y + 10));
+      e.y + 10), true);
   }
   onChooseGraphPortKeyType(port : BlockPortRegData, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData, isBaseType : boolean) => {
@@ -397,7 +398,7 @@ export default class GraphProp extends Vue {
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
-      e.y + 10));
+      e.y + 10), false);
   }
 
   

@@ -29,7 +29,7 @@ export class BlockEditorOwner {
   showBlockRightMenu : (pos : Vector2) => void;
   deleteBlock: (block : BlockEditor, rm ?: boolean) => void;
 
-  chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void) => void;
+  chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void, canBeExecute : boolean) => void;
   openGraph: (graph : BlockGraphDocunment) => void;
 
 
