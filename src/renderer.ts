@@ -13,6 +13,7 @@ import Contextmenu from "vue-contextmenujs/dist/contextmenu.umd"
 Vue.use(Contextmenu);
 Vue.use(iView);
 Vue.config.productionTip = false;
+Vue.config.devtools = true;
 
 /* eslint-disable no-new */
 new Vue({

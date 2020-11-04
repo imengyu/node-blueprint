@@ -195,11 +195,15 @@ let stringEditor : BlockParameterEditorRegData = {
     if(nowVal == null || typeof nowVal != 'string') 
       nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'string' ? defaultVal : '');
 
-    let ele = document.createElement('input')
-    ele.style.width = '50px';
+    let ele = document.createElement('textarea')
     if(nowVal != null && typeof nowVal == 'string')
       ele.value = <string>nowVal;
-    ele.type = 'text';
+    ele.style.width = '110px';
+    ele.style.height = '23px';
+    ele.style.minHeight = '23px';
+    ele.style.minWidth = '110px';
+    ele.style.resize = 'both';
+    ele.classList.add('custom-editor');
     ele.onblur = () => changeCallBack(ele.value);
     return ele
   },

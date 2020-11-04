@@ -4,7 +4,16 @@ import logger from "../utils/Logger";
 
 export class BlockService {
   public allBlocks = {};
-  public allBlocksGrouped : Array<CategoryData> = [];
+  public allBlocksGrouped : Array<CategoryData> = [
+    {
+      category: '',
+      childCategories: [],
+      blocks: [],
+      open: true,
+      show: true,
+      filterShow: true,
+    }
+  ];
   public allPacks = [];
 
   public isEditorMode = false;

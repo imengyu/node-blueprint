@@ -7,11 +7,11 @@ export class Logger {
   }
   public info(msg) {
     if (this.shouldLog('info'))
-      console.warn(msg)
+      console.info(msg)
   }
   public log(msg) {
     if (this.shouldLog('info'))
-      console.warn(msg)
+      console.log(msg)
   }
   public warning(msg) {
     if (this.shouldLog('warning'))

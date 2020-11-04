@@ -11,6 +11,8 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
 import { BlockRunContextData } from "../WorkProvider/Runner";
 import { BlockParameterType } from "../Define/BlockParameterType";
+import BlockServiceInstance from "../../sevices/BlockService";
+import { Vector2 } from "../Vector2";
 
 export default { 
   register,
@@ -34,6 +36,10 @@ function register() {
     registerDebugBase()
   ).concat(
     registerTypeBase()
+  ).concat(
+    registerLoadLib()
+  ).concat(
+    registerCommentBlock()
   );
 }
 
@@ -179,7 +185,7 @@ function registerScriptVariableBase()  {
   //设置变量
 
   variableSet.baseInfo.author = 'imengyu';
-  variableSet.baseInfo.description = "设置变量的值";
+  variableSet.baseInfo.description = "设置变量值";
   variableSet.baseInfo.category = '基础';
   variableSet.baseInfo.version = '2.0';
   variableSet.type = 'base';
@@ -238,7 +244,7 @@ function registerScriptVariableBase()  {
       let portOut = block.getPortByGUID(block.data['portOutGuid']);
 
       let variable = block.currentGraph.findGraphVariable(block.options['variable']);
-      block.name = '设置变量 ' + variable.name + ' 的值';
+      block.name = '设置 ' + variable.name;
       block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
 
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
@@ -966,4 +972,101 @@ function registerTypeBase() {
   blocks.push(block);
 
   return blocks;
+}
+function registerLoadLib() {
+
+  let blocks = [];
+
+  let block = new BlockRegData("A76128DC-F4E4-69D4-F232-A4E226183B34", "加载库", "加载附加函数库", 'imengyu', '基础');
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/module.svg');
+  block.baseInfo.version = '2.0';
+  block.ports = [
+    {
+      direction: 'input',
+      guid: 'IN',
+      paramType: 'execute',
+    },
+    {
+      direction: 'input',
+      guid: 'LIBNAME',
+      name: '库的包名',
+      description: '指定要加载的库包名',
+      paramType: 'string',
+      paramRequired: true,
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'execute',
+    },
+    {
+      direction: 'output',
+      guid: 'LOAD-SUCCESS',
+      paramType: 'boolean',
+      name: '加载成功?',
+    },
+    {
+      direction: 'output',
+      guid: 'ALREDAY-LOADED',
+      paramType: 'boolean',
+      name: '已经加载?',
+    },
+    {
+      direction: 'output',
+      guid: 'LIB-INFO',
+      paramType: 'object',
+      name: '库信息实体',
+    },
+  ];
+  block.callbacks.onPortExecuteIn = (block, port) => {
+    let libName = block.getInputParamValue('LIBNAME');
+    if(StringUtils.isNullOrEmpty(libName)) {
+      block.throwError('库的包名 必须提供 !', port);
+    }
+    else {
+      
+    }
+  };
+  block.blockStyle.logoBackground = require('../../assets/images/BlockIcon/module-big.svg');
+  block.blockStyle.smallTitle = true;
+  block.blockStyle.noTitle = true;
+  block.blockStyle.hideLogo = true;
+
+  blocks.push(block);
+
+  return blocks;
+}
+function registerCommentBlock() {
+  let block = new BlockRegData("088C2A25-192D-42E7-D31B-B5E9FB7C68DD", "文档注释", "", 'imengyu', '');
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/info.svg');
+  block.baseInfo.description = '在这个单元里面添加你的代码注释，拖动右下角可以调整大小';
+  block.ports = [];
+  block.blockStyle.minHeight = '100px';
+  block.callbacks.onCreateCustomEditor = (parentEle, block) => {
+
+    var input = document.createElement('textarea');
+    input.value = block.options['content'] ? block.options['content'] : '';
+    input.classList.add('custom-editor');
+    input.classList.add('comment-editor');
+    input.style.width = (typeof block.options['width'] == 'number' ? block.options['width'] : 210) + 'px';
+    input.style.height = (typeof block.options['height'] == 'number' ? block.options['height'] : 122) + 'px';
+    input.onchange = () => { 
+      block.options['content'] = input.value; 
+      block.editor.markFileChanged();
+    };
+    input.oncontextmenu = (e) => {
+      block.editor.showInputRightMenu(new Vector2(e.x, e.y), <HTMLInputElement>e.target);      
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    block.data['input-control'] = input;
+    parentEle.appendChild(input);
+  };
+  block.callbacks.onSave = (block) => {
+    var input = <HTMLInputElement>block.data['input-control'];
+    block.options['width'] = input.offsetWidth;
+    block.options['height'] = input.offsetHeight;
+    block.options['content'] = input.value;
+  };
+  return [ block ];
 }

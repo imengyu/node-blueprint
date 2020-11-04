@@ -4,7 +4,7 @@
     <!--单元连接弹出提示-->
     <div class="common-tip"
       v-show="isConnecting && !isConnectingToNew"
-      :style="{ left: (connectingEndPos.x - viewPort.x) + 'px', top:  (connectingEndPos.y - viewPort.y) + 'px' }">
+      :style="{ left: (connectingEndPos.x - viewPort.x + 10) + 'px', top:  (connectingEndPos.y - viewPort.y + 10) + 'px' }">
       <span v-if="currentHoverPort==null"><i class="iconfont icon-calendar-1 mr-1"></i>连接至新的单元</span>
       <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i></span>
       <span v-else><i class="iconfont icon-close- text-danger mr-1"></i><span v-html="connectingFailedText"></span></span>
@@ -69,9 +69,9 @@
       @update-viewport="recalcViewPort"
       @update-select-state="$emit('update-select-state', hasSelected())"
       @update-add-block-panel-filter="(d) => $emit('update-add-block-panel-filter', d)"
-      @update-set-file-changed="$emit('update-set-file-changed')"
-      @show-add-block-panel-view-port-pos="(p) => $emit('show-add-block-panel-at-pos', viewPortPosToWindowPos(p))"
-      @show-add-block-panel-at-pos="(p) => $emit('show-add-block-panel-at-pos', p)"
+      @update-set-file-changed="onFileChanged"
+      @show-add-block-panel-view-port-pos="(p) => $emit('show-add-block-panel-at-pos', this, viewPortPosToWindowPos(p))"
+      @show-add-block-panel-at-pos="(p) => $emit('show-add-block-panel-at-pos', this, p)"
       @clear-add-block-panel-filter="$emit('clear-add-block-panel-filter')"
       @set-add-block-inpos="setAddBlockInpos"
       @on-delete-block="onDeleteBlock"
@@ -137,21 +137,29 @@ import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
 })
 export default class BlockDrawer extends Vue {
 
-  currentGraph : BlockGraphDocunment = null;
-  currentDocunment : BlockDocunment = null;
+  private currentGraph : BlockGraphDocunment = null;
+  private currentDocunment : BlockDocunment = null;
 
-  loadedBlocks : Array<BlockEditor> = [];
-  loadedConnectors : Array<ConnectorEditor> = [];
+  @Prop({default:null}) docunment : BlockDocunment;
 
+  private loadedBlocks : Array<BlockEditor> = [];
+  private loadedConnectors : Array<ConnectorEditor> = [];
+
+  public goGraph(g : BlockGraphDocunment) {
+    if(g != this.currentGraph) {
+      this.currentGraph = g;
+      this.currentDocunment.currentGraph = g;
+      this.drawGraph(this.currentGraph);
+    }
+  }
   /**
    * 加载绘制文档
    */
   public drawGraph(doc : BlockGraphDocunment) {
-    if(this.currentGraph != doc) {
-      this.unloadGraph();
-      this.currentGraph = doc;
+    this.unloadGraph();
+    this.currentGraph = doc;
+    if(this.currentGraph)
       this.loadGraph();
-    }
   }
   public loadDocunment(doc : BlockDocunment) {
     if(this.currentDocunment != null)
@@ -179,7 +187,6 @@ export default class BlockDrawer extends Vue {
     }
   }
   private loadGraph() {
-    
     if(this.currentGraph.isEditor) {
 
       this.editorCanvas.drawStop();
@@ -261,7 +268,6 @@ export default class BlockDrawer extends Vue {
       });
       this.currentGraph = null;
     }
-  
   }
 
   public doDeleteGraph(graph : BlockGraphDocunment) {
@@ -485,6 +491,10 @@ export default class BlockDrawer extends Vue {
     if(this.viewRealSize.w != this.editorHost.offsetWidth || this.viewRealSize.h != this.editorHost.offsetHeight)
       this.onWindowSizeChanged();
   }
+  private onFileChanged() {
+    if(this.docunment)
+      this.docunment.fileChanged = true;
+  }
 
   editorHost : HTMLDivElement = null;
   editorWorker : BlockEditorWorker = null;
@@ -494,7 +504,11 @@ export default class BlockDrawer extends Vue {
   blockOwnerData : BlockEditorOwner = null;
 
   mounted() {
+
     setTimeout(() =>{
+      this.currentDocunment = this.docunment;
+      this.currentGraph =  null;
+      this.docunment.currentEditor = this;
 
       window.addEventListener('resize', () => this.onWindowSizeChanged);
 
@@ -531,6 +545,8 @@ export default class BlockDrawer extends Vue {
         getMultiSelectedBlocks: this.editorWorker.getMultiSelectedBlocks,
         unConnectConnector: this.editorWorker.unConnectConnector,
         showBlockRightMenu: this.showBlockRightMenu,
+        markFileChanged: () => this.onFileChanged(),
+        showInputRightMenu: (pos) => this.$emit('on-show-input-right-menu', pos),
         deleteBlock: this.editorWorker.deleteBlock,
         chooseType: (p, c, ce) => { this.$emit('choose-custom-type', p, c, ce); },
         openGraph: (g) => { this.$emit('on-open-graph', g); },
@@ -567,11 +583,15 @@ export default class BlockDrawer extends Vue {
       this.$emit('update-block-owner-data', this.blockOwnerData);
       this.onWindowSizeChanged();
       this.recalcViewPort();
+
+      this.loadDocunment(this.currentDocunment);
+      this.$emit('on-created', this);
     },200);
   }
   beforeDestroy() {
     window.removeEventListener('resize', () => this.onWindowSizeChanged);
     this.editorHost.removeEventListener('resize', () => this.onWindowSizeChanged);
+    this.$emit('on-destroyed', this);
   }
 
   //拖放
@@ -698,6 +718,9 @@ export default class BlockDrawer extends Vue {
         this.viewPort.x + (this.viewPort.w / 2 - 35) + this.viewPort.w / 2.5,
         this.viewPort.y + (this.viewPort.h / 2 - 15)
       ));
+
+      //新文档，所以取消设置文件更改状态
+      this.currentDocunment.fileChanged = false;
     }, 200);
   }
   public newGraph() {

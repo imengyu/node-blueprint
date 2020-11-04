@@ -6,7 +6,7 @@ import { BlockPort, BlockPortDirection } from "../Define/Port";
 import CommonUtils from "../../utils/CommonUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
-import { Block, OnUserAddPortCallback } from "../Define/Block";
+import { Block, OnBlockEditorEventCallback, OnUserAddPortCallback } from "../Define/Block";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { BlockEditorOwner } from "./BlockEditorOwner";
 import StringUtils from "../../utils/StringUtils";
@@ -91,6 +91,7 @@ export class BlockEditor extends Block {
       this.onCreateCustomEditor = this.regData.callbacks.onCreateCustomEditor;
       this.onUserAddPort = this.regData.callbacks.onUserAddPort;
       this.onCreatePortCustomEditor = this.regData.callbacks.onCreatePortCustomEditor;
+      this.onSave = this.regData.callbacks.onSave;
 
       this.portsChangeSettings = this.regData.settings.portsChangeSettings;
       this.parametersChangeSettings = this.regData.settings.parametersChangeSettings;
@@ -224,7 +225,7 @@ export class BlockEditor extends Block {
     else if(!CommonUtils.isNullOrEmpty(this.els.elLogoRight)) this.els.elLogoRight.style.backgroundImage = 'url(' + this.blockStyleSettings.logoRight + ')';
 
     if(!CommonUtils.isNullOrEmpty(this.blockStyleSettings.logoBackground)) {
-      if(this.blockStyleSettings.logoBackground.startsWith('title:')) this.els.elBackground.innerHTML = '<span class="big-title">' + this.blockStyleSettings.logoBackground.substr(7) + "</span>";
+      if(this.blockStyleSettings.logoBackground.startsWith('title:')) this.els.elBackground.innerHTML = '<span class="big-title">' + this.blockStyleSettings.logoBackground.substr(6) + "</span>";
       else if(this.blockStyleSettings.logoBackground.startsWith('<')) this.els.elBackground.innerHTML = this.blockStyleSettings.logoBackground;
       else this.els.elBackground.style.backgroundImage = 'url(' + this.blockStyleSettings.logoBackground + ')';
     }
@@ -708,15 +709,19 @@ export class BlockEditor extends Block {
   private onMouseUp(e : MouseEvent) {
     this.mouseDown = false;
 
-    if(this.lastMovedBlock) {
-      this.editor.onMoveBlockEnd(this);
-    }else {
-      this.updateSelectStatus(true);
-      this.editor.onUserSelectBlock(this, e.button == 0);
+    if(!this.testIsDownInControl(e)){
+
+      if(this.lastMovedBlock) {
+        this.editor.onMoveBlockEnd(this);
+      }else {
+        this.updateSelectStatus(true);
+        this.editor.onUserSelectBlock(this, e.button == 0);
+      }
     }
 
     document.removeEventListener('mousemove', this.fnonMouseMove);
     document.removeEventListener('mouseup', this.fnonMouseUp);
+  
   }
   private onMouseWhell(e : WheelEvent) {
     if(this.testIsDownInControl(e)) 
@@ -745,6 +750,7 @@ export class BlockEditor extends Block {
   public onCreateCustomEditor : BlockEditorComponentCreateFn = null;
   public onCreatePortCustomEditor : BlockPortEditorComponentCreateFn = null;
   public onUserAddPort : OnUserAddPortCallback = null;
+  public onSave : OnBlockEditorEventCallback = null;
 
   //#region 端口连接处理事件
 

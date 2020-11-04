@@ -323,17 +323,25 @@ export class BlockPortEditor extends BlockPort {
 
   //#region 鼠标事件
 
+  public mouseEnter = false;
   public mouseDownInPort = false;
   public mouseConnectingPort = false;
 
   private onPortMouseEnter(e : MouseEvent) {
-    (<BlockEditor>this.parent).editor.updateCurrentHoverPort(this);
-    
-    if(!this.paramType.isExecute()) 
-      ToolTipUtils.updateElementTooltip(this.editorData.el, this.getPortParamValStr());   
+    if(!this.mouseEnter) {
+      this.mouseEnter = true;
+
+      (<BlockEditor>this.parent).editor.updateCurrentHoverPort(this);
+      
+      if(!this.paramType.isExecute()) 
+        ToolTipUtils.updateElementTooltip(this.editorData.el, this.getPortParamValStr());  
+    } 
   }
   private onPortMouseLeave() {
-    (<BlockEditor>this.parent).editor.updateCurrentHoverPortLeave(this);
+    if(this.mouseEnter) {
+      this.mouseEnter = false;
+      (<BlockEditor>this.parent).editor.updateCurrentHoverPortLeave(this);
+    }
   }
   private onPortMouseMove(e : MouseEvent) {
     this.mouseConnectingPort = true;

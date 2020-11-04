@@ -1,18 +1,19 @@
 @import './root';
 
 .menu-bar {
-  padding: 0 0 0 50px;
+  padding: 0;
   background: #2f2f2c;
   position: relative;
   z-index: 2;
   height: $top-menu-height;
+  -webkit-app-region: no-drag;
 
   > .menu-bar-item {
     height: $top-menu-height;
-    vertical-align: middle;
+    vertical-align: middle
   }
 
-  > .editor-breadcrumb {
+  > .editor-file-tab {
     height: $top-menu-height;
     vertical-align: middle;
   }
@@ -22,6 +23,7 @@
   z-index: 5;
   color: #333;
   display: inline-block;
+  -webkit-app-region: no-drag;
 
   &.open {
     .menu-title {

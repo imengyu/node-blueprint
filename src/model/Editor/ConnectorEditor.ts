@@ -8,10 +8,6 @@ import { BlockPortEditor } from "./BlockPortEditor";
 
 export class ConnectorEditor extends Connector {
 
-  public constructor(startPort ?: BlockPort, endPort ?: BlockPort) {
-    super(startPort, endPort);
-  }
-
   public startPort : BlockPortEditor = null;
   public endPort : BlockPortEditor = null;
   public selected = false;

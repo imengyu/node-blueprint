@@ -8,17 +8,13 @@ const TerserPlugin = require('terser-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const JavaScriptObfuscator = require('webpack-obfuscator');
 
-const env = process.env.NODE_ENV === 'testing'
-  ? require('../config/test.env')
-  : require('../config/prod.env')
-
 const webpackConfig = [
   merge(baseWebpackConfig[0], {
     mode: 'production',
     devtool: config.build.productionSourceMap ? config.build.devtool : false,
     plugins: [
       new webpack.DefinePlugin({
-        'process.env': env
+        'process.env': require('../config/prod.env.electron')
       }),
       new HtmlWebpackPlugin({
         filename: process.env.NODE_ENV === 'testing'
@@ -41,11 +37,6 @@ const webpackConfig = [
         minify: { minifyCSS: true, minifyJS: true, collapseWhitespace: true, removeComments: true }
       }),
       new HtmlWebpackPlugin({
-        template: 'html-withimg-loader!./src/pages/docs.html',
-        filename: config.build.assetsRoot + '/docs.html', inject: false,
-        minify: { minifyCSS: true, minifyJS: true, collapseWhitespace: true, removeComments: true }
-      }),
-      new HtmlWebpackPlugin({
         template: 'html-withimg-loader!./src/pages/neterr.html',
         filename: config.build.assetsRoot + '/neterr.html', inject: false,
         minify: { minifyCSS: true, minifyJS: true, collapseWhitespace: true, removeComments: true }
@@ -60,16 +51,17 @@ const webpackConfig = [
         parallel: true
       }) ]
     }
-  }) , baseWebpackConfig[1]
-]
-
-baseWebpackConfig[1].devtool = config.build.productionSourceMap ? config.build.devtool : false,
-baseWebpackConfig[1].mode = 'production'
-baseWebpackConfig[1].plugins.push(
-  new webpack.DefinePlugin({
-    'process.env': env,
+  }) , 
+  merge(baseWebpackConfig[1], {
+    mode: 'production',
+    devtool: config.build.productionSourceMap ? config.build.devtool : false,
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.env': require('../config/prod.env.electron')
+      }),  
+    ]
   })
-);
+]
 
 if (config.build.productionGzip) {
   const CompressionWebpackPlugin = require('compression-webpack-plugin')

@@ -6,7 +6,7 @@
 
     <Input v-model="searchValue" placeholder="搜索单元..." clearable size="small" suffix="ios-search" :style="{margin:'5px 0'}" />
 
-    <div v-for="(item, index) in allBlocksGrouped" :key="index" :name="index.toString()" v-show="item.show&&item.filterShow"
+    <div v-for="(item, index) in allBlocksGrouped" :key="index" :name="index.toString()" v-show="item.show&&item.filterShow&&item.category!=''"
       class="collapse-item">
       <span class="collapse-title"  @click="item.open=!item.open;">
         <i :class="'collapse-arrow iconfont ' + (item.open ? 'icon-arrow-down-1' : 'icon-arrow-right-')"></i>
@@ -16,6 +16,10 @@
         @on-block-item-click="onBlockItemClick">
       </BlockCategory>
     </div>
+
+    <BlockCategory v-if="blocksGroupedMostOut" :categoryData="blocksGroupedMostOut" :isAddDirectly="isAddDirectly"
+      @on-block-item-click="onBlockItemClick">
+    </BlockCategory>
 
     <div v-if="currentShowCount==0 && searchValue != ''" class="text-center">暂无结果</div>
 
@@ -40,6 +44,7 @@ import { BlockParameterSetType, BlockParameterType } from "../model/Define/Block
 export default class AddPanel extends Vue {
   name = "AddPanel";
 
+  private blocksGroupedMostOut : CategoryData = null;
   @Prop({ default: null }) allBlocksGrouped : Array<CategoryData>;
   @Prop({ default: null }) showPos : Vector2;
   @Prop({ default: false }) show : boolean;
@@ -53,6 +58,17 @@ export default class AddPanel extends Vue {
   @Prop({ default: null }) filterByPortKeyType : BlockParameterType;
   @Prop({ default: null }) filterByPortSetType : BlockParameterSetType;
 
+  @Watch('allBlocksGrouped')
+  onAllBlocksGroupedChanged(newV) {
+    if(newV) { 
+      for (let index = 0; index < newV.length; index++) {
+        if(newV[index].category == '') {
+          this.blocksGroupedMostOut = newV[index];
+          break;
+        }        
+      }
+    } 
+  }
   @Watch('show')
   onShowChanged(newV) {
     if(newV) { setTimeout(() => {

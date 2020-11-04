@@ -27,12 +27,13 @@ export class BlockEditorOwner {
   unConnectConnector: (connector : ConnectorEditor) => void;
 
   showBlockRightMenu : (pos : Vector2) => void;
+  showInputRightMenu : (pos : Vector2, ele : HTMLInputElement) => void;
   deleteBlock: (block : BlockEditor, rm ?: boolean) => void;
 
   chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void, canBeExecute : boolean) => void;
   openGraph: (graph : BlockGraphDocunment) => void;
 
-
+  markFileChanged : () => void;
 
   viewPortPosToWindowPos: (pos : Vector2) => Vector2;
 

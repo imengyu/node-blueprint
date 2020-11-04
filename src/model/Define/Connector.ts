@@ -8,9 +8,7 @@ export class Connector {
 
   public uid : string;
 
-  public constructor(startPort ?: BlockPort, endPort ?: BlockPort) {
-    this.startPort = startPort;
-    this.endPort = endPort;
+  public constructor() {
     this.uid = CommonUtils.genNonDuplicateIDHEX(16);
   }
 

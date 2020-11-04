@@ -19,7 +19,7 @@
   z-index: 100;
   overflow: hidden;
 
-  > div {
+  > .tool-item {
     width: $left-toolbar-width;
     height: $left-toolbar-width;
     line-height: $left-toolbar-width;
@@ -94,7 +94,7 @@
     width: 100%;
     height: 1px;
     margin: 4px 3px 0 3px;
-    background-color: #353535;
+    background-color: rgba(255, 255, 255, 0.11);
   }
   .block {
     display: inline-block;
@@ -110,7 +110,6 @@
   bottom: 0;
   top: $top-menu-height;
   overflow: hidden;
-  border: solid #444 1px;
 
   .editorCanvas {
     width: 100%;
@@ -204,6 +203,156 @@
   }
 }
 
+.editor-icon {
+  display: inline-block;
+  width: 45px;
+  text-align: center;
+
+  img {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+  }
+}
+
+.editor-file-tab {
+  display: inline-block;
+  -webkit-app-region: no-drag;
+  
+}
+.editor-file-tab-item {
+  position: relative;
+  display: inline-block;
+  -webkit-app-region: no-drag;
+  height: 100%;
+
+  .close {
+    visibility: hidden;
+  }
+  &:hover {
+    .close {
+      visibility: visible;
+    }
+  }
+  &.active {
+    background-color: #000;
+  }
+
+  span {
+    color: #fff;
+  }
+}
+
+.editor-graph-breadcrumb {
+  position: relative;
+  height: 100%;
+  padding: 3px 10px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  cursor: pointer;
+
+  .button-controls {
+    display: inline-block;
+    margin-left: 7px;
+
+    a {
+      -webkit-app-region: no-drag;
+      color: #fff;
+
+      &:hover, &:active {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+//编辑器面包屑
+.editor-breadcrumb {
+  position: relative;
+  display: inline-block;
+  color: #999;
+  font-size: 14px;
+  vertical-align: middle;
+
+  > div {
+    display: inline-block;
+    padding: 5px 10px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color .2s cubic-bezier(.645,.045,.355,1);
+    color: #b9bcc4;
+
+    &.current {
+      background-color: #262626;
+    }
+
+    a {
+      color: #b9bcc4;
+
+      &:hover, &:focus {
+        color: #fff;
+      }
+    }
+
+    &::after {
+      display: inline-block;
+      content: '/';
+      margin: 0 6px;
+      font-weight: 400;
+      color: #c0c4cc;
+    }
+
+    &.last::after {
+      display: none;
+    }
+  }
+}
+
+.editor-blank-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  .huge-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 20px;
+    background-color: #757575;
+    padding: 25px;
+    width: 200px;
+    height: 200px;
+    text-align: center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #969696;
+    }
+    
+    &:not(:first-child) {
+      margin-left: 10px;
+    }
+
+    span {
+      color: #fff;
+      display: block;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    img {
+      width: 90px;
+      height: 90px;
+    }
+  }
+}
+
 //可折叠列表
 .collapse-list {
   position: relative;
@@ -237,6 +386,16 @@
     color: #000;
     margin-right: 3px;
   }
+}
+
+.titlebar-drag-region {
+  top: 0;
+  left: 0;
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: drag;
 }
 
 //属性列表
@@ -539,47 +698,6 @@
 
 }
 
-//编辑器面包屑
-.editor-breadcrumb {
-  position: relative;
-  display: inline-block;
-  color: #999;
-  font-size: 14px;
-  vertical-align: middle;
-
-  > div {
-    display: inline-block;
-    padding: 5px 10px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: color .2s cubic-bezier(.645,.045,.355,1);
-    color: #b9bcc4;
-
-    &.current {
-      background-color: #262626;
-    }
-
-    a {
-      color: #b9bcc4;
-
-      &:hover, &:focus {
-        color: #fff;
-      }
-    }
-
-    &::after {
-      display: inline-block;
-      content: '/';
-      margin: 0 6px;
-      font-weight: 400;
-      color: #c0c4cc;
-    }
-
-    &.last::after {
-      display: none;
-    }
-  }
-}
 
 .check-input {
   white-space: normal;
@@ -619,4 +737,13 @@
 
 .ivu-split-trigger-con {
   z-index: 300;
+}
+
+.comment-editor {
+  display: inline-block;
+  resize: both;
+  color: #000;
+  background-color: rgba(255, 255, 255, 0.788);
+  min-height: 80px;
+  min-width: 100px;
 }

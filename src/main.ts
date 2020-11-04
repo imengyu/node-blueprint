@@ -1,4 +1,4 @@
-import electron, { app, BrowserWindow, dialog, shell } from 'electron'
+import electron, { app, BrowserWindow, dialog, shell, session } from 'electron'
 import path from "path"
 import url from 'url'
 import fs from 'fs'
@@ -14,23 +14,20 @@ const exec = child_process.exec;
 var appTray : Electron.Tray = null;
 var appQuit = false
 var appIco : Electron.NativeImage = null;
-var appDir = process.cwd().replace(/\\/g, '/');
+var appDir = process.cwd().replace(/\\/g, '/') ;
 var appCanQuit = false;
 
 var mainWindow : Electron.BrowserWindow = null;
 var crashedWindow : Electron.BrowserWindow = null;
-
-function installVueDevTools() {
-  let devtoolsPath = appDir + '/extensions/vue-devtools/5.3.3_0';
-  if(fs.existsSync(devtoolsPath)) BrowserWindow.addDevToolsExtension(devtoolsPath);
-}
-function createMainWindow () {
+ 
+async function createMainWindow () {
+  appIco = Electron.nativeImage.createFromPath(path.posix.join(appDir, require('./assets/images/logo.ico')));
+  
+  console.log('createMainWindow');
 
   mainWindow = new BrowserWindow({
     minWidth: 710,
     minHeight: 500,
-    width: 900, 
-    height: 600,
     frame: false,
     transparent: false,
     fullscreen: false,
@@ -40,26 +37,20 @@ function createMainWindow () {
     webPreferences: {
       webSecurity: false, 
       nodeIntegration: true,
+      enableRemoteModule: true,
     },
   })
   mainWindow.setMenu(null)
-  mainWindow.loadURL(getPagePath('renderer.html'))
-  mainWindow.webContents.on('crashed', (event, killed) => {
-    if(killed) {
-      genErrorReport();
-      showCrashedWindow();
-      destroyMainWindow();
-    }
-    else {
-      genErrorReport();
-      mainWindow.webContents.loadURL(getPagePath('crashed.html'))
-    }
+
+  mainWindow.webContents.on('render-process-gone', (event, detail) => {
+    genErrorReport();
+    showCrashedWindow();
+    destroyMainWindow();
   });
   mainWindow.webContents.on('devtools-reload-page', () => {
     if(!mainWindow.isMinimized()) mainWindow.restore();
     if(!mainWindow.isFocused()) mainWindow.focus();
   });
-  mainWindow.webContents.openDevTools();
   mainWindow.on('closed', () =>  {
     if(appTray != null) {
       appTray.destroy();
@@ -88,6 +79,16 @@ function createMainWindow () {
     } 
   });
   mainWindow.once('ready-to-show', () => mainWindow.show())
+  
+  
+  //await mainWindow.webContents.session.loadExtension('D:/Programming/WebProjecs/Blueprint/dist/development/extensions/vue-devtools');
+  //await session.defaultSession.loadExtension('D:/Programming/WebProjecs/Blueprint/dist/development/extensions/vue-devtools');
+
+  await mainWindow.loadURL(getPagePath('renderer.html'));
+  if(process.env.NODE_ENV == 'development')  {
+    mainWindow.webContents.once('devtools-opened', () => mainWindow.focus());
+    mainWindow.webContents.openDevTools();
+  }
 
   createMainMenu();
 }
@@ -121,7 +122,7 @@ function createMainMenu() {
   const contextMenu = Menu.buildFromTemplate(trayMenuTemplate);
 
   appTray = new Tray(appIco);
-  appTray.setToolTip('PunctualCat');
+  appTray.setToolTip('Blueprint');
   appTray.setContextMenu(contextMenu);
   appTray.on('click', () => mainWindow.show())
 }
@@ -185,19 +186,38 @@ function submitErrorReport() {
 function initBasePath(callback : () => void) {
   
   appDir = appDir.replace(/\\/g, '/');
-  if(fs.existsSync(appDir + '/dist/index.html')) appDir = appDir + '/dist';
-  else if(fs.existsSync(appDir + '/dist/development/index.html')) appDir = appDir + '/dist/development';
-  else if(fs.existsSync(appDir + '/resources/app/index.html')) appDir = appDir + '/resources/app';
-  else if(fs.existsSync(appDir + '/resources/app.asar')) appDir = appDir + '/resources/app.asar';
+  if(fs.existsSync(appDir + '/dist/index.html')) appDir = appDir + '/dist/';
+  else if(fs.existsSync(appDir + '/dist/development/index.html')) appDir = appDir + '/dist/development/';
+  else if(fs.existsSync(appDir + '/resources/app/index.html')) appDir = appDir + '/resources/app/';
+  else if(fs.existsSync(appDir + '/resources/app.asar')) appDir = appDir + '/resources/app.asar/';
   
   callback();
 }
 function initApp() {
 
-  app.on('ready', () => {
-    appIco = Electron.nativeImage.createFromPath(path.posix.join(appDir, require('./assets/images/logo.ico')));
-    installVueDevTools();
-    createMainWindow();
+  app.on('ready', async () => { 
+    
+      //installVueDevTools
+      try {
+        
+        let devtoolsPath = appDir + 'extensions/vue-devtools';
+        console.log('devtoolsPath: ' + devtoolsPath);
+
+        if(fs.existsSync(devtoolsPath)) 
+          await session.defaultSession.loadExtension(devtoolsPath).then((e) => {
+            console.log('vue-devtools Extension : ' + e.id);
+          }).catch((e) => {
+            console.error(e);
+          })
+      }catch(e) {
+        console.error(e);
+      }
+
+    try { await createMainWindow(); }
+    catch(e) {
+      dialog.showErrorBox("发生了错误", "抱歉，应用发生了一个错误，现在应用将会关闭\n" + e);
+      app.exit(-1);
+    }
   })
   app.on('window-all-closed', () =>  {
     // On OS X it is common for applications and their menu bar
@@ -210,7 +230,7 @@ function initApp() {
     if (mainWindow === null) createMainWindow()
   })
   app.on('web-contents-created', (event, contents) => {
-    
+
     let errCount = 0;
 
     contents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId) => {
@@ -254,7 +274,6 @@ function initApp() {
       }
     })
   })
-
 }
 function initIpcs() {
 
@@ -302,6 +321,11 @@ function initIpcs() {
     if(mainWindow && event.sender == mainWindow.webContents) 
       mainWindow.webContents.loadURL(getPagePath('index.html'))
   });
+  ipc.on('main-act-toggle-devtools', (event) => {
+    if(mainWindow)
+      if(mainWindow.webContents.isDevToolsOpened()) mainWindow.webContents.closeDevTools();
+      else mainWindow.webContents.openDevTools();
+  });
   ipc.on('main-act-run-shell', (event, arg) => {
     let workerProcess
     //console.log('run command : ' + arg.command);
@@ -313,8 +337,12 @@ function initIpcs() {
 }
 
 //Init start
-
-initBasePath(() => {
-  initApp();
-  initIpcs();
-})
+try {
+  initBasePath(() => {
+    initApp();
+    initIpcs();
+  })
+}catch(e) {
+  dialog.showErrorBox("发生了错误", "抱歉，应用发生了一个错误，现在应用将会关闭\n" + e);
+  app.exit(-1);
+}

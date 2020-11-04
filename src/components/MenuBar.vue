@@ -1,5 +1,7 @@
 <template>
   <div class="menu-bar">
+    <div class="titlebar-drag-region"></div>
+    <slot name="icon"></slot>
     <div v-for="(menu,i) in menus" :class="menu.show ? 'menu-bar-item open' : 'menu-bar-item'" :key="i" 
       @click="onItemMouseClick(menu)" 
       @mouseenter="onItemMouseEnter(menu)" @mouseleave="onItemMouseLeave(menu)">
@@ -14,6 +16,7 @@
       </div>
     </div>
     <slot />
+    <slot name="end"></slot>
   </div>
 </template>
 
@@ -31,7 +34,9 @@ export default class MenuBar extends Vue {
 
   @Watch('menus')
   onMenusChanged() {
-    setTimeout(() =>  this.menus.forEach((m) => m.show = false), 200);
+    setTimeout(() =>  this.menus.forEach((m) => {
+      m.show = false;
+    }), 200);
   }
   @Watch('currentShowMenu')
   onCurrentShowMenuChanged(newv : MenuData) {

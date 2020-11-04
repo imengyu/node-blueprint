@@ -7,6 +7,7 @@ import { BlockPort } from "../Define/Port";
 import { Connector } from "../Define/Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { Block } from "../Define/Block";
+import { BlockPortEditor } from "../Editor/BlockPortEditor";
 
 /**
  * 流图保存加载解析器
@@ -59,6 +60,10 @@ export class BlockFileParser {
       let mapIndex = findBlockGUIDMap(block.guid);
       if(mapIndex == -1)
         mapIndex = docData.blockMap.push(block.guid) - 1;
+
+      //让单元保存自定义数据
+      if(saveToEditor && typeof (<BlockEditor>block).onSave == 'function')
+        (<BlockEditor>block).onSave(<BlockEditor>block);
 
       let blockData = {
         guidMap: mapIndex,
@@ -151,7 +156,7 @@ export class BlockFileParser {
 
     return data;
   }
-  private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean) {
+  private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean, doc : BlockDocunment) {
 
     let graph = new BlockGraphDocunment()
     
@@ -169,6 +174,7 @@ export class BlockFileParser {
     graph.outputPorts = graphData.outputPorts;
     graph.variables = [];
     graph.isMainGraph = false;
+    graph.docunment = doc;
 
     //variables
     graphData.variables.forEach(variable => {
@@ -225,19 +231,23 @@ export class BlockFileParser {
     graphData.connectors.forEach(connector => {
       let startPort = graph.blocks[connector.startBlock].getPortByGUID(connector.startPort);
       let endPort = graph.blocks[connector.endBlock].getPortByGUID(connector.endPort);
-      
+      let c = new ConnectorEditor();
+      c.startPort = <BlockPortEditor>startPort;
+      c.endPort = <BlockPortEditor>endPort;
+
       if(startPort != null && endPort != null){        
         if(readToEditor) {
-          let c = new ConnectorEditor(startPort, endPort);
           c.flexableCoonIndex = connector.flexableCoonIndex;
           graph.connectors.push(c);
-        }else graph.connectors.push(new Connector(startPort, endPort));
+        }else {
+          graph.connectors.push(c);
+        }
       }
     }); 
 
     //child graph
     graphData.childGraphs.forEach(childGraph => {
-      graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor));
+      graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor, doc));
     }); 
 
     return graph;
@@ -255,6 +265,7 @@ export class BlockFileParser {
       libVersion: doc.libVersion,
       openEditorVersion: doc.openEditorVersion,
       mainGraph: null,
+      uid: doc.uid,
       blockMap: [],
       portMap: [],
     };
@@ -278,6 +289,7 @@ export class BlockFileParser {
 
     let data = JSON.parse(str);
 
+    doc.uid = data.uid;
     doc.libVersion = data.libVersion;
     doc.openEditorVersion = data.openEditorVersion;
     doc.name = data.name;
@@ -287,7 +299,7 @@ export class BlockFileParser {
     //port GUID map
     data.portMap.forEach(port => portRegDatas.push(port));
     //load Graph
-    doc.mainGraph = this.loadGraph(data.mainGraph, null, blockRegDatas, portRegDatas, readToEditor);
+    doc.mainGraph = this.loadGraph(data.mainGraph, null, blockRegDatas, portRegDatas, readToEditor, doc);
     doc.mainGraph.isMainGraph = true;
     
     return doc;

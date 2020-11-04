@@ -5,6 +5,8 @@ import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockRunContextData } from "../WorkProvider/Runner";
 import { BlockParameterSetType } from "./BlockParameterType";
+import CommonUtils from "../../utils/CommonUtils";
+import BlockDrawer from "../../components/BlockDrawer.vue";
 
 /**
  * 文档结构
@@ -14,7 +16,9 @@ export class BlockDocunment {
   public constructor(name = '') {
     this.name = name;
     this.mainGraph = new BlockGraphDocunment(name);
+    this.mainGraph.docunment = this;
     this.mainGraph.isMainGraph = true;
+    this.uid = CommonUtils.genNonDuplicateIDHEX(16);
   }
 
   /**
@@ -37,6 +41,23 @@ export class BlockDocunment {
    * 是否是编辑器模式
    */
   isEditor = false;
+  /**
+   * 文件所在位置
+   */
+  path = '';
+  /**
+   * 提示文件是否在编辑器更改过但没有保存
+   */
+  fileChanged = false;
+  /**
+   * 
+   */
+  uid = '';
+  /**
+   * 当前打开的图表
+   */
+  currentGraph : BlockGraphDocunment = null;
+  currentEditor : BlockDrawer = null;
 }
 
 /**
@@ -69,6 +90,11 @@ export class BlockGraphDocunment {
    * 单元
    */
   blocks : Array<Block> = [];
+
+  /**
+   * 图表所在文档
+   */
+  docunment : BlockDocunment = null;
 
   /**
    * 根据单元GUID获取当前文档中的所有单元

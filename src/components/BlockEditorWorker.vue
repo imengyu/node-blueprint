@@ -170,7 +170,7 @@ export default class BlockEditorWorker extends Vue {
       if(this.connectors[i].hover)
         this.selectedConnectors.push(this.connectors[i]);
   }
-
+  
   public updateMousePos(e : MouseEvent) {
     this.mouseCurrentPos.x = e.x - this.toolBarWidth;
     this.mouseCurrentPos.y = e.y - this.toolBarHeight;
@@ -238,6 +238,8 @@ export default class BlockEditorWorker extends Vue {
     block.createBase();
     block.create(this.blockOwnerData);
     block.setPos(position);
+
+    this.currentGraph.blocks.push(block);
 
     this.$emit('update-set-file-changed');
   }
@@ -383,6 +385,8 @@ export default class BlockEditorWorker extends Vue {
       else if(endPort.direction == 'input') 
         connector.flexableCoonIndex = (<BlockEditor>endPort.parent).testAndChangeFlexablePortType(endPort, startPort) ? ConnectorEditor.flexableCoonSource++ : 0;
     }
+
+    this.$emit('update-set-file-changed');
     
     return connector;
   }
@@ -396,14 +400,17 @@ export default class BlockEditorWorker extends Vue {
 
     if(connector.startPort != null) {
       connector.startPort.removeConnectToPort(connector.endPort);
-      (<BlockPortEditor>connector.startPort).editorData.updatePortConnectStatusElement();
+      if(connector.endPort.editorData != null)
+        connector.startPort.editorData.updatePortConnectStatusElement();
       (<BlockEditor>connector.startPort.parent).invokeOnPortUnConnect(connector.startPort);
     }
     if(connector.endPort != null) {
       connector.endPort.removeConnectByPort(connector.startPort);
-      (<BlockPortEditor>connector.endPort).editorData.updatePortConnectStatusElement();
+      if(connector.endPort.editorData != null)
+        connector.endPort.editorData.updatePortConnectStatusElement();
       (<BlockEditor>connector.endPort.parent).invokeOnPortUnConnect(connector.endPort);
     }
+
     this.$emit('update-set-file-changed');
   }
   public flushConnectorFlexablePort(connector : ConnectorEditor) {
@@ -646,6 +653,7 @@ export default class BlockEditorWorker extends Vue {
   private testEventInControl(e : Event){
     let target = (<HTMLElement>e.target);
     return (HtmlUtils.isEventInControl(e)
+      || target.classList.contains('flow-block-no-move') 
       || target.classList.contains('param-editor') 
       || target.classList.contains('port-delete') 
       || target.classList.contains('port')
@@ -653,6 +661,9 @@ export default class BlockEditorWorker extends Vue {
   }
 
   private onMouseDown(e : MouseEvent) {
+    if(this.testEventInControl(e))
+      return;
+
     this.mouseDowned = true;
     this.mouseDownPos.x = e.x - this.toolBarWidth;
     this.mouseDownPos.y = e.y - this.toolBarHeight;
@@ -683,6 +694,8 @@ export default class BlockEditorWorker extends Vue {
     document.addEventListener('mousemove', <any>this.onMouseMoveFn);
   }
   private onMouseUp(e : MouseEvent) {
+    if(this.testEventInControl(e))
+      return;
 
     this.updateMousePos(e);
 

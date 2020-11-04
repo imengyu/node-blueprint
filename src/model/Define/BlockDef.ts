@@ -145,67 +145,102 @@ export class BlockRegData {
     /**
      * 单元初始化时的回调。
      * 通常在这个回调里面进行单元初始化的一些工作，请不要在这里调用行为节点（因为节点未初始化完成）。
+     * 
+     * (block : Block) => void
      */
     onCreate : OnBlockEventCallback,
     /**
      * 单元在编辑器模式中初始化时的回调。
+     * (block : BlockEditor) => void
      */
     onEditorCreate : OnBlockEditorEventCallback,
     /**
      * 单元释放时的回调。
+     * 
+     * (block : Block) => void
      */
     onDestroy : OnBlockEventCallback,
     /**
+     * 编辑器保存时的回调。（仅编辑器模式调用）
+     * 
+     * (block : BlockEditor) => void
+     */
+    onSave : OnBlockEditorEventCallback,
+    /**
      * 当图表开始运行
+     * 
+     * (block : Block) => void
      */
     onStartRun : OnBlockEventCallback,
     /**
      * 单元工作处理函数。入方向的执行端口激活时的回调。
      * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
+     * 
+     * (block : Block, port : BlockPort) => void
      */
     onPortExecuteIn : OnPortEventCallback,
     /**
      * 单元端口更新处理函数。
      * 下一级单元请求本单元输出参数时发生的回调。
+     * 
+     * (block : Block, port : BlockPort, context : BlockRunContextData) => void
      */
     onPortParamRequest : OnPortRequestCallback,
 
     /**
      * 用户添加了一个端口时的回调。
+     * 
+     * (block : Block, port : BlockPort) => void
      */
     onPortAdd : OnPortEventCallback,
     /**
      * 用户删除了一个端口时的回调。
+     * 
+     * (block : Block, port : BlockPort) => void
      */
     onPortRemove : OnPortEventCallback,
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
+     * 
+     * (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData)
      */
     onCreateCustomEditor : BlockEditorComponentCreateFn,
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
+     * 
+     * (parentEle : HTMLElement, block : BlockEditor, port : BlockPort) => HTMLElement
      */
     onCreatePortCustomEditor : BlockPortEditorComponentCreateFn,
     /**
      * 用户创建端口时的回调（仅编辑器模式调用）
+     * 
+     * (block : BlockEditor, direction : BlockPortDirection, type : 'execute'|'param') => BlockPortRegData|BlockPortRegData[]
      */
     onUserAddPort: OnUserAddPortCallback,
     /**
      * 添加单元时的回调，在这个回调中检查能否添加单元，
      * 返回null可以添加，返回一个字符串表示不能添加，字符串会显示给用户。（仅编辑器模式调用）
+     * 
+     * (block : BlockRegData, graph : BlockGraphDocunment) => string|null
      */
     onAddCheck: OnAddBlockCheckCallback,
     /**
      * 当的端口连接检查时的回调，在这个回调中检查能否连接端口，
      * 返回null可以添加，返回一个字符串表示不能连接，字符串会显示给用户。（仅编辑器模式调用）
+     * 
+     *  (block : BlockEditor, port : BlockPort, portSource : BlockPort) => string
      */
     onPortConnectCheck: OnPortConnectCheckCallback,
     /**
      * 当端口连接时的回调。（仅编辑器模式调用）
+     * 
+     * (block : BlockEditor, port : BlockPort, portSource : BlockPort) => void
      */
     onPortConnect: OnPortConnectCallback,
     /**
      * 当端口断开连接时的回调。（仅编辑器模式调用）
+     * 
+     * (block : BlockEditor, port : BlockPort) => void
      */
     onPortUnConnect: OnPortEditorEventCallback,
   } = {
@@ -224,6 +259,7 @@ export class BlockRegData {
     onPortConnectCheck: null,
     onPortConnect: null,
     onPortUnConnect: null,
+    onSave: null,
   }
 
   /**
@@ -260,6 +296,7 @@ export class BlockStyleSettings  {
   public logoBottom = "";
   /**
    * 单元左下角的小图标 16x16
+   * 如果设置为 “title:xxxxx” 那么将会显示为文字 xxxxx
    */
   public logoBackground = "";
   /**
@@ -349,6 +386,10 @@ export interface BlockPortRegData {
    * 参数值是否为全局变量，默认为 false
    */
   paramStatic ?: boolean;
+  /**
+   * 指定参数是否必须提供，默认为 false
+   */
+  paramRequired ?: boolean;
 
   portAnyFlexable ?: {};
 

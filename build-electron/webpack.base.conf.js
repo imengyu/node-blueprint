@@ -39,9 +39,8 @@ const rendererConfig = {
         test: /\.(ttf|woff|woff2|eot|otf|svg|node|bmp|png|jpg|jpeg|gif|ico)$/,
         use: [
           {
-            loader: 'url-loader',
+            loader: 'file-loader',
             options: {
-              limit: 0,
               outputPath: 'assets',
             }
           }
@@ -108,9 +107,8 @@ const mainConfig = {
         test: /\.(ttf|woff|woff2|eot|otf|svg|node|bmp|png|jpg|jpeg|gif|ico)$/,
         use: [
           {
-            loader: 'url-loader',
+            loader: 'file-loader',
             options: {
-              limit: 0,
               outputPath: 'assets',
             }
           }
@@ -135,6 +133,12 @@ const mainConfig = {
       {
         from: path.resolve(__dirname, '../src/main-process'),
         to: process.env.NODE_ENV === 'production' ? config.build.assetsRoot : config.dev.assetsRoot
+      },
+    ]),
+    new CopyWebpackPlugin([
+      {
+        from: path.resolve(__dirname, '../src/assets/images/logo.ico'),
+        to: (process.env.NODE_ENV === 'production' ? config.build.assetsRoot : config.dev.assetsRoot) + '/assets/logo.ico'
       },
     ])
   ]

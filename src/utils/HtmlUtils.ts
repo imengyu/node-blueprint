@@ -17,6 +17,7 @@ export default {
   hideElement(el : HTMLElement) {
     el.style.display = 'none';
   },
+  isEleEditable,
   createOptionElement,
   registerShowTooltipDelay,
 }
@@ -31,6 +32,22 @@ function createOptionElement(value : string, text : string) {
   return e;
 } 
 
+/**
+ * 判断点击区域可编辑
+ * @param {*} e 
+ */
+function isEleEditable(e){
+  if(!e){
+      return false;
+  }
+  //为input标签或者contenteditable属性为true
+  if(e.tagName == 'INPUT' || e.contentEditable == 'true'){
+      return true;
+  }else{
+      //递归查询父节点
+      return isEleEditable(e.parentNode)
+  }
+}
 
 /**
  * 获取元素的绝对纵坐标

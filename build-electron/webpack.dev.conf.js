@@ -18,7 +18,7 @@ const devWebpackConfig = [
     },
     plugins: [
       new webpack.DefinePlugin({
-        'process.env': require('../config/dev.env')
+        'process.env': require('../config/dev.env.electron')
       }),  
       new HtmlWebpackPlugin({
         template: 'html-withimg-loader!./src/renderer.html',
@@ -37,16 +37,23 @@ const devWebpackConfig = [
       }),
       new VueLoaderPlugin(),
     ]
-  }), baseWebpackConfig[1]
+  }), 
+  merge(baseWebpackConfig[1], {
+    mode: 'development',
+    devtool: config.dev.devtool,
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.env': require('../config/dev.env.electron')
+      }),  
+    ]
+  })
 ]
-
-baseWebpackConfig[1].devtool = config.dev.devtool,
-baseWebpackConfig[1].mode = 'development'
 
 let electronStarted = false
 
 module.exports = new Promise((resolve, reject) => {
 
+  /*
   devWebpackConfig[0].plugins.push({
     apply: (compiler) => {
       compiler.hooks.done.tap('StartElectron', compilation => {
@@ -71,6 +78,7 @@ module.exports = new Promise((resolve, reject) => {
       });
     }
   })
+  */
   
   resolve(devWebpackConfig)
  
