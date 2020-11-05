@@ -34,8 +34,8 @@ export class ConnectorEditor extends Connector {
     let startPos = this.startPort.editorData.getPosition();
     let endPos = this.endPort.editorData.getPosition();
 
-    let x1 = startPos.x * viewZoom, x2 = endPos.x * viewZoom, 
-    y1 = startPos.y * viewZoom, y2 = endPos.y * viewZoom;
+    let x1 = startPos.x * viewZoom - 1, x2 = endPos.x * viewZoom + 2, 
+    y1 = startPos.y * viewZoom - 1, y2 = endPos.y * viewZoom + 2;
 
     this.rect.Set(x1, y1, x2 - x1, y2 - y1);
     return this.rect.testInRect(pos);

@@ -22,6 +22,11 @@ export default {
   },
   pad,
   formatNumberWithComma,
+  getFileName(path : string) {
+    var pos = path.lastIndexOf('/');
+    if(pos < 0) pos = path.lastIndexOf('\\');
+    return path.substring(pos + 1);  
+  }
 }
 /**
 * 判断字符串是否是 Base64 编码

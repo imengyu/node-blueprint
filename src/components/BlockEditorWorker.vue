@@ -1,12 +1,17 @@
 <template>
   <div>
+    <div ref="blockHostBackground" class="flow-block-host" :style="{ 
+      left: -viewPort.x + 'px', top: -viewPort.y + 'px' ,
+      userSelect: (isMultiSelecting ? 'none' : 'unset'),
+      transform: 'scale(' + viewZoom + ')'
+    }" oncontextmenu="return false"> 
+    </div>
+    <slot />
     <div ref="blockHost" class="flow-block-host" :style="{ 
       left: -viewPort.x + 'px', top: -viewPort.y + 'px' ,
       userSelect: (isMultiSelecting ? 'none' : 'unset'),
       transform: 'scale(' + viewZoom + ')'
-    }"
-      oncontextmenu="return false" 
-    >
+    }" oncontextmenu="return false"> 
     </div>
     <!--对话框-->
     <Modal v-model="showDeleteModal" width="360">
@@ -123,6 +128,17 @@ export default class BlockEditorWorker extends Vue {
     if(this.selectedConnectors.length > 0) 
       return this.selectedConnectors[0];
     return null;
+  }
+  /**
+   * 选中一些单元
+   */
+  public selectSomeBlocks(blocks : Array<BlockEditor>) {
+    this.unSelectAllBlocks();
+    for(var i=0;i<blocks.length;i++)  {
+      blocks[i].updateSelectStatus(true);
+      this.selectedBlocks.push(blocks[i]);
+    }
+    this.$emit('update-select-state');
   }
   /**
    * 取消选中所有单元
@@ -291,6 +307,9 @@ export default class BlockEditorWorker extends Vue {
   private connectingSrcPort : BlockPort = null;
 
   currentHoverPort : BlockPortEditor = null;
+
+  public currentSelectedBlock : BlockEditor = null;
+  public currentSelectedPort : BlockPortEditor = null;
 
   /**
    * 连接两个端口
@@ -582,6 +601,33 @@ export default class BlockEditorWorker extends Vue {
 
     this.$emit('update-set-file-changed');
   }
+  public straightenConnector(port : BlockPortEditor, connector : ConnectorEditor) {
+    let refPos = port.editorData.getPosition();
+    let block : BlockEditor;
+    let oldPos : Vector2;
+
+    if(connector.startPort == port) {
+      block = connector.endPort.getParentBlock();
+      oldPos = connector.endPort.editorData.getPosition();
+    }
+    else if(connector.endPort == port)  {
+      block = connector.startPort.getParentBlock();
+      oldPos = connector.startPort.editorData.getPosition();
+    }
+
+    if(block) {
+      let offPos = oldPos.y - block.position.y;
+      block.setPos(new Vector2(block.position.x, refPos.y - offPos));
+    }
+
+    this.$emit('update-set-file-changed');
+  }
+  public isAnyConnectorHover() {
+    for(let i = 0, c= this.connectors.length;i<c;i++)
+      if(this.connectors[i].hover)
+        return true;
+    return false;
+  }
 
   //单元的操作
   //=======================
@@ -598,27 +644,43 @@ export default class BlockEditorWorker extends Vue {
     this.selectedBlocks.forEach((b) => this.unConnectBlock(b));
     this.$emit('update-set-file-changed');
   }
+  public unConnectPort(port : BlockPortEditor) {
+    port.connectedToPort.forEach((b) => this.unConnectConnector(<ConnectorEditor>b.connector));
+    port.connectedFromPort.forEach((b) => this.unConnectConnector(<ConnectorEditor>b.connector));
+    this.$emit('update-set-file-changed');
+  }
   public refreshSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.refreshBlock(b));
   }
-  public alignSelectedBlock(align : 'left'|'top'|'right'|'bottom') {
+  public alignSelectedBlock(baseBlock : BlockEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
     switch(align) {
       case 'left':
-
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(baseBlock.position.x, b.position.y)));
         break;
       case 'top':
-
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(b.position.x, baseBlock.position.y)));
         break;
-      case 'right':
-
+      case 'center-x': {
+        let center = baseBlock.position.x + baseBlock.size.x / 2;
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(center + b.size.x / 2, b.position.y)));
         break;
-      case 'bottom':
-
+      }
+      case 'center-y': {
+        let center = baseBlock.position.y + baseBlock.size.y / 2;
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(b.position.x, center + b.size.y / 2)));
         break;
+      }
+      case 'right': {
+        let right = baseBlock.position.x + baseBlock.size.x;
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(right - baseBlock.size.x, b.position.y)));
+        break;
+      }
+      case 'bottom': {
+        let bottom = baseBlock.position.y + baseBlock.size.y;
+        this.selectedBlocks.forEach((b) => b.setPos(new Vector2(b.position.x, bottom - baseBlock.size.y)));
+        break;
+      }
     }
-    this.selectedBlocks.forEach((b) => {
-      
-    });
     this.$emit('update-set-file-changed');
   }
   public setSelectedBlockBreakpointState(state : BlockBreakPoint) {
@@ -645,6 +707,12 @@ export default class BlockEditorWorker extends Vue {
       });
     });
     return conn;
+  }
+  public makePortAsVariable(port : BlockPortEditor)  { 
+    
+  }
+  public genCommentForSelectedBlock() {
+
   }
 
   //编辑器鼠标事件
@@ -694,8 +762,7 @@ export default class BlockEditorWorker extends Vue {
     document.addEventListener('mousemove', <any>this.onMouseMoveFn);
   }
   private onMouseUp(e : MouseEvent) {
-    if(this.testEventInControl(e))
-      return;
+    
 
     this.updateMousePos(e);
 
@@ -847,6 +914,7 @@ export default class BlockEditorWorker extends Vue {
   mounted() {
     setTimeout(() => {
       this.blockHost = <HTMLDivElement>this.$refs.blockHost;
+      this.blockHostBackground = <HTMLDivElement>this.$refs.blockHostBackground;
       this.editorHost.addEventListener('mousedown', this.onMouseDown);
       this.editorHost.addEventListener('mouseup', this.onMouseUp);
       this.editorHost.addEventListener('mousemove', this.onMouseMove);
@@ -878,9 +946,16 @@ export default class BlockEditorWorker extends Vue {
     document.removeEventListener('keydown', this.onKeyDown);
   }
 
-  public getBlockHostElement() { return this.blockHost }
+  public getBlockHostElement(layer : string) { 
+    switch(layer) {
+      case 'normal': return this.blockHost ;
+      case 'background': return this.blockHostBackground ;
+    }
+    return null;
+  }
 
   blockHost : HTMLDivElement;
+  blockHostBackground : HTMLDivElement;
   @Prop({ default: null }) blockOwnerData : BlockEditorOwner;
   @Prop({ default: null }) editorHost : HTMLDivElement;
   @Prop({ default: 0 }) toolBarHeight : number;

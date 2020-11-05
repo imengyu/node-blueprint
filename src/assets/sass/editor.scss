@@ -242,6 +242,17 @@
   span {
     color: #fff;
   }
+
+  i {
+    padding: 0 6px;
+  }
+
+  > div.last {
+
+    i {
+      display: none;
+    }
+  }
 }
 
 .editor-graph-breadcrumb {
@@ -319,6 +330,7 @@
   height: 100%;
 
   .huge-button {
+    position: relative;
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -349,6 +361,26 @@
     img {
       width: 90px;
       height: 90px;
+    }
+
+    ul {
+      display: block;
+      overflow: scroll;
+      width: 100%;
+      height: 100%;
+      @include pc-fix-scrollbar();
+
+      li {
+        color: rgb(155, 188, 207);
+      }
+
+      a {
+        color: #c4c4c4;
+
+        &:active, &:hover {
+          color: #fff;
+        }
+      }
     }
   }
 }

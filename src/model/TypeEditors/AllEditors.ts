@@ -23,7 +23,7 @@ export default {
   },
   getDefaultEnumEditor(customType : BlockParameterEnumRegData) : BlockParameterEditorRegData {
     return {
-      editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+      editorCreate: (block, port, parentEle, changeCallBack, nowVal, defaultVal) => {
         let ele = document.createElement('select')
         ele.setAttribute('type', "text");
 
@@ -54,7 +54,7 @@ export default {
 }
 
 let booleanEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+  editorCreate: (block, port, parentEle, changeCallBack, nowVal, defaultVal) => {
 
     if(nowVal == null || typeof nowVal != 'boolean') 
     nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'boolean' ? defaultVal : false);
@@ -76,7 +76,7 @@ let booleanEditor : BlockParameterEditorRegData = {
   useInSetType: [ 'variable' ],
 };
 let numberEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+  editorCreate: (block, port, parentEle, changeCallBack, nowVal, defaultVal) => {
 
     if(nowVal == null || typeof nowVal != 'number') 
     nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'number' ? defaultVal : 0);
@@ -133,7 +133,7 @@ let numberEditor : BlockParameterEditorRegData = {
   useInSetType: [ 'variable' ],
 };
 let bigintEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+  editorCreate: (block, port, parentEle, changeCallBack, nowVal, defaultVal) => {
 
     if(nowVal == null || typeof nowVal != 'bigint') 
       nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'bigint' ? defaultVal : BigInt(0));
@@ -190,20 +190,27 @@ let bigintEditor : BlockParameterEditorRegData = {
   useInSetType: [ 'variable' ],
 };
 let stringEditor : BlockParameterEditorRegData = {
-  editorCreate: (parentEle, changeCallBack, nowVal, defaultVal) => {
+  editorCreate: (block, port, parentEle, changeCallBack, nowVal, defaultVal) => {
 
+    let partuid = port ? ('param_editors_' + port.guid) : '';
     if(nowVal == null || typeof nowVal != 'string') 
       nowVal = changeCallBack(defaultVal != null && typeof defaultVal == 'string' ? defaultVal : '');
 
     let ele = document.createElement('textarea')
     if(nowVal != null && typeof nowVal == 'string')
       ele.value = <string>nowVal;
-    ele.style.width = '110px';
-    ele.style.height = '23px';
+    ele.style.width = block && block.options[partuid + '_w'] ? block.options[partuid + '_w'] : '110px';
+    ele.style.height = block && block.options[partuid + '_h'] ? block.options[partuid + '_h'] : '23px';
     ele.style.minHeight = '23px';
-    ele.style.minWidth = '110px';
+    ele.style.minWidth = '40px';
     ele.style.resize = 'both';
     ele.classList.add('custom-editor');
+    ele.onmouseup = () => {
+      if(block) {
+        block.options[partuid + '_w'] = ele.offsetWidth + 'px';
+        block.options[partuid + '_h'] = ele.offsetHeight + 'px';
+      }
+    };
     ele.onblur = () => changeCallBack(ele.value);
     return ele
   },

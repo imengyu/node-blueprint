@@ -16,6 +16,11 @@ import BlockUtils from "../Blocks/Utils/BlockUtils";
 import { BlockPortEditor, BlockPortIcons } from "./BlockPortEditor";
 
 
+export const SIZE_LEFT = 0x1;
+export const SIZE_RIGHT = 0x2;
+export const SIZE_TOP = 0x4;
+export const SIZE_BOTTOM = 0x8;
+
 /**
  * 编辑器模式下的单元。
  * 扩展了单元的编辑事件操作与管理,供编辑器使用。
@@ -97,7 +102,7 @@ export class BlockEditor extends Block {
       this.parametersChangeSettings = this.regData.settings.parametersChangeSettings;
     }
 
-    let host = this.editor.getBlockHostElement();
+    let host = this.editor.getBlockHostElement(this.blockStyleSettings.layer);
 
     this.el = document.createElement('div');
     this.el.classList.add("flow-block");
@@ -107,6 +112,10 @@ export class BlockEditor extends Block {
       this.el.style.minWidth = this.blockStyleSettings.minWidth;
     if(!StringUtils.isNullOrEmpty(this.blockStyleSettings.minHeight))
       this.el.style.minHeight = this.blockStyleSettings.minHeight;
+
+    this.els.elSizeDragger = document.createElement('div');
+    this.els.elSizeDragger.classList.add('size-dragger');
+    if(!this.userCanResize) HtmlUtils.hideElement(this.els.elSizeDragger);
 
     //#region Ports
 
@@ -295,6 +304,15 @@ export class BlockEditor extends Block {
     this.el.appendChild(content);
     this.el.appendChild(this.els.elBreakPointStatus);
     this.el.appendChild(this.els.elBreakPointArrow);
+    this.el.appendChild(this.els.elSizeDragger);
+
+    //size
+    if(this.userCanResize) {
+      if(this.size.x > 0)
+        this.el.style.width = this.size.x + 'px';
+      if(this.size.y > 0)
+        this.el.style.height = this.size.y + 'px';
+    }
 
     //Events
 
@@ -349,7 +367,7 @@ export class BlockEditor extends Block {
     this.outputPorts = null;
     this.allPorts = null;
 
-    this.editor.getBlockHostElement().removeChild(this.el);
+    this.el.parentNode.removeChild(this.el);
   }
   public clone() {
     let blockEditor = new BlockEditor(this.regData);
@@ -373,6 +391,12 @@ export class BlockEditor extends Block {
       this.position.Set(pos);
     this.el.style.left = this.position.x + 'px';
     this.el.style.top = this.position.y + 'px';
+  }
+  public setSize(size ?: Vector2) {
+    if(typeof this.size != 'undefined')
+      this.size.Set(size);
+    this.el.style.width = this.size.x + 'px';
+    this.el.style.height = this.size.y + 'px';
   }
   /**
    * 断开端口的所有连接
@@ -438,6 +462,9 @@ export class BlockEditor extends Block {
       this.els.elAddInputParamPort.style.visibility = this.parametersChangeSettings.userCanAddInputParameter ? '' : 'hidden';
       this.els.elAddOutputParamPort.style.visibility = this.parametersChangeSettings.userCanAddOutputParameter ? '' : 'hidden';
     }
+
+    if(this.userCanResize) HtmlUtils.showElement(this.els.elSizeDragger);
+    else HtmlUtils.hideElement(this.els.elSizeDragger);
     
   }
   public updateSelectStatus(selected?:boolean) {
@@ -641,20 +668,20 @@ export class BlockEditor extends Block {
 
   //#region 鼠标事件
 
- 
-
-  //#endregion 
-
-  //#region 单元移动事件
-
   public mouseDown = false;
   public mouseConnectingPort = false;
   public mouseDownInPort = false;
 
   private mouseLastDownPos : Vector2 = new Vector2();
+  private mouseLastDownPosInViewPort : Vector2 = new Vector2();
   private lastBlockPos : Vector2 = new Vector2();
   private lastMovedBlock = false;
+  private lastBlockSize : Vector2 = new Vector2();
+  private minBlockSize : Vector2 = new Vector2();
 
+  private currentSizeType = 0;
+
+  public isLastMovedBlock() { return this.lastMovedBlock; }
   public updateLastPos() { this.lastBlockPos.Set(this.position); }
   public getLastPos() { return this.lastBlockPos; }
 
@@ -665,71 +692,194 @@ export class BlockEditor extends Block {
     this.hover = false;
   }
   private onMouseMove(e : MouseEvent) {
-  
-    if(this.mouseDown && e.button == 0 && !this.mouseDownInPort && !this.mouseConnectingPort) {
-      let pos = new Vector2(
-        this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
-        this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)
-      );
-      if(pos.x != this.position.x || pos.y != this.position.y) {
-        this.lastMovedBlock = true;
-        this.setPos(pos);
-        this.editor.onMoveBlock(this, new Vector2(e.x - this.mouseLastDownPos.x, e.y - this.mouseLastDownPos.y));
+    if(this.mouseDown) {
+      if(e.buttons == 1){ 
+        //Resize
+        //=====================
+        if(this.currentSizeType) { 
+          let mousePos = this.editor.windowPosToViewPortPos(new Vector2(e.x, e.y));
+          let size = new Vector2(this.size.x, this.size.y);
 
-        //如果当前块没有选中，在这里切换选中状态
-        if(!this.selected) {
-          let multiSelectBlocks = this.editor.getMultiSelectedBlocks();
-          if(multiSelectBlocks.length == 0 || multiSelectBlocks.contains(this)) {
-            this.updateSelectStatus(true);
-            this.editor.onUserSelectBlock(this, true);
-          }else {
-            this.editor.unSelectAllBlocks();
-            this.updateSelectStatus(true);
-            this.editor.onUserSelectBlock(this, false);
+          if (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_TOP) == SIZE_TOP)) {
+            //左上
+            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
+            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            this.setPos(mousePos);
+          }
+          else if(((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
+            //右下
+            size.x = mousePos.x - this.lastBlockPos.x;
+            size.y = mousePos.y - this.lastBlockPos.y;
+          }
+          else if (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM)) {
+            //左下
+            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
+            size.y = mousePos.y - this.lastBlockPos.y;
+            this.setPos(new Vector2(mousePos.x, this.position.y));
+          }
+          else if (((this.currentSizeType & SIZE_TOP) == SIZE_TOP) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
+            //右上
+            size.x = mousePos.x - this.lastBlockPos.x;
+            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            this.setPos(new Vector2(this.position.x, mousePos.y));
+          }
+          else if((this.currentSizeType & SIZE_TOP) == SIZE_TOP)  {
+            //上
+            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            this.setPos(new Vector2(this.position.x, mousePos.y));
+          }
+          else if((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) {
+            //下
+            size.y = mousePos.y - this.lastBlockPos.y;
+          }
+          else if((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) {
+            //左
+            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
+            this.setPos(new Vector2(mousePos.x, this.position.y));
+          }
+          else if((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT) {
+            //右
+            size.x = mousePos.x - this.lastBlockPos.x;
+          }            
+          
+          if(size.x < this.minBlockSize.x) size.x = this.minBlockSize.x;
+          if(size.y < this.minBlockSize.y) size.y = this.minBlockSize.y;
+
+          this.setSize(size);
+        }
+        //Move
+        //=====================
+        else if(!this.mouseDownInPort && !this.mouseConnectingPort) { 
+          let pos = new Vector2(
+            this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
+            this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)
+          );
+          if(pos.x != this.position.x || pos.y != this.position.y) {
+            this.lastMovedBlock = true;
+            this.setPos(pos);
+            this.editor.onMoveBlock(this, new Vector2(e.x - this.mouseLastDownPos.x, e.y - this.mouseLastDownPos.y));
+    
+            //如果当前块没有选中，在这里切换选中状态
+            if(!this.selected) {
+              let multiSelectBlocks = this.editor.getMultiSelectedBlocks();
+              if(multiSelectBlocks.length == 0 || multiSelectBlocks.contains(this)) {
+                this.updateSelectStatus(true);
+                this.editor.onUserSelectBlock(this, true);
+              }else {
+                this.editor.unSelectAllBlocks();
+                this.updateSelectStatus(true);
+                this.editor.onUserSelectBlock(this, false);
+              }
+            }
           }
         }
+        return true;
       }
-      return true;
+    }
+    else if(this.userCanResize) { //鼠标移动到边缘显示调整大小样式
+      this.testInResize(e);
     }
     return false;
   }
   private onMouseDown(e : MouseEvent) {
+    if(this.blockStyleSettings.layer == 'background' && this.editor.isAnyConnectorHover()) 
+      return;
     if(!this.testIsDownInControl(e)) {
       this.mouseDown = true;
       this.mouseLastDownPos.Set(e.x, e.y);
+      this.mouseLastDownPosInViewPort = this.editor.windowPosToViewPortPos(new Vector2(e.x, e.y));
       this.lastMovedBlock = false;
       this.lastBlockPos.Set(this.position);
+      this.lastBlockSize.Set(this.size);
+
+      if(this.userCanResize) {
+        this.minBlockSize.x = this.el.style.minWidth ? parseInt(this.el.style.minWidth) : 111;
+        this.minBlockSize.y = this.el.style.minWidth ? parseInt(this.el.style.minHeight) : 100;
+        this.testInResize(e);
+      }
 
       document.addEventListener('mousemove', this.fnonMouseMove);
       document.addEventListener('mouseup', this.fnonMouseUp);
 
       e.stopPropagation();
     }
+    this.updateCursor();
   }
   private onMouseUp(e : MouseEvent) {
-    this.mouseDown = false;
+    if(this.mouseDown) {
+      this.mouseDown = false;
 
-    if(!this.testIsDownInControl(e)){
+      if(!this.testIsDownInControl(e)){
 
-      if(this.lastMovedBlock) {
-        this.editor.onMoveBlockEnd(this);
-      }else {
-        this.updateSelectStatus(true);
-        this.editor.onUserSelectBlock(this, e.button == 0);
+        if(this.editor.isConnectorSelected()) 
+          this.editor.unSelectAllConnector();
+
+        if(this.lastMovedBlock) {
+          this.editor.onMoveBlockEnd(this);
+        }else {
+          this.updateSelectStatus(true);
+          this.editor.onUserSelectBlock(this, true);
+        }
       }
+      this.updateCursor();
     }
 
     document.removeEventListener('mousemove', this.fnonMouseMove);
     document.removeEventListener('mouseup', this.fnonMouseUp);
-  
+
   }
   private onMouseWhell(e : WheelEvent) {
     if(this.testIsDownInControl(e)) 
       e.stopPropagation();
   }
-  private onContextMenu(e) {
-    this.editor.showBlockRightMenu(new Vector2(e.x, e.y));
+  private onContextMenu(e : MouseEvent) {
+    if(this.editor.isConnectorSelected()) {
+      this.editor.showConnectorRightMenu(new Vector2(e.x, e.y));
+    }else {
+      e.stopPropagation();
+      e.preventDefault();
+      this.editor.showBlockRightMenu(this, new Vector2(e.x, e.y));
+    }
     return false;
+  }
+
+  private testInResize(e : MouseEvent) {
+    let pos = this.editor.windowPosToViewPortPos(new Vector2(e.x, e.y));
+    pos.substract(this.position);
+    this.currentSizeType = 0;
+    if(pos.x <= 6) this.currentSizeType |= SIZE_LEFT;
+    else if(pos.x > this.size.x - 6) this.currentSizeType |= SIZE_RIGHT;
+    if(pos.y <= 6) this.currentSizeType |= SIZE_TOP;
+    else if(pos.y > this.size.y - 6) this.currentSizeType |= SIZE_BOTTOM;
+
+    if(pos.x >= this.size.x - 10 && pos.y >= this.size.y - 10)
+      this.currentSizeType |= SIZE_BOTTOM | SIZE_RIGHT;
+
+    this.updateCursor();
+  }
+  private updateCursor() {
+    if(this.currentSizeType > 0) {
+      if(
+        (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_TOP) == SIZE_TOP))
+        || (((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+      )
+        this.el.style.cursor = 'nwse-resize';
+      else if(
+        (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM))
+        || (((this.currentSizeType & SIZE_TOP) == SIZE_TOP) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+      )
+        this.el.style.cursor = 'nesw-resize';
+      else if(((this.currentSizeType & SIZE_TOP) == SIZE_TOP) || ((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM))
+        this.el.style.cursor = 'ns-resize';
+      else if(((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) || ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+        this.el.style.cursor = 'ew-resize';
+      else 
+        this.el.style.cursor = 'default';
+    }else if(this.mouseDown) {
+      this.el.style.cursor = 'move';
+    }else {
+      this.el.style.cursor = 'default';
+    }
   }
 
   //#endregion 
@@ -846,6 +996,8 @@ export class BlockEditorHTMLData {
   elLogo : HTMLDivElement = null;
   elLogoRight : HTMLDivElement = null;
   elLogoBottom : HTMLDivElement = null;
+
+  elSizeDragger : HTMLDivElement = null;
 
   elBreakPointArrow : HTMLDivElement = null;
   elBreakPointStatus : HTMLDivElement = null ;

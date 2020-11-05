@@ -74,6 +74,7 @@ export class BlockPortEditor extends BlockPort {
     this.editorData.el.addEventListener('mousedown', (e) => this.onPortMouseDown(e));
     this.editorData.el.addEventListener('mouseenter', (e) => this.onPortMouseEnter(e));
     this.editorData.el.addEventListener('mouseleave', () => this.onPortMouseLeave());
+    this.editorData.el.addEventListener('contextmenu', this.onContextMenu.bind(this));
     ToolTipUtils.registerElementTooltip(this.editorData.el);
 
     //switch port and text's direction
@@ -175,7 +176,10 @@ export class BlockPortEditor extends BlockPort {
     if(!this.forceNoEditorControl && editor != null) {
 
       //创建编辑器和更新回调
-      this.editorData.elEditor = editor.editorCreate(this.editorData.el, (v) => {
+      this.editorData.elEditor = editor.editorCreate(
+        <BlockEditor>this.parent,
+        this,
+        this.editorData.el, (v) => {
         portParameter.paramUserSetValue = v;
         if(portParameter.direction == 'output')
           portParameter.updateOnputValue(this.parent.currentRunningContext, v);
@@ -280,7 +284,8 @@ export class BlockPortEditor extends BlockPort {
           BlockPortIcons.portParamIconArrayActive, BlockPortIcons.portParamIconSet);
 
         switch(this.paramSetType) {
-          case 'variable': {
+          case 'variable':
+          default: {
             CommonUtils.setClassWithSwitch(this.editorData.elDot, this.isConnected() || this.editorData.forceDotActiveState, 
               BlockPortIcons.portParamIcon, BlockPortIcons.portParamIconActive);
             break
@@ -344,9 +349,11 @@ export class BlockPortEditor extends BlockPort {
     }
   }
   private onPortMouseMove(e : MouseEvent) {
-    this.mouseConnectingPort = true;
-    (<BlockEditor>this.parent).mouseConnectingPort = true;
-    (<BlockEditor>this.parent).editor.updateConnectEnd(new Vector2(e.x, e.y));
+    if(e.button == 0) {
+      this.mouseConnectingPort = true;
+      (<BlockEditor>this.parent).mouseConnectingPort = true;
+      (<BlockEditor>this.parent).editor.updateConnectEnd(new Vector2(e.x, e.y));
+    }
     return true;
   }
   private onPortMouseDown(e : MouseEvent) {
@@ -355,8 +362,10 @@ export class BlockPortEditor extends BlockPort {
       (<BlockEditor>this.parent).mouseDownInPort = true;
       this.mouseConnectingPort = false;
       (<BlockEditor>this.parent).mouseConnectingPort = false;
-      (<BlockEditor>this.parent).editor.startConnect(this);
-      (<BlockEditor>this.parent).editor.updateConnectEnd(new Vector2(e.x, e.y));
+      if(e.button == 0) {
+        (<BlockEditor>this.parent).editor.startConnect(this);
+        (<BlockEditor>this.parent).editor.updateConnectEnd(new Vector2(e.x, e.y));
+      }
 
       document.addEventListener('mouseup', this.fnonPortMouseUp);
       document.addEventListener('mousemove', this.fnonPortMouseMove);
@@ -374,6 +383,12 @@ export class BlockPortEditor extends BlockPort {
     document.removeEventListener('mouseup', this.fnonPortMouseUp);
     document.removeEventListener('mousemove', this.fnonPortMouseMove);
   }
+  private onContextMenu(e : MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    (<BlockEditor>this.parent).editor.showPortRightMenu(this, new Vector2(e.x, e.y));
+    return false;
+  }
 
   //#endregion 
 
@@ -389,6 +404,17 @@ export class BlockPortEditor extends BlockPort {
       || target.classList.contains('port')
       || target.classList.contains('custom-editor'));
   }
+
+  //#region 编辑器获取信息
+
+  public getBlockFastInfo() {
+    return this.parent.regData.baseInfo.name;
+  }
+  public getParentBlock() {
+    return <BlockEditor>this.parent;
+  }
+
+  //#endregion
 }
 
 /**

@@ -169,7 +169,12 @@
           <span>打开流程图</span>
         </div>
         <div class="huge-button">
-          
+          <ul>
+            <li><small>最近打开文件</small></li>
+            <li v-for="(item, li) in this.recentList" :key="li">
+              <a href="javascript:;" :title="item" @click="doLoadFile(item)">{{ getPath(item) }}</a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -292,6 +297,7 @@ export default class Editor extends Vue {
   menuItemDelete : MenuData = null;
   menuItemSave : MenuData = null;
   menuItemExportJson : MenuData = null;
+  menuItemRecent : MenuData = null;
 
   @Watch('runningState')
   updateRunMenuStates() {
@@ -323,6 +329,11 @@ export default class Editor extends Vue {
     this.menuItemPatse = new MenuData('粘贴', () => this.editorControlCurrent.clipboardPaste(), 'Ctrl+V');
     this.menuItemDelete = new MenuData('删除', () => this.showDeleteModalClick(), 'Delete');
 
+    this.menuItemRecent = new MenuData('打开最近文件', [
+      new MenuSeparator(),
+      new MenuData('清除最近打开文件', () => { this.recentList.empty(); this.flushRecentList(); }),
+    ]);
+
     this.menuItemSave = new MenuData('保存...', () => {
       this.saveDoc(this.currentDocunment)
     }, 'Ctrl+S', false, false);
@@ -330,16 +341,18 @@ export default class Editor extends Vue {
 
     this.menuMain = [
       new MenuData('文件', [
-      new MenuData('新建文件', () => this.newFile()),
-      new MenuData('打开...', () => this.loadFile()),
-      this.menuItemSave,
-      this.menuItemExportJson,
-    ].concat(
-      this.currentRuntimeType == 'electron' ? [
+        new MenuData('新建文件', () => this.newFile()),
+        new MenuData('打开...', () => this.loadFile()),
+        this.menuItemRecent,
         new MenuSeparator(),
-        new MenuData('退出', () => this.windowControl('close')),
-      ] : []
-    )),
+        this.menuItemSave,
+        this.menuItemExportJson,
+      ].concat(
+        this.currentRuntimeType == 'electron' ? [
+          new MenuSeparator(),
+          new MenuData('退出', () => this.windowControl('close')),
+        ] : []
+      )),
       new MenuData('编辑', [
         new MenuData('撤销', () => this.undo(), 'Ctrl+Z'),
         new MenuData('重做', () => this.redo(), 'Ctrl+Y'),
@@ -626,7 +639,6 @@ export default class Editor extends Vue {
       this.windowIsMax = this.currentWindow.isMaximized();
     }
   }
-
   private saveSettings() {
     SettingsServiceInstance.setSettingsBoolean('drawDebugInfo', this.settings.drawDebugInfo);
     SettingsServiceInstance.setSettingsBoolean('gridShow', this.settings.gridShow);
@@ -644,7 +656,54 @@ export default class Editor extends Vue {
       SettingsServiceInstance.setSettingsNumber('lastWindowHeight', this.settings.lastWindowHeight);
     }
   }
-       
+
+  //#endregion
+
+  //#region 最近文件
+
+  private recentList : Array<string> = [];
+
+  private loadRecentList() {
+    if(this.currentRuntimeType == 'electron') {
+      fs.readFile(this.currentAppPath + '/recent.json', {}, (err, data) => {
+        if(data.length > 0) {
+          let j = JSON.parse(data.toString());
+          if(j) {
+            this.recentList = j.recentList;
+            this.recentList.forEach((s) => {
+              this.menuItemRecent.childs.unshift(new MenuData(s, () => this.doLoadFile(s)))
+            })
+          }
+        }
+
+      });
+    }
+  }
+  private saveRecentList() {
+    fs.writeFileSync(this.currentAppPath + '/recent.json', JSON.stringify({
+      recentList: this.recentList
+    }))
+  }    
+  private addToRecentList(s) {
+    if(!this.recentList.contains(s)) {
+      if(this.recentList.length >= 9) 
+        this.recentList.pop();
+      this.recentList.unshift(s);
+      this.menuItemRecent.childs.unshift(new MenuData(s, () => this.doLoadFile(s)))
+      this.saveRecentList();
+    }
+  }
+  private getPath(s) {
+    return StringUtils.getFileName(s);
+  }
+  private flushRecentList() { 
+    for(let i = this.menuItemRecent.childs.length - 3; i >= 0; i++) 
+      this.menuItemRecent.childs.remove(i);
+    this.recentList.forEach((l) => { 
+      this.menuItemRecent.childs.unshift(new MenuData(l, () => this.doLoadFile(l)))
+    });
+  }
+
   //#endregion
 
   //#region 初始化
@@ -662,7 +721,7 @@ export default class Editor extends Vue {
       this.initElectron();
       this.initElectronIPC();
       window.onbeforeunload = () => {
-        this.saveSettings();
+        this.saveSettings(); 
       };
     }else if(process.env.EDITOR_ENV == 'web') {
       this.currentRuntimeType = 'web';
@@ -678,6 +737,7 @@ export default class Editor extends Vue {
     this.initMenu();
     this.initEditorRunner();
     this.initEditorWorkProvider();
+    this.loadRecentList();
   
     BlockServiceInstance.init();
     BlockServiceInstance.isEditorMode = true;
@@ -696,6 +756,7 @@ export default class Editor extends Vue {
   private destroy() {
     this.deleteShutCuts();
     this.saveSettings();
+    this.saveRecentList();
     this.runner = null;
     window.onbeforeunload = null;
   }
@@ -717,6 +778,7 @@ export default class Editor extends Vue {
   remote : Electron.Remote = null;
 
   currentWindow : BrowserWindow = null;
+  currentAppPath = '';
 
   private initElectron() {
     this.ipc = electron.ipcRenderer;
@@ -725,6 +787,7 @@ export default class Editor extends Vue {
     this.currentWindow = this.remote.getCurrentWindow();
     this.windowIsMax = this.currentWindow.isMaximized();
     this.currentWindow.setMinimumSize(710, 500);
+    this.currentAppPath = process.cwd();
   }
   private initElectronIPC() {   
     this.ipc.on("main-window-act", (event, arg) => {
@@ -840,7 +903,7 @@ export default class Editor extends Vue {
 
     let that = this;
     setTimeout(() => {
-      that.getCurrentDocEditor(doc).newFile();
+      that.goGraph(doc.mainGraph);
     }, 500);
   }
   private onOpenFileInputChanged() {
@@ -867,6 +930,7 @@ export default class Editor extends Vue {
     }
   }
   private doLoadFile(path : string) {
+    this.addToRecentList(path);//添加到最近列表
     let g = this.isFileOpened(path);
     if(g == null) {
       g = new BlockDocunment();
@@ -881,7 +945,7 @@ export default class Editor extends Vue {
           logger.error('Load file failed : ' + path + '\n' + err);
           this.$Modal.error({ title: '加载文档失败', content: '发生了错误：' + err });
         }else {
-          logger.log('File loaded : ' + path);
+          logger.log('File loaded : ' + this.getPath(path));
           this.parser.loadFromString(data, g, true);
           this.goDoc(g);
           setTimeout(() => {
@@ -933,7 +997,8 @@ export default class Editor extends Vue {
       let oldIndex = this.openedDocunments.indexOf(g);
       this.openedDocunments.remove(g);
       if(this.currentDocunment == g) {
-        this.currentDocunment = oldIndex > 0 ? this.openedDocunments[oldIndex - 1] : null;
+        this.currentDocunment = oldIndex > 0 ? this.openedDocunments[oldIndex - 1] : 
+          (this.openedDocunments.length > 0 ? this.openedDocunments[0] : null);
       }
       if(typeof callback == 'function')
         callback(true);
@@ -1020,7 +1085,7 @@ export default class Editor extends Vue {
       this.$Message.loading({ content: '正在保存中，请稍后...', duration: 0 });
       let str = this.parser.saveToString(this.currentDocunment, true);
       fs.writeFile(g.path, str, { encoding: 'UTF-8' }, () => {
-        logger.log('Save file : ' + g.path + ' success.');
+        logger.log('Save file : ' + this.getPath(g.path) + ' success.');
         this.$Message.destroy();
         this.$Message.success('保存文档成功');
         if(typeof callback == 'function') 

@@ -10,12 +10,12 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import AllEditors from "../model/TypeEditors/AllEditors";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterBaseType } from "../model/Define/BlockParameterType";
+import { BlockParameterBaseType, BlockParameterType } from "../model/Define/BlockParameterType";
 
 @Component
 export default class VariableTypeEditor extends Vue {
 
-  @Prop({ default: null }) variableType : string;
+  @Prop({ default: null }) variableType : BlockParameterType;
   @Prop({ default: null }) value : any;
 
   private hostEl : HTMLElement = null;
@@ -39,17 +39,17 @@ export default class VariableTypeEditor extends Vue {
     }
 
     let customType : BlockParameterTypeRegData = null;
-    if(this.variableType != 'any') {
-      this.currentEditor = AllEditors.getBaseEditors(<BlockParameterBaseType>this.variableType);
+    if(!this.variableType.isAny()) {
+      this.currentEditor = AllEditors.getBaseEditors(<BlockParameterBaseType>this.variableType.getType());
       if(this.currentEditor == null) {
-        customType = ParamTypeServiceInstance.getCustomType(this.variableType);
+        customType = ParamTypeServiceInstance.getCustomType(this.variableType.getType());
         if(customType != null) this.currentEditor = customType.editor;
         if(this.currentEditor == null && (customType && customType.prototypeName == 'enum'))
           this.currentEditor = AllEditors.getDefaultEnumEditor(<BlockParameterEnumRegData>customType);
       }
       //创建
       if(this.currentEditor != null) {
-        this.currentEditorEl = this.currentEditor.editorCreate(this.hostEl, (newV) => {
+        this.currentEditorEl = this.currentEditor.editorCreate(null, null, this.hostEl, (newV) => {
           this.$emit('input', newV)
         }, this.value, null, customType);
         this.hostEl.appendChild(this.currentEditorEl);

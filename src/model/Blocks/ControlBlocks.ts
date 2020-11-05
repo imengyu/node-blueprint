@@ -211,7 +211,7 @@ function registerControl() {
         AllEditors.getBaseEditors(port.data["customEditorType"])
         : (customType == null ? null : customType.editor);
       if(typeEditor != null) {
-        return typeEditor.editorCreate(parentEle, (newV) => {
+        return typeEditor.editorCreate(block, port, parentEle, (newV) => {
           port.options['typeOutPort'] = newV;
           port.description = '当输入为 ' + StringUtils.valueToStr(newV) +  ' 时执行';
           port.regData.description = port.description;
@@ -388,7 +388,7 @@ function registerControl() {
         : (customType == null ? null : customType.editor);
       if(typeEditor != null) {
         let el = document.createElement('div');
-        let input = typeEditor.editorCreate(parentEle, (newV) => {
+        let input = typeEditor.editorCreate(block, port, parentEle, (newV) => {
           port.options['typeOutPort'] = newV;
           port.description = '当输入为 ' + StringUtils.valueToStr(newV) +  ' 时输出此变量';
           port.regData.description = port.description;

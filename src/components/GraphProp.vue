@@ -20,22 +20,24 @@
       <CollapsePropHeader title="图表输入">
         <div class="prop-list">
           <div v-for="(port,i) in graph.inputPorts" :key="i" class="prop-list-item">
-            <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)" />
+            <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 200px);" @blur="onUpdateGraphPort(port)" />
             <div v-if="port" class="prop-box">
 
               <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
-                {{ getTypeNameRemap(port.paramDictionaryKeyType) }}
+                {{ getTypeNameRemap(port.paramDictionaryKeyType.getType()) }}
                 <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
+                v-if="port.paramType"
                 v-model="port.paramSetType" 
-                :color="getTypeColor(port.paramType)"
+                :type="port.paramType"
+                :color="getTypeColor(port.paramType.getType())"
                 :color2="getTypeColor(port.paramDictionaryKeyType)"
                 @change-set-type="onUpdateGraphPort(port)"></VariableSetTypeEditor>
 
               <span>
-                {{ getTypeNameRemap(port.paramType) }}
+                {{ getTypeNameRemap(port.paramType.getType()) }}
                 <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输入类型"></a>
               </span>
 
@@ -49,7 +51,7 @@
             <a href="javascript:;" title="删除输入" @click="onDeleteGraphPort(port, 'input')">
               <i class="iconfont icon-close-1"></i>
             </a>
-            <div v-if="port && port.paramType!='execute'" class="prop-item">
+            <div v-if="port && !port.paramType.isExecute()" class="prop-item">
               <span>输入默认值: </span>
               <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
             </div>
@@ -66,18 +68,20 @@
             <div v-if="port" class="prop-box">
 
               <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
-                {{ getTypeNameRemap(port.paramDictionaryKeyType) }}
+                {{ getTypeNameRemap(port.paramDictionaryKeyType.getType()) }}
                 <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
+                v-if="port.paramType"
                 v-model="port.paramSetType" 
-                :color="getTypeColor(port.paramType)"
+                :type="port.paramType"
+                :color="getTypeColor(port.paramType.getType())"
                 :color2="getTypeColor(port.paramDictionaryKeyType)"
                 @change-set-type="onUpdateGraphPort(port)"></VariableSetTypeEditor>
 
               <span>
-                {{ getTypeNameRemap(port.paramType) }}
+                {{ getTypeNameRemap(port.paramType.getType()) }}
                 <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输出类型"></a>
               </span>
 
@@ -91,7 +95,7 @@
             <a href="javascript:;" title="删除输出" @click="onDeleteGraphPort(port, 'output')">
               <i class="iconfont icon-close-1"></i>
             </a>
-            <div v-if="port && port.paramType!='execute'" class="prop-item">
+            <div v-if="port && !port.paramType.isExecute()" class="prop-item">
               <span>输出默认值: </span>
               <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
             </div>
@@ -123,12 +127,13 @@
             <div class="prop-item-editor">
 
               <span v-if="variable.setType=='dictionary'" title="映射键类型">
-                {{ getTypeNameRemap(variable.dictionaryKeyType) }}
+                {{ getTypeNameRemap(variable.dictionaryKeyType.getType()) }}
                 <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
                 v-model="variable.setType" 
+                :type="variable.type"
                 :color="getTypeColor(variable.type)"
                 :color2="getTypeColor(variable.dictionaryKeyType)"
                 @change-set-type="onUpdateGraphVariable(null,variable)"></VariableSetTypeEditor>
@@ -287,7 +292,8 @@ export default class GraphProp extends Vue {
     }, 
     new Vector2(
       e.x - (<HTMLElement>(<HTMLElement>e.target).parentNode).offsetWidth, 
-      e.y + 10), false);
+      e.y + 10), 
+    false);
   }
   onUpdateGraphVariable(vNameOld : string, v : BlockGraphVariable) {
     this.blockOwnerData.graphVariableChange.onVariableUpdate(this.graph, vNameOld, v);
@@ -310,8 +316,8 @@ export default class GraphProp extends Vue {
   //端口
   //===========================
 
-  lastSetParamType : BlockParameterType = null;
-  lastSetParamKeyType : BlockParameterType = null;
+  lastSetParamType : BlockParameterType = new BlockParameterType('any');
+  lastSetParamKeyType : BlockParameterType = new BlockParameterType('any');
 
   onAddGraphPort(direction : BlockPortDirection) {
     let port : BlockPortRegData = {
@@ -319,6 +325,8 @@ export default class GraphProp extends Vue {
       name: '新端口' + (direction == 'input' ? this.graph.inputPorts.length : this.graph.outputPorts.length),
       direction: direction,
       paramType: this.lastSetParamType,
+      paramDictionaryKeyType: this.lastSetParamKeyType,
+      paramSetType: 'variable',
       forceNoEditorControl: true,
     };
     if(direction == 'input') this.graph.inputPorts.push(port);
@@ -421,18 +429,21 @@ export default class GraphProp extends Vue {
   onAddChildGraph() {
     let doc = new BlockGraphDocunment('新图表'+this.graph.children.length);
     doc.isEditor = true;
+    doc.docunment = this.graph.docunment;
     doc.parent = this.graph;
     doc.inputPorts.push({
       name: '进入',
       guid: 'PI0',
       direction: 'input',
-      paramType: 'execute'
+      paramType: 'execute',
+      paramSetType: 'variable',
     });
     doc.outputPorts.push({
       name: '退出',
       guid: 'PO0',
       direction: 'output',
-      paramType: 'execute'
+      paramType: 'execute',
+      paramSetType: 'variable',
     });
     this.graph.children.push(doc);
   }

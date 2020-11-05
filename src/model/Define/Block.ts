@@ -62,6 +62,8 @@ export class Block {
    */
   public breakpoint : BlockBreakPoint = 'none';
 
+  public userCanResize = false;
+
   public constructor(regData ?: BlockRegData, editorBlock = false) {
     this.uid = CommonUtils.genNonDuplicateIDHEX(16);
     this.isEditorBlock = editorBlock;
@@ -100,6 +102,8 @@ export class Block {
           this.onPortUnConnect.addListener(this,this.regData.callbacks.onPortUnConnect);
         if(typeof this.regData.callbacks.onPortConnectCheck == 'function') 
           this.onPortConnectCheck.addListener(this,this.regData.callbacks.onPortConnectCheck);
+        
+        this.userCanResize = this.regData.blockStyle.userCanResize;
       }
 
       if(this.regData.ports.length > 0)
@@ -205,7 +209,7 @@ export class Block {
       newPort.paramUserSetValue = initialValue;
     if(CommonUtils.isDefinedAndNotNull(data.portAnyFlexable)) newPort.portAnyFlexable = data.portAnyFlexable;
     if(CommonUtils.isDefinedAndNotNull(data.paramStatic)) newPort.paramStatic = data.paramStatic;
-    if(!CommonUtils.isNullOrEmpty(data.paramSetType)) newPort.paramSetType = data.paramSetType;
+    if(CommonUtils.isDefinedAndNotNull(data.paramSetType)) newPort.paramSetType = data.paramSetType;
     if(CommonUtils.isDefinedAndNotNull(data.paramDictionaryKeyType)) {
       if(typeof data.paramDictionaryKeyType == 'string') newPort.paramDictionaryKeyType = BlockParameterType.createTypeFromString(data.paramDictionaryKeyType);
       else newPort.paramDictionaryKeyType = CommonUtils.clone(data.paramDictionaryKeyType);
@@ -324,7 +328,7 @@ export class Block {
       if(CommonUtils.isDefined(newKeyType))
         if(typeof newKeyType == 'string') port.paramDictionaryKeyType = BlockParameterType.createTypeFromString(newKeyType);
         else port.paramDictionaryKeyType.set(newKeyType);
-      if(CommonUtils.isDefined(newSetType))
+      if(CommonUtils.isDefinedAndNotNull(newSetType))
         port.paramSetType = newSetType;
 
       this.onUpdatePortElement.invoke(this, port);

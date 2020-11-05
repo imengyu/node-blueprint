@@ -41,6 +41,11 @@ export class BlockParameterType {
   public static Any() { return new BlockParameterType('any') };
 
   public set(baseType : string|BlockParameterType, customType = '') {
+    if(typeof baseType == 'undefined') {
+      this.baseType = 'any';
+      this.customType = '';
+      return;
+    }
     if(typeof baseType == 'string') {
       if(CommonUtils.isNullOrEmpty(customType)) {
         this.baseType = ParamTypeServiceInstance.getBaseTypeForCustomType(baseType);

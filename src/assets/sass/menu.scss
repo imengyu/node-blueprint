@@ -30,12 +30,12 @@
       background: white;
       color: #333;
     }
-    .menu-list {
+    > .menu-list {
       display: block;
     }
   }
 
-  .menu-list {
+  > .menu-list {
     display: none;
     position: absolute;
   }
@@ -68,14 +68,30 @@
   padding: 7px 0;
   border-radius: 0 3px 3px 3px;
   box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  max-width: 450px;
+
+  &.show {
+    display: inline-block;
+  }
+  &.hide {
+    display: none;
+  }
+
+  .menu-list {
+    top: -7px;
+    left: 100%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
 
   .menu-item {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     line-height: 22px;
     padding: 5px 69px 5px 25px;
     cursor: default;
     color: #333;
+    max-width: 450px;
+    text-overflow: ellipsis;
 
     i {
       position: absolute;
@@ -97,7 +113,13 @@
       color: #000;
     }
 
-    span {
+    .menu-arrow {
+      position: absolute;
+      right: 10px;
+      top: 2px;
+      padding: 5px;
+    }
+    .shortcut {
       display: block;
       position: absolute;
       right: 10px;

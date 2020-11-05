@@ -46,7 +46,6 @@ export default class BlockEditorCanvasDrawer extends Vue {
 
     if(this.gridShow) 
       this.drawGrid();
-    this.drawConnectors();
     this.drawMultiSelBox();
 
     //Debug text
@@ -88,12 +87,7 @@ export default class BlockEditorCanvasDrawer extends Vue {
   @Prop({default: 1}) viewZoom : number;
   @Prop({default: 100}) viewScale: number;
   @Prop({default: () => { return { w: 0, h: 0 } } }) viewRealSize : { w: number, h: number };
-  @Prop({default: false}) isConnecting : boolean;
   @Prop({default: false}) isMultiSelecting : boolean;
-  @Prop({default: null}) connectingEndPos : Vector2;
-  @Prop({default: null}) connectingStartPort : BlockPortEditor;
-  @Prop({default: false}) connectingIsFail : boolean;
-  @Prop({default: null}) connectingConnector : ConnectorEditor;
   @Prop({default: null}) multiSelectRect : Rect;
 
   @Watch('viewRealSize')
@@ -164,37 +158,11 @@ export default class BlockEditorCanvasDrawer extends Vue {
       this.ctx.strokeRect(this.multiSelectRect.x, this.multiSelectRect.y, this.multiSelectRect.w, this.multiSelectRect.h)
     }
   }
-  private drawConnectors() {
-    this.ctx.strokeStyle = "#000";
-    this.ctx.lineWidth = 1.5;
-
-    if(this.connectors)
-      this.connectors.forEach(element => {
-        element.drawPos = this.drawDebugInfo;
-        element.draw(this.ctx, this.viewPort, this.viewZoom);
-      });
-
-    if(this.isConnecting && this.connectingConnector != null) {
-      if(this.connectingIsFail) this.ctx.strokeStyle = "#e9412a";
-      else this.ctx.strokeStyle = "#efefef";
-
-      this.connectingConnector.startPort = this.connectingStartPort;
-      if(this.connectingStartPort.direction == 'input') 
-        this.connectingConnector.drawLineInPos(this.ctx, this.viewPort, this.viewZoom, this.connectingEndPos, this.connectingStartPort.editorData.getPosition());
-      else if(this.connectingStartPort.direction == 'output')
-        this.connectingConnector.drawLineInPos(this.ctx, this.viewPort, this.viewZoom, this.connectingStartPort.editorData.getPosition(), this.connectingEndPos);
-      
-    }
-  }
-
-
   private onContextMenu(e : MouseEvent) {
     e.preventDefault();
     this.$emit('contextmenu', e);
     return false;
   }
-
-
   mounted() {
     setTimeout(() => {
       this.canvas = (<HTMLCanvasElement>this.$refs.canvas);

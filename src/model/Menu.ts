@@ -8,7 +8,7 @@ export class MenuData {
   public separator = false;
   public callback : MenuCallback = null;
   public childs : Array<MenuData> = null;
-  public enter = true;
+  public enter = false;
 
   public constructor(name : string, callbackOrChild : MenuCallback | Array<MenuData> , shortcut = '', checked = false, enabled = true) {
     this.name = name;

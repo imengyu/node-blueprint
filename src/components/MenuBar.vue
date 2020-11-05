@@ -6,14 +6,9 @@
       @click="onItemMouseClick(menu)" 
       @mouseenter="onItemMouseEnter(menu)" @mouseleave="onItemMouseLeave(menu)">
       <div class="menu-title">{{ menu.name }}</div>
-      <div class="menu-list"> 
-        <div v-for="(menuChild, i2) in menu.childs" :key="i2" @click="onMenuItemMouseClick(menuChild, $event)"
-          :class="menuChild.show ? (menuChild.separator?'separator':(menuChild.enable ?'menu-item':'menu-item disabled')) : 'display-none'">
-            <i v-if="menuChild.checked" class="iconfont icon-check-"></i>
-            {{menuChild.separator?'':menuChild.name}}
-            <span v-if="menuChild.shortcut!=''" class="shortcut">{{menuChild.shortcut}}</span>
-          </div>
-      </div>
+      <MenuList :menu="menu"
+        @on-item-click="(c, e) => onMenuItemMouseClick(c, e)">
+      </MenuList>
     </div>
     <slot />
     <slot name="end"></slot>
@@ -23,8 +18,13 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { MenuData } from "../model/Menu";
+import MenuList from "./MenuList.vue";
 
-@Component
+@Component({
+  components: {
+    MenuList
+  }
+})
 export default class MenuBar extends Vue {
   name = "MenuBar";
 

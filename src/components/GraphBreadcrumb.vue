@@ -3,6 +3,7 @@
     <div v-for="(graph, i) in graphBreadcrumb" :key="i" :class="(i==graphBreadcrumb.length-1?'last':'')+(graph.isCurrent?' current':'')">
       <span v-if="graph.isCurrent">{{graph.text}}</span>
       <a v-else href="javascript:;" @click="$emit('on-go-graph', graph.graph)">{{graph.text}}</a>
+      <i class="iconfont icon-arrow-right-"></i>
     </div>
     <div v-if="!graphBreadcrumb || graphBreadcrumb.length == 0">
       {{currentDocunment.name}}

@@ -23,6 +23,17 @@ export class Vector2 {
     this.y *= v;
     return this;
   }
+  public substract(v : number|Vector2) {
+    if(typeof v === "number") {
+      this.x -= v;
+      this.y -= v;
+    }
+    else if(typeof v == "object") {
+      this.x -= v.x;
+      this.y -= v.y;
+    }
+    return this;
+  }
   public divide(v : number) {
     this.x /= v;
     this.y /= v;

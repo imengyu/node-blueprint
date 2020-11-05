@@ -648,7 +648,7 @@ function registerOperatorBase() {
   };
   blockCreateObject.callbacks.onCreatePortCustomEditor = (parentEle, block, port) => { 
     let el = document.createElement('div');
-    let input = AllEditors.getBaseEditors('string').editorCreate(parentEle, (newV) => {
+    let input = AllEditors.getBaseEditors('string').editorCreate(block, port, parentEle, (newV) => {
       port.options['key'] = newV;
       port.description = '键为 ' + StringUtils.valueToStr(newV) +  ' 的值';
       port.regData.description = port.description;

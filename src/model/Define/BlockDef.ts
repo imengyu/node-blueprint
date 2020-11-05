@@ -4,6 +4,7 @@ import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 import { BlockParameterBaseType, BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
 import { BlockPack } from "../Blocks/Utils/BlockRegister";
+import { BlockPortEditor } from "../Editor/BlockPortEditor";
 
 /**
  * 单元信息结构
@@ -327,6 +328,14 @@ export class BlockStyleSettings  {
    * 是否隐logo
    */
   public hideLogo = false;
+  /**
+   * 指示用户是否可以调整该单元大小
+   */
+  public userCanResize = false;
+  /**
+   * 指定单元渲染所在层
+   */
+  public layer : 'normal'|'background' = 'normal';
 }
 
 /**
@@ -495,9 +504,9 @@ export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
 }
 
 
-export type BlockParameterEditorComponentCreateFn = (parentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
+export type BlockParameterEditorComponentCreateFn = (block : BlockEditor, port : BlockPortEditor, rparentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
 export type BlockParameterEditorValueChangedFn = (newVal : any, editorEle : HTMLElement) => void;
 export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData) => void;
-export type BlockPortEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, port : BlockPort) => HTMLElement;
+export type BlockPortEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, port : BlockPortEditor) => HTMLElement;
   
 

@@ -5,9 +5,10 @@ import { ConnectorEditor } from "./ConnectorEditor";
 import { BlockPortRegData, BlockParameterTypeRegData } from "../Define/BlockDef";
 import { BlockGraphVariable, BlockGraphDocunment } from "../Define/BlockDocunment";
 import { EventHandler } from "../../utils/EventHandler";
+import { BlockPortEditor } from "./BlockPortEditor";
 
 export class BlockEditorOwner {
-  getBlockHostElement : () => HTMLElement;
+  getBlockHostElement : (layer : string) => HTMLElement;
   getMultiSelectedBlocks : () => BlockEditor[];
   getVue : () => Vue;
 
@@ -24,10 +25,17 @@ export class BlockEditorOwner {
   updateConnectEnd : (pos : Vector2) => void;
 
   unSelectAllBlocks : () => void;
+  unSelectAllConnector : () => void;
   unConnectConnector: (connector : ConnectorEditor) => void;
 
-  showBlockRightMenu : (pos : Vector2) => void;
+  isConnectorSelected: () => boolean;
+  isAnyConnectorHover: () => boolean;
+  getWorker: () => any;
+
+  showBlockRightMenu : (block : BlockEditor, pos : Vector2) => void;
+  showPortRightMenu : (port : BlockPortEditor, pos : Vector2) => void;
   showInputRightMenu : (pos : Vector2, ele : HTMLInputElement) => void;
+  showConnectorRightMenu : (pos : Vector2) => void;
   deleteBlock: (block : BlockEditor, rm ?: boolean) => void;
 
   chooseType: (pos : Vector2, callback: (type: BlockParameterTypeRegData, isBaseType : boolean) => void, canBeExecute : boolean) => void;
@@ -36,6 +44,7 @@ export class BlockEditorOwner {
   markFileChanged : () => void;
 
   viewPortPosToWindowPos: (pos : Vector2) => Vector2;
+  windowPosToViewPortPos: (pos : Vector2) => Vector2;
 
   //编辑器事件回调
   graphVariableChange : {

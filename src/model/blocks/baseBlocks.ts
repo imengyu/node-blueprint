@@ -23,6 +23,7 @@ export default {
   getScriptBaseGraphCall() { return graphCall;  },
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
+  getScriptBaseCommentBlock() { return commentBlock;  },
   packageName: 'Base',
   version: 1,
 }
@@ -50,6 +51,7 @@ let graphOut : BlockRegData;
 let graphCall : BlockRegData;
 let variableGet : BlockRegData;
 let variableSet : BlockRegData;
+let commentBlock : BlockRegData;
 
 function registerScriptBase()  {
 
@@ -338,7 +340,7 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
+        portReal.paramType = typeof port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
         portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
         portReal.paramSetType = port.paramSetType;
@@ -499,8 +501,7 @@ function registerScriptGraphBase()  {
   };
   graphCall.callbacks.onEditorCreate = (block) => {
 
-    let currentGraph = (<BlockGraphDocunment>block.data['currentGraph']);
-    
+    let currentGraph = (<BlockGraphDocunment>block.data['currentGraph']);  
     if(currentGraph == null) {
       block.addBottomTip('icon-error-1','没有找到子图表 ' + block.options['graph'],'text-warning');
       return;
@@ -1068,5 +1069,51 @@ function registerCommentBlock() {
     block.options['height'] = input.offsetHeight;
     block.options['content'] = input.value;
   };
-  return [ block ];
+
+  commentBlock = new BlockRegData("24AA3DF0-49D9-84D9-8138-534505C33327", "注释块", "", 'imengyu', '');
+  commentBlock.baseInfo.logo = require('../../assets/images/BlockIcon/info2.svg');
+  commentBlock.baseInfo.description = '';
+  commentBlock.ports = [];
+  commentBlock.blockStyle.minHeight = '100px';
+  commentBlock.blockStyle.userCanResize = true;
+  commentBlock.blockStyle.hideLogo = true;
+  commentBlock.blockStyle.noTitle = true;
+  commentBlock.blockStyle.layer = 'background';
+  commentBlock.callbacks.onCreateCustomEditor = (parentEle, block) => {
+    let blockEle = <HTMLDivElement>parentEle.parentNode;
+    blockEle.classList.add('flow-block-comment-block');
+    blockEle.style.minWidth = '250px';
+    blockEle.style.minHeight = '150px';
+    let ele = document.createElement('div');
+    let input = document.createElement('input');
+    let span = document.createElement('span');
+    input.value = block.options['comment'] ? block.options['comment'] : '注释';
+    input.onchange = () => {
+      block.options['comment'] = input.value;
+      span.innerText = input.value;
+    };
+    input.style.display = 'none';
+    input.onkeypress = (e) => {
+      if(e.key == 'Enter')
+        input.onblur(undefined);
+    };
+    input.onblur = () => {
+      input.style.display = 'none';
+      span.style.display = 'block';
+    };
+    span.onclick = () => {
+      if(block.selected && !block.isLastMovedBlock()) {
+        span.style.display = 'none';
+        input.style.display = 'block';
+        input.focus();
+      }
+    };
+    span.innerText = input.value;
+    ele.classList.add('comment-block-title');
+    ele.appendChild(input);
+    ele.appendChild(span);
+    parentEle.appendChild(ele);
+  };
+
+  return [ block, commentBlock ];
 }

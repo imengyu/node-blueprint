@@ -8,6 +8,8 @@ import { Connector } from "../Define/Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { Block } from "../Define/Block";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
+import { BlockParameterType } from "../Define/BlockParameterType";
+import CommonUtils from "../../utils/CommonUtils";
 
 /**
  * 流图保存加载解析器
@@ -25,8 +27,8 @@ export class BlockFileParser {
       childGraphs: [],
 
       comment: graph.comment,
-      inputPorts: graph.inputPorts,
-      outputPorts: graph.outputPorts,
+      inputPorts: [],
+      outputPorts: [],
       variables: [],
       
       blocks: [],
@@ -73,6 +75,7 @@ export class BlockFileParser {
         breakpoint: saveToEditor ? block.breakpoint : undefined,
         options: block.options,
         position: saveToEditor ? (<BlockEditor>block).position : undefined,
+        size: saveToEditor && block.userCanResize ? (<BlockEditor>block).size : undefined,
       };
 
       let blocksIndex = data.blocks.push(blockData) - 1;
@@ -149,6 +152,23 @@ export class BlockFileParser {
 
     }
 
+    graph.inputPorts.forEach((p) => {
+      p.paramType = p.paramType.toString();
+      if(CommonUtils.isDefinedAndNotNull(p.paramDictionaryKeyType))
+        p.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
+      else
+        p.paramDictionaryKeyType = 'any';
+      data.inputPorts.push(p);
+    });
+    graph.outputPorts.forEach((p) => {
+      p.paramType = p.paramType.toString();
+      if(CommonUtils.isDefinedAndNotNull(p.paramDictionaryKeyType))
+        p.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
+      else
+        p.paramDictionaryKeyType = 'any';
+      data.outputPorts.push(p);
+    });
+
     //Save child graph
     graph.children.forEach((childGraph) =>
       data.childGraphs.push(this.saveGraph(childGraph, docData, saveToEditor))
@@ -176,6 +196,11 @@ export class BlockFileParser {
     graph.isMainGraph = false;
     graph.docunment = doc;
 
+    //child graph
+    graphData.childGraphs.forEach(childGraph => {
+      graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor, doc));
+    }); 
+    
     //variables
     graphData.variables.forEach(variable => {
       let v = new BlockGraphVariable();
@@ -199,6 +224,9 @@ export class BlockFileParser {
       blockInstance.createBase();
 
       if(readToEditor) {
+        if(blockInstance.userCanResize)
+          (<BlockEditor>blockInstance).size.Set(block.size);
+
         (<BlockEditor>blockInstance).position.Set(block.position);
         (<BlockEditor>blockInstance).mark = block.mark;
         (<BlockEditor>blockInstance).markOpen = block.markOpen;
@@ -227,6 +255,20 @@ export class BlockFileParser {
       }
     });
 
+    graph.inputPorts = [];
+    graphData.inputPorts.forEach((p) => {
+      p.paramType = new BlockParameterType(p.paramType);
+      p.paramDictionaryKeyType = new BlockParameterType(p.paramDictionaryKeyType);
+      graph.inputPorts.push(p);
+    });
+    graph.outputPorts = [];
+    graphData.outputPorts.forEach((p) => {
+      p.paramType = new BlockParameterType(p.paramType);
+      p.paramDictionaryKeyType = new BlockParameterType(p.paramDictionaryKeyType);
+      graph.outputPorts.push(p);
+    });
+
+
     //connectors
     graphData.connectors.forEach(connector => {
       let startPort = graph.blocks[connector.startBlock].getPortByGUID(connector.startPort);
@@ -243,11 +285,6 @@ export class BlockFileParser {
           graph.connectors.push(c);
         }
       }
-    }); 
-
-    //child graph
-    graphData.childGraphs.forEach(childGraph => {
-      graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor, doc));
     }); 
 
     return graph;
