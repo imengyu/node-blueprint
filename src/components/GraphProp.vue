@@ -255,7 +255,6 @@ export default class GraphProp extends Vue {
     let v = new BlockGraphVariable();
 
     v.name = '变量' + this.graph.variables.length;
-    v.type = 'any';
     v.defaultValue = null;
     v.value = null;
 
@@ -274,7 +273,7 @@ export default class GraphProp extends Vue {
   }
   onChooseGraphVariableType(v : BlockGraphVariable, e : MouseEvent) {
     this.$emit('choose-graph-variable-type', (type : BlockParameterTypeRegData) => {
-      v.type = type.name;
+      v.type = BlockParameterType.createTypeFromString(type.name);
       this.onUpdateGraphVariable(v.name, v);
     }, 
     new Vector2(

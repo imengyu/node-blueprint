@@ -51,6 +51,10 @@ import HtmlUtils from "../utils/HtmlUtils";
 import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
 import { BlockParameterSetType, BlockParameterType } from "../model/Define/BlockParameterType";
 import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
+import ParamTypeServiceInstance from "../sevices/ParamTypeService";
+import { BlockParameterTypeConverterData } from "../model/Define/BlockDef";
+import BaseBlocks from "../model/Blocks/BaseBlocks";
+import MathUtils from "../utils/MathUtils";
 
 /**
  * 编辑器逻辑控制
@@ -171,7 +175,7 @@ export default class BlockEditorWorker extends Vue {
   }
   private testCastConnector() {
     for(let i = 0, c= this.connectors.length;i<c;i++)
-      this.connectors[i].hover = (this.connectors[i].testInRect(this.mouseCurrentPosInViewPort, this.viewZoom));
+      this.connectors[i].hover = (this.connectors[i].testInConnector(this.mouseCurrentPosInViewPort, this.viewZoom));
   }
   private updateAllSelectedElements() {
     //Updste all MultiSelect eles
@@ -248,15 +252,14 @@ export default class BlockEditorWorker extends Vue {
   //=======================
 
   public addBlock(block : BlockEditor, position : Vector2, connectToPort ?: BlockPort) {
-    this.blocks.push(block);
+    
 
     block.currentGraph = this.currentGraph;
     block.createBase();
     block.create(this.blockOwnerData);
     block.setPos(position);
 
-    this.currentGraph.blocks.push(block);
-
+    this.blocks.push(block);
     this.$emit('update-set-file-changed');
   }
   public deleteBlock(block : BlockEditor, rm = true) {
@@ -294,11 +297,14 @@ export default class BlockEditorWorker extends Vue {
   isConnecting = false;
   isConnectingToNew = false;
 
-  connectingIsFail : boolean = false;
+  connectingIsFail = false;
   connectingStartPort : BlockPortEditor = null;
   connectingEndPos : Vector2 = null;
-  connectingCanConnect : boolean = false;
-  connectingFailedText : string = '';
+  connectingCanConnect = false;
+  connectingShouldAddConverter = false;
+  connectingNextAddConverter : BlockParameterTypeConverterData  = null;
+  connectingFailedText = '';
+  connectingSuccessText = '';
 
   private connectingOtherSideRequireType : BlockParameterType = null;
   private connectingOtherSideRequireKeyType : BlockParameterType = null;
@@ -432,6 +438,29 @@ export default class BlockEditorWorker extends Vue {
 
     this.$emit('update-set-file-changed');
   }
+
+  private connectConnectorWithConverter() {
+
+    //创建转换器
+    let convBlock = new BlockEditor(BaseBlocks.getScriptBaseConvertBlock());
+    
+    convBlock.options['coverterFrom'] = this.connectingNextAddConverter.fromType.toString();
+    convBlock.options['coverterTo'] = this.connectingNextAddConverter.toType.toString();
+
+    this.addBlock(
+      convBlock, 
+      MathUtils.calcVectorCenter(this.connectingStartPort.editorData.getPosition(), this.currentHoverPort.editorData.getPosition()) //计算两个端点的中心位置
+    );
+
+    //将两个端口连接至转换器上
+
+    let startPot = this.connectingStartPort.direction === 'output' ? this.connectingStartPort : this.currentHoverPort;
+    let endPot = this.currentHoverPort.direction === 'input' ? this.currentHoverPort : this.connectingStartPort;
+
+    this.connectConnector(startPot, convBlock.getPortByGUID('INPUT'));
+    this.connectConnector(convBlock.getPortByGUID('OUTPUT'), endPot);
+  }
+
   public flushConnectorFlexablePort(connector : ConnectorEditor) {
     let startPort = connector.startPort;
     let endPort = connector.endPort;
@@ -495,7 +524,12 @@ export default class BlockEditorWorker extends Vue {
     
     //检查
     if(this.connectingCanConnect && this.currentHoverPort != null && this.connectingStartPort != null) {
-      this.connectConnector(this.connectingStartPort, this.currentHoverPort);
+
+      //连接是否需要添加一个转换器
+      if(this.connectingShouldAddConverter)
+        this.connectConnectorWithConverter();
+      else
+        this.connectConnector(this.connectingStartPort, this.currentHoverPort);
       this.connectingStartPort = null;
     }
 
@@ -538,6 +572,9 @@ export default class BlockEditorWorker extends Vue {
     }
 
     this.currentHoverPort = port;
+    this.connectingShouldAddConverter = false;
+    this.connectingNextAddConverter = null;
+    this.connectingSuccessText = '';
 
     if(this.connectingStartPort == null){
       this.connectingIsFail = false;
@@ -557,15 +594,49 @@ export default class BlockEditorWorker extends Vue {
 
       //参数类型检查
       if(this.connectingCanConnect) {
-        if(this.currentHoverPort.direction == 'input')
+
+        if(this.currentHoverPort.direction == 'input') {
           this.connectingCanConnect = this.currentHoverPort.checkTypeAllow(this.connectingStartPort); 
-        else if(this.connectingStartPort.direction == 'input') 
+
+          if(this.currentHoverPort.connectedFromPort.length > 0) 
+            this.connectingSuccessText = '将会替换已有连接';
+        }
+        else if(this.connectingStartPort.direction == 'input') {
           this.connectingCanConnect = this.connectingStartPort.checkTypeAllow(this.currentHoverPort);
 
-        if(!this.connectingCanConnect) 
-          this.connectingFailedText = this.connectingStartPort.getTypeFriendlyString() + ' 与 ' + 
-            this.currentHoverPort.getTypeFriendlyString() + ' 不兼容';
+          if(this.connectingStartPort.connectedFromPort.length > 0) 
+            this.connectingSuccessText = '将会替换已有连接';
+        }
+
+        //如果不能连接
+        if(!this.connectingCanConnect) {
+          let startPot = this.connectingStartPort.direction === 'output' ? this.connectingStartPort : this.currentHoverPort;
+          let endPot = this.currentHoverPort.direction === 'input' ? this.currentHoverPort : this.connectingStartPort;
+          //检查类型有没有转换器
+          let converter = ParamTypeServiceInstance.getTypeCoverter(startPot.paramType, endPot.paramType);
+          if(converter) {
+            //有转换器
+            if(this.connectingStartPort.paramSetType != this.connectingStartPort.paramSetType) 
+              this.connectingFailedText = '端口集合类型不同，不能转换';
+            else if(converter.allowSetType !== this.connectingStartPort.paramSetType)
+              this.connectingFailedText = '转换器不支持端口集合类型';
+            else {
+              //设置转换器，在连接的时候会进行添加
+              this.connectingShouldAddConverter = true;
+              this.connectingNextAddConverter = converter;
+              this.connectingCanConnect = true;
+              this.connectingSuccessText = '转换 ' + 
+                ParamTypeServiceInstance.getTypeNameForUserMapping(startPot.paramType) + 
+                ' 至 ' + ParamTypeServiceInstance.getTypeNameForUserMapping(endPot.paramType);
+            }
+          } else  {
+            //没有转换器，不兼容连接
+            this.connectingFailedText = this.connectingStartPort.getTypeFriendlyString() + ' 与 ' + 
+              this.currentHoverPort.getTypeFriendlyString() + ' 不兼容';
+          }
+        }
         else {
+          //调用单元自己的检查函数检查是否可用连接
           let err = null;
           if(this.currentHoverPort.direction == 'input') {
             err = this.currentHoverPort.parent.onPortConnectCheck.invoke(this.currentHoverPort.parent, this.currentHoverPort, this.connectingStartPort); 
@@ -574,7 +645,7 @@ export default class BlockEditorWorker extends Vue {
             err = this.connectingStartPort.parent.onPortConnectCheck.invoke(this.connectingStartPort.parent, this.connectingStartPort, this.currentHoverPort); 
             this.connectingCanConnect = !CommonUtils.isDefinedAndNotNull(err);
           }
-
+          //如果不能连接，则显示错误
           if(!this.connectingCanConnect) 
             this.connectingFailedText = err;
         }
@@ -735,9 +806,8 @@ export default class BlockEditorWorker extends Vue {
     this.mouseDowned = true;
     this.mouseDownPos.x = e.x - this.toolBarWidth;
     this.mouseDownPos.y = e.y - this.toolBarHeight;
-    this.mouseDownPosInViewPort.x = this.viewPort.x + this.mouseDownPos.x;
-    this.mouseDownPosInViewPort.y = this.viewPort.x + this.mouseDownPos.y;
     this.updateMousePos(e);
+    this.mouseDownPosInViewPort.Set(this.mouseCurrentPosInViewPort);
 
     this.isMultiSelected = false;
     this.isMoveedBlock = false;
@@ -748,8 +818,7 @@ export default class BlockEditorWorker extends Vue {
     
     if(e.buttons == 1) {
       //多选
-      if(this.mouseLeftMove) //移动视图
-        this.isDragView = true;
+      if(this.mouseLeftMove) this.isDragView = true; //移动视图
       else {
         this.isMultiSelecting = true;
         this.multiSelectRect.Set(0,0,0,0);
@@ -806,40 +875,44 @@ export default class BlockEditorWorker extends Vue {
 
     if(this.mouseDowned && this.isMouseMoved) { 
       if(this.isMultiSelecting) {
+
         //多选框的方向处理
-        if(this.mouseCurrentPosInViewPort.x > this.mouseDownPosInViewPort.x) {
-          this.multiSelectRect.x = this.mouseDownPosInViewPort.x;
-          this.multiSelectRect.w = this.mouseCurrentPosInViewPort.x - this.mouseDownPosInViewPort.x;
-        }else {
-          this.multiSelectRect.x = this.mouseCurrentPosInViewPort.x;
-          this.multiSelectRect.w = this.mouseDownPosInViewPort.x - this.mouseCurrentPosInViewPort.x;
-        }
-        if(this.mouseCurrentPosInViewPort.y > this.mouseDownPosInViewPort.y) {
-          this.multiSelectRect.y = this.mouseDownPosInViewPort.y;
-          this.multiSelectRect.h = this.mouseCurrentPosInViewPort.y - this.mouseDownPosInViewPort.y;
-        }else {
-          this.multiSelectRect.y = this.mouseCurrentPosInViewPort.y;
-          this.multiSelectRect.h = this.mouseDownPosInViewPort.y - this.mouseCurrentPosInViewPort.y;
+        {
+          if(this.mouseCurrentPosInViewPort.x > this.mouseDownPosInViewPort.x) {
+            this.multiSelectRect.x = this.mouseDownPosInViewPort.x;
+            this.multiSelectRect.w = this.mouseCurrentPosInViewPort.x - this.mouseDownPosInViewPort.x;
+          }else {
+            this.multiSelectRect.x = this.mouseCurrentPosInViewPort.x;
+            this.multiSelectRect.w = this.mouseDownPosInViewPort.x - this.mouseCurrentPosInViewPort.x;
+          }
+          if(this.mouseCurrentPosInViewPort.y > this.mouseDownPosInViewPort.y) {
+            this.multiSelectRect.y = this.mouseDownPosInViewPort.y;
+            this.multiSelectRect.h = this.mouseCurrentPosInViewPort.y - this.mouseDownPosInViewPort.y;
+          }else {
+            this.multiSelectRect.y = this.mouseCurrentPosInViewPort.y;
+            this.multiSelectRect.h = this.mouseDownPosInViewPort.y - this.mouseCurrentPosInViewPort.y;
+          }
         }
 
         if(this.multiSelectRect.w > 0 && this.multiSelectRect.h > 0) {
-          //选择块
+          let rect = new Rect();
+          //选择单元
           for(var i = 0, c = this.blocks.length; i < c; i++) {
-            this.blocks[i].updateSelectStatus(this.blocks[i].getRect().testRectCross(this.multiSelectRect));
+
+            let block = this.blocks[i];
+
+            rect.Set(block.position.x, block.position.y, block.size.x, block.size.y);
+            rect.multiply(this.viewZoom);
+
+            this.blocks[i].updateSelectStatus(rect.testRectCross(this.multiSelectRect));
+
             if(this.blocks[i].selected) this.multiSelectedBlocks.push(this.blocks[i]);
             else this.multiSelectedBlocks.remove(this.blocks[i]);
           }
-          //选择连接
-          for(var i = 0, c = this.connectors.length; i < c; i++) {
-            this.connectors[i].selected = this.connectors[i].testRectCross(this.multiSelectRect, this.viewZoom);
-            if(this.connectors[i].selected && !this.selectedConnectors.contains(this.connectors[i])) 
-              this.selectedConnectors.push(this.connectors[i]);
-            else this.selectedConnectors.remove(this.connectors[i]);
-          }
           this.isMultiSelected = true;
-        }else
-          this.isMultiSelected = false;
-      }else if(this.isDragView) {
+        }else this.isMultiSelected = false;
+
+      } else if(this.isDragView) {
         //移动视图
         this.viewPort.x = this.mouseDownViewPortPos.x - (this.mouseCurrentPos.x - this.mouseDownPos.x);
         this.viewPort.y = this.mouseDownViewPortPos.y - (this.mouseCurrentPos.y - this.mouseDownPos.y);
@@ -970,6 +1043,7 @@ export default class BlockEditorWorker extends Vue {
   @Watch('isConnectingToNew') update_isConnectingToNew(v) { this.$emit('update-isConnectingToNew', v); }
   @Watch('connectingIsFail') update_connectingIsFail(v) { this.$emit('update-connectingIsFail', v); }
   @Watch('connectingFailedText') update_connectingFailedText(v) { this.$emit('update-connectingFailedText', v); }
+  @Watch('connectingSuccessText') update_connectingSuccessText(v) { this.$emit('update-connectingSuccessText', v); }
   @Watch('connectingCanConnect') update_connectingCanConnect(v) { this.$emit('update-connectingCanConnect', v); }
   @Watch('connectingStartPort') update_connectingStartPort(v) { this.$emit('update-connectingStartPort', v); }
   @Watch('connectingEndPos') update_connectingEndPos(v) { this.$emit('update-connectingEndPos', v); }

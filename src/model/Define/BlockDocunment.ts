@@ -4,7 +4,7 @@ import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockRunContextData } from "../WorkProvider/Runner";
-import { BlockParameterSetType } from "./BlockParameterType";
+import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
 import BlockDrawer from "../../components/BlockDrawer.vue";
 
@@ -186,7 +186,7 @@ export class BlockGraphDocunment {
 export class BlockGraphVariable {
 
   name = '';
-  type = '';
+  type : BlockParameterType = BlockParameterType.createTypeFromString('any');
   dictionaryKeyType = '';
   setType : BlockParameterSetType = 'variable';
 

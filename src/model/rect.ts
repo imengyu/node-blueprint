@@ -64,6 +64,19 @@ export class Rect {
     }
   }
 
+  public expand(v : number) {
+    this.x -= v;
+    this.y -= v;
+    this.w += v * 2;
+    this.h += v * 2;
+  }
+  public multiply(v : number) {
+    this.x *= v;
+    this.y *= v;
+    this.w *= v;
+    this.h *= v;
+  }
+
   public getRight() { return this.w < 0 ? this.x : this.x + this.w; }
   public getBottom() { return this.h < 0 ? this.y : this.y + this.h; }
   public getLeft() { return this.w < 0 ? this.x + this.w : this.x; }

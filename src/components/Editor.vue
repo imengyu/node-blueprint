@@ -201,7 +201,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Component, Vue, Watch } from "vue-property-decorator";
 import { State } from 'vuex-class'
 import { Block } from '../model/Define/Block'
 import { Vector2 } from "../model/Vector2";
@@ -740,8 +740,8 @@ export default class Editor extends Vue {
     this.loadRecentList();
   
     BlockServiceInstance.init();
-    BlockServiceInstance.isEditorMode = true;
-    BlockServiceInstance.allBlocksGrouped = this.allBlocksGrouped;
+    BlockServiceInstance.setIsEditorMode(true);
+    BlockServiceInstance.setAllBlocksGrouped(this.allBlocksGrouped);
     BlockRegister.registerAll();
     ParamTypeServiceInstance.init();
     BlockServiceInstance.updateBlocksList();
@@ -906,26 +906,13 @@ export default class Editor extends Vue {
       that.goGraph(doc.mainGraph);
     }, 500);
   }
-  private onOpenFileInputChanged() {
+  public onOpenFileInputChanged() {
     let input = (<HTMLInputElement>this.$refs.OpenFileInput);
     if(input.files.length > 0) {
       let reader = new FileReader();
       reader.readAsText(input.files[0], 'UTF-8');
       reader.onload = (e) => {
-        let content = e.target.result;
-        try {
-          let doc = new BlockDocunment();
-          this.parser.loadFromString(content.toString(), doc, true);
-          this.goDoc(doc);
-        }
-        catch(e) {
-          this.$Modal.error({
-            title: '加载文档失败',
-            content: '发生了错误：' + e
-          });
-          this.newFile();
-          console.error(e);
-        }
+        this.doLoadFileToGraph(e.target.result.toString(), input.files[0].path);
       };
     }
   }
@@ -933,6 +920,12 @@ export default class Editor extends Vue {
     this.addToRecentList(path);//添加到最近列表
     let g = this.isFileOpened(path);
     if(g == null) {
+
+      if(!fs.existsSync(path)) {
+        this.$Modal.error({ title: '加载文档失败', content: '文件 ' + path + ' 不存在' });
+        return;
+      }
+
       g = new BlockDocunment();
       g.path = path;
 
@@ -944,15 +937,7 @@ export default class Editor extends Vue {
           this.$Message.destroy();
           logger.error('Load file failed : ' + path + '\n' + err);
           this.$Modal.error({ title: '加载文档失败', content: '发生了错误：' + err });
-        }else {
-          logger.log('File loaded : ' + this.getPath(path));
-          this.parser.loadFromString(data, g, true);
-          this.goDoc(g);
-          setTimeout(() => {
-            this.goGraph(g.mainGraph);
-            this.$Message.destroy();
-          }, 400);
-        }
+        }else this.doLoadFileToGraph(data, path);
       });
 
     }else {
@@ -960,6 +945,40 @@ export default class Editor extends Vue {
       setTimeout(() => {
         this.goGraph(g.mainGraph);
       }, 200);
+    }
+  }
+  private doLoadFileToGraph(data : string, path : string) {
+    let errRet = (e) => {
+      this.$Modal.error({
+        title: '加载文档失败',
+        content: e
+      });
+      this.$Message.destroy();
+    }
+    let doc = new BlockDocunment();
+    let ret = null;
+    try {
+      ret = this.parser.loadFromString(data, doc, true);
+    } catch(e) {
+      errRet('发生了错误：' + e);
+      console.error(e);
+      logger.error('File load failed : ' + e);
+      return;
+    }
+    if(ret === -1)
+      errRet('加载的文件是一个空文件');
+    else if(ret === -2)
+      errRet('加载的文件是不是有效的JSON格式，这表示文件可能已经损坏')
+    else {
+      this.goDoc(doc);
+
+      //跳转
+      setTimeout(() => {
+        this.goGraph(doc.mainGraph);
+        this.$Message.destroy();
+      }, 400);
+
+      logger.log('File loaded : ' + this.getPath(path));
     }
   }
 
@@ -1081,7 +1100,7 @@ export default class Editor extends Vue {
         return;
       }
       //保存文件
-      logger.log('Saveing : ' + g.path);
+      logger.log('Saving : ' + g.path);
       this.$Message.loading({ content: '正在保存中，请稍后...', duration: 0 });
       let str = this.parser.saveToString(this.currentDocunment, true);
       fs.writeFile(g.path, str, { encoding: 'UTF-8' }, () => {
@@ -1140,10 +1159,10 @@ export default class Editor extends Vue {
     editor.doDeleteGraph(g);
   }
   //关闭回调
-  private onCloseGraph(g : BlockDocunment) {
+  public onCloseGraph(g : BlockDocunment) {
     this.closeDoc(g, null);
   }
-  private onGoDoc(g : BlockDocunment) {
+  public onGoDoc(g : BlockDocunment) {
     if(this.currentDocunment != g) this.goDoc(g);
   }
 

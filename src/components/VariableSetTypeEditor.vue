@@ -1,7 +1,7 @@
 <template>
   <div class="position-relative display-inline-block">
     <div class="flow-float-set-typedot" title="更改集合类型" @click="switchShow" :style="{ color: color }">
-      <i v-if="!canChoodeType || value=='variable'" class="iconfont icon-11"></i>
+      <i v-if="!canChooseType || value=='variable'" class="iconfont icon-11"></i>
       <i v-else-if="value=='array'" class="iconfont icon-port-array-full"></i>
       <i v-else-if="value=='set'" class="iconfont icon-port-set"></i>
       <span v-else-if="value=='dictionary'" >
@@ -21,10 +21,6 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import ParamTypeServiceInstance from "../sevices/ParamTypeService";
-import AllEditors from "../model/TypeEditors/AllEditors";
-import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockGraphDocunment, BlockGraphVariable } from "../model/Define/BlockDocunment";
 import { BlockParameterSetType, BlockParameterType } from "../model/Define/BlockParameterType";
 
 @Component
@@ -36,11 +32,11 @@ export default class VariableSetTypeEditor extends Vue {
   @Prop({ default: null }) color2 : string;
 
   private show = false;
-  private canChoodeType = false;
+  private canChooseType = false;
 
   @Watch('type') 
   onTypeChange() {
-    this.canChoodeType = !this.type.isExecute();
+    this.canChooseType = this.type && !this.type.isExecute();
   }
 
   switchType(newType) {
@@ -50,7 +46,7 @@ export default class VariableSetTypeEditor extends Vue {
   }
 
   switchShow() {
-    if(this.canChoodeType)
+    if(this.canChooseType)
       this.show = !this.show;
   }
 

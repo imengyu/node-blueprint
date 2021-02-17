@@ -29,3 +29,17 @@
 如果你对这个项目感兴趣，也可以联系我，wechart： imyzc_dream_or_chase，我们可以一起探讨一下这个项目的前景和应用问题。如果你很想使用这个项目在生产环境中，我会尽力帮助你完善项目和接入改进（可能需要一点点回报）🌈。
 
 
+### 如何运行
+
+```
+npm install # 先安装依赖
+npm run dev # 运行浏览器模式 
+
+# 或者运行electron模式（可用运行nodejs API）
+
+npm run build-electron-dev # 首先开启一个命令窗口运行编译命令
+npm run run-electron-dev # 再开启一个命令窗口运行Electron命令
+
+```
+
+

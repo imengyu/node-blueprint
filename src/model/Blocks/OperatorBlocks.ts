@@ -3,7 +3,6 @@ import { Block } from "../Define/Block";
 import CommonUtils from "../../utils/CommonUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import StringUtils from "../../utils/StringUtils";
-import { BlockPack } from "./Utils/BlockRegister";
 import { BlockPort } from "../Define/Port";
 
 export default {

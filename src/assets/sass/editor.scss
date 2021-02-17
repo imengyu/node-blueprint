@@ -335,8 +335,9 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    border-radius: 20px;
-    background-color: #757575;
+    border-radius: 4px;
+    background-color: #fefefe;
+    border: 1px solid #efefef;
     padding: 25px;
     width: 200px;
     height: 200px;
@@ -344,7 +345,8 @@
     cursor: pointer;
 
     &:hover {
-      background-color: #969696;
+      background-color: #e9e9e9;
+      border: 1px solid #dfdfdf;
     }
     
     &:not(:first-child) {
@@ -352,7 +354,7 @@
     }
 
     span {
-      color: #fff;
+      color: #525252;
       display: block;
       font-size: 13px;
       margin-top: 6px;
@@ -371,14 +373,14 @@
       @include pc-fix-scrollbar();
 
       li {
-        color: rgb(155, 188, 207);
+        color: rgb(13, 139, 212);
       }
 
       a {
-        color: #c4c4c4;
+        color: #146594;
 
         &:active, &:hover {
-          color: #fff;
+          color: rgb(0, 163, 238);
         }
       }
     }

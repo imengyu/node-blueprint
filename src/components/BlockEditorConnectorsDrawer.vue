@@ -12,7 +12,7 @@ import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { Rect } from "../model/Rect";
 import { Vector2 } from "../model/Vector2";
 import { BlockPort } from "../model/Define/Port";
-import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
+import { BlockPortEditor, BlockPortEditorDataFake } from "../model/Editor/BlockPortEditor";
 
 /**
  * 编辑器背景绘制控制
@@ -47,7 +47,6 @@ export default class BlockEditorConnectorsDrawer extends Vue {
   @Prop({default: null}) connectingEndPos : Vector2;
   @Prop({default: null}) connectingStartPort : BlockPortEditor;
   @Prop({default: false}) connectingIsFail : boolean;
-  @Prop({default: null}) connectingConnector : ConnectorEditor;
   @Prop({default: false}) drawDebugInfo : boolean;
 
   @Watch('viewRealSize')
@@ -58,26 +57,36 @@ export default class BlockEditorConnectorsDrawer extends Vue {
     }
   }
 
+  //用于绘制鼠标连接的连接线实例
+  private connectingConnector = new ConnectorEditor();
+  private connectingConnectorPortMoveable : BlockPortEditor = null;
+  private connectingConnectorPortMoveableFakeEditorData : BlockPortEditorDataFake = null;
+
+  //绘制连接线
   private drawConnectors() {
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 1.5;
 
     if(this.connectors)
-      this.connectors.forEach(element => {
-        element.drawPos = this.drawDebugInfo;
-        element.draw(this.ctx, this.viewPort, this.viewZoom);
-      });
+      this.connectors.forEach(element => element.draw(this.ctx, this.viewPort, this.viewZoom));
 
     if(this.isConnecting && this.connectingConnector != null) {
       if(this.connectingIsFail) this.ctx.strokeStyle = "#e9412a";
       else this.ctx.strokeStyle = "#efefef";
 
       this.connectingConnector.startPort = this.connectingStartPort;
-      if(this.connectingStartPort.direction == 'input') 
-        this.connectingConnector.drawLineInPos(this.ctx, this.viewPort, this.viewZoom, this.connectingEndPos, this.connectingStartPort.editorData.getPosition());
-      else if(this.connectingStartPort.direction == 'output')
-        this.connectingConnector.drawLineInPos(this.ctx, this.viewPort, this.viewZoom, this.connectingStartPort.editorData.getPosition(), this.connectingEndPos);
+      if(this.connectingStartPort.direction == 'input') {
+        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPos);
+        this.connectingConnector.startPort = this.connectingConnectorPortMoveable;
+        this.connectingConnector.endPort = this.connectingStartPort;
+      }
+      else if(this.connectingStartPort.direction == 'output') {
+        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPos);
+        this.connectingConnector.startPort = this.connectingStartPort;
+        this.connectingConnector.endPort = this.connectingConnectorPortMoveable;
+      }
       
+      this.connectingConnector.draw(this.ctx, this.viewPort, this.viewZoom);
     }
   }
 
@@ -88,6 +97,11 @@ export default class BlockEditorConnectorsDrawer extends Vue {
   }
 
   mounted() {
+
+    this.connectingConnectorPortMoveable = new BlockPortEditor(null);
+    this.connectingConnectorPortMoveableFakeEditorData = new BlockPortEditorDataFake();
+    this.connectingConnectorPortMoveable.editorData = this.connectingConnectorPortMoveableFakeEditorData
+
     setTimeout(() => {
       this.canvas = (<HTMLCanvasElement>this.$refs.canvas);
       this.ctx = this.canvas.getContext("2d");

@@ -1,14 +1,13 @@
 import { BlockDocunment, BlockGraphDocunment, BlockGraphVariable } from "../Define/BlockDocunment";
-import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
+import { BlockRegData } from "../Define/BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
 import BlockServiceInstance from "../../sevices/BlockService";
 import StringUtils from "../../utils/StringUtils";
 import { BlockPort } from "../Define/Port";
-import { Connector } from "../Define/Connector";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { Block } from "../Define/Block";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
-import { BlockParameterType } from "../Define/BlockParameterType";
+import { BlockParameterType, BlockParameterSetType } from "../Define/BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
 
 /**
@@ -16,6 +15,12 @@ import CommonUtils from "../../utils/CommonUtils";
  */
 export class BlockFileParser {
 
+  /**
+   * 保存图表
+   * @param graph 图表
+   * @param docData 图表数据
+   * @param saveToEditor 是否是编辑器保存版本
+   */
   private saveGraph(graph : BlockGraphDocunment, docData : {
     blockMap: Array<any>,
     portMap: Array<any>,
@@ -57,7 +62,7 @@ export class BlockFileParser {
       return -1;
     };
 
-    //Write blocks
+    //写入单元
     graph.blocks.forEach(block => {
       let mapIndex = findBlockGUIDMap(block.guid);
       if(mapIndex == -1)
@@ -80,7 +85,7 @@ export class BlockFileParser {
 
       let blocksIndex = data.blocks.push(blockData) - 1;
 
-      //Write Parameters
+      //写入入参数
       for(let i = 0, keys = Object.keys(block.inputPorts), c = keys.length; i < c; i++) {
 
         let port : BlockPort = block.inputPorts[keys[i]];
@@ -102,6 +107,7 @@ export class BlockFileParser {
             type: port.paramType,
           })
       }
+      //写入出参数
       for(let i = 0, keys = Object.keys(block.outputPorts), c = keys.length; i < c; i++) {
 
         let port : BlockPort = block.outputPorts[keys[i]];
@@ -125,7 +131,7 @@ export class BlockFileParser {
       }
     });
 
-    //Write connectors
+    //写入链接
     graph.connectors.forEach(connector => {
       data.connectors.push({
         startBlock: findBlockIndex(connector.startPort.parent.uid),
@@ -136,13 +142,13 @@ export class BlockFileParser {
       });
     });
 
-    //variables
+    //写入变量
     graph.variables.forEach(variable => {     
       data.variables.push({
         defaultValue: variable.defaultValue,
         value: variable.value,
         name: variable.name,
-        type: variable.type,
+        type: variable.type.getType(),
         setType: variable.setType,
         dictionaryKeyType: variable.dictionaryKeyType,
       });
@@ -152,6 +158,7 @@ export class BlockFileParser {
 
     }
 
+    //写入图表的输入输出接口
     graph.inputPorts.forEach((p) => {
       p.paramType = p.paramType.toString();
       if(CommonUtils.isDefinedAndNotNull(p.paramDictionaryKeyType))
@@ -169,13 +176,22 @@ export class BlockFileParser {
       data.outputPorts.push(p);
     });
 
-    //Save child graph
+    //递归保存子图表
     graph.children.forEach((childGraph) =>
       data.childGraphs.push(this.saveGraph(childGraph, docData, saveToEditor))
     );
 
     return data;
   }
+  /**
+   * 加载图表
+   * @param graphData 数据
+   * @param parentGraph 父图表
+   * @param blockRegDatas block GUID map
+   * @param portRegDatas port GUID map
+   * @param readToEditor 是否是读取至编辑器
+   * @param doc 所属文档
+   */
   private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean, doc : BlockDocunment) {
 
     let graph = new BlockGraphDocunment()
@@ -196,24 +212,24 @@ export class BlockFileParser {
     graph.isMainGraph = false;
     graph.docunment = doc;
 
-    //child graph
+    //递归加载子图表
     graphData.childGraphs.forEach(childGraph => {
       graph.children.push(this.loadGraph(childGraph, graph, blockRegDatas, portRegDatas, readToEditor, doc));
     }); 
     
-    //variables
+    //加载变量
     graphData.variables.forEach(variable => {
       let v = new BlockGraphVariable();
       v.defaultValue = variable.defaultValue;
       v.value = variable.value;
       v.name = variable.name;
-      v.type = variable.type;
-      v.setType = variable.setType;
+      v.type = BlockParameterType.createTypeFromString(variable.type);
+      v.setType = <BlockParameterSetType>variable.setType;
       v.dictionaryKeyType = variable.dictionaryKeyType;
       graph.variables.push(v);
     }); 
     
-    //blocks
+    //加载单元
     graphData.blocks.forEach(block => {
       let blockInstance = readToEditor ? new BlockEditor(blockRegDatas[block.guidMap]) : new Block(blockRegDatas[block.guidMap]);
       
@@ -235,7 +251,7 @@ export class BlockFileParser {
       graph.blocks.push(blockInstance);
     });
 
-    //ports
+    //加载单元接口
     graphData.ports.forEach(port => {
       if(port.type == 'execute')
         graph.blocks[port.blockMap].addPort(portRegDatas[port.guidMap].regData, true);
@@ -269,7 +285,7 @@ export class BlockFileParser {
     });
 
 
-    //connectors
+    //加载单元链接
     graphData.connectors.forEach(connector => {
       let startPort = graph.blocks[connector.startBlock].getPortByGUID(connector.startPort);
       let endPort = graph.blocks[connector.endBlock].getPortByGUID(connector.endPort);
@@ -318,13 +334,20 @@ export class BlockFileParser {
   public loadFromString(str : string, doc : BlockDocunment, readToEditor : boolean) {
     if(StringUtils.isNullOrEmpty(str)) {
       console.log('[loadFromString] invalid string!');
-      return false;
+      return -1;
     }
 
     let blockRegDatas : Array<BlockRegData> = [];
     let portRegDatas = [];
 
-    let data = JSON.parse(str);
+    let data = null;
+
+    try {
+      data = JSON.parse(str);
+    } catch(e) {
+      console.log('[loadFromString] invalid file!');
+      return -2;
+    }
 
     doc.uid = data.uid;
     doc.libVersion = data.libVersion;

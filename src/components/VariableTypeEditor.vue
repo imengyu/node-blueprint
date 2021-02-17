@@ -16,7 +16,7 @@ import { BlockParameterBaseType, BlockParameterType } from "../model/Define/Bloc
 export default class VariableTypeEditor extends Vue {
 
   @Prop({ default: null }) variableType : BlockParameterType;
-  @Prop({ default: null }) value : any;
+  @Prop({ default: null }) value : BlockParameterType;
 
   private hostEl : HTMLElement = null;
   private currentEditorEl : HTMLElement = null;

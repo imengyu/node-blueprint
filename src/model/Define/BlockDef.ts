@@ -3,14 +3,25 @@ import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCall
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 import { BlockParameterBaseType, BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
-import { BlockPack } from "../Blocks/Utils/BlockRegister";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
+import { PackageDef } from "./PackageDef";
+
+//单元注册
+//========================
 
 /**
  * 单元信息结构
  */
 export class BlockRegData {
 
+  /**
+   * 创建单元信息结构
+   * @param guid 单元唯一GUID
+   * @param name 单元名称
+   * @param description 说明字符串
+   * @param author 作者名字
+   * @param category 分类名称
+   */
   public constructor(guid : string, name : string, description?:string, author?:string, category?:string) {
     this.guid = guid;
     this.baseInfo.name = name;
@@ -62,13 +73,21 @@ export class BlockRegData {
   /**
    * 单元所属的包
    */
-  public pack : BlockPack = null;
+  public pack : PackageDef = null;
 
   /**
    * 单元的端口
    */
   public ports : Array<BlockPortRegData> = [];
 
+  /**
+   * 根据方向、类型、键类型等参数在当前定义文件中查找一个端口
+   * @param direction 端口方向
+   * @param type 数据类型
+   * @param keyType 集合键的类型
+   * @param setType 数据集合的类型
+   * @param includeAny 是否包含 any 类型
+   */
   public hasOnePortByDirectionAndType(direction : BlockPortDirection, type : BlockParameterType, keyType : BlockParameterType, setType : BlockParameterSetType = 'variable', includeAny = false) {
     if(type.isExecute()) {
       for(let i = 0, c = this.ports.length; i < c;i++)
@@ -104,38 +123,46 @@ export class BlockRegData {
    * 单元的配置
    */
   public settings : {
-    portsChangeSettings : {
-      userCanAddInputPort: boolean,
-      userCanAddOutputPort: boolean,
-    },  
-    parametersChangeSettings : BlockParametersChangeSettings,
-    oneBlockOnly: boolean,
-    data: any,
-    hideInAddPanel: boolean,
-  } = {
     /**
      * 端口动态配置
      */
+    portsChangeSettings : {
+      /**
+       * 指示用户能不能添加输入端口
+       */
+      userCanAddInputPort: boolean,
+      /**
+       * 指示用户能不能添加输出端口
+       */
+      userCanAddOutputPort: boolean,
+    },  
+    /**
+     * 参数动态配置
+     */
+    parametersChangeSettings : BlockParametersChangeSettings,
+    /**
+     * 获取或者设置当前单元是否只能在一个图表中出现一次
+     */
+    oneBlockOnly: boolean,
+    /**
+     * 自定义静态数据，会传输至每一个派生自此定义的 Block.data 上
+     */
+    data: any,
+    /**
+     * 是否在添加单元菜单中隐藏
+     */
+    hideInAddPanel: boolean,
+  } = {
     portsChangeSettings : {
       userCanAddInputPort: false,
       userCanAddOutputPort: false,
     },  
-     /**
-     * 端口动态配置
-     */
     parametersChangeSettings : {
       userCanAddInputParameter: false,
       userCanAddOutputParameter: false,
-
     },
-    /**
-     * 获取或者设置当前单元是否只能在一个图表中出现一次
-     */
     oneBlockOnly: false,
     data: {},
-    /**
-     * 是否在添加单元菜单中隐藏
-     */
     hideInAddPanel: false,
   }
 
@@ -203,7 +230,7 @@ export class BlockRegData {
     /**
      * 创建单元自定义编辑器的回调（仅编辑器模式调用）
      * 
-     * (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData)
+     * (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData) => void
      */
     onCreateCustomEditor : BlockEditorComponentCreateFn,
     /**
@@ -212,6 +239,13 @@ export class BlockRegData {
      * (parentEle : HTMLElement, block : BlockEditor, port : BlockPort) => HTMLElement
      */
     onCreatePortCustomEditor : BlockPortEditorComponentCreateFn,
+    /**
+     * 单元鼠标事件（仅编辑器模式调用）
+     * 
+     * (blocak : BlockEditor, event : 'move'|'down'|'up', e : MouseEvent) => boolean
+     * //返回true则终止默认事件
+     */
+    onBlockMouseEvent : BlockMouseEventFn,
     /**
      * 用户创建端口时的回调（仅编辑器模式调用）
      * 
@@ -261,6 +295,7 @@ export class BlockRegData {
     onPortConnect: null,
     onPortUnConnect: null,
     onSave: null,
+    onBlockMouseEvent: null,
   }
 
   /**
@@ -273,19 +308,36 @@ export class BlockRegData {
    */
   public blockMenu = new BlockMenuSettings();
 
+  /**
+   * 参见 BlockPortRegData.portAnyFlexable , 该字段用于定义单元整体的key使用。
+   */
   public portAnyFlexables = {};
+
+  //以下字段用于编辑器内部使用
 
   show = true;
   filterShow = true;
 }
 
 export type BlockParametersChangeSettings = {
+  /**
+   * 指定用户是否可以添加进入参数
+   */
   userCanAddInputParameter: boolean,
+  /**
+   * 指定用户是否可以添加输出参数
+   */
   userCanAddOutputParameter: boolean
 }
 export class BlockMenuSettings  {
+  /**
+   * 自定义端口菜单
+   */
   public items : Array<MenuItem> = [];
 }
+/**
+ * 单元样式设置
+ */
 export class BlockStyleSettings  {
   /**
    * 单元右上角的大图标 32x32
@@ -317,6 +369,10 @@ export class BlockStyleSettings  {
    */
   public noTitle = false;
   /**
+   * 是否不显示鼠标悬停提示
+   */
+  public noTooltip = false;
+  /**
    * 单元最小宽度
    */
   public minWidth = '';
@@ -338,12 +394,15 @@ export class BlockStyleSettings  {
   public layer : 'normal'|'background' = 'normal';
 }
 
+//端口注册
+//========================
+
 /**
  * 行为节点信息结构
  */
 export interface BlockPortRegData {
   /**
-   * 节点 的唯一ID (数字或字符串，可以随便写)，一个单元内不能重复
+   * 节点 的唯一ID (不能为空，数字或字符串，可以随便写，在16个字符之内)，只要保证一个单元内不能重复即可
    */
   guid: string,
   /**
@@ -400,6 +459,41 @@ export interface BlockPortRegData {
    */
   paramRequired ?: boolean;
 
+  /**
+   * 该字段用于指示类型为 any 的弹性端口的行为。
+   * 
+   * 该字段是一个Object，格式为：
+   * { 
+   *   key: boolean, 
+   *   key2: boolean,
+   *   ...
+   * }
+   * 或：
+   * { 
+   *   key3: { get: 'paramDictionaryKeyType'|'paramType', set: 'paramDictionaryKeyType'|'paramType' },
+   *   ...
+   * }
+   * (注意：字段中出现的key必须也在BlockDef的portAnyFlexables字段中定义并为true，如下：
+   * portAnyFlexables: {
+   *   key: true
+   * }
+   * 不然的话数据不会保存)
+   * 
+   * 说明：
+   * 当key后面的值不是false或undefined时，表示这个flexable key可用，
+   * 当两个端口都定义了相同名称的两个flexable key并且都可用时，表示两个端口弹性绑定，
+   * 这是，如果其中一个端口连接上了一个有类型的端口，那么它将会转换自身类型至连接上的端口，
+   * 并且把弹性绑定的另一个端口的类型也改过来，这就是弹性端口的功能。
+   * 
+   * 如果key后面的定义如key3所示，是一个get和set，这表示自定义弹性端口要参考和改变的字段
+   * get表示当接上了端口时要参考的字段，会将自己的类型改为对应的参考的字段值。
+   * set表示当弹性端口要更改自己的值时，他要更改哪个字段。
+   * 这通常用于集合类型的弹性端口。
+   * 
+   * paramType 表示端口类型
+   * paramDictionaryKeyType 表示端口的集合键的类型
+   * 
+   */
   portAnyFlexable ?: {};
 
   /**
@@ -411,10 +505,14 @@ export interface BlockPortRegData {
    */
   forceEditorControlOutput ?: boolean;
 
+  /**
+   * 自定义静态数据，将会拷贝至每一个改单元的端口实例的 data 上。
+   */
   data ?: any;
 }
-
-
+/**
+ * 参数的编辑器注册数据
+ */
 export class BlockParameterEditorRegData {
   /**
    * 一个函数回调，在这里创建数据类型的对应编辑器，用来编辑此种类型的数据。
@@ -429,6 +527,9 @@ export class BlockParameterEditorRegData {
    */
   public useInSetType : BlockParameterSetType[] = [ 'variable' ];
 }
+
+//类型注册
+//========================
 
 /**
  * 数据类型信息结构。
@@ -469,6 +570,25 @@ export class BlockParameterTypeRegData {
    * getHashCode 获取哈希码函数.
    */
   public getHashCode : (v) => string = null;
+
+    /**
+   * createDefaultValue 创建默认值函数.
+   */
+  public createDefaultValue : () => any = null;
+}
+
+/**
+ * 枚举的项结构
+ */
+export type BlockParameterEnumValueData = {
+  /**
+   * 项的值
+   */
+  value: string,
+  /**
+   * 项的说明文字
+   */
+  description: string
 }
 
 /**
@@ -477,7 +597,14 @@ export class BlockParameterTypeRegData {
  */
 export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
 
-  public constructor(name : string, allowTypes ?: Array<{ value: string, description: string }> | Array<string>, color?: string, 
+  /**
+   * 创建枚举类型信息结构
+   * @param name 枚举名称
+   * @param allowTypes 枚举允许的项
+   * @param color 颜色
+   * @param editor 编辑器数据，若不定义，则使用默认枚举编辑器
+   */
+  public constructor(name : string, allowTypes ?: Array<BlockParameterEnumValueData> | Array<string>, color?: string, 
     editor ?: BlockParameterEditorRegData) {
     super(name, 'enum', color, editor);
 
@@ -489,24 +616,47 @@ export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
             description: ''
           })
         });
-      } else this.allowTypes = this.allowTypes.concat(<Array<{ value: string, description: string }>>allowTypes);
+      } else this.allowTypes = this.allowTypes.concat(<Array<BlockParameterEnumValueData>>allowTypes);
     }
   }
 
   /**
-   * 枚举项
+   * 枚举允许的项
    */
-  public allowTypes : Array<{
-    value: string,
-    description: string
-  }> = [];
+  public allowTypes : Array<BlockParameterEnumValueData> = [];
 
 }
 
+/**
+ * 类型转换器的注册类型
+ */
+export class BlockParameterTypeConverterData {
+
+  /**
+   * 源类型
+   */
+  public fromType : BlockParameterType = BlockParameterType.Any();
+  /**
+   * 目标类型
+   */
+  public toType : BlockParameterType = BlockParameterType.Any();
+  /**
+   * 转换所支持的集合类型
+   */
+  public allowSetType : BlockParameterSetType = 'variable' ;
+  /**
+   * 转换器
+   */
+  public converter : (source : any) => any;
+}
+
+//回调函数定义
+//========================
 
 export type BlockParameterEditorComponentCreateFn = (block : BlockEditor, port : BlockPortEditor, rparentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
 export type BlockParameterEditorValueChangedFn = (newVal : any, editorEle : HTMLElement) => void;
 export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData) => void;
 export type BlockPortEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, port : BlockPortEditor) => HTMLElement;
+export type BlockMouseEventFn = (block : BlockEditor, event : 'move'|'down'|'up', e : MouseEvent) => boolean;
   
 

@@ -6,7 +6,7 @@
       v-show="isConnecting && !isConnectingToNew"
       :style="{ left: (connectingEndPos.x - viewPort.x + 10) + 'px', top:  (connectingEndPos.y - viewPort.y + 10) + 'px' }">
       <span v-if="currentHoverPort==null"><i class="iconfont icon-calendar-1 mr-1"></i>连接至新的单元</span>
-      <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i></span>
+      <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i><span v-html="connectingSuccessText"></span></span>
       <span v-else><i class="iconfont icon-close- text-danger mr-1"></i><span v-html="connectingFailedText"></span></span>
     </div>
     <!--节点提示-->
@@ -51,6 +51,7 @@
       @update-connectingStartPort="(v) => connectingStartPort = v"
       @update-connectingIsFail="(v) => connectingIsFail = v"
       @update-connectingFailedText="(v) => connectingFailedText = v"
+      @update-connectingSuccessText="(v) => connectingSuccessText = v"
       @update-multiSelectRect="(v) => multiSelectRect = v"
       :mouseLeftMove="mouseLeftMove"
       :currentDocunment="currentDocunment"
@@ -86,8 +87,7 @@
         :drawDebugInfo="settings.drawDebugInfo"
         :connectingEndPos="connectingEndPos"
         :connectingStartPort="connectingStartPort"
-        :connectingIsFail="connectingIsFail"
-        :connectingConnector="connectingConnector">
+        :connectingIsFail="connectingIsFail">
       </BlockEditorConnectorsDrawer>
 
     </BlockEditorWorker>
@@ -718,8 +718,8 @@ export default class BlockDrawer extends Vue {
   connectingEndPos = new Vector2();
   connectingStartPort : BlockPort = null;
   connectingIsFail = false;
-  connectingConnector = new ConnectorEditor();
   connectingFailedText = '';
+  connectingSuccessText = '';
   multiSelectRect = new Rect();
   currentHoverPort  : BlockPort = null;
 

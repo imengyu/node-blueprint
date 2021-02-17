@@ -1,6 +1,6 @@
 import { Vector2 } from "../Vector2"
 import { Rect } from "../Rect";
-import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings, BlockPortRegData } from "../Define/BlockDef";
+import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings, BlockPortRegData, BlockMouseEventFn } from "../Define/BlockDef";
 import { BlockPort, BlockPortDirection } from "../Define/Port";
 
 import CommonUtils from "../../utils/CommonUtils";
@@ -97,6 +97,7 @@ export class BlockEditor extends Block {
       this.onUserAddPort = this.regData.callbacks.onUserAddPort;
       this.onCreatePortCustomEditor = this.regData.callbacks.onCreatePortCustomEditor;
       this.onSave = this.regData.callbacks.onSave;
+      this.onMouseEvent = this.regData.callbacks.onBlockMouseEvent;
 
       this.portsChangeSettings = this.regData.settings.portsChangeSettings;
       this.parametersChangeSettings = this.regData.settings.parametersChangeSettings;
@@ -171,7 +172,9 @@ export class BlockEditor extends Block {
     this.els.elTitle = document.createElement('div');
     this.els.elTitle.classList.add("title");
     this.els.elTitle.setAttribute('data-title', this.description);
-    ToolTipUtils.registerElementTooltip(this.els.elTitle);
+
+    if(!this.blockStyleSettings.noTooltip)
+      ToolTipUtils.registerElementTooltip(this.els.elTitle);
 
     this.els.elBackground = document.createElement('div');
     this.els.elBackground.classList.add("background");
@@ -209,7 +212,8 @@ export class BlockEditor extends Block {
       titleSmallSpan.innerText = this.name
       titleSmall.setAttribute('data-title', this.description);
       titleSmall.appendChild(titleSmallSpan);
-      ToolTipUtils.registerElementTooltip(titleSmall);
+      if(!this.blockStyleSettings.noTooltip)
+        ToolTipUtils.registerElementTooltip(titleSmall);
       this.el.appendChild(titleSmall);
     }
   
@@ -325,7 +329,8 @@ export class BlockEditor extends Block {
     this.el.addEventListener('wheel', this.onMouseWhell.bind(this));
     this.el.addEventListener('contextmenu', this.onContextMenu.bind(this));
 
-    ToolTipUtils.registerElementTooltip(this.el);
+    if(!this.blockStyleSettings.noTooltip)
+      ToolTipUtils.registerElementTooltip(this.el);
 
     //load port elements
     this.allPorts.forEach(port => {
@@ -693,6 +698,9 @@ export class BlockEditor extends Block {
   }
   private onMouseMove(e : MouseEvent) {
     if(this.mouseDown) {
+
+      if(typeof this.onMouseEvent === 'function' && this.onMouseEvent(this, 'move', e))
+        return true;
       if(e.buttons == 1){ 
         //Resize
         //=====================
@@ -775,6 +783,7 @@ export class BlockEditor extends Block {
         }
         return true;
       }
+
     }
     else if(this.userCanResize) { //鼠标移动到边缘显示调整大小样式
       this.testInResize(e);
@@ -798,6 +807,9 @@ export class BlockEditor extends Block {
         this.testInResize(e);
       }
 
+      if(typeof this.onMouseEvent === 'function')
+        this.onMouseEvent(this, 'down', e);
+
       document.addEventListener('mousemove', this.fnonMouseMove);
       document.addEventListener('mouseup', this.fnonMouseUp);
 
@@ -820,6 +832,9 @@ export class BlockEditor extends Block {
           this.updateSelectStatus(true);
           this.editor.onUserSelectBlock(this, true);
         }
+
+        if(typeof this.onMouseEvent === 'function')
+          this.onMouseEvent(this, 'up', e);
       }
       this.updateCursor();
     }
@@ -852,8 +867,8 @@ export class BlockEditor extends Block {
     if(pos.y <= 6) this.currentSizeType |= SIZE_TOP;
     else if(pos.y > this.size.y - 6) this.currentSizeType |= SIZE_BOTTOM;
 
-    if(pos.x >= this.size.x - 10 && pos.y >= this.size.y - 10)
-      this.currentSizeType |= SIZE_BOTTOM | SIZE_RIGHT;
+    if(pos.x >= this.size.x - 20 && pos.y >= this.size.y - 20)
+      this.currentSizeType |= (SIZE_BOTTOM | SIZE_RIGHT);
 
     this.updateCursor();
   }
@@ -901,6 +916,7 @@ export class BlockEditor extends Block {
   public onCreatePortCustomEditor : BlockPortEditorComponentCreateFn = null;
   public onUserAddPort : OnUserAddPortCallback = null;
   public onSave : OnBlockEditorEventCallback = null;
+  public onMouseEvent : BlockMouseEventFn = null;
 
   //#region 端口连接处理事件
 

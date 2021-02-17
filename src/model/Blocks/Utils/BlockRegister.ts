@@ -1,5 +1,6 @@
 import { Content } from "iview"
 import BlockServiceInstance from "../../../sevices/BlockService"
+import { PackageDef } from "../../Define/PackageDef"
 import ArrayBlocks from "../ArrayBlocks"
 import BaseBlocks from "../BaseBlocks"
 import ControlBlocks from "../ControlBlocks"
@@ -19,13 +20,13 @@ export default {
 function registerAll() {
   getAllPacks().forEach((pack) => registerPack(pack));
 }
-function registerPack(pack : BlockPack) {
+function registerPack(pack : PackageDef) {
   let blocks = pack.register();
   blocks.forEach(element => {
     BlockServiceInstance.registerBlock(element, pack, false);
   });
 }
-function unregisterPack(pack : BlockPack) {
+function unregisterPack(pack : PackageDef) {
   let blocks = pack.register();
   blocks.forEach(element => {
     BlockServiceInstance.unregisterBlock(element.guid, false);
@@ -43,10 +44,4 @@ function getAllPacks() {
     OSBlocks,
     SetBlocks,
   ]
-}
-
-export interface BlockPack {
-  register: Function,
-  packageName: string,
-  version: number,
 }

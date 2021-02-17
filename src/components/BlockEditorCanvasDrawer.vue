@@ -8,9 +8,6 @@
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { ConnectorEditor } from "../model/Editor/ConnectorEditor";
 import { Rect } from "../model/Rect";
-import { Vector2 } from "../model/Vector2";
-import { BlockPort } from "../model/Define/Port";
-import { BlockPortEditor } from "../model/Editor/BlockPortEditor";
 
 /**
  * 编辑器背景绘制控制

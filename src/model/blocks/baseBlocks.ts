@@ -5,7 +5,7 @@ import StringUtils from "../../utils/StringUtils";
 import CanvasUtils from "../../utils/CanvasUtils";
 import logger from "../../utils/Logger";
 import { BlockGraphDocunment, BlockGraphVariable } from "../Define/BlockDocunment";
-import { BlockParameterEnumRegData, BlockRegData } from "../Define/BlockDef";
+import { BlockParameterEnumRegData, BlockParameterTypeConverterData, BlockRegData } from "../Define/BlockDef";
 import { BlockPort } from "../Define/Port";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
@@ -24,25 +24,56 @@ export default {
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
   getScriptBaseCommentBlock() { return commentBlock;  },
+  getScriptBaseConvertBlock() { return convertBlock;  },
   packageName: 'Base',
   version: 1,
 }
 
 function register() {
+
+  //注册转换方法
+  registerBaseConverters();
+
   return registerScriptBase().concat(
-    registerScriptGraphBase()
-  ).concat(
-    registerScriptVariableBase()
-  ).concat(
-    registerDebugBase()
-  ).concat(
-    registerTypeBase()
-  ).concat(
-    registerLoadLib()
-  ).concat(
-    registerCommentBlock()
+    registerScriptGraphBase(),
+    registerScriptVariableBase(),
+    registerDebugBase(),
+    registerTypeBase(),
+    registerLoadLib(),
+    registerCommentBlock(),
+    registerConvertBlock(),
   );
 }
+
+function registerBaseConverters() {
+  let anyStringConverter = (v) => { return '' + v };
+
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: BlockParameterType.createTypeFromString('number'),
+    toType: BlockParameterType.createTypeFromString('string'), 
+    allowSetType: 'variable', 
+    converter: anyStringConverter
+  });
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: BlockParameterType.createTypeFromString('bigint'),
+    toType: BlockParameterType.createTypeFromString('string'), 
+    allowSetType: 'variable', 
+    converter: anyStringConverter
+  });
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: BlockParameterType.createTypeFromString('boolean'),
+    toType: BlockParameterType.createTypeFromString('string'), 
+    allowSetType: 'variable', 
+    converter: anyStringConverter
+  });
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: BlockParameterType.createTypeFromString('object'),
+    toType: BlockParameterType.createTypeFromString('string'), 
+    allowSetType: 'variable', 
+    converter: anyStringConverter
+  });
+}
+
 
 let blockIn : BlockRegData;
 let blockOut : BlockRegData;
@@ -52,6 +83,7 @@ let graphCall : BlockRegData;
 let variableGet : BlockRegData;
 let variableSet : BlockRegData;
 let commentBlock : BlockRegData;
+let convertBlock : BlockRegData;
 
 function registerScriptBase()  {
 
@@ -145,7 +177,7 @@ function registerScriptVariableBase()  {
       let variable = block.currentGraph.findGraphVariable(block.options['variable']);
 
       block.name = '获取变量 ' + variable.name + ' 的值';
-      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
+      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type.toString()), 0.3);
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
           block.editor.deleteBlock(block, true);
@@ -247,7 +279,7 @@ function registerScriptVariableBase()  {
 
       let variable = block.currentGraph.findGraphVariable(block.options['variable']);
       block.name = '设置 ' + variable.name;
-      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
+      block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type.toString()), 0.3);
 
       block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
@@ -273,7 +305,7 @@ function registerScriptVariableBase()  {
           block.updatePort(portOut);
 
           block.name = '设置变量 ' + variable.name + ' 的值';
-          block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type), 0.3);
+          block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type.toString()), 0.3);
           block.updateContent();
         }
       });
@@ -1038,6 +1070,7 @@ function registerLoadLib() {
   return blocks;
 }
 function registerCommentBlock() {
+
   let block = new BlockRegData("088C2A25-192D-42E7-D31B-B5E9FB7C68DD", "文档注释", "", 'imengyu', '');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/info.svg');
   block.baseInfo.description = '在这个单元里面添加你的代码注释，拖动右下角可以调整大小';
@@ -1076,6 +1109,7 @@ function registerCommentBlock() {
   commentBlock.ports = [];
   commentBlock.blockStyle.minHeight = '100px';
   commentBlock.blockStyle.userCanResize = true;
+  commentBlock.blockStyle.noTooltip = true;
   commentBlock.blockStyle.hideLogo = true;
   commentBlock.blockStyle.noTitle = true;
   commentBlock.blockStyle.layer = 'background';
@@ -1084,6 +1118,7 @@ function registerCommentBlock() {
     blockEle.classList.add('flow-block-comment-block');
     blockEle.style.minWidth = '250px';
     blockEle.style.minHeight = '150px';
+
     let ele = document.createElement('div');
     let input = document.createElement('input');
     let span = document.createElement('span');
@@ -1114,6 +1149,68 @@ function registerCommentBlock() {
     ele.appendChild(span);
     parentEle.appendChild(ele);
   };
+  commentBlock.callbacks.onBlockMouseEvent = (block: BlockEditor, event: "move" | "down" | "up", e: MouseEvent) => {
+    if(event === 'down') {
+      
+    } else if(event === 'move') {
+      
+    } else if(event === 'up') {
+      
+    }
+    return false;
+  };
 
   return [ block, commentBlock ];
+}
+function registerConvertBlock() {
+
+  let block = new BlockRegData("8C7DA763-05C1-61AF-DCD2-174CB6C2C279", "转换器", "", 'imengyu', '');
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
+  block.baseInfo.description = '';
+  block.ports = [
+    {
+      guid: 'INPUT',
+      paramType: 'any',
+      direction: 'input',
+      defaultConnectPort: true,
+    },
+    {
+      guid: 'OUTPUT',
+      paramType: 'any',
+      direction: 'output'
+    },
+  ];
+  block.type = 'base';
+  block.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  block.blockStyle.noTitle = true;
+  block.blockStyle.minWidth = '0px';
+  block.settings.hideInAddPanel = true;
+  block.callbacks.onCreate = (block : Block) => {
+    if(!StringUtils.isNullOrEmpty(block.options['coverterFrom']) && !StringUtils.isNullOrEmpty(block.options['coverterTo']))
+      block.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(block.options['coverterFrom'], block.options['coverterTo']);
+
+    let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
+    if(coverter) {
+
+      let fromPort = block.getPortByGUID('INPUT');
+      let toPort = block.getPortByGUID('OUTPUT');
+
+      block.changePortParamType(fromPort, coverter.fromType, coverter.allowSetType);
+      block.changePortParamType(toPort, coverter.toType, coverter.allowSetType);
+      block.regData.baseInfo.description = '转换 ' + ParamTypeServiceInstance.getTypeNameForUserMapping(coverter.fromType) + 
+        ' 至 ' + ParamTypeServiceInstance.getTypeNameForUserMapping(coverter.toType);
+    }
+  };
+  block.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
+    let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
+    if(coverter) {
+      let input = block.getInputParamValue('INPUT');
+      block.setOutputParamValue('OUTPUT', coverter.converter(input));
+    } else {
+      block.throwError('转换器没有设置转换方法，请删除之后重新添加', port, 'error');
+    }
+  };
+  
+  convertBlock = block;
+  return [ block ];
 }

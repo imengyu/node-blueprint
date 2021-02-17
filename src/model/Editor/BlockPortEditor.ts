@@ -455,5 +455,19 @@ export class BlockPortEditorData {
   }
 }
 
+export class BlockPortEditorDataFake extends BlockPortEditorData {
+  
+  public constructor() {
+    super();
+  }
 
+  private posFake = new Vector2();
+  
+  public setPosition(p : Vector2) {
+    this.posFake.Set(p);
+  }
+  public getPosition() {
+    return this.posFake;
+  }
+}
 

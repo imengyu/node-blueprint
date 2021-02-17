@@ -1,13 +1,30 @@
-import { BlockParameterTypeRegData } from "../model/Define/BlockDef";
+import { BlockParameterTypeConverterData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
 import { BlockParameterBaseType, BlockParameterType } from "../model/Define/BlockParameterType";
 import CommonUtils from "../utils/CommonUtils";
-import { EventHandler, VoidDelegate } from "../utils/EventHandler";
+import { EventHandler } from "../utils/EventHandler";
+import StringUtils from "../utils/StringUtils";
 
+/**
+ * 类型服务，用于管理系统中的数据类型
+ */
 export class ParamTypeService {
   private allCustomTypes : Map<string, BlockParameterTypeRegData> = new Map<string, BlockParameterTypeRegData>();
+  private allTypeConerters = new Map<string, 
+    Map<string, BlockParameterTypeConverterData>
+  >();
 
+  /**
+   * 获取所有自定义类型
+   */
   public getAllCustomTypes() { return this.allCustomTypes; }
+  /**
+   * 获取所有的基础类型
+   */
   public getAllBaseTypes() { return [ 'execute','boolean','bigint','number', 'string', 'function','object','any' ]; }
+  /**
+   * 获取指定名称自定义类型的基础类型
+   * @param name 自定义类型名称
+   */
   public getBaseTypeForCustomType(name : string) : BlockParameterBaseType {
     if(this.isBaseType(name)) return <BlockParameterBaseType>name;
     else {
@@ -15,10 +32,18 @@ export class ParamTypeService {
       return <BlockParameterBaseType>(c ? c.prototypeName : 'any');
     }
   }
+  /**
+   * 获取类型是不是基础类型
+   * @param name 类型名称
+   */
   public isBaseType(name : string) {
     return this.getAllBaseTypes().indexOf(name) >= 0;
   }
 
+  /**
+   * 检查这个类型能不能用来作为集合的键
+   * @param name 类型名称
+   */
   public checkTypeCanBeDictionaryKey(name : string) {
     switch(name) {
       case 'any':
@@ -34,13 +59,74 @@ export class ParamTypeService {
     }
     return false;
   }
+
+  /**
+   * 初始化
+   */
   public init() {
     
+  }
+
+  //类型转换注册
+  //======================
+
+  /**
+   * 注册类型转换器
+   * @param reg 类型转换器
+   */
+  public registerTypeCoverter(reg : BlockParameterTypeConverterData) {
+
+    let from = reg.fromType.toString();
+    let to = reg.toType.toString();
+
+    let typeChild = this.allTypeConerters.get(from);
+    if(typeChild == null) {
+      typeChild = new Map<string, BlockParameterTypeConverterData>();
+      this.allTypeConerters.set(from, typeChild);
+    }
+
+    typeChild.set(to, reg);
+  }
+  /**
+   * 取消注册类型转换器
+   * @param reg 类型转换器
+   */
+  public unregisterTypeCoverter(reg : BlockParameterTypeConverterData) {
+
+    let from = reg.fromType.toString();
+    let to = reg.toType.toString();
+
+    let typeChild = this.allTypeConerters.get(from);
+    if(typeChild == null) 
+      return;
+
+    let target = typeChild.get(to);
+    if(target != null) 
+      typeChild.delete(to);
+  }
+  /**
+   * 获取已经注册的类型转换器
+   * @param fromType 源类型
+   * @param toType 要转为的类型
+   */
+  public getTypeCoverter(fromType : BlockParameterType, toType : BlockParameterType) {
+    let from = fromType.toString();
+    let to = toType.toString();
+    let typeChild = this.allTypeConerters.get(from);
+    if(typeChild == null) {
+      typeChild = new Map<string, BlockParameterTypeConverterData>();
+      this.allTypeConerters.set(from, typeChild);
+    }
+    return typeChild.get(to);
   }
 
   //类型注册
   //======================
 
+  /**
+   * 注册自定义类型
+   * @param reg 类型数据
+   */
   public registerCustomType(reg : BlockParameterTypeRegData) {
     let old = this.getCustomType(reg.name);
     if(old != null) {
@@ -51,11 +137,19 @@ export class ParamTypeService {
     this.onTypeChanged.invoke('add', reg.name, reg);
     return reg;
   }
+  /**
+   * 获取已经注册的自定义类型
+   * @param name 类型名称
+   */
   public getCustomType(name : string) {
     if(this.allCustomTypes.has(name))
       return this.allCustomTypes.get(name);
     return null;
   }
+  /**
+   * 取消注册自定义类型
+   * @param name 类型名称
+   */
   public unregisterCustomType(name : string) {
     if(!this.allCustomTypes.has(name)) {
       console.warn("[unregisterCustomType] Type " + name + " are not register !");
@@ -69,12 +163,25 @@ export class ParamTypeService {
   //类型信息
   //======================
 
+  /**
+   * 获取自定义类型的自定义编辑器
+   * @param name 类型名称
+   */
   public getCustomTypeEditor(name : string) {
     if(this.allCustomTypes.has(name))
       return this.allCustomTypes.get(name).editor;
     return null;
   }
-  public getTypeColor(name : string, defaultColor ?: string) {
+  /**
+   * 获取类型的颜色
+   * @param name 类型名称或类型对象
+   * @param defaultColor 
+   */
+  public getTypeColor(name : string | BlockParameterType, defaultColor ?: string) {
+    if(StringUtils.isNullOrEmpty(name))
+      return defaultColor;
+    if(typeof name === 'object')
+      name = name.toString();
     switch(name) {
       case 'execute': return 'rgb(246,246,246)';
       case 'boolean': return 'rgb(180,0,0)';
@@ -89,6 +196,10 @@ export class ParamTypeService {
         return type ? type.color : (defaultColor ? defaultColor : 'rgb(250,250,250)');
     }
   }
+  /**
+   * 获取类型的默认值
+   * @param type 类型对象
+   */
   public getTypeDefaultValue(type : BlockParameterType) {
     switch(type.baseType) {
       case 'execute': return undefined;
@@ -96,13 +207,23 @@ export class ParamTypeService {
       case 'bigint': return 0;
       case 'number': return 0;
       case 'string': return '';
+      case 'custom':
       default:
-        return null;
+        let customType = ParamTypeServiceInstance.getCustomType(type.customType);
+        if(customType && typeof customType.createDefaultValue == 'function') 
+          return customType.createDefaultValue();
     }
+    return undefined;
   }
-  public getTypeNameForUserMapping(name : string) { 
+  /**
+   * 获取对用户友好的类型名称
+   * @param name 类型名称或类型对象
+   */
+  public getTypeNameForUserMapping(name : string | BlockParameterType) { 
     if(CommonUtils.isNullOrEmpty(name))
       return '未定义';
+    if(typeof name === 'object')
+      name = name.toString();
     switch(name) {
       case 'execute': return '执行';
       case 'any': return '通配符';
