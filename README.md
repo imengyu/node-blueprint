@@ -74,7 +74,7 @@ wechart： imyzc_dream_or_chase，我们可以一起探讨一下这个项目的�
    ![image](https://raw.githubusercontent.com/imengyu/node-blueprint/master/images/help2.jpg)
 4. 点击左边工具栏的“+”按钮或是在图表中点击右键可以弹出添加单元菜单，在里面选择你需要添加的，可以点击一次，是添加到鼠标位置，按住并拖动可以添加到自定义位置。
    ![image](https://raw.githubusercontent.com/imengyu/node-blueprint/master/images/help3.jpg)
-5. 每个单元都有自己的端口，左边是入口，右边是出口。三角形是执行端口，程序是依据它来走的；圆形是数据端口，数据根据它来流动
+5. 每个单元都有自己的端口，左边是入口，右边是出口。三角形是执行端口，程序是依据它来走的；圆形是数据端口，数据根据它来流动。<br>
    ![image](https://raw.githubusercontent.com/imengyu/node-blueprint/master/images/help4.jpg)
 6. 点击工具栏的绿色三角形可以进行调试，（目前没有调试输出，不过你可以使用浏览器自带调试工具查看输出和调试信息）。<br>
    点击工具栏的蓝色箭头表示单步调试，每运行一步就会暂停下来，图表中会显示程序的走向，您可以把鼠标移动到端口上面，这样会显示端口当前的数据值。
