@@ -7,7 +7,7 @@
 
 ---
 
-![image](https://raw.githubusercontent.com/imengyu/node-blueprint/master/images/preview.png)
+![image](https://raw.githubusercontent.com/imengyu/node-blueprint/master/images/preview.jpg)
 
 [English Readme](https://github.com/imengyu/node-blueprint/blob/master/README.en.md)
 ### 特性
