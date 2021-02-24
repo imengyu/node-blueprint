@@ -1,6 +1,6 @@
 
 <p align="center">
- <img width="100px" src="https://raw.githubusercontent.com/imengyu/node-blueprint/master/src/assets/images/logo-huge.png" align="center" alt="GitHub Readme Stats" />
+ <img width="240px" src="https://raw.githubusercontent.com/imengyu/node-blueprint/master/src/assets/images/logo-huge.png" align="center" alt="GitHub Readme Stats" />
  <hr>
  <p align="center">一个抄袭 Unreal Engine 蓝图的基于JS的脚本编辑和运行程序</p>
 </p>
