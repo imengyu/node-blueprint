@@ -57,7 +57,7 @@ export function doChangeBlockFlexablePort(block: BlockEditor, portCurrent: Block
   let targetKeyData = portCurrent.portAnyFlexable[flexablePropKey];
   if(!CommonUtils.isDefined(targetKeyData)) {
     let keys = Object.keys(portCurrent.portAnyFlexable);
-    if(keys.length == 0) targetKeyData = '';
+    if(keys.length == 0) targetKeyData = false;
     else targetKeyData = portCurrent.portAnyFlexable[keys[0]];
   }
 

@@ -5,21 +5,21 @@ export default {
    * 字符串判空
    * @param str 字符串
    */
-  isNullOrEmpty(str){
+  isNullOrEmpty(str : any){
     return StringUtils.isNullOrEmpty(str);
   },
   /**
    * 判断是否定义并且不为null
    * @param v 要判断的数值
    */
-  isDefinedAndNotNull(v) {
+  isDefinedAndNotNull(v : any) {
     return v != null && typeof v != 'undefined';
   },
   /**
    * 判断是否定义并且不为null
    * @param v 要判断的数值
    */
-  isDefined(v) {
+  isDefined(v : any) {
     return typeof v != 'undefined';
   },
 
@@ -29,31 +29,38 @@ export default {
   mergeJsonArray,
   exportRaw,
 
-
-
-  valueToStr(val) {
+  /**
+   * 转换数据为字符串
+   * @param val 任意数据
+   */
+  valueToStr(val : any) {
     if(typeof val == 'string') 
       return '"' + val + '"';
     else 
       return val + ''
   },
-  genRandom(minNum, maxNum){
-    return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
+  /**
+   * 生成指定范围之内的随机数
+   * @param minNum 最小值
+   * @param maxNum 最大值
+   */
+  genRandom(minNum : number, maxNum : number){
+    return Math.floor(Math.random()*(maxNum-minNum+1)+minNum); 
   },
   /**
-   * 生成不重复随机数
+   * 生成不重复随机字符串
    * @param randomLength 字符长度
    */
-  genNonDuplicateID(randomLength){
+  genNonDuplicateID(randomLength : number){
     let idStr = Date.now().toString(36)
     idStr += Math.random().toString(36).substr(3,randomLength)
     return idStr
   },
   /**
-   * 生成不重复随机数
+   * 生成不重复随机字符串
    * @param randomLength 字符长度
    */
-  genNonDuplicateIDHEX(randomLength){
+  genNonDuplicateIDHEX(randomLength : number){
     let idStr = this.genNonDuplicateID(randomLength);
     return StringUtils.strToHexCharCode(idStr, false).substr(idStr.length - randomLength, randomLength);
   },
@@ -110,8 +117,6 @@ export default {
   swapItems,
   upData,
   downData,
-
-  
 
   calcTimeSurplus,
   /**
@@ -173,15 +178,15 @@ export default {
  * 克隆对象
  * @param {Object} obj 要克隆对象
  */
-function clone(obj) {
-  let temp = null;
+function clone(obj: any) {
+  let temp : any  = null;
   if (obj instanceof Array) {
     temp = obj.concat();
   } else if (obj instanceof Function) {
     //函数是共享的是无所谓的，js也没有什么办法可以在定义后再修改函数内容
     temp = obj;
   } else {
-    temp = new Object();
+    temp= new Object();
     for (let item in obj) {
       let val = obj[item];
       if(val == null) temp[item] = null;
@@ -195,7 +200,7 @@ function clone(obj) {
  * @param {*} setObj 
  * @param {*} sourceObj 
  */
-function cloneValue(setObj, sourceObj){
+function cloneValue(setObj: any, sourceObj: any){
   if(!setObj || !sourceObj) return;
   Object.keys(setObj).forEach(function(key){
     if(typeof sourceObj[key] != 'undefined') {
@@ -205,7 +210,7 @@ function cloneValue(setObj, sourceObj){
   });
 }
 
-function mergeJSON(minor, main) {
+function mergeJSON(minor: any, main: any) {
   for (var key in minor) {
     if (main[key] === undefined) { // 不冲突的，直接赋值 
       main[key] = minor[key];
@@ -221,10 +226,10 @@ function mergeJSON(minor, main) {
   }
   return main;
 }
-function isJSON(target) {
+function isJSON(target : any) {
   return target != null && typeof target == "object" && target.constructor == Object;
 }
-function isArray(o) {
+function isArray(o : any) {
   return Object.prototype.toString.call(o) == '[object Array]';
 }
 /**
@@ -232,8 +237,8 @@ function isArray(o) {
  * @param {*} a 
  * @param {*} b 
  */
-function mergeJsonArray(a, b) {
-  var r = {};
+function mergeJsonArray(a : any, b : any) {
+  var r : any = {};
   var i = 0;
   for (var key in a) {
     r[i] = a[key];
@@ -258,7 +263,7 @@ function mergeJsonArray(a, b) {
  * @param {Number} index1 索引1
  * @param {Number} index2 索引2
  */
-function swapItems(arr, index1, index2) {
+function swapItems(arr : Array<any>, index1 : number, index2: number) {
   arr[index1] = arr.splice(index2,1,arr[index1])[0]
   /*
   let x = arr[index1];
@@ -272,7 +277,7 @@ function swapItems(arr, index1, index2) {
  * @param {Array} arr 数组
  * @param {Number} index 索引
  */
-function upData (arr, index) {
+function upData (arr : Array<any>, index : number) {
   　if (arr.length > 1 && index !== 0)
   　return swapItems(arr, index, index - 1)
 }
@@ -281,7 +286,7 @@ function upData (arr, index) {
  * @param {Array} arr 数组
  * @param {Number} index 索引
  */
-function downData (arr, index) {
+function downData (arr : Array<any>, index : number) {
   　if (arr.length > 1 && index !== (arr.length - 1))
     return swapItems(arr, index, index + 1)
 }
@@ -319,13 +324,22 @@ function calcTimeSurplus(limitTime : Date) {
   return '已经超过时间了';
 }
 
-function fakeClick(obj) {
+/**
+ * 虚拟点击事件
+ * @param obj 要点击的元素
+ */
+function fakeClick(obj : HTMLElement) {
   var ev = document.createEvent("MouseEvents");
   ev.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
   obj.dispatchEvent(ev);
 }
 
-function exportRaw(name, data) {
+/**
+ * 调用浏览器下载
+ * @param name 文件名
+ * @param data 数据
+ */
+function exportRaw(name : string, data : string) {
   var export_blob = new Blob([data]);
   var save_link = <HTMLLinkElement>document.createElementNS("http://www.w3.org/1999/xhtml", "a")
   save_link.href = URL.createObjectURL(export_blob);

@@ -33,7 +33,7 @@ function calcVectorCenter(vec1 : Vector2, vec2 : Vector2) {
  * @param cp2 控制点2坐标
  * @param p2 终点坐标
  */
-function threeOrderBezier(t, x1 : number, y1 : number, cx1 : number, cy1 : number, cx2 : number, cy2 : number, x2 : number, y2 : number) {
+function threeOrderBezier(t : number, x1 : number, y1 : number, cx1 : number, cy1 : number, cx2 : number, cy2 : number, x2 : number, y2 : number) {
 	var x =
 		x1 * (1 - t) * (1 - t) * (1 - t) +
 		3 * cx1 * t * (1 - t) * (1 - t) +

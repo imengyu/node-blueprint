@@ -53,6 +53,7 @@ Array.prototype.empty = function(item) {
 }
 
 Array.prototype.remove = function(item) {
+  /*
   var dx = typeof item === 'number' ? item : this.indexOf(item);
   var rs = false
   if(dx >= 0){
@@ -65,6 +66,16 @@ Array.prototype.remove = function(item) {
     this.length -= 1;
   }
   return rs;
+  */
+  var index = this.indexOf(item);
+  if(index >= 0) {
+    this.splice(index, 1);
+    return true;
+  } 
+  return false;
+}
+Array.prototype.insert = function(i, item) {
+  return this.splice(i, 0, item);
 }
 Array.prototype.contains = function(item) {
   return this.indexOf(item) >= 0;

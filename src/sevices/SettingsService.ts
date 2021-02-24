@@ -10,7 +10,15 @@ export class SettingsService {
   setSettingsBoolean(key : string, value : boolean) {
     localStorage.setItem(key, value ? 'true' : 'false');
   }
-
+  setSettings(key : string, value : string) {
+    localStorage.setItem(key, value);
+  }
+  getSettings(key : string, defaultVlaue : string) : string {
+    let s = localStorage.getItem(key);
+    if(CommonUtils.isNullOrEmpty(s)) 
+      return defaultVlaue;
+    return s;
+  }
   getSettingsNumber(key : string, defaultVlaue : number) : number {
     let s = localStorage.getItem(key);
     if(CommonUtils.isNullOrEmpty(s)) 

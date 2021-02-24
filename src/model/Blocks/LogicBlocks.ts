@@ -1,6 +1,6 @@
 import { BlockRegData, BlockPortRegData } from "../Define/BlockDef";
 import { Block } from "../Define/Block";
-import { BlockPort } from "../Define/Port";
+import { BlockPort, BlockPortDirection } from "../Define/Port";
 import CommonUtils from "../../utils/CommonUtils";
 import { BlockEditor } from "../Editor/BlockEditor";
 
@@ -36,7 +36,7 @@ function register() {
     });
     
   };
-  let LogicBase_onUserAddPort = (block : Block, dirction, type) => {
+  let LogicBase_onUserAddPort = (block : Block, dirction : BlockPortDirection, type : 'execute'|'param') => {
     block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 1 : block.inputPortCount;
     return {
       guid: 'PI' + block.data['portCount'],
@@ -109,7 +109,7 @@ function register() {
   And.callbacks.onUserAddPort = LogicBase_onUserAddPort;
   And.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   And.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : any = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(!CommonUtils.isDefinedAndNotNull(v))
@@ -145,7 +145,7 @@ function register() {
   Or.callbacks.onUserAddPort = LogicBase_onUserAddPort;
   Or.callbacks.onPortConnectCheck = LogicBase_onPortConnectCheck;
   Or.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : any = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(!CommonUtils.isDefinedAndNotNull(v))

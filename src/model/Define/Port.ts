@@ -9,6 +9,7 @@ import CommonUtils from "../../utils/CommonUtils";
 import ParamTypeServiceInstance, { ParamTypeService } from "../../sevices/ParamTypeService";
 import { homedir } from "os";
 import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
+import { CustomStorageObject } from "./CommonDefine";
 
 /**
  * 端口的方向
@@ -22,6 +23,8 @@ export type BlockPortDirection = 'input'|'output';
  * 单元端口
  */
 export class BlockPort {
+
+  [index : string]: any;
 
   /**
    * 名称
@@ -138,7 +141,7 @@ export class BlockPort {
   public paramStatic = false;
 
   private paramStaticValue : any = null;
-  public portAnyFlexable = {};
+  public portAnyFlexable : { [ index: string ] : boolean|{ get: string, set: string } } = {};
 
   public getUserSetValue() {
     if(CommonUtils.isDefined(this.paramUserSetValue))
@@ -192,7 +195,7 @@ export class BlockPort {
    * 设置当前端口变量在栈中的数据。
    * 设置后必须调用 updateOnputValue 才能更新下一级。
    */
-  public setValue(runningContext: BlockRunContextData, value) {
+  public setValue(runningContext: BlockRunContextData, value : any) {
     if(this.paramStatic) {
       let oldV = this.paramStaticValue;
       if(oldV != value) this.paramStaticValue = value;
@@ -231,15 +234,11 @@ export class BlockPort {
   /**
    * 自定义单元数据供代码使用（不会保存至文件中）
    */
-  public data = {
-
-  };
+  public data : CustomStorageObject = {};
   /**
    * 自定义参数端口属性供代码使用（会保存至文件中）
    */
-  public options = {
-
-  };
+  public options : CustomStorageObject = {};
 
   /**
    * 获取当前端口已缓存的参数
@@ -302,10 +301,10 @@ export class BlockPort {
    * @param runningContext 正在运行的上下文
    * @param v 参数值
    */
-  public updateOnputValue(runningContext: BlockRunContextData, v) {
+  public updateOnputValue(runningContext: BlockRunContextData, v : any)  {
     if(this.direction != 'output') {
       logger.warning('[port.updateOnputValue] Can not updateOnputValue on a non-output port.');
-      return undefined;
+      return;
     }
     if(CommonUtils.isDefined(v))
       this.setValue(runningContext, v);

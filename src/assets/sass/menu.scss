@@ -1,21 +1,17 @@
 @import './root';
 
 .menu-bar {
+  display: inline-block;
   padding: 0;
-  background: #2f2f2c;
   position: relative;
   z-index: 2;
   height: $top-menu-height;
   -webkit-app-region: no-drag;
+  font-size: 12px;
 
   > .menu-bar-item {
+    position: relative;
     height: $top-menu-height;
-    vertical-align: middle
-  }
-
-  > .editor-file-tab {
-    height: $top-menu-height;
-    vertical-align: middle;
   }
 }
 .menu-bar-item {
@@ -24,9 +20,10 @@
   color: #333;
   display: inline-block;
   -webkit-app-region: no-drag;
+  vertical-align: middle;
 
   &.open {
-    .menu-title {
+    .menu-title { 
       background: white;
       color: #333;
     }
@@ -47,7 +44,7 @@
   z-index: 10;
   color: #fff;
   position: relative;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .menu-context {

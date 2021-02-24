@@ -1,14 +1,21 @@
 <template>
-  <router-view></router-view>
+  <div id="app">
+    <router-view/>
+  </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
-@Component({
-  components: {},
-  name: "App"
+import Vue from 'vue'
+
+export default Vue.extend({
+  name: 'App',
+  mounted: function() {
+    console.log('App mounted');
+  },
+  destroyed: function() {
+    console.log('App destroyed');
+  }
 })
-export default class App extends Vue {
-}
+
 </script>

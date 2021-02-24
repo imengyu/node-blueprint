@@ -1,6 +1,6 @@
 'use strict'
 const path = require('path')
-const config = require('../config')
+const config = require('../config-electron')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const vueLoaderConfig = require('./vue-loader.conf');
 
@@ -10,7 +10,7 @@ function resolve (dir) {
 
 const rendererConfig = {
   entry: { 
-    'renderer': resolve('src/renderer.ts'),
+    'renderer': resolve('src/main.ts'),
     'crashed': resolve('src/pages/crashed.ts'),
   },
   output: {
@@ -86,7 +86,7 @@ const rendererConfig = {
   plugins: []
 }
 const mainConfig = {
-  entry: resolve('src/main.ts'),
+  entry: resolve('src/main-process/main.ts'),
   output: {
     filename: 'main.js',
     path: process.env.NODE_ENV === 'production' ? config.build.assetsRoot : config.dev.assetsRoot,
@@ -132,7 +132,8 @@ const mainConfig = {
     new CopyWebpackPlugin([
       {
         from: path.resolve(__dirname, '../src/main-process'),
-        to: process.env.NODE_ENV === 'production' ? config.build.assetsRoot : config.dev.assetsRoot
+        to: process.env.NODE_ENV === 'production' ? config.build.assetsRoot : config.dev.assetsRoot,
+        ignore: [ 'main.ts' ],
       },
     ]),
     new CopyWebpackPlugin([

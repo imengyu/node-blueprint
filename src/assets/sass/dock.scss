@@ -1,0 +1,322 @@
+@import "./root.scss";
+
+$tab-height: 35px;
+$tab-lr-button-size: 15px;
+
+.dock-host {
+  position: absolute;
+}
+.dock-grid {
+  background-color: $tab-mormal-color;
+}
+.dock-grid, .dock-empty {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.dock-panel {
+  position: absolute;
+  z-index: 60;
+
+  background-color: $tab-active-color;
+}
+
+//dock 所用的标签页
+.dock-tab {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.dock-tab-list {
+  display: block;
+  height: $tab-height;
+  position: relative;
+  overflow: visible;
+  position: relative;
+  padding: 0px 6px;
+
+  &::before {
+    display: inline-block;
+    position: absolute;
+    content: '';
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    z-index: 0;
+    background-color: $tab-border-color;
+  }
+
+  .left, .right {
+    display: inline-block;
+    overflow: hidden;
+    color: $tab-button-normal-color;
+    width: $tab-lr-button-size;
+    position: absolute;
+    bottom: 6px;
+    user-select: none;
+
+    &:hover {
+      background-color: $tab-button-hover-color;
+      border-radius: 3px;
+    }
+  }
+  .right {
+    left: $tab-lr-button-size;
+  }
+
+  .tabs {
+    display: inline-block;
+    white-space: nowrap;
+    position: absolute;
+    top: 0;
+    left: $tab-lr-button-size * 2 + 2px;
+    right: $tab-lr-button-size;
+    bottom: 0;
+    overflow: hidden;
+    transition: all ease-in-out 0.25s;
+
+    .item {
+      position: relative;
+      display: inline-flex;
+      margin-top: 5px;
+      padding: 0px 10px;
+      cursor: pointer;
+      color: #ffffff;
+      border: 1px solid transparent;
+      border-bottom-color: $tab-border-color;
+      justify-content: center;
+      align-items: center;
+      height: calc(100% - 5px);
+      vertical-align: middle;
+
+      .icon {
+        display: inline-block;
+      }
+      .close {
+        text-decoration: none;
+        color: $tab-button-normal-color;
+        user-select: none;
+
+        &:hover {
+          background-color: $tab-button-hover-color;
+          border-radius: 3px;
+        }
+      }
+
+      span {
+        display: inline-block;
+        padding: 0 6px;
+        font-size: 12px;
+      }
+  
+      &.active {
+        background-color: $tab-active-color;
+        border-bottom-color: $tab-active-color;
+        border-right-color: $tab-border-color;
+        border-left-color: $tab-border-color;
+        border-top-color: $tab-border-color;
+
+        &::before {
+          position: absolute;
+          display: inline-block;
+          content: '';
+          width: 100%;
+          bottom: -1px;
+          left: 0;
+          background-color: $tab-border-color;
+        }
+      }    
+    }
+  }
+
+}
+.dock-tab-content {
+  position: absolute;
+  top: $tab-height;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+//dock 拖拽区域
+.dock-split {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  > .dock-grid {
+    position: absolute;
+  }
+}
+.dock-split-host {
+  position: absolute;
+}
+.dock-split-dragger {
+  position: absolute;
+  background: $tab-mormal-color;
+  z-index: 10;
+
+  &.vertical {
+    left: 0;
+    right: 0;
+    height: 6px;
+    margin-top: -3px;
+    cursor: row-resize;
+    
+    border-top: 1px solid $tab-border-color;
+    border-bottom: 1px solid $tab-border-color;
+
+    div {
+      width: 30px;
+      height: 100;
+      left: 50%;
+      margin-left: -15px;
+    }
+  }
+  &.horizontal {
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    margin-left: -3px;
+
+    cursor: col-resize;
+    border-left: 1px solid $tab-border-color;
+    border-right: 1px solid $tab-border-color;
+
+    div {
+      width: 100%;
+      height: 30px;
+      top: 50%;
+      margin-top: -15px;
+    }
+  }
+
+  div {
+    position: absolute;
+    background: rgba($primary-color-dark, 0.1);
+    border-radius: 2px;
+  }
+}
+
+//dock 拖拽放置布局
+.dock-drop-layout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 71;
+  pointer-events: none;
+
+  .dock-drop-square {
+    position: absolute;
+    box-sizing: border-box;
+    pointer-events: visible;
+    z-index: 100;
+    width: 32px;
+    height: 32px;
+    font-family: 'Fredoka One', sans-serif;
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid transparent;
+    left: calc(50% - 16px);
+    top: calc(50% - 16px);
+
+    &.active {
+      border: 1px solid #9812d6;
+      background: rgba(177, 39, 241, 0.637);
+    }
+  
+    .dock-drop-square-box {
+      box-sizing: border-box;
+      border: 1px solid #9e9e9e;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    &::before {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: block;
+      line-height: 30px;
+      text-align: center;
+    }
+  }
+  .dock-drop-float {
+    z-index: 80;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0.01;
+  }
+  .dock-drop-left {
+    left: calc(50% - 48px);
+
+    &.dock-drop-deep {
+      left: calc(50% - 64px);
+      width: 16px;
+    }
+    &::before {
+      content: '>';
+      transform: rotate(180deg);
+    }
+  }
+  .dock-drop-right {
+    left: calc(50% + 16px);
+
+    &.dock-drop-deep {
+      left: calc(50% + 48px);
+      width: 16px;
+    }
+
+    &::before {
+      content: '>';
+    }
+  }
+  .dock-drop-top {
+    top: calc(50% - 48px);
+
+    &.dock-drop-deep {
+      top: calc(50% - 64px);
+      height: 16px;
+
+      &::before {
+        line-height: 14px;
+      }
+    }
+
+    &::before {
+      content: '>';
+      transform: rotate(270deg);
+    }
+  }
+  .dock-drop-bottom {
+    top: calc(50% + 16px);
+
+    &.dock-drop-deep {
+      top: calc(50% + 48px);
+      height: 16px;
+
+      &::before {
+        line-height: 14px;
+      }
+    }
+
+    &::before {
+      content: '>';
+      transform: rotate(90deg);
+    }
+  }
+}
+//dock 拖拽高亮
+.drag-light-box {
+  position: absolute;
+  background-color: rgba($primary-color-dark, 0.4);
+  border: 1.5px solid rgba($primary-color, 0.6);
+  pointer-events: none;
+  z-index: 0;
+}

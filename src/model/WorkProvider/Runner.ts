@@ -41,7 +41,7 @@ export class BlockRunner {
 
   public contexts : BlockRunContextData[] = [];
 
-  private loop = null;
+  private loop : any = null;
   private loopCount = 0;
 
   /**

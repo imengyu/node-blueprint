@@ -6,7 +6,7 @@ export default {
    * 检查事件是否处于控件内（input\select）
    * @param e 事件
    */
-  isEventInControl(e) {
+  isEventInControl(e : Event) {
     let target = (<HTMLElement>e.target);
     return (target.tagName == 'INPUT' 
       || target.tagName == 'SELECT');
@@ -22,9 +22,6 @@ export default {
   registerShowTooltipDelay,
 }
 
-
-
-
 function createOptionElement(value : string, text : string) {
   let e = document.createElement('option');
   e.value = value;
@@ -36,17 +33,15 @@ function createOptionElement(value : string, text : string) {
  * 判断点击区域可编辑
  * @param {*} e 
  */
-function isEleEditable(e){
-  if(!e){
-      return false;
-  }
+function isEleEditable(e : HTMLElement) : boolean {
+  if(!e)
+    return false;
   //为input标签或者contenteditable属性为true
-  if(e.tagName == 'INPUT' || e.contentEditable == 'true'){
-      return true;
-  }else{
-      //递归查询父节点
-      return isEleEditable(e.parentNode)
-  }
+  if(e.tagName == 'INPUT' || e.contentEditable == 'true')
+    return true;
+  else
+    //递归查询父节点
+    return isEleEditable(e.parentNode as HTMLElement);
 }
 
 /**
@@ -76,7 +71,7 @@ function getElementIndex(element : HTMLElement) {
 }
 
 
-let timerShowTooltipDelay = null;
+let timerShowTooltipDelay : any = null;
 
 function registerShowTooltipDelay(callback: () => void) {
   if(timerShowTooltipDelay != null)

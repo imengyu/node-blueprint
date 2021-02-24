@@ -1,4 +1,3 @@
-import { Content } from "iview"
 import BlockServiceInstance from "../../../sevices/BlockService"
 import { PackageDef } from "../../Define/PackageDef"
 import ArrayBlocks from "../ArrayBlocks"

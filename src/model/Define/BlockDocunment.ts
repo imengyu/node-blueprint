@@ -4,9 +4,8 @@ import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockRunContextData } from "../WorkProvider/Runner";
-import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
+import { BlockParameterSetType, BlockParameterType, createParameterTypeFromString } from "./BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
-import BlockDrawer from "../../components/BlockDrawer.vue";
 
 /**
  * 文档结构
@@ -57,7 +56,8 @@ export class BlockDocunment {
    * 当前打开的图表
    */
   currentGraph : BlockGraphDocunment = null;
-  currentEditor : BlockDrawer = null;
+  
+  currentEditor : any = null;
 }
 
 /**
@@ -101,7 +101,7 @@ export class BlockGraphDocunment {
    * @param guid 单元GUID
    */
   public getBlocksByGUID(guid : string) { 
-    let arr = [];
+    let arr : Block[] = [];
     this.blocks.forEach(element => {
       if(element.guid==guid)
         arr.push(element);
@@ -186,7 +186,7 @@ export class BlockGraphDocunment {
 export class BlockGraphVariable {
 
   name = '';
-  type : BlockParameterType = BlockParameterType.createTypeFromString('any');
+  type : BlockParameterType = createParameterTypeFromString('any');
   dictionaryKeyType = '';
   setType : BlockParameterSetType = 'variable';
 
@@ -205,7 +205,7 @@ export class BlockGraphVariable {
    * @param runningContext 当前运行上下文 
    * @param newV 数值
    */
-  set(runningContext : BlockRunContextData, newV) {
+  set(runningContext : BlockRunContextData, newV : any) {
     if(this.static) {
       if(this.value != newV) {
         this.value = newV;
@@ -224,6 +224,6 @@ export class BlockGraphVariable {
    */
   get(runningContext : BlockRunContextData) {
     if(this.static) return this.value;
-    else if(this.stack >= 0) return runningContext.graphParamStack[this.stack];
+    else if(!runningContext && this.stack >= 0) return runningContext.graphParamStack[this.stack];
   }
 }

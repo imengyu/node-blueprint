@@ -3,7 +3,7 @@ import { Rect } from '../Rect';
 
 export class ConnectorDrawer {
 
-  public posData2 = [];
+  public posData2 = new Array<number>();
   
   /**
    * 绘制连接的贝塞尔曲线

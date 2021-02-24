@@ -1,3 +1,4 @@
+import { MouseEventDelegate } from "@/utils/EventHandler";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import CommonUtils from "../../utils/CommonUtils";
 import HtmlUtils from "../../utils/HtmlUtils";
@@ -392,8 +393,8 @@ export class BlockPortEditor extends BlockPort {
 
   //#endregion 
 
-  private fnonPortMouseMove = null;
-  private fnonPortMouseUp = null;
+  private fnonPortMouseMove : MouseEventDelegate = null;
+  private fnonPortMouseUp : MouseEventDelegate = null;
 
   private testIsDownInControl(e : MouseEvent){
     let target = (<HTMLElement>e.target);

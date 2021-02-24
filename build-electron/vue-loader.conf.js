@@ -1,5 +1,5 @@
 'use strict'
-const config = require('../config')
+const config = require('../config-electron')
 const isProduction = process.env.NODE_ENV === 'production'
 const sourceMapEnabled = isProduction
   ? config.build.productionSourceMap

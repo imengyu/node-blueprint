@@ -1,0 +1,37 @@
+{
+  "size": 0,
+  "grids": [
+    {
+      "size": 10,
+      "grids": [],
+      "panels": [],
+      "name": "areaLeft",
+      "alwaysVisible": false
+    },
+    {
+      "size": 70,
+      "grids": [],
+      "panels": [],  
+      "noPanelViewSlotName": "mainEmptyView",
+      "name": "areaMain",
+      "alwaysVisible": true
+    },
+    {
+      "size": 20,
+      "grids": [],
+      "panels": [
+        {
+          "key": "Props"
+        },
+        {
+          "key": "DocProps"
+        }
+      ],
+      "name": "areaRight",
+      "alwaysVisible": false
+    }
+  ],
+  "panels": [],
+  "currentDirection": "horizontal",
+  "alwaysVisible": true
+}

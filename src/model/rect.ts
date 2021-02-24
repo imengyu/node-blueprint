@@ -6,7 +6,7 @@ export class Rect {
   public w = 0;
   public h = 0;
 
-  public constructor(x? : number, y? : number, w? : number, h? : number) {
+  public constructor(x? : number | Rect, y? : number, w? : number, h? : number) {
     this.Set(x,y,w,h);
   }
 
@@ -88,6 +88,10 @@ export class Rect {
     this.center.x = this.x + this.w / 2;
     this.center.y = this.y + this.h / 2;
     return this.center;
+  }
+
+  public toString() {
+    return `x:${this.x},y:${this.y},w:${this.w},h${this.h}`;
   }
 }
 

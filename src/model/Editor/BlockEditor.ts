@@ -1,6 +1,6 @@
 import { Vector2 } from "../Vector2"
 import { Rect } from "../Rect";
-import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings, BlockPortRegData, BlockMouseEventFn } from "../Define/BlockDef";
+import { BlockRegData, BlockParameterTypeRegData, BlockParameterEnumRegData, BlockParameterEditorRegData, BlockEditorComponentCreateFn, BlockParametersChangeSettings, BlockStyleSettings, BlockPortEditorComponentCreateFn, BlockMenuSettings, BlockPortRegData, BlockMouseEventFn, PortAnyFlexableData, BlockPortAnyFlexablesData } from "../Define/BlockDef";
 import { BlockPort, BlockPortDirection } from "../Define/Port";
 
 import CommonUtils from "../../utils/CommonUtils";
@@ -14,6 +14,7 @@ import HtmlUtils from "../../utils/HtmlUtils";
 import ToolTipUtils from "../../utils/ToolTipUtils";
 import BlockUtils from "../Blocks/Utils/BlockUtils";
 import { BlockPortEditor, BlockPortIcons } from "./BlockPortEditor";
+import { MouseEventDelegate } from "@/utils/EventHandler";
 
 
 export const SIZE_LEFT = 0x1;
@@ -60,8 +61,8 @@ export class BlockEditor extends Block {
         (<ConnectorEditor>connector).active(port);
     });
     this.onPortRemove.addListener(this, this.onPortRemoveCallback);
-    this.onEnterBlock.addListener(this, (block) => this.markActive());
-    this.onLeaveBlock.addListener(this, (block) => this.markDective());
+    this.onEnterBlock.addListener(this, () => this.markActive());
+    this.onLeaveBlock.addListener(this, () => this.markDective());
   }
 
   public blockStyleSettings = new BlockStyleSettings();
@@ -537,7 +538,7 @@ export class BlockEditor extends Block {
 
   private updatePortElement(port : BlockPort) { if(this.created) (<BlockPortEditor>port).updatePortElement(); }
   private removePortElement(port : BlockPort) { if(this.created) (<BlockPortEditor>port).removePortElement(); }
-  private onPortRemoveCallback(block, port : BlockPort) {
+  private onPortRemoveCallback(block : BlockEditor, port : BlockPort) {
     this.unConnectPort(port);
   }
 
@@ -632,7 +633,7 @@ export class BlockEditor extends Block {
     this.els.elBottomInfoHost.removeChild(el);
   }
 
-  private activeFlashInterval = null;
+  private activeFlashInterval : any = null;
   private activeFlashCount = 0;
 
   //#endregion 
@@ -640,12 +641,10 @@ export class BlockEditor extends Block {
   //#region 其他事件
 
   public onUserDeletePort(port : BlockPort) {
-    this.editor.getVue().$Modal.confirm({
-      title: '提示',
-      content: '确定删除此端口？',
-      onOk: () => this.deletePort(port.guid),
-      onCancel: () => {}
-    });
+    this.editor.getVue().$confirm('确定删除此端口？', '提示', {
+      type: 'warning',
+      confirmButtonClass: 'el-button-danger',
+    }).then(() =>  this.deletePort(port.guid)).catch(() => {});
   }
   private callUserAddPort(direction : BlockPortDirection, type : 'execute'|'param') {
     let v = this.onUserAddPort(this, direction, type);
@@ -689,6 +688,7 @@ export class BlockEditor extends Block {
   public isLastMovedBlock() { return this.lastMovedBlock; }
   public updateLastPos() { this.lastBlockPos.Set(this.position); }
   public getLastPos() { return this.lastBlockPos; }
+  public getCurrentSizeType() { return this.currentSizeType; }
 
   private onMouseEnter(e : MouseEvent) {
     this.hover = true;
@@ -828,7 +828,7 @@ export class BlockEditor extends Block {
 
         if(this.lastMovedBlock) {
           this.editor.onMoveBlockEnd(this);
-        }else {
+        }else if(this.editor.getMultiSelectedBlocks().length == 0 || e.button == 0) {
           this.updateSelectStatus(true);
           this.editor.onUserSelectBlock(this, true);
         }
@@ -909,8 +909,8 @@ export class BlockEditor extends Block {
       || target.classList.contains('custom-editor'));
   }
 
-  private fnonMouseMove = null;
-  private fnonMouseUp = null;
+  private fnonMouseMove : MouseEventDelegate = null;
+  private fnonMouseUp : MouseEventDelegate = null;
 
   public onCreateCustomEditor : BlockEditorComponentCreateFn = null;
   public onCreatePortCustomEditor : BlockPortEditorComponentCreateFn = null;
@@ -921,7 +921,7 @@ export class BlockEditor extends Block {
   //#region 端口连接处理事件
 
   public connectedPortCount = 0;
-  public portAnyFlexables = {};
+  public portAnyFlexables : BlockPortAnyFlexablesData = {};
 
   public isAnyPortConnected() { return this.connectedPortCount > 0; }
   public invokeOnPortConnect(port : BlockPort, portSource : BlockPort) {

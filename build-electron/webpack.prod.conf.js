@@ -1,6 +1,6 @@
 'use strict'
 const webpack = require('webpack')
-const config = require('../config')
+const config = require('../config-electron')
 const merge = require('webpack-merge')
 const baseWebpackConfig = require('./webpack.base.conf')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -14,13 +14,13 @@ const webpackConfig = [
     devtool: config.build.productionSourceMap ? config.build.devtool : false,
     plugins: [
       new webpack.DefinePlugin({
-        'process.env': require('../config/prod.env.electron')
+        'process.env': require('../config-electron/prod.env')
       }),
       new HtmlWebpackPlugin({
         filename: process.env.NODE_ENV === 'testing'
           ? 'renderer.html'
           : config.build.index,
-        template: 'html-withimg-loader!./src/renderer.html',
+        template: './src/pages/renderer.html',
         inject: false,
         minify: {
           minifyCSS: true,
@@ -32,12 +32,12 @@ const webpackConfig = [
         chunksSortMode: 'dependency'
       }),
       new HtmlWebpackPlugin({
-        template: 'html-withimg-loader!./src/pages/crashed.html',
+        template: './src/pages/crashed.html',
         filename: config.build.assetsRoot + '/crashed.html', inject: false,
         minify: { minifyCSS: true, minifyJS: true, collapseWhitespace: true, removeComments: true }
       }),
       new HtmlWebpackPlugin({
-        template: 'html-withimg-loader!./src/pages/neterr.html',
+        template: './src/pages/neterr.html',
         filename: config.build.assetsRoot + '/neterr.html', inject: false,
         minify: { minifyCSS: true, minifyJS: true, collapseWhitespace: true, removeComments: true }
       }),
@@ -57,7 +57,7 @@ const webpackConfig = [
     devtool: config.build.productionSourceMap ? config.build.devtool : false,
     plugins: [
       new webpack.DefinePlugin({
-        'process.env': require('../config/prod.env.electron')
+        'process.env': require('../config/electron/prod.env')
       }),  
     ]
   })

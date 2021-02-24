@@ -27,8 +27,8 @@ export class EventHandler<T> {
       }
     return true;
   }
-  public invoke(...args) { 
-    let rs = undefined;
+  public invoke(...args : any) { 
+    let rs : any = undefined;
     if(this.listener.length > 0) {
       let _args = arguments;
       this.listener.forEach((callback) => {
@@ -41,3 +41,4 @@ export class EventHandler<T> {
 }
 
 export type VoidDelegate = () => void; 
+export type MouseEventDelegate = (e : MouseEvent) => any; 

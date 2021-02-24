@@ -311,12 +311,19 @@ export class BlockRegData {
   /**
    * 参见 BlockPortRegData.portAnyFlexable , 该字段用于定义单元整体的key使用。
    */
-  public portAnyFlexables = {};
+  public portAnyFlexables : BlockPortAnyFlexablesData = {};
 
   //以下字段用于编辑器内部使用
 
   show = true;
   filterShow = true;
+}
+
+export interface BlockPortAnyFlexablesData { 
+  [index: string]: { setResultToOptions?: string, setResultToData?: string }
+}
+export interface PortAnyFlexableData { 
+  [ index: string ] : boolean|{ get: string, set: string }
 }
 
 export type BlockParametersChangeSettings = {
@@ -494,7 +501,7 @@ export interface BlockPortRegData {
    * paramDictionaryKeyType 表示端口的集合键的类型
    * 
    */
-  portAnyFlexable ?: {};
+  portAnyFlexable ? : PortAnyFlexableData;
 
   /**
    * 是否强制不显示编辑参数控件
@@ -569,7 +576,7 @@ export class BlockParameterTypeRegData {
   /**
    * getHashCode 获取哈希码函数.
    */
-  public getHashCode : (v) => string = null;
+  public getHashCode : (v : any) => string = null;
 
     /**
    * createDefaultValue 创建默认值函数.
@@ -610,7 +617,7 @@ export class BlockParameterEnumRegData extends BlockParameterTypeRegData {
 
     if(typeof allowTypes != 'undefined' && allowTypes.length > 0) {
       if(typeof allowTypes[0] == 'string'){
-        allowTypes.forEach(element => {
+        allowTypes.forEach((element : any) => {
           this.allowTypes.push({
             value: element,
             description: ''
@@ -653,7 +660,7 @@ export class BlockParameterTypeConverterData {
 //回调函数定义
 //========================
 
-export type BlockParameterEditorComponentCreateFn = (block : BlockEditor, port : BlockPortEditor, rparentEle : HTMLElement, changeCallback : (newVal) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
+export type BlockParameterEditorComponentCreateFn = (block : BlockEditor, port : BlockPortEditor, rparentEle : HTMLElement, changeCallback : (newVal : any) => any, nowVal : any, defaultVal : any, customType : BlockParameterTypeRegData) => HTMLElement;
 export type BlockParameterEditorValueChangedFn = (newVal : any, editorEle : HTMLElement) => void;
 export type BlockEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, regData : BlockRegData) => void;
 export type BlockPortEditorComponentCreateFn = (parentEle : HTMLElement, block : BlockEditor, port : BlockPortEditor) => HTMLElement;

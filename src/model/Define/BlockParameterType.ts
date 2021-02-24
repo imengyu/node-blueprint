@@ -32,18 +32,6 @@ export class BlockParameterType {
   }
 
   /**
-   * 从字符串表示方式创建类型对象
-   * @param name 
-   */
-  public static createTypeFromString(name : string) : BlockParameterType {
-    if(name == 'any')
-      return BlockParameterType.Any();
-    if(ParamTypeServiceInstance.isBaseType(name))
-      return new BlockParameterType(<BlockParameterBaseType>name);
-    return new BlockParameterType(ParamTypeServiceInstance.getBaseTypeForCustomType(name), name);
-  }
-
-  /**
    * 获取静态any类型
    */
   public static Any() { return new BlockParameterType('any') };
@@ -110,4 +98,22 @@ export class BlockParameterType {
   public toString() {
     return this.getType();
   }
+}
+
+/**
+ * 从字符串表示方式创建类型对象
+ * @param name 
+ */
+export function createParameterTypeFromString(name : string) : BlockParameterType {
+  if(name == 'any')
+    return BlockParameterType.Any();
+  if(ParamTypeServiceInstance.isBaseType(name))
+    return new BlockParameterType(<BlockParameterBaseType>name);
+  return new BlockParameterType(ParamTypeServiceInstance.getBaseTypeForCustomType(name), name);
+}
+/**
+ * 克隆类型对象
+ */
+export function cloneParameterTypeFromString(old : BlockParameterType) : BlockParameterType {
+  return new BlockParameterType(old.baseType, old.customType);
 }

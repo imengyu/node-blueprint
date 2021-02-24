@@ -696,7 +696,6 @@ function register() {
       var variables = block.variables();
       variables['breakActived'] = false;
 
-
       let EXIT = block.getPortByGUID('EXIT');
       let LOOP = block.getPortByGUID('LOOP');
       let ELEMENT = block.getPortByGUID('ELEMENT');

@@ -1,5 +1,3 @@
-@import './block';
-@import './editor';
 @import './menu';
 @import './utils';
 @import './root';
@@ -7,6 +5,11 @@
 @import './utilities';
 @import './anim';
 @import './window';
+@import './block';
+@import './editor';
+@import './dock';
+@import './el-fix';
+@import './small-widgets.scss';
 
 html, body {
   position: relative;

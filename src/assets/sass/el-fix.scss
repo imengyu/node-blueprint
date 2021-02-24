@@ -1,0 +1,56 @@
+.el-dialog {
+  display: inline-block;
+  background-color: $background-second-color;
+  border: 1px solid $border-color-dark;
+  width: auto;
+  border-radius: 10px;
+  max-width: 50%;
+  text-align: initial;
+
+
+  .el-button--default {
+    background-color: $background-second-color;
+    border: 1px solid $border-color-dark;
+    color: #fff;
+
+    &:hover {
+      background-color: $background-second-color-light;
+    }
+  }
+}
+
+.el-dialog__wrapper {
+  text-align: center;
+}
+.el-dialog__body {
+  color: #9d9fa5;
+  padding: 20px;
+}
+.el-dialog__title {
+  color: #fff;
+}
+
+.el-popconfirm__main {
+  margin: 5px 0 10px 0;
+}
+
+.el-popper {
+  background-color: $background-second-color;
+  border: 1px solid $border-color-dark;
+
+  &[x-placement^=top] .popper__arrow {
+    border-top-color: $border-color-dark;
+
+    &::after {
+      border-top-color: $background-second-color;
+    } 
+  }
+  &[x-placement^=bottom] .popper__arrow {
+    border-bottom-color: $border-color-dark;
+
+    &::after {
+      border-bottom-color: $background-second-color;
+    } 
+  }
+}
+

@@ -6,7 +6,7 @@ import CommonUtils from "../../utils/CommonUtils";
 import StringUtils from "../../utils/StringUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import { Vector2 } from "../Vector2";
-import { BlockParameterType } from "../Define/BlockParameterType";
+import { BlockParameterType, createParameterTypeFromString } from "../Define/BlockParameterType";
 
 export default {
   register() {
@@ -250,7 +250,7 @@ function registerControl() {
     if(block.isEditorBlock)
       (<BlockEditor>block).parametersChangeSettings.userCanAddInputParameter = true;
     
-    block.changePortParamType(block.getPortByGUID('PICON'), BlockParameterType.createTypeFromString(type), 'variable');
+    block.changePortParamType(block.getPortByGUID('PICON'), createParameterTypeFromString(type), 'variable');
 
     //Delete old ports
     if(block.data['lastIsEnum'] || type == 'enum') {

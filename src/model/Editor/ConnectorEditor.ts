@@ -7,6 +7,7 @@ import { BlockPort } from "../Define/Port";
 import { BlockPortEditor } from "./BlockPortEditor";
 import MathUtils from "../../utils/MathUtils";
 import { ConnectorDrawer } from "./ConnectorDrawer";
+import { BlockRunner } from "../WorkProvider/Runner";
 
 export class ConnectorEditor extends Connector {
 
@@ -16,7 +17,7 @@ export class ConnectorEditor extends Connector {
   public hover = false;
   public actived = false;
   public forceActive = false;
-  public currentRunner = null;
+  public currentRunner : BlockRunner = null;
   public valText = '';
   public inited = false;
 
@@ -27,7 +28,7 @@ export class ConnectorEditor extends Connector {
 
   private rect : Rect = new Rect();
   private dotPos = -1;
-  private valTextRows = [];
+  private valTextRows : string[] = [];
   private valTextWidth = 0;
   private valTextHeight = 0;
   private activeCount = 0;

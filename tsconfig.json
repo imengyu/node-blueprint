@@ -1,32 +1,45 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "allowJs": true,
+    "target": "esnext",
     "module": "esnext",
-    "target": "es5",
+    "strict": true,
+    "jsx": "preserve",
+    "importHelpers": true,
     "moduleResolution": "node",
-    "isolatedModules": true,
-    "lib": [
-      "dom",
-      "es5",
-      "es6",
-      "es2015.promise"
-    ],
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strictNullChecks": false,
     "sourceMap": true,
-    "pretty": true,
+    "baseUrl": ".",
     "types": [
+      "webpack-env",
       "./src/types",
       "./node_modules/@types/node",
       "./node_modules/vue/types",
       "./node_modules/vue-router/types",
-      "./node_modules/iview/types",
     ],
-  }, 
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
+  },
   "include": [
-    "src",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
-  ],
+    "node_modules"
+  ]
 }

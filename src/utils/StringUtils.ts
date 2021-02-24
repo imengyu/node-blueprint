@@ -3,8 +3,8 @@ export default {
    * 字符串判空
    * @param str 字符串
    */
-  isNullOrEmpty(str){
-    return !str || typeof str == 'undefined' || str == ''
+  isNullOrEmpty(str: any){
+    return !str || typeof str === 'undefined' || str === '' || str.length == 0
   },
   isBase64,
   isNumber,
@@ -15,7 +15,7 @@ export default {
    * 将一个变量转为字符串
    * @param val 变量
    */
-  valueToStr(val) {
+  valueToStr(val : any) {
     if(typeof val == 'string') 
       return '"' + val + '"';
     return String(val)
@@ -28,18 +28,19 @@ export default {
     return path.substring(pos + 1);  
   }
 }
+
 /**
 * 判断字符串是否是 Base64 编码
 * @param {String} str 
 */
-function isBase64(str) {
+function isBase64(str : string) {
   return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/.test(str);
 }
 /**
  * 检测字符串是否是一串数字
  * @param {String} val 
  */
-function isNumber(val) {
+function isNumber(val : string) {
   var regPos = /^\d+(\.\d+)?$/; //非负浮点数
   var regNeg = /^(-(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)))$/; //负浮点数
   if (regPos.test(val) || regNeg.test(val)) {
@@ -89,10 +90,11 @@ function strToHexCharCode(str : string, with0x = true) : string {
 /**
  * 数字补0
  */
-function pad(num, n) {
-  var len = num.toString().length;
+function pad(num : number, n : number) {
+  let numStr = num.toString();
+  let len = numStr.length;
   while (len < n) {
-    num = "0" + num;
+    numStr = "0" + numStr;
     len++;
   }
   return num;
@@ -100,9 +102,9 @@ function pad(num, n) {
 /**
  * 按千位逗号分割
  * @param s 需要格式化的数值.
- * @param type 判断格式化后是否需要小数位.
+ * @param needDecimal 判断格式化后是否需要小数位.
  */
-function formatNumberWithComma(s, type) {
+function formatNumberWithComma(s : string, needDecimal: boolean) {
   if (/[^0-9\.]/.test(s))
       return "0";
   if (s == null || s == "")
@@ -114,7 +116,7 @@ function formatNumberWithComma(s, type) {
   while (re.test(s))
       s = s.replace(re, "$1,$2");
   s = s.replace(/,(\d\d)$/, ".$1");
-  if (type == 0) { // 不带小数位(默认是有小数位)
+  if (!needDecimal) { // 不带小数位(默认是有小数位)
       var a = s.split(".");
       if (a[1] == "00") {
           s = a[0];

@@ -1,5 +1,6 @@
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import { BlockParameterType } from "./BlockParameterType";
+import { HashableObject } from "./CommonDefine";
 
 export class ValMap {
 
@@ -29,20 +30,20 @@ export class ValMap {
   public clear() {
     this.map.clear();
   }
-  public delete(key) : boolean {
-    if(this.isUseKeyRemap) key = key.getHashCode(key);
+  public delete(key : string|HashableObject) : boolean {
+    if(this.isUseKeyRemap && typeof key === 'object') key = key.getHashCode(key);
     return this.map.delete(key);
   }
-  public get(key) {
-    if(this.isUseKeyRemap) key = key.getHashCode(key);
+  public get(key: string|HashableObject) {
+    if(this.isUseKeyRemap && typeof key === 'object') key = key.getHashCode(key);
     return this.map.get(key);
   }
-  public has(key): boolean {
-    if(this.isUseKeyRemap) key = key.getHashCode(key);
+  public has(key: string|HashableObject): boolean {
+    if(this.isUseKeyRemap && typeof key === 'object') key = key.getHashCode(key);
     return this.map.has(key);
   }
-  public set(key, value) {
-    if(this.isUseKeyRemap) key = key.getHashCode(key);
+  public set(key: string|HashableObject, value : any) {
+    if(this.isUseKeyRemap && typeof key === 'object') key = key.getHashCode(key);
     this.map.set(key, value);
     return this;
   }

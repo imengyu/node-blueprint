@@ -10,7 +10,8 @@ import CommonUtils from "../../utils/CommonUtils";
 import { Connector } from "./Connector";
 import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
-import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
+import { BlockParameterSetType, BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "./BlockParameterType";
+import { CustomStorageObject } from "./CommonDefine";
 
 /**
  * 基础单元定义
@@ -28,15 +29,15 @@ export class Block {
   /**
    * 自定义单元属性供代码使用（全局）（会保存至文件中）
    */
-  public options = {};
+  public options : CustomStorageObject = {};
   /**
    * 自定义单元数据供代码使用（全局）（不会保存至文件中）
    */
-  public data = {};
+  public data : CustomStorageObject = {};
   /**
    * 自定义单元变量供代码使用（单元局部）（不会保存至文件中）
    */
-  public variables(context ?: BlockRunContextData) : {} {
+  public variables(context ?: BlockRunContextData) : CustomStorageObject {
     if(!CommonUtils.isDefined(context)) 
       context = this.currentRunningContext;
     //遍历调用栈  
@@ -141,7 +142,7 @@ export class Block {
   public onPortExecuteIn = new EventHandler<OnPortEventCallback>();
   public onPortParamRequest = new EventHandler<OnPortRequestCallback>();
   public onPortAdd = new EventHandler<OnPortEventCallback>();
-  public onPortRemove = new EventHandler<OnPortEventCallback>();
+  public onPortRemove = new EventHandler<OnPortEditorEventCallback>();
 
   public portUpdateLock = false;
 
@@ -169,8 +170,8 @@ export class Block {
   //节点操作
   //===========================
 
-  public inputPorts = {};
-  public outputPorts = {};
+  public inputPorts : { [index: string]: BlockPort; } = {};
+  public outputPorts : { [index: string]: BlockPort; } = {};
   public inputPortCount = 0;
   public outputPortCount = 0;
   public allPorts : Array<BlockPort> = [];
@@ -181,7 +182,7 @@ export class Block {
    * @param data 行为端口数据
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
    */
-  public addPort(data : BlockPortRegData, isDyamicAdd = true, initialValue = null, forceChangeDirection ?: BlockPortDirection) {
+  public addPort(data : BlockPortRegData, isDyamicAdd = true, initialValue : any = null, forceChangeDirection ?: BlockPortDirection) {
     let oldData = this.getPort(data.guid, data.direction);
     if(oldData != null && oldData != undefined) {
       logger.warning("[addPort]" + data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !");
@@ -196,9 +197,9 @@ export class Block {
     newPort.direction = CommonUtils.isDefinedAndNotNull(forceChangeDirection) ? forceChangeDirection : data.direction;
     newPort.regData = data;
     if(typeof data.paramType == 'string') 
-      newPort.paramType = BlockParameterType.createTypeFromString(data.paramType);
+      newPort.paramType = createParameterTypeFromString(data.paramType);
     else 
-      newPort.paramType = CommonUtils.clone(data.paramType);
+      newPort.paramType = cloneParameterTypeFromString(data.paramType);
     if(CommonUtils.isDefinedAndNotNull(data.paramRefPassing)) newPort.paramRefPassing = data.paramRefPassing;
     if(CommonUtils.isDefinedAndNotNull(data.executeInNewContext)) newPort.executeInNewContext = data.executeInNewContext;
     newPort.paramDefaultValue = CommonUtils.isDefinedAndNotNull(data.paramDefaultValue) ? data.paramDefaultValue : ParamTypeServiceInstance.getTypeDefaultValue(newPort.paramType);
@@ -211,8 +212,8 @@ export class Block {
     if(CommonUtils.isDefinedAndNotNull(data.paramStatic)) newPort.paramStatic = data.paramStatic;
     if(CommonUtils.isDefinedAndNotNull(data.paramSetType)) newPort.paramSetType = data.paramSetType;
     if(CommonUtils.isDefinedAndNotNull(data.paramDictionaryKeyType)) {
-      if(typeof data.paramDictionaryKeyType == 'string') newPort.paramDictionaryKeyType = BlockParameterType.createTypeFromString(data.paramDictionaryKeyType);
-      else newPort.paramDictionaryKeyType = CommonUtils.clone(data.paramDictionaryKeyType);
+      if(typeof data.paramDictionaryKeyType == 'string') newPort.paramDictionaryKeyType = createParameterTypeFromString(data.paramDictionaryKeyType);
+      else newPort.paramDictionaryKeyType = cloneParameterTypeFromString(data.paramDictionaryKeyType);
     }
 
     newPort.forceEditorControlOutput = data.forceEditorControlOutput;
@@ -323,10 +324,10 @@ export class Block {
     if(port.parent == this) {
 
       if(CommonUtils.isDefined(newType))
-        if(typeof newType == 'string') port.paramType = BlockParameterType.createTypeFromString(newType);
+        if(typeof newType == 'string') port.paramType = createParameterTypeFromString(newType);
         else port.paramType.set(newType);
       if(CommonUtils.isDefined(newKeyType))
-        if(typeof newKeyType == 'string') port.paramDictionaryKeyType = BlockParameterType.createTypeFromString(newKeyType);
+        if(typeof newKeyType == 'string') port.paramDictionaryKeyType = createParameterTypeFromString(newKeyType);
         else port.paramDictionaryKeyType.set(newKeyType);
       if(CommonUtils.isDefinedAndNotNull(newSetType))
         port.paramSetType = newSetType;

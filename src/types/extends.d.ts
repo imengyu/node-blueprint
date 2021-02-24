@@ -17,6 +17,13 @@ interface Array<T> {
   contains(item: T) : boolean;
 
   /**
+   * 在数组中插入元素
+   * @param index 插入位置
+   * @param item 要插入的元素
+   */
+  insert(index: number, item: T): void;
+
+  /**
    * 仅添加元素一次到数组中，如果数组中已存在，则不会添加
    * @param item 元素
    * @returns 返回元素新的长度
@@ -39,7 +46,7 @@ interface Date {
 }
 
 interface String {
-   /**
+  /**
    * 查找字符串中是包含另一个字符串
    * @param item 字符串
    */

@@ -1,2 +1,19 @@
-$left-toolbar-width: 45px;
+$left-toolbar-width: 40px;
+$left-icon-off: 40px;
 $top-menu-height: 30px;
+
+$primary-color: rgb(206, 100, 255);
+$primary-color-dark: rgb(189, 73, 243);
+
+$background-color: #161727;
+$background-second-color: #282c34;
+$background-second-color-light: #4f5768;
+$border-color: #3e4053;
+$border-color-dark: #111216;
+$active-color: #282c34;
+
+$tab-mormal-color: $background-color;
+$tab-active-color: $active-color;
+$tab-border-color: $border-color-dark;
+$tab-button-normal-color: #cccccc;
+$tab-button-hover-color:  #7e7e7e;

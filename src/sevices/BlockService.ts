@@ -8,7 +8,7 @@ import logger from "../utils/Logger";
 export class BlockService {
 
   //所有单元
-  private allBlocks = {};
+  private allBlocks = new Map<string, BlockRegData>();
   //所有单元（已分类）
   private allBlocksGrouped : Array<CategoryData> = [
     {
@@ -21,7 +21,7 @@ export class BlockService {
     }
   ];
   //所有包
-  private allPacks = [];
+  private allPacks = new Array<PackageDef>();
   private isEditorMode = false;
 
   /**
@@ -61,7 +61,7 @@ export class BlockService {
       return;
     }
     BlockDef.pack = pack;
-    this.allBlocks[BlockDef.guid] = BlockDef;
+    this.allBlocks.set(BlockDef.guid, BlockDef);
 
     if(this.isEditorMode && updateList) this.updateBlocksList();
   }
@@ -70,7 +70,7 @@ export class BlockService {
    * @param guid 单元GUID
    */
   public getRegisteredBlock(guid : string) {
-    return this.allBlocks[guid];
+    return this.allBlocks.get(guid);
   }
   /**
    * 取消注册单元包
@@ -86,13 +86,13 @@ export class BlockService {
    * @param updateList 是否刷新列表
    */
   public unregisterBlock(guid : string, updateList = true) {
-    let regData : BlockRegData = this.allBlocks[guid]
+    let regData : BlockRegData = this.allBlocks.get(guid);
     if(this.isEditorMode && regData) {
       if((<any>regData).categoryObject) {
         (<CategoryData>(<any>regData).categoryObject).blocks.remove(regData);
       }
     }
-    delete(this.allBlocks[guid]);
+    this.allBlocks.delete(guid);
     if(this.isEditorMode && updateList) this.updateBlocksList();
   }
 
@@ -152,8 +152,7 @@ export class BlockService {
    */
   public updateBlocksList() {
     if(this.isEditorMode) {
-      Object.keys(this.allBlocks).forEach(key => {
-        let regData : BlockRegData = this.allBlocks[key];
+      this.allBlocks.forEach(regData => {
         let category = this.findBlocksListCategory(regData.baseInfo.category);
 
         (<any>regData).categoryObject = category;

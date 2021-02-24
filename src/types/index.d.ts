@@ -1,8 +1,7 @@
+/// <reference types="react-vue" />
+/// <reference path="./extends.d.ts" />
+/// <reference path="./vue-contextmenujs.d.ts" />
 
-/// <reference path="extends.d.ts" />
-/// <reference path="vue-contextmenujs.d.ts" />
-
-
-export interface Maim {
-
-}
+declare module 'glolbal';
+declare module 'vue-contextmenujs/dist/contextmenu.umd.js';
+declare module 'vue-happy-scroll/src';

@@ -10,9 +10,9 @@ import { BlockPort } from "../Define/Port";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
 import { BlockRunContextData } from "../WorkProvider/Runner";
-import { BlockParameterType } from "../Define/BlockParameterType";
-import BlockServiceInstance from "../../sevices/BlockService";
+import { BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "../Define/BlockParameterType";
 import { Vector2 } from "../Vector2";
+import { Rect } from "../Rect";
 
 export default { 
   register,
@@ -46,31 +46,44 @@ function register() {
 }
 
 function registerBaseConverters() {
-  let anyStringConverter = (v) => { return '' + v };
+  let anyStringConverter = (v : any) => { return '' + v };
 
   ParamTypeServiceInstance.registerTypeCoverter({
-    fromType: BlockParameterType.createTypeFromString('number'),
-    toType: BlockParameterType.createTypeFromString('string'), 
+    fromType: createParameterTypeFromString('number'),
+    toType: createParameterTypeFromString('string'), 
     allowSetType: 'variable', 
     converter: anyStringConverter
   });
   ParamTypeServiceInstance.registerTypeCoverter({
-    fromType: BlockParameterType.createTypeFromString('bigint'),
-    toType: BlockParameterType.createTypeFromString('string'), 
+    fromType: createParameterTypeFromString('bigint'),
+    toType: createParameterTypeFromString('string'), 
     allowSetType: 'variable', 
     converter: anyStringConverter
   });
   ParamTypeServiceInstance.registerTypeCoverter({
-    fromType: BlockParameterType.createTypeFromString('boolean'),
-    toType: BlockParameterType.createTypeFromString('string'), 
+    fromType: createParameterTypeFromString('boolean'),
+    toType: createParameterTypeFromString('string'), 
     allowSetType: 'variable', 
     converter: anyStringConverter
   });
   ParamTypeServiceInstance.registerTypeCoverter({
-    fromType: BlockParameterType.createTypeFromString('object'),
-    toType: BlockParameterType.createTypeFromString('string'), 
+    fromType: createParameterTypeFromString('object'),
+    toType: createParameterTypeFromString('string'), 
     allowSetType: 'variable', 
     converter: anyStringConverter
+  });
+
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: createParameterTypeFromString('string'),
+    toType: createParameterTypeFromString('number'), 
+    allowSetType: 'variable', 
+    converter: (v) => parseFloat(v)
+  });
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: createParameterTypeFromString('string'),
+    toType: createParameterTypeFromString('boolean'), 
+    allowSetType: 'variable', 
+    converter: (v : string) => !StringUtils.isNullOrEmpty(v) && (v.toLowerCase() == 'true')
   });
 }
 
@@ -178,11 +191,11 @@ function registerScriptVariableBase()  {
 
       block.name = '获取变量 ' + variable.name + ' 的值';
       block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type.toString()), 0.3);
-      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
+      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(null, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
           block.editor.deleteBlock(block, true);
       });
-      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(this, (graph, variableOldName, variable) => {
+      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(null, (graph, variableOldName, variable) => {
         if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
           block.options['variable'] = variable.name;
 
@@ -281,11 +294,11 @@ function registerScriptVariableBase()  {
       block.name = '设置 ' + variable.name;
       block.blockStyleSettings.titleBakgroundColor = CanvasUtils.colorStrWithAlpha(ParamTypeServiceInstance.getTypeColor(variable.type.toString()), 0.3);
 
-      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(this, (graph, variable) => {
+      block.data['onVariableRemove'] = block.editor.editorEvents.onVariableRemove.addListener(null, (graph, variable) => {
         if(graph == block.currentGraph && variable.name == block.options['variable'])
           block.editor.deleteBlock(block, true);
       });
-      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(this, (graph, variableOldName, variable) => {
+      block.data['onVariableUpdate'] = block.editor.editorEvents.onVariableUpdate.addListener(null, (graph, variableOldName, variable) => {
         if(graph == block.currentGraph && (variable.name == block.options['variable'] || variableOldName == block.options['variable'])) {
           block.options['variable'] = variable.name
 
@@ -360,31 +373,31 @@ function registerScriptGraphBase()  {
     block.currentGraph.inputPorts.forEach(element => block.addPort(element, false, element.paramDefaultValue, 'output'));
   };
   graphIn.callbacks.onEditorCreate = (block) => {
-    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(null, (graph, port) => {
       port.paramRefPassing = true;
       if(graph == block.currentGraph && port.direction == 'input') 
         block.addPort(port, false, port.paramDefaultValue, 'output');
     });
-    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input')
         block.deletePort(port.guid);
     });
-    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = typeof port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
-        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
+        portReal.paramType = typeof port.paramType === 'string' ? createParameterTypeFromString(port.paramType) : <BlockParameterType>cloneParameterTypeFromString(port.paramType);
+        portReal.paramDictionaryKeyType = typeof port.paramDictionaryKeyType === 'string' ? createParameterTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>cloneParameterTypeFromString(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
         portReal.paramSetType = port.paramSetType;
         portReal.paramRefPassing = true;
-        block.updatePort(portReal);
+        block.updatePort(portReal)
       }
     });
-    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input')
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
     });
-    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') 
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
     });
@@ -435,29 +448,30 @@ function registerScriptGraphBase()  {
     return null;
   };
   graphOut.callbacks.onEditorCreate = (block) => {
-    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') 
         block.addPort(port, false, port.paramDefaultValue, 'input');
     });
-    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') 
         block.deletePort(port.guid);
     });
-    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
-        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
+        portReal.paramType = typeof port.paramType === 'string' ? createParameterTypeFromString(port.paramType) : <BlockParameterType>cloneParameterTypeFromString(port.paramType);
+        portReal.paramDictionaryKeyType = typeof port.paramDictionaryKeyType === 'string' ? createParameterTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>cloneParameterTypeFromString(port.paramDictionaryKeyType);
+        (port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
         portReal.paramSetType = port.paramSetType;
         block.updatePort(portReal);
       }
     });
-    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') 
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
     });
-    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') 
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
     });
@@ -545,7 +559,7 @@ function registerScriptGraphBase()  {
         onClick: () => block.editor.openGraph(currentGraph)
       }
     ];
-    block.el.addEventListener('dblclick ', (e : MouseEvent) => {
+    block.el.addEventListener('dblclick', (e : MouseEvent) => {
       if(e.button == 0)
         block.editor.openGraph(currentGraph);
     });
@@ -553,39 +567,39 @@ function registerScriptGraphBase()  {
     block.name = '调用子图表 ' + currentGraph.name;
     block.description = '调用一个子图表，并返回值\n' + currentGraph.name + '\n' + currentGraph.comment;
 
-    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(this, (graph, port) => {
+    block.data['onGraphPortAdd'] = block.editor.editorEvents.onGraphPortAdd.addListener(null, (graph, port) => {
       if(graph == currentGraph) 
         block.addPort(port, false, port.paramDefaultValue, 'input');
     });
-    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(this, (graph, port) => {
+    block.data['onGraphPortRemove'] = block.editor.editorEvents.onGraphPortRemove.addListener(null, (graph, port) => {
       if(graph == currentGraph) 
         block.deletePort(port.guid);
     });
-    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(this, (graph, port) => {
+    block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(null, (graph, port) => {
       if(graph == currentGraph) {
         let portReal = block.getPortByGUID(port.guid);
-        portReal.paramType = port.paramType == 'string' ?  BlockParameterType.createTypeFromString(port.paramType) : <BlockParameterType>CommonUtils.clone(port.paramType);
-        portReal.paramDictionaryKeyType = port.paramDictionaryKeyType == 'string' ?  BlockParameterType.createTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>CommonUtils.clone(port.paramDictionaryKeyType);
+        portReal.paramType = typeof port.paramType === 'string' ? createParameterTypeFromString(port.paramType) : <BlockParameterType>cloneParameterTypeFromString(port.paramType);
+        portReal.paramDictionaryKeyType = typeof port.paramDictionaryKeyType === 'string' ?  createParameterTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>cloneParameterTypeFromString(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
         portReal.paramSetType = port.paramSetType;
         block.updatePort(portReal);
       }
     });
-    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveDown'] = block.editor.editorEvents.onGraphPortMoveDown.addListener(null, (graph, port) => {
       if(graph == currentGraph) 
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'down');
     });
-    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(this, (graph, port) => {
+    block.data['onGraphPortMoveUp'] = block.editor.editorEvents.onGraphPortMoveUp.addListener(null, (graph, port) => {
       if(graph == currentGraph) 
         block.movePortElementUpOrDown(block.getPortByGUID(port.guid), 'up');
     });
-    block.data['onGraphUpdate'] = block.editor.editorEvents.onGraphUpdate.addListener(this, (graph) => {
+    block.data['onGraphUpdate'] = block.editor.editorEvents.onGraphUpdate.addListener(null, (graph) => {
       if(graph == currentGraph) {
         block.name = '调用子图表 ' + currentGraph.name;
         block.description = '调用一个子图表，并返回值\n' + currentGraph.name + '\n' + currentGraph.comment;
       }
     });
-    block.data['onGraphDelete'] = block.editor.editorEvents.onGraphDelete.addListener(this, (graph) => {
+    block.data['onGraphDelete'] = block.editor.editorEvents.onGraphDelete.addListener(null, (graph) => {
       if(graph == currentGraph) 
         block.editor.deleteBlock(block, true);
     });
@@ -1082,8 +1096,8 @@ function registerCommentBlock() {
     input.value = block.options['content'] ? block.options['content'] : '';
     input.classList.add('custom-editor');
     input.classList.add('comment-editor');
-    input.style.width = (typeof block.options['width'] == 'number' ? block.options['width'] : 210) + 'px';
-    input.style.height = (typeof block.options['height'] == 'number' ? block.options['height'] : 122) + 'px';
+    input.style.width = (typeof block.options['width'] === 'number' ? block.options['width'] : 210) + 'px';
+    input.style.height = (typeof block.options['height'] === 'number' ? block.options['height'] : 122) + 'px';
     input.onchange = () => { 
       block.options['content'] = input.value; 
       block.editor.markFileChanged();
@@ -1149,13 +1163,52 @@ function registerCommentBlock() {
     ele.appendChild(span);
     parentEle.appendChild(ele);
   };
+  commentBlock.callbacks.onCreate = (block) => {
+    block.data['list'] = [];
+    block.data['rect'] = new Rect();
+    block.data['mouseDownPos'] = { x: 0, y: 0 };
+    block.data['mouseDown'] = false;
+  };
+  commentBlock.callbacks.onDestroy = (block) => {
+    block.data['list'] = undefined;
+  };
   commentBlock.callbacks.onBlockMouseEvent = (block: BlockEditor, event: "move" | "down" | "up", e: MouseEvent) => {
+    let list = block.data['list'] as Array<BlockEditor>;
+    let rect = block.data['rect'] as Rect;
+    let mouseDownPos = block.data['mouseDownPos'] as { x: number, y: number};
     if(event === 'down') {
+
+      block.data['mouseDown'] = true;
+
+      mouseDownPos.x = e.x;
+      mouseDownPos.y = e.y;
+
+      //保存鼠标按下时区域内的所有单元
+      rect.Set(block.getRect());
+      list.empty();
+      block.editor.getBlocksInRect(rect).forEach((v) => {
+        if(v != block) {
+          v.updateLastPos();
+          list.push(v);
+        }
+      });
       
     } else if(event === 'move') {
-      
+     
+      if(block.data['mouseDown'] && block.getCurrentSizeType() == 0) {
+
+        //移动包括在注释内的单元
+        let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
+        list.forEach((v) => {
+          v.position.x = v.getLastPos().x + offX;
+          v.position.y = v.getLastPos().y + offY;
+          v.setPos();
+        })
+      }
+
     } else if(event === 'up') {
-      
+      if(block.data['mouseDown'])
+        block.data['mouseDown'] = false;
     }
     return false;
   };
@@ -1164,7 +1217,7 @@ function registerCommentBlock() {
 }
 function registerConvertBlock() {
 
-  let block = new BlockRegData("8C7DA763-05C1-61AF-DCD2-174CB6C2C279", "转换器", "", 'imengyu', '');
+  let block = new BlockRegData("8C7DA763-05C1-61AF-DCD2-174CB6C2C279", "转换器", "", 'imengyu', '基础/转换');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
   block.baseInfo.description = '';
   block.ports = [
@@ -1212,5 +1265,61 @@ function registerConvertBlock() {
   };
   
   convertBlock = block;
-  return [ block ];
+
+  let parseFloatBlock = new BlockRegData("6A644C89-F7FA-E615-6342-D7E747710DD6", "parseFloat", '转换为浮点数', 'imengyu', '基础/转换');
+  parseFloatBlock.baseInfo.logo = require('../../assets/images/BlockIcon/convert-number.svg');
+  parseFloatBlock.ports = [
+    {
+      guid: 'INPUT',
+      paramType: 'any',
+      direction: 'input',
+      description: '要转换的变量',
+      defaultConnectPort: true,
+    },
+    {
+      guid: 'OUTPUT',
+      paramType: 'number',
+      description: '转为的浮点数',
+      direction: 'output'
+    },
+  ];
+  parseFloatBlock.type = 'base';
+  parseFloatBlock.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  parseFloatBlock.blockStyle.noTitle = true;
+  parseFloatBlock.blockStyle.logoBackground = 'title:parseInt';
+  parseFloatBlock.blockStyle.minWidth = '130px';
+  parseFloatBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
+    let input = block.getInputParamValue('INPUT');
+      block.setOutputParamValue('OUTPUT', parseFloat(input));
+  };
+
+  let parseIntBlock = new BlockRegData("824AB4F0-7C8F-A12F-6CA6-87266464BD6E", "parseInt", '转换为整数', 'imengyu', '基础/转换');
+  parseIntBlock.baseInfo.logo = require('../../assets/images/BlockIcon/convert-number-2.svg');
+  parseIntBlock.ports = [
+    {
+      guid: 'INPUT',
+      paramType: 'any',
+      direction: 'input',
+      description: '要转换的变量',
+      defaultConnectPort: true,
+    },
+    {
+      guid: 'OUTPUT',
+      paramType: 'number',
+      description: '转为的整数',
+      direction: 'output'
+    },
+  ];
+  parseIntBlock.type = 'base';
+  parseIntBlock.blockStyle.logoBackground = 'title:parseInt';
+  parseIntBlock.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  parseIntBlock.blockStyle.noTitle = true;
+  parseIntBlock.blockStyle.minWidth = '130px';
+
+  parseIntBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
+    let input = block.getInputParamValue('INPUT');
+      block.setOutputParamValue('OUTPUT', parseInt(input));
+  };
+
+  return [ block, parseFloatBlock, parseIntBlock ];
 }

@@ -2,7 +2,7 @@
   <div class="menu-bar">
     <div class="titlebar-drag-region"></div>
     <slot name="icon"></slot>
-    <div v-for="(menu,i) in menus" :class="menu.show ? 'menu-bar-item open' : 'menu-bar-item'" :key="i" 
+    <div v-show="loadShow" v-for="(menu,i) in menus" :class="menu.show ? 'menu-bar-item open' : 'menu-bar-item'" :key="i" 
       @click="onItemMouseClick(menu)" 
       @mouseenter="onItemMouseEnter(menu)" @mouseleave="onItemMouseLeave(menu)">
       <div class="menu-title">{{ menu.name }}</div>
@@ -31,12 +31,15 @@ export default class MenuBar extends Vue {
   @Prop({ default: null }) menus : Array<MenuData>;
 
   currentShowMenu : MenuData = null;
+  loadShow = false;
 
   @Watch('menus')
   onMenusChanged() {
-    setTimeout(() =>  this.menus.forEach((m) => {
+    this.loadShow = false;
+    setTimeout(() => this.menus.forEach((m) => {
       m.show = false;
-    }), 200);
+      this.loadShow = true;
+    }), 100);
   }
   @Watch('currentShowMenu')
   onCurrentShowMenuChanged(newv : MenuData) {
@@ -74,8 +77,10 @@ export default class MenuBar extends Vue {
     if(!menu.separator) {
       if(typeof menu.callback == 'function')
         menu.callback(menu);
-      this.currentShowMenu.show = false;
-      this.currentShowMenu = null;
+      if(this.currentShowMenu) {
+        this.currentShowMenu.show = false;
+        this.currentShowMenu = null;
+      }
     }
 
     e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;

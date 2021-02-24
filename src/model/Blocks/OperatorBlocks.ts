@@ -3,7 +3,9 @@ import { Block } from "../Define/Block";
 import CommonUtils from "../../utils/CommonUtils";
 import AllEditors from "../TypeEditors/AllEditors";
 import StringUtils from "../../utils/StringUtils";
-import { BlockPort } from "../Define/Port";
+import { BlockPort, BlockPortDirection } from "../Define/Port";
+import { CustomStorageObject } from "../Define/CommonDefine";
+import { BlockEditor } from "../Editor/BlockEditor";
 
 export default {
   register() {
@@ -33,7 +35,7 @@ function registerCalcBase() {
       });
     }
   };
-  let CalcBase_onUserAddPort = (block : Block, dirction, type) => {
+  let CalcBase_onUserAddPort = (block : Block, dirction : BlockPortDirection, type : 'execute'|'param') => {
     block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 1 : block.inputPortCount;
     return {
       guid: 'PI' + block.data['portCount'],
@@ -76,7 +78,7 @@ function registerCalcBase() {
   blockAddition.portAnyFlexables = CalcBase_portAnyFlexables;
   blockAddition.callbacks.onCreate = CalcBase_onCreate;
   blockAddition.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(typeof v != 'undefined')
@@ -100,7 +102,7 @@ function registerCalcBase() {
   blockSubstract.portAnyFlexables = CalcBase_portAnyFlexables;
   blockSubstract.callbacks.onCreate = CalcBase_onCreate;
   blockSubstract.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(typeof v != 'undefined')
@@ -124,7 +126,7 @@ function registerCalcBase() {
   blockDivide.portAnyFlexables = CalcBase_portAnyFlexables;
   blockMultiply.callbacks.onCreate = CalcBase_onCreate;
   blockMultiply.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(typeof v != 'undefined')
@@ -148,7 +150,7 @@ function registerCalcBase() {
   blockDivide.portAnyFlexables = CalcBase_portAnyFlexables;
   blockDivide.callbacks.onCreate = CalcBase_onCreate;
   blockDivide.callbacks.onPortParamRequest = (block, port, context) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid, context);
       if(typeof v != 'undefined')
@@ -173,7 +175,7 @@ function registerCalcBase() {
 
 function registerCalcScalar() {
 
-  let CalcScalar_onUserAddPort = (block, dirction, type) : BlockPortRegData => {
+  let CalcScalar_onUserAddPort = (block : BlockEditor, dirction : BlockPortDirection, type : 'execute'|'param') : BlockPortRegData => {
     block.data['portCount'] = typeof block.data['portCount'] == 'number' ? block.data['portCount'] + 1 : block.inputPortCount;
     return {
       guid: 'PI' + block.data['portCount'],
@@ -229,7 +231,7 @@ function registerCalcScalar() {
   blockMinimum.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockMinimum.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMinimum.callbacks.onPortExecuteIn = (block, port) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
       if(typeof v != 'undefined')
@@ -253,7 +255,7 @@ function registerCalcScalar() {
   blockMaximum.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockMaximum.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockMaximum.callbacks.onPortExecuteIn = (block, port) => { 
-    let rs = null;
+    let rs : number = null;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
       if(typeof v != 'undefined')
@@ -277,7 +279,7 @@ function registerCalcScalar() {
   blockAverage.ports = CalcScalar_cm_ports.concat(CalcScalar_cm_param_ports);
   blockAverage.settings.parametersChangeSettings.userCanAddInputParameter = true;
   blockAverage.callbacks.onPortExecuteIn = (block, port) => { 
-    let rs = null;
+    let rs : number = null;
     let paramCount = 0;
     Object.keys(block.inputPorts).forEach(guid => {
       let v = block.getInputParamValue(guid);
@@ -661,7 +663,7 @@ function registerOperatorBase() {
     return el;
   };
   blockCreateObject.callbacks.onPortExecuteIn = (block, port) => {
-    let object = new Object();
+    let object : CustomStorageObject = new Object();
     Object.keys(block.inputPorts).forEach((key) => {
       let port = <BlockPort>block.inputPorts[key];
       if(!CommonUtils.isNullOrEmpty(port.options['key']))

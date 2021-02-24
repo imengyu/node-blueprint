@@ -7,8 +7,36 @@ import { BlockPort } from "../Define/Port";
 import { ConnectorEditor } from "../Editor/ConnectorEditor";
 import { Block } from "../Define/Block";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
-import { BlockParameterType, BlockParameterSetType } from "../Define/BlockParameterType";
+import { BlockParameterType, BlockParameterSetType, createParameterTypeFromString } from "../Define/BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
+import { Rect } from "../Rect";
+
+interface BlockFileDocData {
+  name: string,
+  libVersion: number,
+  openEditorVersion: number,
+  mainGraph: any,
+  uid: string,
+  blockMap: string[],
+  portMap: any[],
+}
+interface BlockFileGraphData {
+  name: string,
+  viewPort: Rect,
+  scale: number,
+  childGraphs: BlockFileGraphData[],
+
+  comment: string,
+  inputPorts: any[],
+  outputPorts: any[],
+  variables: any[],
+  
+  blocks: any[],
+  ports: any[],
+  connectors: any[],
+  boxs: any[],
+  comments: string[],
+}
 
 /**
  * 流图保存加载解析器
@@ -25,7 +53,7 @@ export class BlockFileParser {
     blockMap: Array<any>,
     portMap: Array<any>,
   }, saveToEditor : boolean) {
-    let data = {
+    let data : BlockFileGraphData = {
       name: graph.name,
       viewPort: graph.viewPort,
       scale: graph.scale,
@@ -192,7 +220,7 @@ export class BlockFileParser {
    * @param readToEditor 是否是读取至编辑器
    * @param doc 所属文档
    */
-  private loadGraph(graphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas, readToEditor : boolean, doc : BlockDocunment) {
+  private loadGraph(graphData : BlockFileGraphData, parentGraph : BlockGraphDocunment, blockRegDatas : Array<BlockRegData>, portRegDatas : any[], readToEditor : boolean, doc : BlockDocunment) {
 
     let graph = new BlockGraphDocunment()
     
@@ -223,7 +251,7 @@ export class BlockFileParser {
       v.defaultValue = variable.defaultValue;
       v.value = variable.value;
       v.name = variable.name;
-      v.type = BlockParameterType.createTypeFromString(variable.type);
+      v.type = createParameterTypeFromString(variable.type);
       v.setType = <BlockParameterSetType>variable.setType;
       v.dictionaryKeyType = variable.dictionaryKeyType;
       graph.variables.push(v);
@@ -313,7 +341,7 @@ export class BlockFileParser {
    * @returns 已保存的字符串
    */
   public saveToString(doc : BlockDocunment, saveToEditor : boolean) {
-    let data = {
+    let data : BlockFileDocData = {
       name: doc.name,
       libVersion: doc.libVersion,
       openEditorVersion: doc.openEditorVersion,
@@ -338,9 +366,9 @@ export class BlockFileParser {
     }
 
     let blockRegDatas : Array<BlockRegData> = [];
-    let portRegDatas = [];
+    let portRegDatas : Array<any> = [];
 
-    let data = null;
+    let data : BlockFileDocData = null;
 
     try {
       data = JSON.parse(str);

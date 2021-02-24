@@ -1,28 +1,30 @@
-export class Logger {
-  public logLevel = "info";
+export type LogLevel = 'info'|'warning'|'error'|'unknow'
 
-  public error(msg) {
+export class Logger {
+  public logLevel : LogLevel = "info";
+
+  public error(msg : any) {
     if (this.shouldLog('error'))
       console.error(msg)
   }
-  public info(msg) {
+  public info(msg : any) {
     if (this.shouldLog('info'))
       console.info(msg)
   }
-  public log(msg) {
+  public log(msg : any) {
     if (this.shouldLog('info'))
       console.log(msg)
   }
-  public warning(msg) {
+  public warning(msg : any) {
     if (this.shouldLog('warning'))
       console.warn(msg)
   }
-  public exception(msg : string, e) {
+  public exception(msg : string, e : Error) {
     if (this.shouldLog('error'))
       console.exception(msg +  ' ' + this.formatError(e))
   }
 
-  formatError(err) {
+  formatError(err : Error) {
     var message = err.message;
     var stack = err.stack;
     if (!stack) {
@@ -33,7 +35,7 @@ export class Logger {
       return stack;
     }
   }
-  shouldLog(level) {
+  shouldLog(level : LogLevel) {
     var shouldLog =
       (this.logLevel === "info" && level === "info") ||
       (["info", "warning"].indexOf(this.logLevel) >= 0 && level === "warning") ||

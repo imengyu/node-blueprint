@@ -312,7 +312,9 @@
     outline: none;
     border: none;
     border-radius: 6px;
-    vertical-align: middle;
+    vertical-align: middle;    
+    font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 12px;
 
     &::-webkit-input-placeholder {
       color: #bbbbbb;
