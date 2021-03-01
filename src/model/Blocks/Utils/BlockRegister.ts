@@ -6,7 +6,7 @@ import ControlBlocks from "../ControlBlocks"
 import DictionaryBlocks from "../DictionaryBlocks"
 import LogicBlocks from "../LogicBlocks"
 import OperatorBlocks from "../OperatorBlocks"
-import OSBlocks from "../OSBlocks"
+import OSBlocks from "../Nodejs/OSBlocks"
 import SetBlocks from "../SetBlocks"
 
 export default {

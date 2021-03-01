@@ -1,5 +1,5 @@
 import { BlockParameterTypeConverterData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
-import { BlockParameterBaseType, BlockParameterType } from "../model/Define/BlockParameterType";
+import { BlockParameterBaseType, BlockParameterType, createParameterTypeFromString } from "../model/Define/BlockParameterType";
 import CommonUtils from "../utils/CommonUtils";
 import { EventHandler } from "../utils/EventHandler";
 import StringUtils from "../utils/StringUtils";
@@ -9,7 +9,7 @@ import StringUtils from "../utils/StringUtils";
  */
 export class ParamTypeService {
   private allCustomTypes : Map<string, BlockParameterTypeRegData> = new Map<string, BlockParameterTypeRegData>();
-  private allTypeConerters = new Map<string, 
+  private allTypeConverter = new Map<string, 
     Map<string, BlockParameterTypeConverterData>
   >();
 
@@ -79,10 +79,10 @@ export class ParamTypeService {
     let from = reg.fromType.toString();
     let to = reg.toType.toString();
 
-    let typeChild = this.allTypeConerters.get(from);
+    let typeChild = this.allTypeConverter.get(from);
     if(typeChild == null) {
       typeChild = new Map<string, BlockParameterTypeConverterData>();
-      this.allTypeConerters.set(from, typeChild);
+      this.allTypeConverter.set(from, typeChild);
     }
 
     typeChild.set(to, reg);
@@ -96,7 +96,7 @@ export class ParamTypeService {
     let from = reg.fromType.toString();
     let to = reg.toType.toString();
 
-    let typeChild = this.allTypeConerters.get(from);
+    let typeChild = this.allTypeConverter.get(from);
     if(typeChild == null) 
       return;
 
@@ -112,16 +112,16 @@ export class ParamTypeService {
   public getTypeCoverter(fromType : BlockParameterType, toType : BlockParameterType) {
     let from = fromType.toString();
     let to = toType.toString();
-    let typeChild = this.allTypeConerters.get(from);
-    if(typeChild == null) {
-      typeChild = new Map<string, BlockParameterTypeConverterData>();
-      this.allTypeConerters.set(from, typeChild);
-    }
-    return typeChild.get(to);
+    let typeChild = this.allTypeConverter.get(from);
+    if(typeChild == null) 
+      typeChild = this.allTypeConverter.get('any');
+    if(typeChild)
+      return typeChild.get(to);
+    return null;
   }
 
   //类型注册
-  //======================
+  //====================== 
 
   /**
    * 注册自定义类型
@@ -134,6 +134,13 @@ export class ParamTypeService {
       return old;
     }
     this.allCustomTypes.set(reg.name, reg);
+    if(reg.prototypeName == 'enum' && reg.autoCreateEnumConverter) 
+      this.registerTypeCoverter({
+        fromType: createParameterTypeFromString('string'),
+        toType: createParameterTypeFromString(reg.name),
+        converter: (v : any) => v,
+        allowSetType: 'variable',
+      });
     this.onTypeChanged.invoke('add', reg.name, reg);
     return reg;
   }

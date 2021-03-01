@@ -1,3 +1,4 @@
+import { BlockSupportPlatform } from "@/model/Define/Block";
 import { BlockRegData } from "../model/Define/BlockDef";
 import { PackageDef } from "../model/Define/PackageDef";
 import logger from "../utils/Logger";
@@ -23,6 +24,7 @@ export class BlockService {
   //所有包
   private allPacks = new Array<PackageDef>();
   private isEditorMode = false;
+  private platform : BlockSupportPlatform = 'all';
 
   /**
    * 获取所有单元（已分类）列表
@@ -38,6 +40,15 @@ export class BlockService {
    */
   public setIsEditorMode(e : boolean) { this.isEditorMode = e; }
 
+  /**
+   * 获取当前的运行平台
+   */
+  public getCurrentPlatform() { return this.platform; }
+  /**
+   * 设置当前的运行平台，用于单元的筛选
+   * @param platform 当前的运行平台
+   */
+  public setCurrentPlatform(platform : BlockSupportPlatform) { this.platform = platform; }
   /**
    * 初始化
    */
@@ -153,12 +164,16 @@ export class BlockService {
   public updateBlocksList() {
     if(this.isEditorMode) {
       this.allBlocks.forEach(regData => {
-        let category = this.findBlocksListCategory(regData.baseInfo.category);
+        if(!regData.grouped) {
+          let category = this.findBlocksListCategory(regData.baseInfo.category);
 
-        (<any>regData).categoryObject = category;
+          (<any>regData).categoryObject = category;
 
-        if(!category.blocks.contains(regData)) 
-          category.blocks.push(regData);
+          if(!category.blocks.contains(regData)) 
+            category.blocks.push(regData);
+            
+          regData.grouped = true;
+        }
       });
     }
   }

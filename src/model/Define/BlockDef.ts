@@ -1,5 +1,5 @@
 import { BlockPortDirection, BlockPort } from "./Port";
-import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback, OnPortConnectCallback, OnPortEditorEventCallback, OnPortConnectCheckCallback } from "./Block";
+import { OnUserAddPortCallback, BlockType, OnPortEventCallback, OnBlockEventCallback, OnBlockEditorEventCallback, OnAddBlockCheckCallback, OnPortUpdateCallback, OnPortRequestCallback, OnPortConnectCallback, OnPortEditorEventCallback, OnPortConnectCheckCallback, BlockSupportPlatform } from "./Block";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { MenuItem } from "../Menu";
 import { BlockParameterBaseType, BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
@@ -39,6 +39,11 @@ export class BlockRegData {
    * 单元类型
    */
   public type : BlockType = 'normal';
+
+  /**
+   * 该单元支持运行的平台类型
+   */
+  public supportPlatform : BlockSupportPlatform[] = [ 'all' ];
 
   /**
    * 基础信息
@@ -317,6 +322,7 @@ export class BlockRegData {
 
   show = true;
   filterShow = true;
+  grouped = false;
 }
 
 export interface BlockPortAnyFlexablesData { 
@@ -559,6 +565,10 @@ export class BlockParameterTypeRegData {
    * 自定义 object 的 prototype 名称
    */
   public prototypeName = "";
+  /**
+   * 自动创建Enum的转换器
+   */
+  public autoCreateEnumConverter = true;
   /** 
    * 编辑器创建
    */

@@ -535,7 +535,7 @@ export default class BlockEditorWorker extends Vue {
     (<BlockEditor>endPort.parent).testAndChangeFlexablePortType(endPort, startPort);
   }
   /**
-   * 获取当前用户是否可以连接
+   * 获取用户当前是否可以连接
    */
   public getCanConnect() { 
     return this.connectingCanConnect; 
@@ -910,8 +910,8 @@ export default class BlockEditorWorker extends Vue {
     if(this.selectedBlocks.length > 0) {
       let rect = this.calcBlocksRegion(this.selectedBlocks);
       let block = new BlockEditor(BaseBlocks.getScriptBaseCommentBlock());
-      block.position.Set(rect.x - 15, rect.y - 15);
-      block.size.Set(rect.w + 30, rect.h + 30);
+      block.position.Set(rect.x - 15, rect.y - 15 - 50);
+      block.size.Set(rect.w + 30, rect.h + 30 + 50);
 
       this.addBlock(block, block.position);
     }
@@ -983,9 +983,12 @@ export default class BlockEditorWorker extends Vue {
         this.multiSelectedBlocks.empty();
         this.multiSelectRect.Set(0,0,0,0);
 
-        if(this.selectOneConnector()) {
-          this.$emit('update-select-state');
+        if(this.selectOneConnector()) {// 选中了一个连接线
+          if(this.keyAltDown && this.selectedConnectors.length > 0) { //Alt按下，删除连接线
+            this.unConnectConnector(this.selectedConnectors[0]);
+          } else this.$emit('update-select-state');
         } else {
+          //显示添加单元弹出菜单
           if(e.button == 2 && !this.isMouseMoved) {
             this.$emit('set-add-block-inpos', this.mouseCurrentPosInViewPort);
             this.$emit('clear-add-block-panel-filter');
@@ -994,6 +997,7 @@ export default class BlockEditorWorker extends Vue {
         }
 
       }else {   
+        //多选刷新状态
         this.updateAllSelectedElements();
         this.$emit('update-select-state');
       }

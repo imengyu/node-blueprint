@@ -349,8 +349,8 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import { Block } from "../model/Define/Block";
-import { Vector2 } from "../model/Vector2";
+import { Block, BlockSupportPlatform } from "../model/Define/Block";
+import { Vector2 } from '../model/Vector2'
 import { BlockRegData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
 import { BlockPort } from "../model/Define/Port";
 import { BlockFileParser } from "../model/WorkProvider/BlockFileParser";
@@ -376,9 +376,7 @@ import MenuBar from "../components/MenuBar.vue";
 import GraphProp from "../components/PropEditor/GraphProp.vue";
 import DocunmentProp from "../components/PropEditor/DocunmentProp.vue";
 import PropNotAvailable from "../components/PropEditor/PropNotAvailable.vue";
-import ChooseTypePanel, {
-  ChooseTypePanelCallback,
-} from "../components/Panel/ChooseTypePanel.vue";
+import ChooseTypePanel, { ChooseTypePanelCallback, } from "../components/Panel/ChooseTypePanel.vue";
 import GraphBreadcrumb from "../components/GraphBreadcrumb.vue";
 import DockHost from "../components/DockLayout/DockHost.vue";
 import DockPanel from "../components/DockLayout/DockPanel.vue";
@@ -386,11 +384,11 @@ import PropTab from "../components/Tab/PropTab.vue";
 import PropTabPanel from "../components/Tab/PropTabPanel.vue";
 import BlockRegister from "../model/Blocks/Utils/BlockRegister";
 import HtmlUtils from "../utils/HtmlUtils";
-import logger, { Logger } from "../utils/Logger";
+import StringUtils from "../utils/StringUtils";
+import logger from "../utils/Logger";
 import { EditorPlatformWorkAbstract } from "./Platform/EditorPlatformWorkAbstract";
 import { EditorPlatformWorkWeb } from "./Platform/EditorPlatformWorkWeb";
 import { EditorPlatformWorkElectron } from "./Platform/EditorPlatformWorkElectron";
-import StringUtils from "../utils/StringUtils";
 import { Connector } from "@/model/Define/Connector";
 import { BlockEditorOwner } from "@/model/Editor/BlockEditorOwner";
 import { FilterByPortData } from "./BlockEditor/BlockEditorWorker.vue";
@@ -1048,7 +1046,7 @@ export default class Editor extends Vue {
 
   //#region 初始化
 
-  private currentRuntimeType: "web" | "electron" = "web";
+  private currentRuntimeType: BlockSupportPlatform = "web";
   private platformWork: EditorPlatformWorkAbstract = null;
 
   private init() {
@@ -1091,11 +1089,12 @@ export default class Editor extends Vue {
               confirmButtonText: '保存并退出',
               cancelButtonClass: 'el-button--danger',
             }).then((d : MessageBoxData) => {
-              if(d === 'confirm') {
+              if(d === 'confirm')
                 this.closeAndSaveAllDoc(() => callback());
-              } else if(d === 'cancel') 
+            }).catch((d : MessageBoxData) => {
+              if(d === 'cancel') 
                 callback();
-            }).catch(() => {});
+            });
           } else callback();
           break;
       }
@@ -1111,6 +1110,7 @@ export default class Editor extends Vue {
     BlockServiceInstance.init();
     BlockServiceInstance.setIsEditorMode(true);
     BlockServiceInstance.setAllBlocksGrouped(this.allBlocksGrouped);
+    BlockServiceInstance.setCurrentPlatform(this.currentRuntimeType);
     BlockRegister.registerAll();
     ParamTypeServiceInstance.init();
     BlockServiceInstance.updateBlocksList();
@@ -1152,7 +1152,7 @@ export default class Editor extends Vue {
 
   //#endregion
 
-  //编辑器功能提供者
+  //#region 编辑器功能提供者
   //=======================
 
   alertModals: Array<AlertDialogData> = [];
@@ -1193,11 +1193,7 @@ export default class Editor extends Vue {
     };
   }
 
-  onEditorMainTabClose(data: DockPanelData) {
-    let uid = data.key.substring(4);
-    let doc = this.getOpenedDocunmentsByUid(uid);
-    if(doc) this.closeDoc(doc);
-  }
+  //#endregion
 
   //#region 文件保存写入控制
 
@@ -1449,6 +1445,12 @@ export default class Editor extends Vue {
     return null;
   }
 
+  //关闭回调
+  public onEditorMainTabClose(data: DockPanelData) {
+    let uid = data.key.substring(4);
+    let doc = this.getOpenedDocunmentsByUid(uid);
+    if(doc) this.closeDoc(doc);
+  }
   //删除回调
   public onDeleteGraph(g: BlockGraphDocunment) {
     if (g.isMainGraph) return;
@@ -1456,10 +1458,6 @@ export default class Editor extends Vue {
     let editor = this.getCurrentEditor(g);
     if (g == editor.getCurrentGraph()) editor.goGraph(g.parent);
     editor.doDeleteGraph(g);
-  }
-  //关闭回调
-  public onCloseGraph(g: BlockDocunment) {
-    this.closeDoc(g, null);
   }
   public onGoDoc(g: BlockDocunment) {
     if (this.currentDocunment != g) this.goDoc(g);

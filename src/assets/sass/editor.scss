@@ -320,7 +320,7 @@ $top-breadcrumb-height: 30px;
   height: $top-breadcrumb-height;
   padding: 3px 26px;
   display: inline-flex;
-  justify-content: start;
+  justify-content: flex-start;
   align-items: center;
   user-select: none;
   cursor: pointer;

@@ -354,6 +354,10 @@ export class BlockEditor extends Block {
     this.updateContent();
     this.updateBreakPointStatus();
     this.updateComment();
+
+    //运行平台如果不符则抛出错误
+    if(!this.isPlatformSupport)
+      this.throwError('单元不支持当前平台', null, 'warning');
   }
   public destroy() {
 
@@ -907,6 +911,27 @@ export class BlockEditor extends Block {
       || target.classList.contains('port-delete') 
       || target.classList.contains('port')
       || target.classList.contains('custom-editor'));
+  }
+
+
+  //抛出错误处理
+  public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error', breakFlow = false) {
+
+    super.throwError(err, port, level, breakFlow);
+
+    //添加错误提示
+    let errorNode = document.createElement('div');
+    errorNode.classList.add('block-error');
+    errorNode.classList.add(level);
+    errorNode.innerHTML = `<i class="iconfont ${level==='warning'?'icon-error-1':'icon-error-'}"></i><span>${err}</span>`;
+    errorNode.setAttribute('title', (<HTMLSpanElement>errorNode.childNodes[1]).innerText);
+
+    this.els.elBottomInfoHost.appendChild(errorNode);
+
+    if(port != null) {
+      (<BlockPortEditor>port).editorData.forceDotErrorState = true;
+      (<BlockPortEditor>port).updatePortConnectStatusElement();
+    }
   }
 
   private fnonMouseMove : MouseEventDelegate = null;

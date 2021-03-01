@@ -1,7 +1,7 @@
 import { BlockPort } from "../Define/Port";
 import { Block } from "../Define/Block";
 import { BlockGraphDocunment, BlockDocunment } from "../Define/BlockDocunment";
-import BaseBlocks from "../Blocks/BaseBlocks";
+import BaseBlocks from '../Blocks/BaseBlocks'
 import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
 
@@ -225,7 +225,8 @@ export class BlockRunner {
   }
   /**
    * 触发断点
-   * @param block 断点所在块
+   * @param currentPort 当断点触发并继续运行后，流将会从该端口继续
+   * @param block 断点所在单元
    * @return 如果断点已处理返回，true
    */
   public markInterrupt(runningContext : BlockRunContextData, currentPort : BlockPort, block : Block) : boolean {

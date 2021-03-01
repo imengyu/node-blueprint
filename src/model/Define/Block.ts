@@ -12,6 +12,7 @@ import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import { BlockPortEditor } from "../Editor/BlockPortEditor";
 import { BlockParameterSetType, BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "./BlockParameterType";
 import { CustomStorageObject } from "./CommonDefine";
+import BlockServiceInstance from "@/sevices/BlockService";
 
 /**
  * 基础单元定义
@@ -110,6 +111,8 @@ export class Block {
       if(this.regData.ports.length > 0)
         this.regData.ports.forEach(element => this.addPort(element, false));
     }
+
+    this.isPlatformSupport = this.regData.supportPlatform.contains('all') || this.regData.supportPlatform.contains(BlockServiceInstance.getCurrentPlatform());
     this.onCreate.invoke(this);
   }
 
@@ -131,7 +134,11 @@ export class Block {
    */
   public currentGraph : BlockGraphDocunment = null;
 
-
+  /**
+   * 获取当前块是否支持当前平台s
+   */
+  public isPlatformSupport = false;
+  
   //单元控制事件
   //===========================
 
@@ -155,6 +162,10 @@ export class Block {
     this.currentRunningContext.stackCalls.push({
       block: this, port: port, childContext: null
     });
+    if(!this.isPlatformSupport) {
+      this.throwError('单元不支持当前平台', port, 'error');
+      return;
+    }
     this.onEnterBlock.invoke();
     if(this.isEditorBlock)
       this.allPorts.forEach((port) => {
@@ -411,9 +422,23 @@ export class Block {
    * @param err 错误字符串
    * @param port 发生的端口（可选）
    * @param level 发生错误的等级
+   * @param breakFlow 是否终止当前流的运行。
+   * 注意，终止后流图将停止运行。单元内部请勿继续调用其他端口。
    */
-  public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error') {
-
+  public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error', breakFlow = false) {
+    let errorString = `[Block Error] In Block ${this.guid}-${this.uid} => Port ${port?port.guid:'UNKNOW'} => ${err}`;
+    switch(level) {
+      case 'error': logger.error(errorString); break;
+      case 'warning': logger.warning(errorString); break;
+    }
+    //触发断点
+    if(breakFlow && this.currentRunningContext) {
+      this.currentRunningContext.runner.markInterrupt(
+        this.currentRunningContext,
+        port,
+        this
+      )
+    }
   }
 }
 
@@ -442,3 +467,12 @@ export type BlockBreakPoint = 'enable'|'disable'|'none';
  * variable：参数单元
  */
 export type BlockType = 'normal'|'base'|'variable';
+
+/**
+ * 该单元支持运行的平台类型
+ * all: 表示所有单元都支持
+ * web：表示用于Web平台
+ * electron：表示用于Elecron平台，这既包含Web平台的html功能，也包含nodejs支持
+ * nodejs：nodejs平台，不包含html功能
+ */
+export type BlockSupportPlatform = 'all'|'web'|'electron'|'nodejs';

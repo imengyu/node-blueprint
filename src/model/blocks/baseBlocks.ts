@@ -85,8 +85,13 @@ function registerBaseConverters() {
     allowSetType: 'variable', 
     converter: (v : string) => !StringUtils.isNullOrEmpty(v) && (v.toLowerCase() == 'true')
   });
+  ParamTypeServiceInstance.registerTypeCoverter({
+    fromType: createParameterTypeFromString('any'),
+    toType: createParameterTypeFromString('string'), 
+    allowSetType: 'variable', 
+    converter: (v : any) => v + ''
+  });
 }
-
 
 let blockIn : BlockRegData;
 let blockOut : BlockRegData;
@@ -1067,9 +1072,8 @@ function registerLoadLib() {
   ];
   block.callbacks.onPortExecuteIn = (block, port) => {
     let libName = block.getInputParamValue('LIBNAME');
-    if(StringUtils.isNullOrEmpty(libName)) {
+    if(StringUtils.isNullOrEmpty(libName)) 
       block.throwError('库的包名 必须提供 !', port);
-    }
     else {
       
     }

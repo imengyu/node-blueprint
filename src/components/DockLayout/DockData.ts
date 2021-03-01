@@ -1,5 +1,5 @@
-import { Rect } from '@/model/Rect';
-import CommonUtils from '@/utils/CommonUtils';
+import { Rect } from '../../model/Rect'
+import CommonUtils from '../../utils/CommonUtils'
 import { VNode } from 'vue/types/umd';
 
 export type DockDirection = 'vertical'|'horizontal'|'unknow';
@@ -118,6 +118,7 @@ export class DockData {
       grids: this.grids.map((v) => v.toJSON()),
       panels: this.panels.map((v) => v.toJSON()),
       alwaysVisible: this.alwaysVisible,
+      name: this.name
     }
   }
 }
