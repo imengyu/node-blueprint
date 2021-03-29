@@ -13,12 +13,15 @@ import 'vue-happy-scroll/docs/happy-scroll.css'
 import "./assets/css/iconfont.css"
 import "./assets/sass/main.scss" 
 import "./utils/BaseExtends"
+import ToolTipUtils from './utils/ToolTipUtils';
 
 Vue.component('happy-scroll', HappyScroll)
 Vue.use(ElementUI);
 Vue.use(Toasted)
 Vue.use(Contextmenu);
 Vue.config.productionTip = false
+
+ToolTipUtils.createVueDirective();
 
 var bus = new Vue({
   el: '#app',

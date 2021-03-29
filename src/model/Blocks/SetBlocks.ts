@@ -56,8 +56,10 @@ function register() {
 
       Object.keys(block.inputPorts).forEach((key) => {
         let port = (<BlockPort>block.inputPorts[key]);
-        if(!port.paramType.isExecute()) 
-        set.add(block.getInputParamValue(port));
+        if(!port.paramType.isExecute()) {
+          let v = block.getInputParamValue(port);
+          if(CommonUtils.isDefinedAndNotNull(v)) set.add(v);
+        }
       });
 
       block.setOutputParamValue('SET', set);
@@ -669,12 +671,6 @@ function register() {
       paramType: 'execute',
     },
     {
-      guid: 'EXIT',
-      paramType: 'execute',
-      direction: 'output',
-      name: '循环结束'
-    },
-    {
       guid: 'LOOPBODY',
       paramType: 'execute',
       direction: 'output',
@@ -686,6 +682,12 @@ function register() {
       direction: 'output',
       name: '当前元素',
       portAnyFlexable: { flexable: true },
+    },
+    {
+      guid: 'EXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
     },
   ];
   SetForeach.portAnyFlexables = {

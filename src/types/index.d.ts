@@ -5,3 +5,5 @@
 declare module 'glolbal';
 declare module 'vue-contextmenujs/dist/contextmenu.umd.js';
 declare module 'vue-happy-scroll/src';
+
+declare var __ORIGINAL_NODEJS_REQUIRE__: NodeRequire;

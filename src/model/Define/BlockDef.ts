@@ -215,8 +215,10 @@ export class BlockRegData {
     /**
      * 单元端口更新处理函数。
      * 下一级单元请求本单元输出参数时发生的回调。
+     * 返回：
+     * 在此回调中直接返回参数。如果本单元存在运行上下文，可直接设置出端口参数。
      * 
-     * (block : Block, port : BlockPort, context : BlockRunContextData) => void
+     * (block : Block, port : BlockPort, context : BlockRunContextData) => any
      */
     onPortParamRequest : OnPortRequestCallback,
 
@@ -344,7 +346,7 @@ export type BlockParametersChangeSettings = {
 }
 export class BlockMenuSettings  {
   /**
-   * 自定义端口菜单
+   * 自定义菜单
    */
   public items : Array<MenuItem> = [];
 }
@@ -385,6 +387,10 @@ export class BlockStyleSettings  {
    * 是否不显示鼠标悬停提示
    */
   public noTooltip = false;
+  /**
+   * 是否不显示注释菜单
+   */
+  public noComment = false;
   /**
    * 单元最小宽度
    */
@@ -513,6 +519,10 @@ export interface BlockPortRegData {
    * 是否强制不显示编辑参数控件
    */
   forceNoEditorControl ?: boolean;
+  /**
+   * 是否强制不检查循环调用
+   */
+  forceNoCycleDetection ?: boolean;
   /**
    * 是否强制在输出端口显示编辑参数控件
    */

@@ -1,6 +1,6 @@
 <template>
   <div class="position-relative display-inline-block">
-    <div class="flow-float-set-typedot" title="更改集合类型" @click="switchShow" :style="{ color: color }">
+    <div class="flow-float-set-typedot" v-tooltip data-title="更改集合类型" @click="switchShow" :style="{ color: color }">
       <i v-if="!canChooseType || value=='variable'" class="iconfont icon-11"></i>
       <i v-else-if="value=='array'" class="iconfont icon-port-array-full"></i>
       <i v-else-if="value=='set'" class="iconfont icon-port-set"></i>
@@ -11,10 +11,10 @@
       <i v-else class="iconfont icon-yuan"></i>
     </div>
     <div v-show="show" class="flow-float-set-selector">
-      <div class="iconfont icon-11" title="变量" @click="switchType('variable')"></div>
-      <div class="iconfont icon-port-array-full" title="数组" @click="switchType('array')"></div>
-      <div class="iconfont icon-port-set" title="集合" @click="switchType('set')"></div>
-      <div class="iconfont icon-port-dictionary-full" title="映射" @click="switchType('dictionary')"></div>
+      <div class="iconfont icon-11" v-tooltip data-title="变量" @click="switchType('variable')"></div>
+      <div class="iconfont icon-port-array-full" v-tooltip data-title="数组" @click="switchType('array')"></div>
+      <div class="iconfont icon-port-set" v-tooltip data-title="集合" @click="switchType('set')"></div>
+      <div class="iconfont icon-port-dictionary-full" v-tooltip data-title="映射" @click="switchType('dictionary')"></div>
     </div>
   </div>
 </template>

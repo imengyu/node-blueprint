@@ -77,8 +77,11 @@ function register() {
         let port = (<BlockPort>block.inputPorts[key]);
         if(port.guid.startsWith('INKEY')) {
           let INVAL = block.inputPorts['INVAL' + port.guid.substring(5)];
-          if(INVAL)
-            map.set(block.getInputParamValue(port), block.getInputParamValue(INVAL));
+          if(INVAL) {
+            let k = block.getInputParamValue(port), v = block.getInputParamValue(INVAL);
+            if(CommonUtils.isDefinedAndNotNull(k) && CommonUtils.isDefinedAndNotNull(v))
+              map.set(k, v);
+          }
         }
       });
 
@@ -483,12 +486,6 @@ function register() {
       paramType: 'execute',
     },
     {
-      guid: 'EXIT',
-      paramType: 'execute',
-      direction: 'output',
-      name: '循环结束'
-    },
-    {
       guid: 'LOOPBODY',
       paramType: 'execute',
       direction: 'output',
@@ -508,7 +505,12 @@ function register() {
       name: '当前键值',
       portAnyFlexable: { flexableA: true },
     },
-    
+    {
+      guid: 'EXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
+    },
   ];
   DictionaryForeach.portAnyFlexables = {
     flexableA: {},

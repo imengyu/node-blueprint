@@ -6,7 +6,7 @@
 
     <div class="input">
       <input class="small-input" type="text" v-model="searchValue" placeholder="搜索类型..." />
-      <a href="javascript:;" class="small-button" title="清空">
+      <a href="javascript:;" class="small-button" v-tooltip data-title="清空">
         <i class="iconfont icon-close-2"></i>
       </a>
     </div>

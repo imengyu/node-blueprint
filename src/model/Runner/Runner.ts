@@ -3,7 +3,9 @@ import { Block } from "../Define/Block";
 import { BlockGraphDocunment, BlockDocunment } from "../Define/BlockDocunment";
 import BaseBlocks from '../Blocks/BaseBlocks'
 import logger from "../../utils/Logger";
-import CommonUtils from "../../utils/CommonUtils";
+import { BlockRunContextData } from "./BlockRunContextData";
+import CommonUtils from "@/utils/CommonUtils";
+import BlockServiceInstance from "@/sevices/BlockService";
 
 /**
  * 流图运行器
@@ -34,11 +36,19 @@ export class BlockRunner {
    * 主运行上下文
    */
   public mainContext : BlockRunContextData = null;
+
   /**
    * 最大调用栈数，默认64
    */
   public maxStackCount = 64;
+  /**
+   * 最大参数栈数，默认1024
+   */
+  public maxParamStackCount = 1024;
 
+  /**
+   * 上下文
+   */
   public contexts : BlockRunContextData[] = [];
 
   private loop : any = null;
@@ -134,7 +144,7 @@ export class BlockRunner {
   }
   private mainloop() {
 
-    if(this.loopCount < Number.MAX_VALUE) this.loopCount++;
+    if(this.loopCount < 0xffff) this.loopCount++;
     else this.loopCount = 0;
 
     //回收上下文
@@ -197,10 +207,11 @@ export class BlockRunner {
   }
   private testContextEnd(runningContext : BlockRunContextData) {
     //检查上下文是否已经运行完毕，完毕则销毁对应上下文
-    if(!runningContext.loopForceInUse && !this.queue.contains(runningContext)) {
-      if(runningContext.childContext.length == 0) //没有子上下文才销毁
+    if(runningContext.parentContext != null
+      && !runningContext.loopForceInUse 
+      && !this.queue.contains(runningContext)
+      && runningContext.childContext.length == 0) //没有子上下文才销毁
         this.destroyContext(runningContext);
-    }
   }
   private loopForReallocContexts() {
     this.contexts.forEach(c => this.testContextEnd(c));
@@ -230,15 +241,17 @@ export class BlockRunner {
    * @return 如果断点已处理返回，true
    */
   public markInterrupt(runningContext : BlockRunContextData, currentPort : BlockPort, block : Block) : boolean {
-    if(currentPort.direction == 'input') {
+    if(currentPort == null || currentPort.direction == 'input') {
       if(typeof this.onRunnerBreakPoint == 'function') {
         this.pause();
         this.onRunnerBreakPoint(currentPort, block);
 
-        //断点已触发，现在修改任务至下个节点
-        runningContext.currentPort = currentPort;
-        runningContext.workType = 'activator';
-        this.queue.push(runningContext);
+        if(currentPort) {
+          //断点已触发，现在修改任务至下个节点
+          runningContext.currentPort = currentPort;
+          runningContext.workType = 'activator';
+          this.queue.push(runningContext);
+        } 
         return true;
       } 
     }
@@ -250,7 +263,8 @@ export class BlockRunner {
   public notifyEnd(runningContext : BlockRunContextData) {
     if(typeof this.onRunnerEnd == 'function') 
       this.onRunnerEnd();
-    console.log(this.mainContext.printCallStack(true));
+    
+    logger.log("流图运行器", this.mainContext.printCallStack(true));
     this.stop();
   }
   /**
@@ -287,7 +301,6 @@ export class BlockRunner {
 
       graph.blocks.forEach((block) => {
         block.currentRunner = this;
-        block.currentRunningContext = runningContext;
         block.stack = runningContext.graphBlockStack.push({
           variables: {}
         }) - 1;
@@ -325,25 +338,38 @@ export class BlockRunner {
    * @param graph 当前图表
    */
   public prepareGraphStack(runningContext : BlockRunContextData, graph : BlockGraphDocunment) {
-
     runningContext.graph = graph;
     runningContext.graphBlockParamStack.empty();
+    runningContext.graphBlockParamIndexs.empty();
+    runningContext.paramStackCreated = true;
 
     graph.blocks.forEach((block) => {
       block.allPorts.forEach((port) => {
         if(!port.paramType.isExecute()) {
-          if(!(port.paramRefPassing && port.direction == 'input')) {
-            port.stack = runningContext.graphBlockParamStack.push(
-              CommonUtils.isDefined(port.paramUserSetValue) ? port.paramUserSetValue : port.paramDefaultValue) - 1;
-          }else {
+          if(port.paramStatic) 
+            port.stack = -2;
+          else if(port.paramRefPassing && port.direction == 'input') 
             port.stack = -1;
+          else 
+            port.stack = runningContext.graphBlockParamIndexs.push(-1) - 1;
+        }
+      });
+    });
+  }
+
+  private prepareChildStack(context : BlockRunContextData, parentContext : BlockRunContextData) {
+    //将父级所有已经链接的出端口保存即时数据至子上下文中进行备用
+    parentContext.graph.blocks.forEach((block) => {
+      block.allPorts.forEach((port) => {
+        if(!port.paramType.isExecute() && port.stack >= 0) {
+          if(!port.paramRefPassing && port.direction === 'output' && port.isConnected()) {
+            context.graphBlockParamIndexs[port.stack] = context.pushParam(port.getValueCached(parentContext));
           }
         }
       });
     });
-
-    runningContext.paramStackCreated = true;
   }
+
   /**
    * 清除图表的运行栈
    * @param runningContext 当前运行上下文
@@ -352,6 +378,7 @@ export class BlockRunner {
   public destroyGraphStack(runningContext : BlockRunContextData, graph : BlockGraphDocunment) {
     if(runningContext.graph == graph) {
       runningContext.graphBlockParamStack.empty();
+      runningContext.graphBlockParamIndexs.empty();
       runningContext.paramStackCreated = false;
     }
   }
@@ -374,7 +401,79 @@ export class BlockRunner {
 
     loop(doc.mainGraph);
   }
-   
+
+  public activeInputPort(runningContext: BlockRunContextData, port: BlockPort) {
+    let block = port.parent;
+
+    if(!CommonUtils.isDefinedAndNotNull(runningContext)) {
+      logger.error(port.getName(), 'activeInputPort: Cannot execute port because runningContext was not provided.');
+      return;
+    }
+
+    //断点触发
+    if(block.breakpoint == 'enable' && runningContext.lastBreakPointPort != port) {
+      if(runningContext.runner.markInterrupt(runningContext, port, block))
+        return;
+    }
+
+    runningContext.lastPort = port;
+    runningContext.currentBlock = block;
+
+    //判断平台
+    if(!block.isPlatformSupport) {
+      block.throwError(`单元不支持当前平台 ${BlockServiceInstance.getCurrentPlatform()}\n` +
+      `它支持的平台有：${block.regData.supportPlatform.join('/')}。\n您可能需要在运行之前判断当前平台。`, port, 'error');
+      return;
+    }
+
+    //环路检测
+    if(block.currentRunningContext === runningContext && !port.forceNoCycleDetection) {
+      block.throwError('运行栈上存在环路：层级' + runningContext.stackLevel, port, 'error', true);
+      return;
+    }
+
+    //入栈
+    block.blockCurrentCreateNewContext = false;
+    block.pushBlockStack(runningContext, port);
+    //调用
+    block.enterBlock(port, runningContext);
+    block.onPortExecuteIn.invoke(block, port);
+    //出栈
+    block.popBlockStack(runningContext);
+  }
+  public activeOutputPortInNewContext(runningContext: BlockRunContextData, port: BlockPort) {
+    let block = port.parent;
+    if(port.direction !== 'output') {
+      logger.error(port.getName(),'activeOutputPortInNewContext: You try to execute port that is not a output port.');
+      return;
+    }
+      
+    //新建上下文
+    let context = block.currentRunner.push(port, runningContext, 'connector');
+
+    //准备子上下文
+    this.prepareGraphStack(context, runningContext.graph);
+    this.prepareChildStack(context, runningContext);
+
+    block.blockCurrentCreateNewContext = true;
+  }
+  public activeOutputPort(runningContext: BlockRunContextData, port: BlockPort) {
+    if(port.executeInNewContext && !CommonUtils.isDefinedAndNotNull(runningContext)) 
+      port.activeInNewContext();
+    else {
+      if(!CommonUtils.isDefinedAndNotNull(runningContext)) {
+        logger.error(port.getName(),'activeOutputPort: Cannot execute port because runningContext was not provided.');
+        return;
+      }
+
+      port.parent.leaveBlock(runningContext);
+
+      runningContext.lastPort = port;
+      runningContext.currentBlock = null;
+      runningContext.runner.callNextConnectedPort(runningContext, port);
+    }
+  }
+
   public lastError = '';
 
   /**
@@ -402,170 +501,3 @@ export type RunnerState = 'stopped'|'running'|'idle';
  * activator：直接激活当前节点
  */
 export type RunnerWorkType = 'connector'|'activator';
-
-/**
- * 运行上下文数据
- */
-export class BlockRunContextData {
-
-  /**
-   * 起始端口
-   */
-  public startPort : BlockPort = null;
-  /**
-   * 执行方式
-   */
-  public workType : RunnerWorkType = 'connector';
-  /**
-   * 当前正在运行的端口
-   */
-  public currentPort : BlockPort = null;
-  /**
-   * 当前正在运行的单元
-   */
-  public currentBlock : Block = null;
-  /**
-   * 上一次运行过的端口
-   */
-  public lastPort : BlockPort = null;
-  /**
-   * 上一次中断的端口
-   */
-  public lastBreakPointPort : BlockPort = null;
-  /**
-   * 当前上下文外围调用的图表单元
-   */
-  public outerBlock : Block = null;
-
-  /**
-   * 所属运行器
-   */
-  public runner : BlockRunner = null;
-  /**
-   * 运行生命周期
-   */
-  public loopLifeTime = 5;
-  public loopNotStart = true;
-  public loopForceInUse = false;
-  /**
-   * 获取上下文是否已经被销毁
-   */
-  public destroyed = false;
-  public paramStackCreated = false;
-
-
-  /**
-   * 创建运行上下文数据
-   * @param runner 运行器
-   * @param startPort 起始端口
-   * @param parentContext 父上下文
-   * @param workType 执行连接方式
-   */
-  public constructor(runner : BlockRunner, startPort : BlockPort, parentContext : BlockRunContextData, 
-    workType : RunnerWorkType = 'connector') {
-
-    this.runner = runner;
-    this.runner.contexts.push(this);
-    this.startPort = startPort;
-    this.currentPort = startPort;
-    this.workType = workType;
-    this.parentContext = parentContext;
-
-    if(this.parentContext != null) {
-      this.parentContext.childContext.addOnce(this);
-      this.outerBlock = this.parentContext.outerBlock;
-      this.graphParamStack = this.parentContext.graphParamStack;
-      this.graphBlockStack = this.parentContext.graphBlockStack;
-      this.stackLevel = this.parentContext.stackLevel + 1;
-    }
-    if(this.stackLevel > this.runner.maxStackCount) {
-      logger.error('Stack overflow at level ' + this.stackLevel + '.');
-      throw new Error("Stack overflow");
-    }
-  }
-
-  /**
-   * 调用层级
-   */
-  public stackLevel = 0;
-  /**
-   * 调用栈
-   */
-  public stackCalls : Array<{
-    block: Block,
-    port: BlockPort,
-    childContext: BlockRunContextData,
-  }> = [];
-
-  /**
-   * 所属图表
-   */
-  public graph : BlockGraphDocunment = null;
-  /**
-   * 图表变量栈
-   */
-  public graphParamStack : Array<any> = [];
-  /**
-   * 图表单元栈
-   */
-  public graphBlockStack : Array<any> = [];
-  /**
-   * 图表单元端口参数栈
-   */
-  public graphBlockParamStack : Array<any> = [];
-
-  /**
-   * 子上下文
-   */
-  public childContext : Array<BlockRunContextData> = [];
-  /**
-   * 父上下文
-   */
-  public parentContext : BlockRunContextData = null;
-
-  /**
-   * 获取上级图表的父上下文
-   */
-  public getUpperParentContext() {
-    let context = <BlockRunContextData>this;
-    //回到父上下文
-    if(context.parentContext.graph != context.graph) 
-    //如果当前上下文和父上下文不在一个图表内，则直接回到父上下文
-      return context.parentContext;
-    else {
-      //如果当前上下文和父上下文不在一个图表内，
-      //认为是子图表的上下文创建的子上下文，则递归查找父上下文
-      while(context != null) {
-        if(context.graph != context.parentContext.graph)
-          break;
-        context = context.parentContext;
-      }
-      return context;
-    }
-  }
-
-  /**
-   * 打印调用堆栈
-   * @param full 是否打印全部的子级调用堆栈
-   */
-  public printCallStack(full = false) {
-    let str = '\nStack count:' + this.stackCalls.length + ' (level ' + this.stackLevel + ')';
-    this.stackCalls.forEach((d) => {
-      if(d.block!=null)
-        str += '\n' + d.block.regData.baseInfo.name + '(' + d.block.uid + ') => ' + d.port.name + '(' + d.port.guid + ')';
-      else if(d.childContext != null && full)
-        str += '\nChild call: \n' + d.childContext.printCallStack(full);
-    });
-
-    if(full) {
-      this.childContext.forEach((c) => {
-        str += c.printCallStack(full);
-      });
-    }
-
-    return str;
-  }
-
-  public markContexInUse() { this.loopForceInUse = true; }
-  public unsetContexInUse() { this.loopForceInUse = false; }
-}

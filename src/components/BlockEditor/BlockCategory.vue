@@ -14,14 +14,14 @@
 
     <div class="block-list">
       <div class="block-item" v-for="(item, index) in categoryData.blocks" :key="index"
-        :title="item.baseInfo.description" :draggable="isAddDirectly ? 'false' : 'true'"
+        v-tooltip :data-title="item.baseInfo.description" :draggable="isAddDirectly ? 'false' : 'true'"
         v-show="item.show && item.filterShow && !item.settings.hideInAddPanel"
         @click="() => isAddDirectly ? $emit('on-block-item-click', item) : null"
         @dragstart="onDrag(item, $event)" >
         <div class="logo" v-if="item.baseInfo.logo!=''&&item.baseInfo.logo.indexOf('<')==0" v-html="item.baseInfo.logo"></div>
         <img v-else-if="item.baseInfo.logo!=''" :src="item.baseInfo.logo" />
         {{ item.baseInfo.name }}
-        <a v-if="!isAddDirectly" href="javascript:;" class="float-right" @click="$emit('on-block-item-click', item)" title="添加"><i class="iconfont icon-pluss-1"></i></a>
+        <a v-if="!isAddDirectly" href="javascript:;" class="float-right" @click="$emit('on-block-item-click', item)" v-tooltip data-title="添加到鼠标位置"><i class="iconfont icon-pluss-1"></i></a>
       </div>
     </div>
 

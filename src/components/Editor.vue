@@ -2,7 +2,7 @@
   <div class="window" oncontextmenu="return false">
     <!--进入遮罩-->
     <div :class="'editor-intro' + (showIntro ? ' show' : '')" v-show="showIntroE">
-      <h1>Easy blueprint</h1>
+      <h1>Node Blueprint</h1>
       <div>简单可视化脚本蓝图编辑器</div>
     </div>
 
@@ -10,11 +10,11 @@
     <AddPanel
       v-show="showAddBlockPanel"
       ref="AddBlockPanel"
+      :style="{ maxHeight: '460px' }"
       :show="showAddBlockPanel"
       :allBlocksGrouped="allBlocksGrouped"
       :showPos="showAddBlockPanelPos"
-      :style="{ maxHeight: showAddBlockPanelMaxHeight + 'px' }"
-      :isAddDirectly="addBlockPanelAddDirectly"
+      :isAddDirectly="false"
       :filterByPortDirection="filterByPortDirection"
       :filterByPortType="filterByPortType"
       :filterByPortKeyType="filterByPortKeyType"
@@ -34,6 +34,20 @@
       @onClose="showChooseTypePanel = false"
     />
 
+    <!--工具提示-->
+    <div class="common-tip"
+      ref="tooltip"
+      v-show="isShowTooltip"
+      v-html="showTooltipText"
+      :style="{ 
+        left: (showTooltipPos.x > 0 ? showTooltipPos.x + 'px': ''), 
+        top: (showTooltipPos.y > 0 ? showTooltipPos.y + 'px' : ''),
+        right: (showTooltipPos.x < 0 ? -showTooltipPos.x + 'px': ''), 
+        bottom: (showTooltipPos.y < 0 ? -showTooltipPos.y + 'px' : '') ,
+      }"
+    >
+    </div>
+
     <!--菜单栏-->
     <MenuBar :menus="menuMain" class="editor-main-menu-bar window-title-bar">
       <template slot="icon">
@@ -43,14 +57,14 @@
       </template>
       <template v-if="showControlButtons" slot="end">
         <div class="window-controls-container">
-          <div class="window-icon-bg" @click="windowControl('min')" title="最小化">
+          <div class="window-icon-bg" @click="windowControl('min')" v-tooltip data-title="最小化">
             <div class="window-icon window-minimize"></div>
           </div>
           <div
             v-if="windowIsMax"
             class="window-icon-bg window-icon-unmaximize"
             @click="windowControl('restore')"
-            title="还原"
+            v-tooltip data-title="还原"
           >
             <div class="window-icon window-max-restore window-unmaximize"></div>
           </div>
@@ -58,14 +72,14 @@
             v-else
             class="window-icon-bg window-icon-maximize"
             @click="windowControl('max')"
-            title="最大化"
+            v-tooltip data-title="最大化"
           >
             <div class="window-icon window-max-restore window-maximize"></div>
           </div>
           <div
             class="window-icon-bg window-close-bg"
             @click="windowControl('close')"
-            title="关闭"
+            v-tooltip data-title="关闭"
           >
             <div class="window-icon window-close"></div>
           </div>
@@ -86,11 +100,11 @@
             <img src="../assets/images/open.svg" />
             <span>打开流程图</span>
           </div>
-          <div class="huge-button">
+          <div class="huge-button cursor-default">
             <ul>
               <li><small>最近打开文件</small></li>
               <li v-for="(item, li) in this.recentList" :key="li">
-                <a href="javascript:;" :title="item" @click="doLoadFile(item)">{{
+                <a href="javascript:;" v-tooltip :data-title="item" @click="doLoadFile(item)">{{
                   getPath(item)
                 }}</a>
               </li>
@@ -99,13 +113,14 @@
         </div>
       </template>
 
+      <!--控制台-->
       <DockPanel
-        key="hello"
-        title="欢迎使用"
-        iconClass="iconfont icon-pig"
-        insertTo="areaLeft"
+        key="console"
+        title="Console"
+        iconClass="iconfont icon-develop"
+        insertTo="areaMainBottom"
       >
-        <h1>欢迎使用</h1>
+        <Console />
       </DockPanel>
       <!--属性编辑器-->
       <DockPanel key="Props" title="属性" iconClass="iconfont icon-new_custom19" :tabLeftOffset="31">
@@ -138,6 +153,7 @@
           :blockOwnerData="blockOwnerData"
           @on-open-graph="goGraph"
           @on-delete-graph="onDeleteGraph"
+          @update-doc-title="(title) => onDocTitleUpdate(currentDocunment, title)"
           @choose-graph-variable-type="onChooseGraphVariableType"
         ></DocunmentProp>
         <PropNotAvailable v-else title="文档属性" />
@@ -157,14 +173,14 @@
         <div class="editor-toolbar">
           <div
             :class="'tool-item button icon' + (mouseLeftMove ? '' : ' active')"
-            title="鼠标用来选择组件"
+            v-tooltip data-title="鼠标用来选择组件"
             @click="mouseLeftMove = false"
           >
             <i class="iconfont icon-yidong_huaban1"></i>
           </div>
           <div
             :class="'tool-item button icon' + (mouseLeftMove ? ' active' : '')"
-            title="鼠标用来移动视图"
+            v-tooltip data-title="鼠标用来移动视图"
             @click="mouseLeftMove = true"
           >
             <i class="iconfont icon-shou"></i>
@@ -175,14 +191,14 @@
           <div v-show="currentDocunment">
             <div
               class="tool-item button icon"
-              title="添加单元"
+              v-tooltip data-title="添加单元"
               @click="showAddBlockPanelBar($event.currentTarget)"
             >
               <i class="iconfont icon-pluss-2"></i>
             </div>
             <div
               class="tool-item button icon"
-              title="删除选中"
+              v-tooltip data-title="删除选中"
               :disabled="!isSelectedBlock"
               @click="showDeleteModalClick()"
             >
@@ -194,7 +210,7 @@
             <div
               v-if="runningState == 'editing' || runningState == 'runningPaused'"
               class="tool-item button icon green"
-              :title="runningState == 'runningPaused' ? '继续运行' : '开始调试'"
+              v-tooltip :data-title="runningState == 'runningPaused' ? '继续运行' : '开始调试'"
               @click="startRun"
             >
               <i class="iconfont icon-play"></i>
@@ -202,7 +218,7 @@
             <div
               v-if="runningState == 'editing'"
               class="tool-item button icon blue"
-              title="开始单步调试"
+              v-tooltip data-title="开始单步调试"
               @click="startRunAndStepNext"
             >
               <i class="iconfont icon-play-next"></i>
@@ -210,7 +226,7 @@
             <div
               v-if="runningState == 'runningPaused'"
               class="tool-item button icon green"
-              title="运行下一步"
+              v-tooltip data-title="运行下一步"
               @click="stepNext"
             >
               <i class="iconfont icon-play-next"></i>
@@ -218,7 +234,7 @@
             <div
               v-if="runningState == 'running'"
               class="tool-item button icon yellow"
-              title="暂停调试"
+              v-tooltip data-title="暂停调试"
               @click="pauseRun"
             >
               <i class="iconfont icon-pause"></i>
@@ -226,7 +242,7 @@
             <div
               v-if="runningState == 'running' || runningState == 'runningPaused'"
               class="tool-item button icon red"
-              title="停止调试"
+              v-tooltip data-title="停止调试"
               @click="stopRun"
             >
               <i class="iconfont icon-close-2"></i>
@@ -234,14 +250,11 @@
 
             <div class="separator"></div>
           </div>
-
-          <div class="tool-item button icon" title="打开控制台" @click="openConsole">
-            <i class="iconfont icon-terminal"></i>
-          </div>
         </div>
         <GraphBreadcrumb 
           :currentDocunment="doc"
           :currentGraph="doc.currentGraph"
+          :ref="'DocBreadcrumb_' + doc.uid"
           @on-go-graph="goGraph"
           />
         <!--流图编辑器-->
@@ -251,11 +264,11 @@
           :settings="settings"
           :mouseLeftMove="mouseLeftMove"
           :docunment="doc"
+          :editoClipboard="editoClipboard"
           @update-select-state="updateSelectState"
           @update-add-block-panel-filter="updateAddBlockPanelFilter"
           @show-add-block-panel-at-pos="showAddBlockPanelAt"
           @clear-add-block-panel-filter="clearAddBlockPanelFilter"
-          @update-clipboard-state="(v) => (isClipboardFilled = v)"
           @update-multi-selecting="(v) => (isMultiSelecting = v)"
           @update-block-owner-data="(d) => (blockOwnerData = d)"
           @choose-custom-type="onChooseCustomType"
@@ -266,6 +279,16 @@
           @on-destroyed="onDocEditorDestroyed"
         ></BlockDrawer>
       </DockPanel>
+      <!--欢迎说明页面-->
+      <DockPanel
+        v-if="showWelcome"
+        key="hello"
+        title="欢迎使用"
+        iconClass="iconfont icon-pig"
+        insertTo="areaLeft"
+        :closeable="true"
+        @on-close="showWelcome=false"
+      ><HelpView /></DockPanel>
     </DockHost>
     <!--对话框-->
     <div>
@@ -293,13 +316,6 @@
         {{ showRunFailedModalContent }}
         <template #footer>
           <el-button autofocus @click="showRunFailedModal = false">确定</el-button>
-        </template>
-      </el-dialog>
-      <!--开发者工具提示对话框-->
-      <el-dialog :visible.sync="showDevtoolsTipModal" title="提示">
-        请按 <span class="badge badge-secondary">F12</span> 开启控制台
-        <template #footer>
-          <el-button autofocus @click="showDevtoolsTipModal = false">确定</el-button>
         </template>
       </el-dialog>
       <!--Alert 对话框-->
@@ -332,11 +348,11 @@
           <hr>
           <div class="v">
             <span class="t">版本：</span>
-            <span>0.1.0</span>
+            <span>{{version}}</span>
           </div>
           <div class="v">
             <span class="t">环境版本：</span>
-            <span></span>
+            <span>{{versionCore }} ({{versionType }})</span>
           </div>
         </div>
         <template #footer>
@@ -344,6 +360,12 @@
         </template>
       </el-dialog>
     </div>
+    <!--剪贴板-->
+    <BlockEditorClipBoard 
+      ref="editoClipboard"
+      @update-clipboard-state="(v) => (isClipboardFilled = v)"
+      >
+    </BlockEditorClipBoard>
   </div>
 </template>
 
@@ -355,17 +377,20 @@ import { BlockRegData, BlockParameterTypeRegData } from "../model/Define/BlockDe
 import { BlockPort } from "../model/Define/Port";
 import { BlockFileParser } from "../model/WorkProvider/BlockFileParser";
 
+import config from "../config/all";
 import CommonUtils from "../utils/CommonUtils";
 import BlockCategory from "../components/BlockEditor/BlockCategory.vue";
 import BlockProp from "../components/PropEditor/BlockProp.vue";
 import AddPanel from "../components/Panel/AddPanel.vue";
+import HelpView from "../views/HelpView.vue";
+
 import BlockServiceInstance from "../sevices/BlockService";
 import ParamTypeServiceInstance from "../sevices/ParamTypeService";
 import DebugWorkProviderInstance from "../model/WorkProvider/DebugWorkProvider";
 import SettingsServiceInstance from "../sevices/SettingsService";
 import { BlockEditor } from "../model/Editor/BlockEditor";
 import { BlockPortDirection } from "../model/Define/Port";
-import { BlockRunner } from "../model/WorkProvider/Runner";
+import { BlockRunner } from "../model/Runner/Runner";
 import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
 import { EditorSettings } from "../model/Editor/EditorSettings";
 import { MenuItem, MenuData, MenuSeparator } from "../model/Menu";
@@ -382,6 +407,7 @@ import DockHost from "../components/DockLayout/DockHost.vue";
 import DockPanel from "../components/DockLayout/DockPanel.vue";
 import PropTab from "../components/Tab/PropTab.vue";
 import PropTabPanel from "../components/Tab/PropTabPanel.vue";
+import Console from "../components/Console.vue";
 import BlockRegister from "../model/Blocks/Utils/BlockRegister";
 import HtmlUtils from "../utils/HtmlUtils";
 import StringUtils from "../utils/StringUtils";
@@ -395,6 +421,8 @@ import { FilterByPortData } from "./BlockEditor/BlockEditorWorker.vue";
 import { DockPanelData } from "./DockLayout/DockData";
 import { Rect } from "@/model/Rect";
 import { MessageBoxData } from "element-ui/types/message-box";
+import ToolTipUtils from "@/utils/ToolTipUtils";
+import BlockEditorClipBoard from "./BlockEditor/BlockEditorClipBoard.vue";
 
 export class EditorShortCutKey {
   public key: string;
@@ -431,11 +459,14 @@ export type EditorRunningState = "editing" | "running" | "runningPaused";
     DocunmentProp: DocunmentProp,
     ChooseTypePanel: ChooseTypePanel,
     GraphBreadcrumb: GraphBreadcrumb,
+    BlockEditorClipBoard: BlockEditorClipBoard,
     DockHost: DockHost,
     DockPanel: DockPanel,
     PropNotAvailable,
     PropTabPanel,
     PropTab,
+    Console,
+    HelpView,
   },
 })
 export default class Editor extends Vue {
@@ -446,6 +477,13 @@ export default class Editor extends Vue {
   showIntro = true;
   showIntroE = true;
   showControlButtons = false;
+  showWelcome = true;
+
+  version = '';
+  versionType = '';  
+  versionCore = '';
+
+  dockLayout : DockHost = null;
 
   //#region 主菜单
 
@@ -592,6 +630,7 @@ export default class Editor extends Vue {
         }),
         new MenuData("缩小", () => this.editorControlCurrent.zoomOut()),
         new MenuSeparator(),
+        new MenuData("重置界面布局", () => this.resetDockLayout()),
         new MenuData(
           "绘制调试信息",
           (menu) => {
@@ -756,7 +795,7 @@ export default class Editor extends Vue {
 
   //#endregion
 
-  //公共方法
+  //#region 公共方法
 
   public redo() {
     this.editorControlCurrent.redo();
@@ -787,6 +826,8 @@ export default class Editor extends Vue {
     }
   }
 
+  //#endregion
+
   //#region 添加单元菜单
 
   @Watch("showAddBlockPanel")
@@ -806,7 +847,6 @@ export default class Editor extends Vue {
 
   showAddBlockPanelPos = new Vector2();
   showAddBlockPanel = false;
-  showAddBlockPanelMaxHeight = 500;
   addBlockPanelAddDirectly = false;
 
   filterByPortDirection: BlockPortDirection = null;
@@ -841,13 +881,7 @@ export default class Editor extends Vue {
   ) {
     this.showAddBlockPanelPos.Set(pos);
     this.showAddBlockPanel = true;
-    this.showAddBlockPanelMaxHeight = viewPort.h - pos.y;
     this.addBlockPanelAddDirectly = showAddDirectly;
-    if (this.showAddBlockPanelMaxHeight > 500) this.showAddBlockPanelMaxHeight = 500;
-    else if (this.showAddBlockPanelMaxHeight < 222) {
-      this.showAddBlockPanelPos.y -= 222 - this.showAddBlockPanelMaxHeight;
-      this.showAddBlockPanelMaxHeight = 222;
-    }
     (<AddPanel>this.$refs.AddBlockPanel).focus();
   }
   showAddBlockPanelBar(e: HTMLElement) {
@@ -987,6 +1021,17 @@ export default class Editor extends Vue {
       this.platformWork.saveSettings(this.settings);
   }
 
+  private resetDockLayout() {
+    this.$confirm('真的要恢复界面布局到默认吗？', '提示', { type: 'warning' })
+    .then(() => {
+      let def = require("../assets/cfgs/dock-default.json");
+      this.dockLayout.setData(def);
+      this.saveDockData();
+    })
+    .catch(() => {
+
+    });
+  }
   private loadDockData() {
     let def = require("../assets/cfgs/dock-default.json");
     let data: any = SettingsServiceInstance.getSettings("dockData", "");
@@ -994,11 +1039,11 @@ export default class Editor extends Vue {
     else data = JSON.parse(data);
 
     setTimeout(() => {
-      (<DockHost>this.$refs.dockLayout).setData(data);
+      this.dockLayout.setData(data);
     }, 200);
   }
   private saveDockData() {
-    let data = (<DockHost>this.$refs.dockLayout).getSaveData();
+    let data = this.dockLayout.getSaveData();
     SettingsServiceInstance.setSettings("dockData", JSON.stringify(data));
   }
 
@@ -1054,7 +1099,7 @@ export default class Editor extends Vue {
     if (baseLoading) HtmlUtils.hideElement(baseLoading);
 
     if (process.env.EDITOR_ENV == "electron") {
-      console.log('Running in electron');
+      logger.log('Editor', 'Running in electron');
       this.showControlButtons = true;
       this.currentRuntimeType = "electron";
       this.platformWork = new EditorPlatformWorkElectron();
@@ -1066,6 +1111,8 @@ export default class Editor extends Vue {
       process.env.EDITOR_ENV == "web" ||
       StringUtils.isNullOrEmpty(process.env.EDITOR_ENV)
     ) {
+      logger.log('Editor', 'Running in web');
+
       this.currentRuntimeType = "web";
       this.platformWork = new EditorPlatformWorkWeb();
 
@@ -1075,6 +1122,7 @@ export default class Editor extends Vue {
       };
     }
 
+    //基础控制
     this.platformWork.init();
     this.platformWork.editorNotifyCallback((type, data, callback) => {
       switch(type) {
@@ -1107,6 +1155,14 @@ export default class Editor extends Vue {
     this.initEditorWorkProvider();
     this.loadRecentList();
 
+    //Tooltip
+    ToolTipUtils.setTooltipProvider({
+      showTooltip: (t, v) => this.onShowTooltip(t, v),
+      hideTooltip: (id) => this.onHideTooltip(id),
+      getEle: () => this.$refs.tooltip as HTMLElement
+    });
+
+    //单元控制
     BlockServiceInstance.init();
     BlockServiceInstance.setIsEditorMode(true);
     BlockServiceInstance.setAllBlocksGrouped(this.allBlocksGrouped);
@@ -1117,13 +1173,27 @@ export default class Editor extends Vue {
 
     this.initShutCuts();
 
+    this.version = config.VERSION;
+    this.versionType = BlockServiceInstance.getCurrentPlatform();
+    this.versionCore = BlockRegister.coreVersion;
+
+    logger.log('Editor', 'Version is ' + config.VERSION);
+    logger.log('Editor', 'Build at ' + config.BuildDate);
+    logger.log('Editor', 'Core version is ' + BlockRegister.coreVersion);
+
     setTimeout(() => {
+      this.dockLayout = <DockHost>this.$refs.dockLayout;
+      this.editoClipboard = <BlockEditorClipBoard>this.$refs.editoClipboard;
+    }, 500);
+    setTimeout(() => {
+      logger.log('Editor', 'Init ok');
       this.showIntro = false;
       this.loadDockData();
       setTimeout(() => (this.showIntroE = false), 300);
     }, 1000);
   }
   private destroy() {
+    logger.log('Editor', 'destroy start');
     this.deleteShutCuts();
     this.saveSettings();
     this.saveRecentList();
@@ -1193,6 +1263,36 @@ export default class Editor extends Vue {
     };
   }
 
+
+  //剪贴板
+  
+  editoClipboard : BlockEditorClipBoard = null;
+
+
+  //弹出提示
+  //========================
+
+  isShowTooltip = false;
+  showTooltipPos = new Vector2();
+  showTooltipText = '';
+  showTooltipId = 0;
+
+  onShowTooltip(text : string, pos : Vector2) {
+    this.isShowTooltip = !CommonUtils.isNullOrEmpty(text);
+    if (CommonUtils.isDefinedAndNotNull(pos)) {
+      //pos.x -= this.editorHostAbsolutePos.x;
+      pos.y += 30;
+      this.showTooltipPos = pos;
+      this.showTooltipId = CommonUtils.genRandom(0, 1024);
+    }
+    this.showTooltipText = text;
+    return this.showTooltipId;
+  }
+  onHideTooltip(id : number) {
+    if(this.showTooltipId == id)
+      this.isShowTooltip = false;
+  }
+
   //#endregion
 
   //#region 文件保存写入控制
@@ -1216,9 +1316,7 @@ export default class Editor extends Vue {
     doc.mainGraph.isEditor = true;
     doc.currentGraph = doc.mainGraph;
     this.goDoc(doc);
-
-    let that = this;
-    setTimeout(() => that.goGraph(doc.mainGraph), 500);
+    setTimeout(() => this.goGraph(doc.mainGraph), 230);
   }
 
   private getCurrentEditor(g: BlockGraphDocunment) {
@@ -1236,10 +1334,12 @@ export default class Editor extends Vue {
   }
 
   public goDoc(g: BlockDocunment) {
-    if (g != this.currentDocunment) {
-      this.currentDocunment = g;
-      if (!this.openedDocunments.contains(g)) this.openedDocunments.push(g);
-    }
+    this.currentDocunment = g;
+    if (!this.openedDocunments.contains(g)) 
+      this.openedDocunments.push(g);
+    setTimeout(() => { 
+      this.dockLayout.activePanel('Doc_' + g.uid);
+    }, 100)
   }
   public goGraph(g: BlockGraphDocunment) {
     this.getCurrentEditor(g).goGraph(g);
@@ -1276,7 +1376,7 @@ export default class Editor extends Vue {
             : null;
       }
       if (typeof callback == "function") callback(true);
-      logger.log("Docunment " + g.name + " closed.");
+      logger.log('文件', "文档 " + g.name + " 已关闭");
     };
     if (this.openedDocunments.contains(g)) {
       if (g.fileChanged) {
@@ -1327,7 +1427,7 @@ export default class Editor extends Vue {
         return;
       }
       //保存文件
-      logger.log("Saving : " + g.path);
+      logger.log('文件', "保存 : " + g.path);
 
       //加载提示
       let toast = this.$toasted.show("正在保存中，请稍后...", {
@@ -1338,7 +1438,7 @@ export default class Editor extends Vue {
 
       let str = this.parser.saveToString(this.currentDocunment, true);
       this.platformWork.writeFile(g.path, str, () => {
-        logger.log("Save file : " + this.getPath(g.path) + " success.");
+        logger.log('文件', "保存文件 " + this.getPath(g.path) + " 成功");
         if (typeof callback == "function") callback(true);
 
         toast.goAway();
@@ -1350,33 +1450,39 @@ export default class Editor extends Vue {
     } else if (this.currentRuntimeType == "web") {
       let str = this.parser.saveToString(this.currentDocunment, true);
       CommonUtils.exportRaw(this.currentDocunment.name + ".json", str);
+
+      logger.log('文件', "导出文件 " + this.currentDocunment.name + " 成功");
+
       g.fileChanged = false;
-      if (typeof callback == "function") callback(true);
+      if (typeof callback == "function") 
+        callback(true);
     }
   }
   /**
    * 打开文件
    */
   public loadFile() {
-    this.platformWork.openFileDialog((paths, files) => {
-      if (paths) {
-        paths.forEach((path) => {
-          //添加到最近列表
-          this.addToRecentList(path);
-          //加载文件
-          this.doLoadFile(path);
-        });
-      } else if (files) {
-        files.forEach((file) => {
-          let reader = new FileReader();
-          //加载文件
-          reader.readAsText(file, "UTF-8");
-          reader.onload = (e) => {
-            this.doLoadFileToGraph(e.target.result.toString(), file.path || file.name);
-          };
-        });
-      }
-    });
+    setTimeout(() => {
+      this.platformWork.openFileDialog((paths, files) => {
+        if (paths) {
+          paths.forEach((path) => {
+            //添加到最近列表
+            this.addToRecentList(path);
+            //加载文件
+            this.doLoadFile(path);
+          });
+        } else if (files) {
+          files.forEach((file) => {
+            let reader = new FileReader();
+            //加载文件
+            reader.readAsText(file, "UTF-8");
+            reader.onload = (e) => {
+              this.doLoadFileToGraph(e.target.result.toString(), file.path || file.name);
+            };
+          });
+        }
+      });
+    }, 200);
   }
 
   private doLoadFile(path: string) {
@@ -1390,12 +1496,13 @@ export default class Editor extends Vue {
       });
 
       //读取文件
-      logger.log("Loading file : " + path);
+      logger.log('文件', "加载文件 " + path);
 
-      this.platformWork.readFile(path, (err, data) => {
+      this.platformWork.readFile(path, (data, err) => {
         toast.goAway(); //关闭土司
         if (err) {
-          logger.error("Load file failed : " + path + "\n" + err);
+          if(typeof err === 'string') logger.error('文件', "加载文件 " + path + "失败\n" + err);
+          else logger.exception('文件', "加载文件 " + path + "失败", err as Error);
           this.showLoadFailedModal = true;
           this.showLoadFailedModalContent = "加载错误：" + err;
         } else this.doLoadFileToGraph(data, path);
@@ -1419,19 +1526,16 @@ export default class Editor extends Vue {
       ret = this.parser.loadFromString(data, doc, true);
     } catch (e) {
       errRet("发生了错误：" + e);
-      console.error(e);
-      logger.error("File load failed : " + e);
+      logger.exception('文件', `"加载文件 “${path}” 失败`, e);
       return;
     }
     if (ret === -1) errRet("加载的文件是一个空文件");
     else if (ret === -2) errRet("加载的文件是不是有效的JSON格式，这表示文件可能已经损坏");
     else {
       this.goDoc(doc);
-
       //跳转
       setTimeout(() => this.goGraph(doc.mainGraph), 400);
-
-      logger.log("File loaded : " + this.getPath(path));
+      logger.log('文件', `文件 ${this.getPath(path)} 已载入`);
     }
   }
 
@@ -1461,6 +1565,12 @@ export default class Editor extends Vue {
   }
   public onGoDoc(g: BlockDocunment) {
     if (this.currentDocunment != g) this.goDoc(g);
+  }
+  public onDocTitleUpdate(doc: BlockDocunment, title: string) {
+    doc.mainGraph.name = title;
+    let breadcrumb = this.$refs['DocBreadcrumb_'+doc.uid] as GraphBreadcrumb[];
+    if(breadcrumb && breadcrumb.length > 0)
+      breadcrumb[0].forceUpdate();
   }
 
   onDocEditorCreated(e: BlockDrawer) {
@@ -1502,7 +1612,7 @@ export default class Editor extends Vue {
       this.editorControls.forEach((element) => element.clearAllBlockDebugStyles());
     }, 300);
 
-    console.log("[DebugRunner] 脚本已经运行完成");
+    logger.log("流图运行器", "脚本已经运行完成");
   }
   private onRunnerIdle() {}
   private onRunnerBreakPoint(currentPort: BlockPort, block: Block) {
@@ -1527,12 +1637,14 @@ export default class Editor extends Vue {
         this.runner.start();
         this.runningState = "running";
         this.runnerStopByBreakPoint = false;
+        logger.log('流图运行器', "继续运行脚本");
       } else {
         //开始执行文档
         if (this.runner.executeStart(this.currentDocunment)) {
           this.runningState = "running";
-          console.log("[DebugRunner] 开始运行脚本");
+          logger.log('流图运行器', "开始运行脚本");
         } else {
+          logger.warning('流图运行器', "运行脚本失败：" + this.runner.lastError);
           this.showRunFailedModal = true;
           this.showRunFailedModalContent = this.runner.lastError;
         }
@@ -1550,9 +1662,12 @@ export default class Editor extends Vue {
     this.runner.stop();
     this.runner.clear();
     this.onRunnerEnd();
+    
+    logger.log('流图运行器', "停止运行脚本");
   }
   public pauseRun() {
     this.runner.stepMode = true;
+    logger.log('流图运行器', "暂停运行脚本");
   }
   public stepNext() {
     this.runner.stepMode = true;
@@ -1562,17 +1677,6 @@ export default class Editor extends Vue {
       this.runningBlock.markBreakPointActiveState(false);
     }
   }
-
-  showDevtoolsTipModal = false;
-
-  public openConsole() {
-    if (this.currentRuntimeType == "electron")
-      this.platformWork.editorAction("main-act-toggle-devtools");
-    else {
-      this.showDevtoolsTipModal = true;
-    }
-  }
-
   disableAllBreakPoint() {
     this.editorControlCurrent.enableOrdisableAllBreakPoint("disable");
   }
@@ -1585,7 +1689,7 @@ export default class Editor extends Vue {
   showAboutModal = false;
 
   showAbout() { this.showAboutModal = true; }
-  showHelp() {}
+  showHelp() { this.showWelcome = true; }
 }
 
 interface AlertDialogData {

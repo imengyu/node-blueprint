@@ -7,7 +7,7 @@ import { BlockPort } from "../Define/Port";
 import { BlockPortEditor } from "./BlockPortEditor";
 import MathUtils from "../../utils/MathUtils";
 import { ConnectorDrawer } from "./ConnectorDrawer";
-import { BlockRunner } from "../WorkProvider/Runner";
+import { BlockRunner } from "../Runner/Runner";
 
 export class ConnectorEditor extends Connector {
 
@@ -90,7 +90,7 @@ export class ConnectorEditor extends Connector {
 
 
 
-  private drawLineInPos(ctx : CanvasRenderingContext2D, x1 : number, x2 : number, y1 : number, y2 : number, viewPort: Rect) {
+  private drawLineInPos(ctx : CanvasRenderingContext2D, x1 : number, x2 : number, y1 : number, y2 : number, viewPort: Rect, viewZoom : number) {
 
     if(viewPort.testInRectXY(x1, y1) || viewPort.testInRectXY(x2, y2))  {
 
@@ -114,7 +114,7 @@ export class ConnectorEditor extends Connector {
       }
 
       //绘制
-      this.drawer.drawConnectorBezierCurve(ctx, x1, y1, x2, y2, viewPort, this.hover, this.dotPos, this.activeCount >= this.activeMaxCount);
+      this.drawer.drawConnectorBezierCurve(ctx, x1, y1, x2, y2, viewPort, viewZoom, this.hover, this.dotPos, this.activeCount >= this.activeMaxCount);
     }
   }
 
@@ -143,7 +143,7 @@ export class ConnectorEditor extends Connector {
     }
 
     //绘制线条
-    this.drawLineInPos(ctx, x1, x2, y1, y2, viewPort);
+    this.drawLineInPos(ctx, x1, x2, y1, y2, viewPort, viewZoom);
 
     //绘制鼠标移动到上面
     if(this.hover || this.selected) {

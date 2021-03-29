@@ -13,19 +13,6 @@
       transform: 'scale(' + viewZoom + ')'
     }" oncontextmenu="return false"> 
     </div>
-    <!--对话框-->
-    <el-dialog :visible.sync="showDeleteModal" title="确定删除">
-      <div style="text-align:center">
-        你真的要删除选中的
-        <span v-if="selectedBlocks.length>0"> {{ selectedBlocks.length }} 个单元</span>
-        <span v-if="selectedConnectors.length>0">{{ selectedConnectors.length }} 个连接</span>
-        吗？
-      </div>
-      <template #footer>
-        <el-button class="p-button-danger" @click="deleteSelectedBlocks();showDeleteModal=false;">删除</el-button>
-        <el-button @click="showDeleteModal=false" autofocus>取消</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -37,7 +24,7 @@ import { BlockPort, BlockPortDirection } from "../../model/Define/Port";
 import { ConnectorEditor } from "../../model/Editor/ConnectorEditor";
 import { BlockEditor } from "../../model/Editor/BlockEditor";
 import { BlockGraphDocunment, BlockDocunment } from "../../model/Define/BlockDocunment";
-import { BlockRunner } from "../../model/WorkProvider/Runner";
+import { BlockRunner } from "../../model/Runner/Runner";
 import { BlockEditorOwner } from "../../model/Editor/BlockEditorOwner";
 import { Connector } from "../../model/Define/Connector";
 import { BlockBreakPoint } from "../../model/Define/Block";
@@ -50,6 +37,7 @@ import MathUtils from "../../utils/MathUtils";
 import HtmlUtils from "../../utils/HtmlUtils";
 import CommonUtils from "../../utils/CommonUtils";
 import BlockEditorCanvasDrawer from "./BlockEditorCanvasDrawer.vue";
+import { config } from "node_modules/vue/types/umd";
 
 export interface FilterByPortData {
   filterByPortDirection: BlockPortDirection,
@@ -138,7 +126,7 @@ export default class BlockEditorWorker extends Vue {
       let block = this.blocks[i];
 
       rect.Set(block.position.x, block.position.y, block.size.x, block.size.y);
-      rect.multiply(this.viewZoom);
+      //rect.multiply(this.viewZoom);
 
       if(rect.testRectCross(rectSelect)) 
           blocks.push(this.blocks[i]);     
@@ -195,6 +183,24 @@ export default class BlockEditorWorker extends Vue {
     this.$emit('update-select-state');
   }
   /**
+   * 选中所有单元
+   */
+  public selectAllBlocks() {
+    for(var i=0;i<this.blocks.length;i++) 
+      this.blocks[i].updateSelectStatus(true);
+    this.selectedBlocks = this.blocks.concat();
+    this.$emit('update-select-state');
+  }
+  /**
+   * 选中所有链接
+   */
+  public selectAllConnectors() {
+    for(let i = 0, c= this.connectors.length;i<c;i++) 
+      this.connectors[i].selected = true;
+    this.selectedConnectors = this.connectors.concat();
+    this.$emit('update-select-state');
+  }
+  /**
    * 取消选中所有链接
    */
   public unSelectAllConnectors() {
@@ -236,8 +242,8 @@ export default class BlockEditorWorker extends Vue {
   public updateMousePos(e : MouseEvent) {
     this.mouseCurrentPos.x = e.clientX - this.editorHostAbsolutePos.x;
     this.mouseCurrentPos.y = e.clientY - this.editorHostAbsolutePos.y;
-    this.mouseCurrentPosInViewPort.x = this.viewPort.x + (e.clientX - this.editorHostAbsolutePos.x);
-    this.mouseCurrentPosInViewPort.y = this.viewPort.y + (e.clientY - this.editorHostAbsolutePos.y);
+    this.mouseCurrentPosInViewPort.x = (this.viewPort.x + (e.clientX - this.editorHostAbsolutePos.x));
+    this.mouseCurrentPosInViewPort.y = (this.viewPort.y + (e.clientY - this.editorHostAbsolutePos.y));
   }
   /**
    * 获取鼠标当前坐标
@@ -256,17 +262,26 @@ export default class BlockEditorWorker extends Vue {
   //=======================
 
   public onUserSelectBlock(block : BlockEditor, selectSingle : boolean) {
-    if(selectSingle) {
+    if(selectSingle && !this.keyControlDown) {
       if(this.selectedBlocks.length > 0)
         for(var i=0;i<this.blocks.length;i++) 
           if(this.blocks[i] != block)
             this.blocks[i].updateSelectStatus(false);
       this.selectedBlocks.splice(0, this.selectedBlocks.length);
     }
-    if(!this.selectedBlocks.contains(block))
+
+    let sel = false;
+    if(!this.selectedBlocks.contains(block)) {
       this.selectedBlocks.push(block);
+      sel = true;
+    } else {
+      this.selectedBlocks.remove(block);
+      sel = false;
+    }
     this.$emit('update-select-state');
     block.updateLastPos();
+
+    return sel;
   }
   public onMoveBlock(block : BlockEditor, moveOffest : Vector2) {
     if(this.selectedBlocks.length > 0) {
@@ -294,7 +309,7 @@ export default class BlockEditorWorker extends Vue {
       this.$emit('update-select-state');
     }
     if(!block.forceNotUnConnect)
-      block.allPorts.forEach((p) => p.unconnectAllConnector());
+      block.allPorts.forEach((p) => (<BlockPortEditor>p).unconnectAllConnector());
   }
 
   // 块控制
@@ -487,19 +502,20 @@ export default class BlockEditorWorker extends Vue {
     this.connectors.remove(connector);
     this.selectedConnectors.remove(connector);
 
-    if(connector.startPort != null) {
-      connector.startPort.removeConnectToPort(connector.endPort);
-      if(connector.endPort.editorData != null)
-        connector.startPort.editorData.updatePortConnectStatusElement();
-      (<BlockEditor>connector.startPort.parent).invokeOnPortUnConnect(connector.startPort);
-    }
-    if(connector.endPort != null) {
-      connector.endPort.removeConnectByPort(connector.startPort);
-      if(connector.endPort.editorData != null)
-        connector.endPort.editorData.updatePortConnectStatusElement();
-      (<BlockEditor>connector.endPort.parent).invokeOnPortUnConnect(connector.endPort);
-    }
+    let start = connector.startPort, end = connector.endPort;
 
+    if(start != null) {
+      start.removeConnectToPort(end);
+      (<BlockEditor>start.parent).invokeOnPortUnConnect(start);
+    }
+    if(end != null) {
+      end.removeConnectByPort(start);
+      (<BlockEditor>end.parent).invokeOnPortUnConnect(end);
+    }
+    if(start && start.editorData)
+      start.editorData.updatePortConnectStatusElement();
+    if(end && end.editorData)
+      end.editorData.updatePortConnectStatusElement();
     this.$emit('update-set-file-changed');
   }
 
@@ -826,6 +842,18 @@ export default class BlockEditorWorker extends Vue {
   public refreshSelectedBlock() {
     this.selectedBlocks.forEach((b) => this.refreshBlock(b));
   }
+  /**
+   * 清空选中的单元的错误
+   */
+  public clearErrForSelectedBlock() {
+    this.selectedBlocks.forEach((b) => this.clearErrForBlock(b));
+  }
+  /**
+   * 清空单元的错误
+   */
+  public clearErrForBlock(block : BlockEditor) {
+    block.clearErrors();
+  }
 
   /**
    * 对齐选中的单元
@@ -1116,21 +1144,24 @@ export default class BlockEditorWorker extends Vue {
       case 46://Delete
         this.showDeleteModalClick();
         break;
-      default:
-        this.$emit('on-editor-key', e.keyCode, e);
+      case 65://A
+        if(this.keyAltDown) this.selectAllBlocks();
+        else if(this.keyControlDown) this.selectAllBlocks();
         break;
     }
+    this.$emit('on-editor-key', e.keyCode, e);
   }
 
 
   //删除疑问对话框
   //=============================
 
-  showDeleteModal = false;
-
   showDeleteModalClick() {
-    if(this.hasSelected())
-      this.showDeleteModal = true;
+    if(this.hasSelected()) {
+      this.$confirm('确定删除选中的 '+ ( this.selectedBlocks.length > 0 ? (this.selectedBlocks.length + ' 个单元') : '') + 
+      ( this.selectedConnectors.length > 0 ? (' ' +this.selectedConnectors.length + ' 个连接') : '') + ' 吗？', '提示', { type: 'warning' })
+      .then(() => this.deleteSelectedBlocks()).catch(() => {})
+    }
   }
   /**
    * 删除选中的单元
@@ -1138,7 +1169,6 @@ export default class BlockEditorWorker extends Vue {
   public deleteSelectedBlocks() {
     this.selectedBlocks.concat().forEach((block) => this.deleteBlock(block));
     this.selectedConnectors.concat().forEach((connector) => this.unConnectConnector(connector));
-    this.showDeleteModal = false;
   }
 
   //加载

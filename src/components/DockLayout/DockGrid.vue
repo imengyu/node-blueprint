@@ -29,7 +29,7 @@
             >
             <i :class="'icon '+panel.iconClass"></i>
             <span>{{ panel.title }}</span>
-            <a v-if="panel.closeable" class="close" :draggable="false" href="javascript:;" @click="onTabItemClose(panel)">
+            <a v-if="panel.closeable" class="close cursor-pointer" :draggable="false" @click="onTabItemClose(panel)" title="关闭">
               <i :class="'iconfont '+(panel.closeUnSave?'icon-file-':'icon-close-')"></i>
             </a>
           </div>

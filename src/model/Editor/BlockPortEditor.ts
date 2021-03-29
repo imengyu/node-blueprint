@@ -79,13 +79,13 @@ export class BlockPortEditor extends BlockPort {
     ToolTipUtils.registerElementTooltip(this.editorData.el);
 
     //switch port and text's direction
-    if(this.direction == 'input') {
+    if(this.direction === 'input') {
       this.editorData.el.appendChild(this.editorData.elDot);
       this.editorData.el.appendChild(this.editorData.elSpan);
       if(this.editorData.elEditor != null) this.editorData.el.appendChild(this.editorData.elEditor);
       this.editorData.el.appendChild(this.editorData.elDeleteButton);
     }
-    else if(this.direction == 'output') {
+    else if(this.direction === 'output') {
       this.editorData.el.appendChild(this.editorData.elDeleteButton);
       if(this.editorData.elEditor != null) this.editorData.el.appendChild(this.editorData.elEditor);   
       this.editorData.el.appendChild(this.editorData.elSpan);
@@ -99,7 +99,7 @@ export class BlockPortEditor extends BlockPort {
       this.editorData.elDot.classList.add(BlockPortIcons.portParamIcon);
 
     if(this.direction == 'input') (<BlockEditor>this.parent).els.elInputPorts.appendChild(this.editorData.el);
-    else if(this.direction == 'output') (<BlockEditor>this.parent).els.elOutputPorts.appendChild(this.editorData.el);
+    else if(this.direction === 'output') (<BlockEditor>this.parent).els.elOutputPorts.appendChild(this.editorData.el);
 
     this.updatePortElement();
     this.createOrReCreatePortCustomEditor();
@@ -182,10 +182,13 @@ export class BlockPortEditor extends BlockPort {
         this,
         this.editorData.el, (v) => {
         portParameter.paramUserSetValue = v;
-        if(portParameter.direction == 'output')
-          portParameter.updateOnputValue(this.parent.currentRunningContext, v);
-        else
-          portParameter.setValue(this.parent.currentRunningContext, v);
+        let context = this.parent.currentRunningContext;
+        if(context) {
+          if(portParameter.direction == 'output')
+            portParameter.updateOnputValue(context, v);
+          else
+            portParameter.setValue(context, v);
+        }
         return v;
       }, portParameter.paramUserSetValue, portParameter.paramDefaultValue, customType);
 
@@ -320,6 +323,10 @@ export class BlockPortEditor extends BlockPort {
         this.editorData.elEditor.style.display = this.isConnected() ? 'none' : 'inline-block';
       }
     }
+  }
+
+  public unconnectAllConnector() { 
+    (<BlockEditor>this.parent).unConnectPort(this);
   }
 
   /**

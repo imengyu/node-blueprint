@@ -62,13 +62,9 @@ export class BlockService {
    * @param updateList 是否刷新列表
    */
   public registerBlock(BlockDef : BlockRegData, pack : PackageDef, updateList = true) {
-    if(pack != null) {
-      if(!this.allPacks.contains(pack))
-        this.allPacks.push(pack);
-    }
     let oldBlock = this.getRegisteredBlock(BlockDef.guid);
     if(oldBlock != null && oldBlock != undefined) {
-      logger.warning("[registerBlock] Block guid " + BlockDef.guid + " alreday registered !");
+      logger.warning('BlockService','Block guid ' + BlockDef.guid + ' alreday registered !');
       return;
     }
     BlockDef.pack = pack;
@@ -84,12 +80,32 @@ export class BlockService {
     return this.allBlocks.get(guid);
   }
   /**
+   * 注册单元包
+   * @param pack 单元包
+   */
+  public registerBlockPack(pack : PackageDef) {
+    this.allPacks.push(pack);
+    logger.log('BlockService', `Register BlockPack : ${pack.packageName}`);
+  }
+  /**
    * 取消注册单元包
    * @param pack 单元包
    */
   public unregisterBlockPack(pack : PackageDef) {
     this.allPacks.remove(pack);
-    logger.log(`unregisterBlockPack : ${pack.packageName}`);
+    logger.log('BlockService', `Unregister BlockPack : ${pack.packageName}`);
+  }
+  /**
+   * 获取包是否注册
+   * @param name 包名
+   */
+  public getBlockPackRegistered(name : string) {
+    for (let index = 0; index < this.allPacks.length; index++) {
+      if(this.allPacks[index].packageName === name) {
+        return this.allPacks[index]
+      }
+    }
+    return null
   }
   /**
    * 取消注册单个单元

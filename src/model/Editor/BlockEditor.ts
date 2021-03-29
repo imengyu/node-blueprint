@@ -254,56 +254,60 @@ export class BlockEditor extends Block {
 
     //#region Comment
 
-    this.els.elBottomInfoHost = document.createElement('div');
-    this.els.elBottomInfoHost.classList.add('bottom-info');
+    if(!this.blockStyleSettings.noComment) {
 
-    content.appendChild(this.els.elBottomInfoHost);
- 
-    this.els.elComment = document.createElement('div');
-    this.els.elComment.classList.add('flow-block-comment', 'flow-block-no-move');
-    this.els.elCommentText = document.createElement('div');
-    this.els.elCommentText.classList.add('flow-block-comment-text', 'flow-block-no-move');
-    this.els.elCommentText.setAttribute('contenteditable', 'true');
-    this.els.elCommentPlaceHolder = document.createElement('span');
-    this.els.elCommentPlaceHolder.classList.add('flow-block-comment-place-holder');
-    this.els.elCommentPlaceHolder.innerText = '点击添加注释';
-    this.els.elCommentOpen = document.createElement('a');
-    this.els.elCommentOpen.setAttribute('data-title', '打开注释气泡');
-    this.els.elCommentOpen.classList.add('flow-block-comment-open','iconfont','icon-qipao');
-    ToolTipUtils.registerElementTooltip(this.els.elCommentOpen);
-    this.els.elCommentClose = document.createElement('a');
-    this.els.elCommentClose.classList.add('iconfont','icon-close-');
-    this.els.elCommentClose.setAttribute('data-title', '隐藏注释气泡');
-    ToolTipUtils.registerElementTooltip(this.els.elCommentClose);
+      this.els.elBottomInfoHost = document.createElement('div');
+      this.els.elBottomInfoHost.classList.add('bottom-info');
+      this.els.elBottomInfoHost.style.display = 'none';
 
-    this.els.elCommentOpen.onclick = () => {
-      this.markOpen = true;
-      this.updateComment();
-    };
-    this.els.elCommentClose.onclick = () => {
-      this.markOpen = false;
-      this.updateComment();
-    };
-    this.els.elCommentPlaceHolder.onclick = () => {
-      this.els.elCommentPlaceHolder.style.display = 'none';
-      this.els.elCommentText.focus();
-    };
-    this.els.elCommentText.oninput = () => {
-      this.els.elComment.style.top = -(this.els.elCommentText.offsetHeight - 23 + 40) + 'px';
-    };
-    this.els.elCommentText.onblur = () => {
-      this.mark = this.els.elCommentText.innerText;
-      this.updateComment();
-    };
+      content.appendChild(this.els.elBottomInfoHost);
+  
+      this.els.elComment = document.createElement('div');
+      this.els.elComment.classList.add('flow-block-comment', 'flow-block-no-move');
+      this.els.elCommentText = document.createElement('div');
+      this.els.elCommentText.classList.add('flow-block-comment-text', 'flow-block-no-move');
+      this.els.elCommentText.setAttribute('contenteditable', 'true');
+      this.els.elCommentPlaceHolder = document.createElement('span');
+      this.els.elCommentPlaceHolder.classList.add('flow-block-comment-place-holder');
+      this.els.elCommentPlaceHolder.innerText = '点击添加注释';
+      this.els.elCommentOpen = document.createElement('a');
+      this.els.elCommentOpen.setAttribute('data-title', '打开注释气泡');
+      this.els.elCommentOpen.classList.add('flow-block-comment-open','iconfont','icon-qipao');
+      ToolTipUtils.registerElementTooltip(this.els.elCommentOpen);
+      this.els.elCommentClose = document.createElement('a');
+      this.els.elCommentClose.classList.add('iconfont','icon-close-');
+      this.els.elCommentClose.setAttribute('data-title', '隐藏注释气泡');
+      ToolTipUtils.registerElementTooltip(this.els.elCommentClose);
 
-    this.els.elComment.appendChild(this.els.elCommentPlaceHolder);
-    this.els.elComment.appendChild(this.els.elCommentText);
-    this.els.elComment.appendChild(this.els.elCommentClose);
+      this.els.elCommentOpen.onclick = () => {
+        this.markOpen = true;
+        this.updateComment();
+      };
+      this.els.elCommentClose.onclick = () => {
+        this.markOpen = false;
+        this.updateComment();
+      };
+      this.els.elCommentPlaceHolder.onclick = () => {
+        this.els.elCommentPlaceHolder.style.display = 'none';
+        this.els.elCommentText.focus();
+      };
+      this.els.elCommentText.oninput = () => {
+        this.els.elComment.style.top = -(this.els.elCommentText.offsetHeight - 23 + 40) + 'px';
+      };
+      this.els.elCommentText.onblur = () => {
+        this.mark = this.els.elCommentText.innerText;
+        this.updateComment();
+      };
+
+      this.els.elComment.appendChild(this.els.elCommentPlaceHolder);
+      this.els.elComment.appendChild(this.els.elCommentText);
+      this.els.elComment.appendChild(this.els.elCommentClose); 
+      this.el.appendChild(this.els.elCommentOpen);
+      this.el.appendChild(this.els.elComment);
+    }
 
     //#endregion
 
-    this.el.appendChild(this.els.elCommentOpen);
-    this.el.appendChild(this.els.elComment);
     this.el.appendChild(this.els.elTitle);
     this.el.appendChild(this.els.elCustomEditor);
     this.el.appendChild(content);
@@ -357,7 +361,7 @@ export class BlockEditor extends Block {
 
     //运行平台如果不符则抛出错误
     if(!this.isPlatformSupport)
-      this.throwError('单元不支持当前平台', null, 'warning');
+      this.throwError('单元不支持当前平台，因此无法在编辑器中调试该单元。', null, 'warning');
   }
   public destroy() {
 
@@ -380,9 +384,16 @@ export class BlockEditor extends Block {
     this.el.parentNode.removeChild(this.el);
   }
   public clone() {
+
+    //保存自定义数据
+    if(typeof this.onSave === 'function')
+      this.onSave(this);
+
     let blockEditor = new BlockEditor(this.regData);
     blockEditor.options = this.options;
     blockEditor.breakpoint = this.breakpoint;
+    blockEditor.markOpen = this.markOpen;
+    blockEditor.mark = this.mark;
 
     this.allPorts.forEach(port => {
       if(port.isDyamicAdd)
@@ -505,7 +516,8 @@ export class BlockEditor extends Block {
     }
   }
   public updateComment() {
-    if(!this.created) return;
+    if(!this.created || this.blockStyleSettings.noComment) 
+      return;
     this.els.elComment.style.display = this.markOpen ? '' : 'none';
     this.els.elCommentClose.style.display = this.markOpen ? '' : 'none';
     this.els.elCommentOpen.style.display = this.markOpen ? 'none' : '';
@@ -626,6 +638,7 @@ export class BlockEditor extends Block {
     d.setAttribute('class', className);
     d.innerHTML = '<i class="iconfont '+icon+' mr-2"></i>' + text;
     this.els.elBottomInfoHost.appendChild(d);
+    this.els.elBottomInfoHost.style.display = '';
     return d;
   }
   public updateBottomTip(el : HTMLElement, icon : string, text : string, className : string = '') {
@@ -635,6 +648,8 @@ export class BlockEditor extends Block {
   }
   public deleteBottomTip(el : HTMLElement) {
     this.els.elBottomInfoHost.removeChild(el);
+    if(this.els.elBottomInfoHost.childNodes.length == 0) 
+      this.els.elBottomInfoHost.style.display = 'none';
   }
 
   private activeFlashInterval : any = null;
@@ -714,44 +729,44 @@ export class BlockEditor extends Block {
 
           if (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_TOP) == SIZE_TOP)) {
             //左上
-            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
-            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            size.x = (this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x);
+            size.y = (this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y);
             this.setPos(mousePos);
           }
           else if(((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
             //右下
-            size.x = mousePos.x - this.lastBlockPos.x;
-            size.y = mousePos.y - this.lastBlockPos.y;
+            size.x = (mousePos.x - this.lastBlockPos.x);
+            size.y = (mousePos.y - this.lastBlockPos.y);
           }
           else if (((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM)) {
             //左下
-            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
-            size.y = mousePos.y - this.lastBlockPos.y;
+            size.x = (this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x);
+            size.y = (mousePos.y - this.lastBlockPos.y);
             this.setPos(new Vector2(mousePos.x, this.position.y));
           }
           else if (((this.currentSizeType & SIZE_TOP) == SIZE_TOP) && ((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
             //右上
-            size.x = mousePos.x - this.lastBlockPos.x;
-            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            size.x = (mousePos.x - this.lastBlockPos.x);
+            size.y = (this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y);
             this.setPos(new Vector2(this.position.x, mousePos.y));
           }
           else if((this.currentSizeType & SIZE_TOP) == SIZE_TOP)  {
             //上
-            size.y = this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y;
+            size.y = (this.lastBlockPos.y + this.lastBlockSize.y - mousePos.y);
             this.setPos(new Vector2(this.position.x, mousePos.y));
           }
           else if((this.currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) {
             //下
-            size.y = mousePos.y - this.lastBlockPos.y;
+            size.y = (mousePos.y - this.lastBlockPos.y);
           }
           else if((this.currentSizeType & SIZE_LEFT) == SIZE_LEFT) {
             //左
-            size.x = this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x;
+            size.x = (this.lastBlockPos.x + this.lastBlockSize.x - mousePos.x);
             this.setPos(new Vector2(mousePos.x, this.position.y));
           }
           else if((this.currentSizeType & SIZE_RIGHT) == SIZE_RIGHT) {
             //右
-            size.x = mousePos.x - this.lastBlockPos.x;
+            size.x = (mousePos.x - this.lastBlockPos.x);
           }            
           
           if(size.x < this.minBlockSize.x) size.x = this.minBlockSize.x;
@@ -762,14 +777,15 @@ export class BlockEditor extends Block {
         //Move
         //=====================
         else if(!this.mouseDownInPort && !this.mouseConnectingPort) { 
+          let zoom = 1 / this.editor.getViewZoom();
           let pos = new Vector2(
-            this.lastBlockPos.x + (e.x - this.mouseLastDownPos.x),
-            this.lastBlockPos.y + (e.y - this.mouseLastDownPos.y)
+            this.lastBlockPos.x + (e.x * zoom - this.mouseLastDownPos.x * zoom),
+            this.lastBlockPos.y + (e.y * zoom - this.mouseLastDownPos.y * zoom)
           );
           if(pos.x != this.position.x || pos.y != this.position.y) {
             this.lastMovedBlock = true;
             this.setPos(pos);
-            this.editor.onMoveBlock(this, new Vector2(e.x - this.mouseLastDownPos.x, e.y - this.mouseLastDownPos.y));
+            this.editor.onMoveBlock(this, new Vector2(e.x * zoom - this.mouseLastDownPos.x * zoom, e.y * zoom - this.mouseLastDownPos.y * zoom));
     
             //如果当前块没有选中，在这里切换选中状态
             if(!this.selected) {
@@ -832,9 +848,8 @@ export class BlockEditor extends Block {
 
         if(this.lastMovedBlock) {
           this.editor.onMoveBlockEnd(this);
-        }else if(this.editor.getMultiSelectedBlocks().length == 0 || e.button == 0) {
-          this.updateSelectStatus(true);
-          this.editor.onUserSelectBlock(this, true);
+        }else if(this.editor.getMultiSelectedBlocks().length == 0 || e.button == 0) {     
+          this.updateSelectStatus(this.editor.onUserSelectBlock(this, true));
         }
 
         if(typeof this.onMouseEvent === 'function')
@@ -924,14 +939,29 @@ export class BlockEditor extends Block {
     errorNode.classList.add('block-error');
     errorNode.classList.add(level);
     errorNode.innerHTML = `<i class="iconfont ${level==='warning'?'icon-error-1':'icon-error-'}"></i><span>${err}</span>`;
-    errorNode.setAttribute('title', (<HTMLSpanElement>errorNode.childNodes[1]).innerText);
+
+    ToolTipUtils.registerElementTooltip(errorNode)
+    ToolTipUtils.updateElementTooltip(errorNode, errorNode.innerHTML);
 
     this.els.elBottomInfoHost.appendChild(errorNode);
+    this.els.elBottomInfoHost.style.display = '';
 
     if(port != null) {
       (<BlockPortEditor>port).editorData.forceDotErrorState = true;
       (<BlockPortEditor>port).updatePortConnectStatusElement();
     }
+  }
+  /**
+   * 清空所有错误
+   */
+  public clearErrors() {
+    let nodes = this.els.elBottomInfoHost.childNodes;
+    for(let i = nodes.length - 1; i >= 0; i--) {
+      if((<HTMLElement>nodes[i]).classList.contains('block-error'))
+        this.els.elBottomInfoHost.removeChild(nodes[i]);
+    }
+    if(this.els.elBottomInfoHost.childNodes.length == 0) 
+      this.els.elBottomInfoHost.style.display = 'none';
   }
 
   private fnonMouseMove : MouseEventDelegate = null;

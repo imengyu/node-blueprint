@@ -169,7 +169,7 @@ export default class BlockEditorCanvasDrawer extends Vue {
       this.ctx.textAlign = 'left';
       this.ctx.font = 'Arial 14px';
       this.draw();
-    }, 300);
+    }, 100);
   }
   beforeDestroy() {
     this.drawStop();

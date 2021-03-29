@@ -65,7 +65,7 @@ export class EditorPlatformWorkElectron implements EditorPlatformWorkAbstract {
   writeFile(path: string, data: string, callback: () => void) {
     fs.writeFile(path, data, { encoding: 'utf-8' }, callback);
   }
-  readFile(path: string, callback: (data: string, err: any) => void)  {
+  readFile(path: string, callback: (data: string, err: Error|string) => void)  {
     if(!fs.existsSync(path)) {
       callback(null, '文件 ' + path + ' 不存在');
     } else fs.readFile(path, { encoding: 'utf-8' }, (data: any, err: any) => {

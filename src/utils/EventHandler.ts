@@ -1,4 +1,5 @@
 export class EventHandler<T> {
+
   public listener : Array<{
     _this : any,
     callback : Function,

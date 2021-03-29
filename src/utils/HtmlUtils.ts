@@ -20,6 +20,8 @@ export default {
   isEleEditable,
   createOptionElement,
   registerShowTooltipDelay,
+  registerHideTooltipDelay,
+  clearHideTooltipDelay,
 }
 
 function createOptionElement(value : string, text : string) {
@@ -72,10 +74,28 @@ function getElementIndex(element : HTMLElement) {
 
 
 let timerShowTooltipDelay : any = null;
+let timerHidetooltipDelay : any = null;
 
+function registerHideTooltipDelay(callback: () => void) {
+  if(timerHidetooltipDelay != null)
+    clearTimeout(timerHidetooltipDelay);
+  timerHidetooltipDelay = setTimeout(() => {
+    timerHidetooltipDelay = null;
+    callback();
+  }, 200);
+}
+function clearHideTooltipDelay() {
+  if(timerHidetooltipDelay != null) {
+    clearTimeout(timerHidetooltipDelay);
+    timerHidetooltipDelay = null;
+  }
+}
 function registerShowTooltipDelay(callback: () => void) {
   if(timerShowTooltipDelay != null)
     clearTimeout(timerShowTooltipDelay);
-  timerShowTooltipDelay = setTimeout(callback, 200);
+  timerShowTooltipDelay = setTimeout(() => {
+    timerShowTooltipDelay = null;
+    callback()
+  }, 400);
 }
 

@@ -1,0 +1,103 @@
+@import './scroll.scss';
+
+.console-base {
+  position: relative;
+  height: 100%;
+
+  .toolbar {
+    background-color: #282c34;
+    border-bottom: 1px solid #313131;
+    min-height: 33px;
+
+    button {
+      background: transparent;
+      outline: none;
+      border: none;
+      height: 33px;
+      line-height: 33px;
+      cursor: pointer;
+      padding: 0px 6px;
+      color: #fff;
+
+      &:hover, &.active {
+        background: rgba(133, 133, 133, 0.5);
+      }
+
+      .iconfont {
+        display: inline-block;
+        margin-right: 5px;
+      }
+    }
+  }
+  .list {
+    position: absolute;
+    top: 33px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    overflow-y: scroll;
+    font-size: 13px;
+    font-family: Consolas, 'Courier New', monospace;
+
+    @include pc-fix-scrollbar();
+
+    .item {
+      position: relative;
+      border-bottom: 1px solid #414141;
+      color: #d3d3d3;  
+      padding: 6px 12px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+
+      .icon {
+        font-size: 14px;
+        margin-right: 6px;
+      }
+      .tag {
+        background-color: #5e5e5e;
+        color: #fff;
+        border-radius: 4px;
+        padding: 2px 6px;
+        margin-right: 4px;
+        display: inline-block;
+        font-size: 12px;
+      }
+
+      .switch {
+
+        display: inline-block;
+        padding: 4px;
+        font-size: 10px;
+        transition: transform ease-in-out 0.3s;
+        cursor: pointer;
+        transform: rotate(0) scale(0.8);
+        
+        &.open {
+          transform: rotate(90deg) scale(0.8);
+        }
+      }
+      .speical {
+        font-style: italic;
+        color: #9e9e9e;
+      }
+
+      &.warp {
+        white-space: pre;
+      }
+      &.warning {
+        background-color: #a06800;
+        border-bottom-color: #bd7b00;
+      }
+      &.error {
+        background-color: #991700;
+        border-bottom-color: #b61b00;
+      }
+      &.info {
+        background-color: #004e83;
+        border-bottom-color: #0061a1;
+      }
+    }
+  }
+}

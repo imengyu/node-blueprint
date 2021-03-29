@@ -25,9 +25,13 @@ export class BlockEditorOwner {
    */
   getBlocksInRect : (rect : Rect) => BlockEditor[];
   getVue : () => Vue;
+  /**
+   * 获取编辑器视图缩放大小
+   */
+  getViewZoom: () => number;
 
   onBlockDelete : (block : BlockEditor) => void;
-  onUserSelectBlock : (block : BlockEditor, selectSingle : boolean) => void;
+  onUserSelectBlock : (block : BlockEditor, selectSingle : boolean) => boolean;
   onMoveBlock : (block : BlockEditor, pos : Vector2) => void;
   onMoveBlockEnd : (block : BlockEditor) => void;
 

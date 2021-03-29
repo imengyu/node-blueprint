@@ -435,6 +435,7 @@ function registerControl() {
       direction: 'input',
       name: '终止',
       description: '终止循环',
+      forceNoCycleDetection: true,
     },
     {
       guid: 'PICON',
@@ -444,16 +445,16 @@ function registerControl() {
       name: '条件',
     },
     {
-      guid: 'POEXIT',
-      paramType: 'execute',
-      direction: 'output',
-      name: '循环结束'
-    },
-    {
       guid: 'POLOOP',
       paramType: 'execute',
       direction: 'output',
       name: '循环体',
+    },
+    {
+      guid: 'POEXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
     },
   ];
   blockWhile.callbacks.onStartRun = (block) => {
@@ -504,6 +505,7 @@ function registerControl() {
       direction: 'input',
       name: '终止',
       description: '终止循环',
+      forceNoCycleDetection: true,
     },
     {
       guid: 'PICON',
@@ -513,16 +515,16 @@ function registerControl() {
       name: '条件',
     },
     {
-      guid: 'POEXIT',
-      paramType: 'execute',
-      direction: 'output',
-      name: '循环结束'
-    },
-    {
       guid: 'POLOOP',
       paramType: 'execute',
       direction: 'output',
       name: '循环体',
+    },
+    {
+      guid: 'POEXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
     },
   ];
   blockDoWhile.callbacks.onStartRun = (block) => {
@@ -700,12 +702,13 @@ function registerControl() {
       direction: 'input',
       name: '终止',
       description: '终止循环',
+      forceNoCycleDetection: true,
     },
     {
-      guid: 'POEXIT',
+      guid: 'POLOOP',
       paramType: 'execute',
       direction: 'output',
-      name: '循环结束'
+      name: '循环体',
     },
     {
       guid: 'POINDEX',
@@ -714,10 +717,10 @@ function registerControl() {
       name: '当前索引',
     },
     {
-      guid: 'POLOOP',
+      guid: 'POEXIT',
       paramType: 'execute',
       direction: 'output',
-      name: '循环体',
+      name: '循环结束'
     },
   ];
   blockFor.callbacks.onPortExecuteIn = (block, port) => { 
@@ -735,22 +738,12 @@ function registerControl() {
       let stepIndex = <number>block.getInputParamValue('PISTEP');
       let breakActived = variables['breakActived'];
 
-      if(stepIndex > 0)
-        for(let i = startIndex; i < endIndex; i += stepIndex) {
-          
-          block.setOutputParamValue(POINDEX, i);
-          block.activeOutputPort(POLOOP);
+      for(let i = startIndex; i < endIndex; i += stepIndex) {
+        
+        block.setOutputParamValue(POINDEX, i);
+        block.activeOutputPort(POLOOP);
 
-          breakActived = variables['breakActived']; if(breakActived) break;
-        }
-      else if(stepIndex < 0) {
-        for(let i = startIndex; i > endIndex; i += stepIndex) {
-
-          block.setOutputParamValue(POINDEX, i);
-          block.activeOutputPort(POLOOP);
-
-          breakActived = variables['breakActived']; if(breakActived) break;
-        }
+        breakActived = variables['breakActived']; if(breakActived) break;
       }
 
       block.activeOutputPort(POEXIT);

@@ -303,10 +303,8 @@
 
   .block-error {
     display: block;
-    margin: 2px;
-    padding: 2px;
+    padding: 2px 0;
     color: #fff;
-    border-radius: 4px;
     max-height: 60px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -326,6 +324,34 @@
       i {
         color: rgb(243, 117, 0);
       }
+    }
+  }
+
+  .bottom-info {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    max-width: 400px;
+    transform: translateY(100%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;    
+    padding: 8px 0;
+
+    .block-error {
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+
+    &::after {
+      display: inline-block;
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      width: 0;
+      height: 0;
+      border: 5px solid transparent;
+      border-bottom-color: rgba(0, 0, 0, 0.5);
     }
   }
 
@@ -416,7 +442,6 @@
   font-size: 16px;
   left: -3px;
   top: -40px;
-  min-height: 31px;
   min-width: 110px;
   background-color: rgba(228, 228, 228, 0.76);
   border-radius: 8px;
@@ -446,7 +471,6 @@
   .flow-block-comment-text {
     display: inline-block;
     font-size: 13px;
-    min-height: 23px;
     min-width: 80px;
     border-radius: 6px;
     color: #000;
@@ -498,6 +522,25 @@
   pointer-events: none;
   top: 0;
   left: 0;
+}
+.flow-block-extended-line {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  width: 30px;
+
+  .ports {
+    margin: 0!important;
+
+    &.input {
+      width: 12px;
+      overflow: hidden;
+    }
+    &.output {
+      width: 12px;
+      overflow: hidden;
+    }
+  }
 }
 
 .flow-block-comment-block {

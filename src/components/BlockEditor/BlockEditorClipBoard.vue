@@ -18,7 +18,7 @@ export default class BlockEditorClipBoard extends Vue {
    * 获取单元剪贴板状态
    */
   getBlocksClipboardState() { 
-    return this.blockClipboard.length == 0; 
+    return this.blockClipboard.length > 0; 
   }
   /**
    * 获取剪贴板中的块

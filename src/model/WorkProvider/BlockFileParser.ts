@@ -10,6 +10,7 @@ import { BlockPortEditor } from "../Editor/BlockPortEditor";
 import { BlockParameterType, BlockParameterSetType, createParameterTypeFromString } from "../Define/BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
 import { Rect } from "../Rect";
+import logger from "@/utils/Logger";
 
 interface BlockFileDocData {
   name: string,
@@ -121,10 +122,10 @@ export class BlockFileParser {
         if(portData[0] == -1)
           portData[0] = docData.portMap.push({
             guid: block.guid + '-' + port.guid,
-            regData: port.regData,
+            regData: port.isDyamicAdd || port.paramType.isExecute() ? port.regData : undefined,
           }) - 1;
 
-        if(!port.paramType.isExecute() || port.isDyamicAdd)
+        if(!port.paramType.isExecute())
           data.ports.push({
             blockMap: blocksIndex,            
             guidMap: portData[0],
@@ -143,10 +144,10 @@ export class BlockFileParser {
         if(portData[0] == -1)
           portData[0] = docData.portMap.push({
             guid: block.guid + '-' + port.guid,
-            regData: port.regData,
+            regData: port.isDyamicAdd || port.paramType.isExecute() ? port.regData : undefined,
           }) - 1;
 
-        if(!port.paramType.isExecute() || port.isDyamicAdd)
+        if(!port.paramType.isExecute())
           data.ports.push({
             blockMap: blocksIndex,            
             guidMap: portData[0],
@@ -301,14 +302,14 @@ export class BlockFileParser {
 
     graph.inputPorts = [];
     graphData.inputPorts.forEach((p) => {
-      p.paramType = new BlockParameterType(p.paramType);
-      p.paramDictionaryKeyType = new BlockParameterType(p.paramDictionaryKeyType);
+      p.paramType = createParameterTypeFromString(p.paramType);
+      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType);
       graph.inputPorts.push(p);
     });
     graph.outputPorts = [];
     graphData.outputPorts.forEach((p) => {
-      p.paramType = new BlockParameterType(p.paramType);
-      p.paramDictionaryKeyType = new BlockParameterType(p.paramDictionaryKeyType);
+      p.paramType = createParameterTypeFromString(p.paramType);
+      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType);
       graph.outputPorts.push(p);
     });
 
@@ -361,7 +362,7 @@ export class BlockFileParser {
    */
   public loadFromString(str : string, doc : BlockDocunment, readToEditor : boolean) {
     if(StringUtils.isNullOrEmpty(str)) {
-      console.log('[loadFromString] invalid string!');
+      logger.log('loadFromString', 'invalid string!');
       return -1;
     }
 
@@ -373,7 +374,7 @@ export class BlockFileParser {
     try {
       data = JSON.parse(str);
     } catch(e) {
-      console.log('[loadFromString] invalid file!');
+      logger.log('loadFromString', 'invalid file!');
       return -2;
     }
 

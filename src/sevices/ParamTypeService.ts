@@ -1,3 +1,4 @@
+import logger from "@/utils/Logger";
 import { BlockParameterTypeConverterData, BlockParameterTypeRegData } from "../model/Define/BlockDef";
 import { BlockParameterBaseType, BlockParameterType, createParameterTypeFromString } from "../model/Define/BlockParameterType";
 import CommonUtils from "../utils/CommonUtils";
@@ -110,6 +111,8 @@ export class ParamTypeService {
    * @param toType 要转为的类型
    */
   public getTypeCoverter(fromType : BlockParameterType, toType : BlockParameterType) {
+    if(fromType.isExecute() || toType.isExecute()) 
+      return null;
     let from = fromType.toString();
     let to = toType.toString();
     let typeChild = this.allTypeConverter.get(from);
@@ -130,7 +133,7 @@ export class ParamTypeService {
   public registerCustomType(reg : BlockParameterTypeRegData) {
     let old = this.getCustomType(reg.name);
     if(old != null) {
-      console.warn("[registerCustomType] Type " + reg.name + " alreday registered !");
+      logger.warning("registerCustomType", "Type " + reg.name + " alreday registered !");
       return old;
     }
     this.allCustomTypes.set(reg.name, reg);
@@ -159,7 +162,7 @@ export class ParamTypeService {
    */
   public unregisterCustomType(name : string) {
     if(!this.allCustomTypes.has(name)) {
-      console.warn("[unregisterCustomType] Type " + name + " are not register !");
+      logger.warning("unregisterCustomType", "Type " + name + " are not register !");
       return;
     }
     this.allCustomTypes.delete(name);

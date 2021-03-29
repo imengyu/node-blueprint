@@ -7,7 +7,7 @@ import { EditorSettings } from "@/model/Editor/EditorSettings";
 export interface EditorPlatformWorkAbstract {
   init: () => void;
   writeFile: (path: string, data : string, callback: () => void) => void;
-  readFile: (path: string, callback: (data : string, err : any) => void) => void;
+  readFile: (path: string, callback: (data : string, err : Error|string) => void) => void;
 
   windowControl: (act : string) => void;
   editorAction: (cmd: string, ...data : any) => void;

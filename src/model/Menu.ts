@@ -1,3 +1,4 @@
+import { BlockEditor } from "./Editor/BlockEditor";
 
 export class MenuData {
   public name = '';
@@ -88,7 +89,7 @@ export declare interface MenuItem {
   /**
    * 菜单项点击事件
    */
-  onClick ?: Function,
+  onClick ?: (this: BlockEditor) => void,
   /**
    * 子菜单结构信息
    */

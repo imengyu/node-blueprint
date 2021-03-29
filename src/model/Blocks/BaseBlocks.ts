@@ -9,10 +9,12 @@ import { BlockParameterEnumRegData, BlockParameterTypeConverterData, BlockRegDat
 import { BlockPort } from "../Define/Port";
 import { BlockEditor } from "../Editor/BlockEditor";
 import { Block } from "../Define/Block";
-import { BlockRunContextData } from "../WorkProvider/Runner";
+import { BlockRunContextData } from "../Runner/BlockRunContextData";
 import { BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "../Define/BlockParameterType";
 import { Vector2 } from "../Vector2";
 import { Rect } from "../Rect";
+import BlockServiceInstance from "@/sevices/BlockService";
+import BlockRegister from "./Utils/BlockRegister";
 
 export default { 
   register,
@@ -42,6 +44,7 @@ function register() {
     registerLoadLib(),
     registerCommentBlock(),
     registerConvertBlock(),
+    registerConnBlock(),
   );
 }
 
@@ -337,7 +340,7 @@ function registerScriptVariableBase()  {
         let val = block.getInputParamValue(block.data['portInGuid']);
         variableReal.set(block.currentRunningContext, val);
       }else {
-        logger.error('[Set variable] variable ' + block.options['variable'] + ' not found !');
+        logger.error(block.getName(),'变量 ' + block.options['variable'] + ' 未找到!');
       }
 
       block.activeOutputPort('PO0');
@@ -390,6 +393,7 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'input') {
         let portReal = block.getPortByGUID(port.guid);
+        portReal.name = port.name;
         portReal.paramType = typeof port.paramType === 'string' ? createParameterTypeFromString(port.paramType) : <BlockParameterType>cloneParameterTypeFromString(port.paramType);
         portReal.paramDictionaryKeyType = typeof port.paramDictionaryKeyType === 'string' ? createParameterTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>cloneParameterTypeFromString(port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
@@ -428,7 +432,7 @@ function registerScriptGraphBase()  {
     //子上下文请求父上下文
     let outerBlock = context.outerBlock;
     if(outerBlock == null) {
-      logger.error('[graphIn.onPortParamRequest.' + port.guid + '] Bad context ' + context + ' .');
+      logger.error(block.getName(), 'graphIn.onPortParamRequest.' + port.guid + ': Bad context ' + context + ' .');
       return;
     }
     let outerPort = outerBlock.getPortByGUID(port.guid);
@@ -488,14 +492,14 @@ function registerScriptGraphBase()  {
     let context = block.currentRunningContext;
     let outerBlock = context.outerBlock;
     if(outerBlock == null) {
-      logger.error('[leavePort.' + port.guid + '] Bad context ' + context + ' .');
+      logger.error(block.getName(), 'leavePort.' + port.guid + ': Bad context ' + context + ' .');
       return;
     }    
     
     //获取父上下文
     let parentContext = context.getUpperParentContext();  
     if(parentContext == null) {
-      logger.error('[leavePort] Bad context has emerged, in port: ' + block.guid + '-' + port.guid);
+      logger.error(block.getName(), 'leavePort: Bad context has emerged, in port: ' + block.guid + '-' + port.guid);
       return null;
     }
     
@@ -616,7 +620,10 @@ function registerScriptGraphBase()  {
 
       let inBlock = block.data['inBlock'];
       if(inBlock == null) {
-        logger.error('[graph.call] Call graph ' + currentGraph.name + ' failed because it does not contain an entry unit.');
+        logger.error(block.getName(), 'graph.call: Call graph ' + currentGraph.name + ' failed because it does not contain an entry unit.', {
+          srcBlock: block,
+          srcPort: port
+        });
 
         //提示
         if(block.isEditorBlock) {
@@ -627,7 +634,10 @@ function registerScriptGraphBase()  {
       }
       let inPort = inBlock.getPortByGUID(port.guid);
       if(inPort == null) {
-        logger.error('[graph.call] Call graph ' + currentGraph.name + ' -> ' + port.guid + ' failed.');
+        logger.error(block.getName(), 'graph.call: Call graph ' + currentGraph.name + ' -> ' + port.guid + ' failed.', {
+          srcBlock: block,
+          srcPort: port
+        });
         return;
       }
 
@@ -653,7 +663,10 @@ function registerScriptGraphBase()  {
     //父上下文请求子上下文
     let outBlock = block.data['outBlock'];
     if(outBlock == null) {
-      logger.error('[graph.onPortParamRequest] request graph param failed because it does not contain an output unit.');
+      logger.error(block.getName(), 'graph.onPortParamRequest: Request graph param failed because it does not contain an output unit.', {
+        srcBlock: block,
+        srcPort: port
+      });
       return;
     }
 
@@ -690,11 +703,40 @@ function registerDebugBase() {
   ParamTypeServiceInstance.registerCustomType(new BlockParameterEnumRegData("DebugLogLevel", [
     'log','info','warn','error'
   ], '#F7C709'));
+  ParamTypeServiceInstance.registerCustomType(new BlockParameterEnumRegData("BasePlatformType", [
+    'all','electron','nodejs','cnative'
+  ], '#8552a1'));
 
   let blockDebug = new BlockRegData("4B6EA737-9702-A383-A268-AADC332038DF", "输出日志", '输出调试日志至控制台', '基础', '基础/调试');
   let blockModal = new BlockRegData("CB1FB757-631D-8A95-0AB1-3CB28CB04FBC", "显示一个信息对话框", '显示一个对话框', '基础', '基础/调试');
   let blockConfirm = new BlockRegData("84AB5443-1998-B4FB-773A-5F41F364BB7A", "显示一个确认对话框", '显示一个确认对话框，用户可选择确认或取消', '基础', '基础/调试');
   let blockDelay = new BlockRegData("6C01D858-CF4D-D9EF-C18E-DE5DAE400702", "延时", '延迟流程图的运行', '基础', '基础');
+  let blockPlatform = new BlockRegData("522E5C4D-16E1-9D48-1916-19830B6F5B35", "运行库平台", "获取当前流图所在的运行库的平台", 'imengyu', '基础');
+  
+  //blockPlatform
+  //===================
+
+  blockPlatform.blockStyle.logoBackground = 'title:运行库平台';
+  blockPlatform.blockStyle.minWidth = '140px';
+  blockPlatform.baseInfo.logo = require('../../assets/images/BlockIcon/switch.svg');
+  blockPlatform.baseInfo.version = '2.0';
+  blockPlatform.ports = [
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'BasePlatformType',
+    },
+  ];
+  blockPlatform.callbacks.onPortParamRequest = (block, port) => {
+
+  };
+  blockPlatform.blockStyle.titleBakgroundColor = "rgba(255,20,147,0.6)";
+  blockPlatform.blockStyle.smallTitle = true;
+  blockPlatform.blockStyle.noTitle = true;
+  blockPlatform.blockStyle.hideLogo = true;
+
+  //blockModal
+  //===================
 
   blockDelay.baseInfo.version = '2.0';
   blockDelay.baseInfo.logo = require('../../assets/images/BlockIcon/clock.svg');
@@ -776,16 +818,28 @@ function registerDebugBase() {
 
     switch(paramLevel) {
       case 'log':
-        console.log(paramInput);
+        logger.log(block.getName(), paramInput, {
+          srcBlock: block,
+          srcPort: port
+        });
         break;
       case 'info':
-        console.info(paramInput);
+        logger.info(block.getName(), paramInput, {
+          srcBlock: block,
+          srcPort: port
+        });
         break; 
       case 'warn':
-        console.warn(paramInput);
+        logger.warning(block.getName(), paramInput, {
+          srcBlock: block,
+          srcPort: port
+        });
         break;
       case 'error':
-        console.error(paramInput);
+        logger.error(block.getName(), paramInput, {
+          srcBlock: block,
+          srcPort: port
+        });
         break;
     }
 
@@ -919,16 +973,18 @@ function registerDebugBase() {
   blockConfirm.callbacks.onCreateCustomEditor = null;
   blockConfirm.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  return [ blockDelay, blockConfirm, blockDebug, blockModal ]
+  return [ blockPlatform, blockDelay, blockConfirm, blockDebug, blockModal ]
 }
 function registerTypeBase() {
 
-  let comUppdateFn = (block : Block, port : BlockPort, context : BlockRunContextData) => {
-    block.setOutputParamValue('OUT', block.getInputParamValue('IN', context), context);
+  let typeRequest = (block : Block, port : BlockPort, context : BlockRunContextData) => {
+    let val = block.getInputParamValue('IN', context);
+    port.updateOnputValue(context, val);
+    return val;
   };
   let blocks = [];
 
-  let block = new BlockRegData("A81899CF-766B-F511-B179-90A81BBB088B", "字符串", "字符串 string 类型参数", 'imengyu', '基础/类型参数');
+  let block = new BlockRegData("A81899CF-766B-F511-B179-90A81BBB088B", "字符串", "字符串 string 类型参数", 'imengyu', '基础/类型');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/string.svg');
   block.baseInfo.version = '2.0';
   block.ports = [
@@ -943,7 +999,7 @@ function registerTypeBase() {
       paramType: 'string',
     },
   ];
-  block.callbacks.onPortParamRequest = comUppdateFn;
+  block.callbacks.onPortParamRequest = typeRequest;
   block.blockStyle.titleBakgroundColor = "rgba(255,20,147,0.6)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
@@ -951,7 +1007,7 @@ function registerTypeBase() {
 
   blocks.push(block);
 
-  block = new BlockRegData("EE8345CE-14FB-3CE5-C5CD-30CF3A102DE5", "数字", "数字 number 类型参数", 'imengyu', '基础/类型参数');
+  block = new BlockRegData("EE8345CE-14FB-3CE5-C5CD-30CF3A102DE5", "数字", "数字 number 类型参数", 'imengyu', '基础/类型');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/number.svg');
   block.baseInfo.version = '2.0';
   block.ports = [
@@ -967,7 +1023,7 @@ function registerTypeBase() {
       paramType: 'number',
     },
   ];
-  block.callbacks.onPortParamRequest = comUppdateFn;
+  block.callbacks.onPortParamRequest = typeRequest;
   block.blockStyle.titleBakgroundColor = "rgba(158,258,68,0.6)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
@@ -975,31 +1031,7 @@ function registerTypeBase() {
 
   blocks.push(block);
 
-  block = new BlockRegData("6CE4CA4F-E2F9-AD97-3F83-1B60289C9290", "BigInt", "BigInt 类型参数", 'imengyu', '基础/类型参数');
-  block.baseInfo.logo = require('../../assets/images/BlockIcon/bigint.svg');
-  block.baseInfo.version = '2.0';
-  block.ports = [
-    {
-      direction: 'input',
-      guid: 'IN',
-      paramType: 'bigint',
-      paramDefaultValue: 0,
-    },
-    {
-      direction: 'output',
-      guid: 'OUT',
-      paramType: 'bigint',
-    },
-  ];
-  block.callbacks.onPortParamRequest = comUppdateFn;
-  block.blockStyle.titleBakgroundColor = "rgba(0,168,243,0.5)";
-  block.blockStyle.smallTitle = true;
-  block.blockStyle.noTitle = true;
-  block.blockStyle.hideLogo = true;
-
-  blocks.push(block);
-
-  block = new BlockRegData("90833609-8CF7-2324-A4C0-781344701C06", "布尔值", "布尔 boolean 类型参数", 'imengyu', '基础/类型参数');
+  block = new BlockRegData("90833609-8CF7-2324-A4C0-781344701C06", "布尔值", "布尔 boolean 类型参数", 'imengyu', '基础/类型');
   block.baseInfo.logo = require('../../assets/images/BlockIcon/boolean.svg');
   block.baseInfo.version = '2.0';
   block.ports = [
@@ -1015,8 +1047,32 @@ function registerTypeBase() {
       paramType: 'boolean',
     },
   ];
-  block.callbacks.onPortParamRequest = comUppdateFn;
+  block.callbacks.onPortParamRequest = typeRequest;
   block.blockStyle.titleBakgroundColor = "rgba(180,0,0,0.6)";
+  block.blockStyle.smallTitle = true;
+  block.blockStyle.noTitle = true;
+  block.blockStyle.hideLogo = true;
+
+  blocks.push(block);
+
+  block = new BlockRegData("6CE4CA4F-E2F9-AD97-3F83-1B60289C9290", "BigInt", "BigInt 类型参数", 'imengyu', '基础/类型');
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/bigint.svg');
+  block.baseInfo.version = '2.0';
+  block.ports = [
+    {
+      direction: 'input',
+      guid: 'IN',
+      paramType: 'bigint',
+      paramDefaultValue: 0,
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'bigint',
+    },
+  ];
+  block.callbacks.onPortParamRequest = typeRequest;
+  block.blockStyle.titleBakgroundColor = "rgba(0,168,243,0.5)";
   block.blockStyle.smallTitle = true;
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
@@ -1061,7 +1117,7 @@ function registerLoadLib() {
       direction: 'output',
       guid: 'ALREDAY-LOADED',
       paramType: 'boolean',
-      name: '已经加载?',
+      name: '调用之前已加载?',
     },
     {
       direction: 'output',
@@ -1073,9 +1129,36 @@ function registerLoadLib() {
   block.callbacks.onPortExecuteIn = (block, port) => {
     let libName = block.getInputParamValue('LIBNAME');
     if(StringUtils.isNullOrEmpty(libName)) 
-      block.throwError('库的包名 必须提供 !', port);
+      block.throwError('库的包名 必须提供 !', port, "error", true);
     else {
-      
+      let pack = BlockRegister.isPackRegister(libName);
+      if(pack) {
+        block.setOutputParamValue('ALREDAY-LOADED', true);
+        block.setOutputParamValue('LIB-INFO', pack);
+        block.activeOutputPort('OUT');
+      } else {
+        block.setOutputParamValue('ALREDAY-LOADED', false);
+
+        try{
+          
+          let pack = __ORIGINAL_NODEJS_REQUIRE__(libName);
+          if(pack) {
+            BlockRegister.registerPack(pack);
+            block.setOutputParamValue('LOAD-SUCCESS', true);
+            block.setOutputParamValue('LIB-INFO', BlockRegister.isPackRegister(libName));
+          } else {
+            block.throwError(`Pack ${libName} load failed : func not return anything!`, port, 'warning', false);
+            block.setOutputParamValue('LOAD-SUCCESS', false);
+            block.setOutputParamValue('LIB-INFO', null);
+          }
+        } catch(e) {
+          block.throwError(`Pack ${libName} load failed : Error ${e}`, port, 'warning', false);
+          block.setOutputParamValue('LOAD-SUCCESS', false);
+          block.setOutputParamValue('LIB-INFO', null);
+        }
+
+        block.activeOutputPort('OUT');
+      }
     }
   };
   block.blockStyle.logoBackground = require('../../assets/images/BlockIcon/module-big.svg');
@@ -1114,6 +1197,7 @@ function registerCommentBlock() {
     block.data['input-control'] = input;
     parentEle.appendChild(input);
   };
+  block.blockStyle.noComment = true;
   block.callbacks.onSave = (block) => {
     var input = <HTMLInputElement>block.data['input-control'];
     block.options['width'] = input.offsetWidth;
@@ -1128,6 +1212,7 @@ function registerCommentBlock() {
   commentBlock.blockStyle.minHeight = '100px';
   commentBlock.blockStyle.userCanResize = true;
   commentBlock.blockStyle.noTooltip = true;
+  commentBlock.blockStyle.noComment = true;
   commentBlock.blockStyle.hideLogo = true;
   commentBlock.blockStyle.noTitle = true;
   commentBlock.blockStyle.layer = 'background';
@@ -1202,10 +1287,11 @@ function registerCommentBlock() {
       if(block.data['mouseDown'] && block.getCurrentSizeType() == 0) {
 
         //移动包括在注释内的单元
+        let zoom = 1 / block.editor.getViewZoom();
         let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
         list.forEach((v) => {
-          v.position.x = v.getLastPos().x + offX;
-          v.position.y = v.getLastPos().y + offY;
+          v.position.x = v.getLastPos().x + (offX * zoom);
+          v.position.y = v.getLastPos().y + (offY * zoom);
           v.setPos();
         })
       }
@@ -1244,7 +1330,9 @@ function registerConvertBlock() {
   block.settings.hideInAddPanel = true;
   block.callbacks.onCreate = (block : Block) => {
     if(!StringUtils.isNullOrEmpty(block.options['coverterFrom']) && !StringUtils.isNullOrEmpty(block.options['coverterTo']))
-      block.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(block.options['coverterFrom'], block.options['coverterTo']);
+      block.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(
+        createParameterTypeFromString(block.options['coverterFrom']), 
+        createParameterTypeFromString(block.options['coverterTo']));
 
     let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
     if(coverter) {
@@ -1326,4 +1414,86 @@ function registerConvertBlock() {
   };
 
   return [ block, parseFloatBlock, parseIntBlock ];
+}
+function registerConnBlock() {
+  let block = new BlockRegData("8A94A788-ED4E-E521-5BC2-4D69B59BAB80", "数据延长线", "", 'imengyu', '基础');
+
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
+  block.baseInfo.description = '';
+  block.ports = [
+    {
+      guid: 'INPUT',
+      paramType: 'any',
+      paramRefPassing: true,
+      direction: 'input',
+      portAnyFlexable: { flexable: true },
+      defaultConnectPort: true,
+    },
+    {
+      guid: 'OUTPUT',
+      paramType: 'any',
+      paramRefPassing: true,
+      portAnyFlexable: { flexable: true },
+      direction: 'output'
+    },
+  ];
+  block.portAnyFlexables = {
+    flexable: {}
+  };
+  block.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
+  block.blockStyle.noTitle = true;
+  block.blockStyle.noComment = true;
+  block.blockStyle.minWidth = '0px';
+  block.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
+    return block.getInputParamValue('INPUT', context);
+  };
+  block.callbacks.onCreate = (block : Block) => {
+    let type = block.options['type'];
+    if(!StringUtils.isNullOrEmpty(type)) {
+      block.changePortParamType(block.getPortByGUID('INPUT'), undefined, type); 
+      block.changePortParamType(block.getPortByGUID('OUTPUT'), undefined, type); 
+    }
+  };
+  block.blockMenu.items.push({
+    label: '集合类型',
+    children: [
+      {
+        label: '变量',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'variable'); 
+          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'variable'); 
+          this.options['type'] = 'variable';
+        }
+      },
+      {
+        label: '数组',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'array'); 
+          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'array'); 
+          this.options['type'] = 'array';
+        }
+      },
+      {
+        label: '集合',
+        onClick: function() {
+          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'set'); 
+          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'set'); 
+          this.options['type'] = 'set';
+        }
+      },
+      {
+        label: '映射',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'dictionary'); 
+          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'dictionary'); 
+          this.options['type'] = 'dictionary';
+        }
+      },
+    ]
+  })
+  block.callbacks.onEditorCreate = (block) => {
+    block.el.classList.add('flow-block-extended-line');
+  }
+
+  return [ block ];
 }

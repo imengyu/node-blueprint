@@ -29,6 +29,10 @@ export default class GraphBreadcrumb extends Vue {
     isCurrent: boolean,
   }> = [];
 
+  @Watch('currentDocunment')
+  public forceUpdate() { 
+    this.loadGraphBreadcrumb(this.currentGraph);
+  }
   @Watch('currentGraph')
   loadGraphBreadcrumb(v : BlockGraphDocunment) {
     if(v == null || this.currentDocunment == null) this.graphBreadcrumb.empty();

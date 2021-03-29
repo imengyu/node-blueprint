@@ -1,7 +1,7 @@
 import { BlockPortRegData, BlockRegData, } from "./BlockDef";
 import { BlockPortDirection, BlockPort } from "./Port";
 
-import { BlockRunContextData, BlockRunner } from "../WorkProvider/Runner";
+import { BlockRunner } from "../Runner/Runner";
 import { EventHandler } from "../../utils/EventHandler";
 import { BlockGraphDocunment } from "./BlockDocunment";
 import { BlockEditor } from "../Editor/BlockEditor";
@@ -13,6 +13,7 @@ import { BlockPortEditor } from "../Editor/BlockPortEditor";
 import { BlockParameterSetType, BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "./BlockParameterType";
 import { CustomStorageObject } from "./CommonDefine";
 import BlockServiceInstance from "@/sevices/BlockService";
+import { BlockRunContextData } from "../Runner/BlockRunContextData";
 
 /**
  * 基础单元定义
@@ -43,8 +44,11 @@ export class Block {
       context = this.currentRunningContext;
     //遍历调用栈  
     do {
-      if(this.stack < context.graphBlockParamStack.length) 
-        return context.graphBlockParamStack[this.stack].variables;
+      if(this.stack < context.graphBlockStack.length) {
+        let variables = context.graphBlockStack[this.stack];
+        if(variables)
+          return variables.variables;
+      }
       else if(context != null && context.parentContext != null) 
         context = context.parentContext.graph == context.graph ? context.parentContext : null;//同一个图表中才能互相访问
       else context = null;
@@ -54,6 +58,48 @@ export class Block {
   }
 
   public stack = -1;
+
+  private stackRepeat = 0;
+
+  /**
+   * 单元进入，参数，变量压栈
+   * @param context 当前上下文
+   */
+  public pushBlockStack(context: BlockRunContextData, port: BlockPort) {
+    if(this.currentRunningContext === null) {
+      this.currentRunningContext = context;
+      //准备所有参数栈
+      let argCount = 0;
+      this.allPorts.forEach((port) => {
+        if(!port.paramType.isExecute()) {
+          if(!(port.paramRefPassing && port.direction === 'input')) {
+            context.graphBlockParamIndexs[port.stack] = context.pushParam(
+              CommonUtils.isDefined(port.paramUserSetValue) ? port.paramUserSetValue : port.paramDefaultValue
+            );
+            argCount++;
+          }
+        }
+      });
+      context.pushParam(argCount);//保存argCount
+    } else {
+      this.stackRepeat ++;//防止错误的释放栈
+    }
+  }
+  /**
+   * 单元结束，参数，变量弹栈
+   * @param context 当前上下文
+   */
+  public popBlockStack(context: BlockRunContextData) {
+
+    if(this.stackRepeat > 0) {
+      this.stackRepeat--;
+      return;//防止错误的释放栈
+    }
+
+    let argCount = context.popParam() as number;
+    context.stackPointer -= argCount;
+    this.currentRunningContext = null;
+  }
 
   /**
    * 块的类型
@@ -71,6 +117,13 @@ export class Block {
     this.isEditorBlock = editorBlock;
     if(regData)
       this.regData = regData;
+  }
+
+  /**
+   * 获取名称
+   */
+  public getName(withUid = false) {
+    return this.regData.baseInfo.name + (withUid ? `(UID: ${this.uid})` : '');
   }
 
   public createBase() {
@@ -152,20 +205,18 @@ export class Block {
   public onPortRemove = new EventHandler<OnPortEditorEventCallback>();
 
   public portUpdateLock = false;
+  public blockCurrentCreateNewContext = false;
 
   //上下文运行操作
   //===========================
 
   //进入块时的操作
   public enterBlock(port: BlockPort, context : BlockRunContextData) {
-    this.currentRunningContext = context;
-    this.currentRunningContext.stackCalls.push({
-      block: this, port: port, childContext: null
+    context.stackCalls.push({
+      block: this, 
+      port: port, 
+      childContext: null,
     });
-    if(!this.isPlatformSupport) {
-      this.throwError('单元不支持当前平台', port, 'error');
-      return;
-    }
     this.onEnterBlock.invoke();
     if(this.isEditorBlock)
       this.allPorts.forEach((port) => {
@@ -196,7 +247,9 @@ export class Block {
   public addPort(data : BlockPortRegData, isDyamicAdd = true, initialValue : any = null, forceChangeDirection ?: BlockPortDirection) {
     let oldData = this.getPort(data.guid, data.direction);
     if(oldData != null && oldData != undefined) {
-      logger.warning("[addPort]" + data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !");
+      logger.warning(this.getName() + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
+        srcBlock: this
+      });
       return oldData;
     }
 
@@ -227,7 +280,8 @@ export class Block {
       else newPort.paramDictionaryKeyType = cloneParameterTypeFromString(data.paramDictionaryKeyType);
     }
 
-    newPort.forceEditorControlOutput = data.forceEditorControlOutput;
+    newPort.forceEditorControlOutput = data.forceEditorControlOutput || false;
+    newPort.forceNoCycleDetection = data.forceNoCycleDetection || false;
     newPort.data = CommonUtils.isDefinedAndNotNull(data.data) ? data.data : {};
 
     if(newPort.direction == 'input') {
@@ -256,7 +310,9 @@ export class Block {
   public deletePort(guid : string|BlockPort, direction ?: BlockPortDirection) {
     let oldData = typeof guid == 'string' ? this.getPort(guid, direction) : guid;
     if(oldData == null || oldData == undefined) {
-      logger.warning("[deletePort] " + guid + " port not exist !");
+      logger.warning(this.getName() + ".deletePort", guid + " port not exist !", {
+        srcBlock: this,
+      });
       return;
     }
 
@@ -393,8 +449,10 @@ export class Block {
    */
   public activeOutputPort(guid : string|BlockPort, context ?: BlockRunContextData) {
     let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
-    if(port)
+    if(port) 
       port.active(context ? context : this.currentRunningContext);
+    else
+      logger.warning(this.getName(true), 'activeOutputPort: Not found port ' + guid);
   }
   /**
    * 在新的上下文中激活某一个输出行为端口（适用于接收事件）
@@ -402,8 +460,10 @@ export class Block {
    */
   public activeOutputPortInNewContext(guid : string|BlockPort) {
     let port = typeof guid == 'string' ? <BlockPort>this.outputPorts[guid] : guid;
-    if(port)
+    if(port) 
       port.activeInNewContext();
+    else
+      logger.warning(this.getName(true), 'activeOutputPort: Not found port ' + guid);
   }
 
   public onEnterBlock = new EventHandler<OnBlockEventCallback>();
@@ -426,16 +486,32 @@ export class Block {
    * 注意，终止后流图将停止运行。单元内部请勿继续调用其他端口。
    */
   public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error', breakFlow = false) {
-    let errorString = `[Block Error] In Block ${this.guid}-${this.uid} => Port ${port?port.guid:'UNKNOW'} => ${err}`;
+    let errorString = `单元 ${this.getName()} (${this.uid}) ${port?'=>  端口'+port.guid:''} 发生错误： ${err}`;
     switch(level) {
-      case 'error': logger.error(errorString); break;
-      case 'warning': logger.warning(errorString); break;
+      case 'error': 
+        logger.error('单元错误', errorString, {
+          srcBlock: this,
+          srcPort: port
+        }); 
+        break;
+      case 'warning':
+        logger.warning('单元警告', errorString, {
+          srcBlock: this,
+          srcPort: port
+        }); 
+        break;
+      default: 
+        logger.log('单元警告', errorString, {
+          srcBlock: this,
+          srcPort: port
+        });
+        break;
     }
     //触发断点
     if(breakFlow && this.currentRunningContext) {
       this.currentRunningContext.runner.markInterrupt(
         this.currentRunningContext,
-        port,
+        null,
         this
       )
     }
@@ -448,7 +524,7 @@ export type OnPortEditorEventCallback = (block : BlockEditor, port : BlockPort) 
 export type OnPortUpdateCallback = (block : Block, port : BlockPort, portSource : BlockPort) => void;
 export type OnPortConnectCallback = (block : BlockEditor, port : BlockPort, portSource : BlockPort) => void;
 export type OnPortConnectCheckCallback = (block : BlockEditor, port : BlockPort, portSource : BlockPort) => string;
-export type OnPortRequestCallback = (block : Block, port : BlockPort, context : BlockRunContextData) => void;
+export type OnPortRequestCallback = (block : Block, port : BlockPort, context : BlockRunContextData) => any;
 export type OnBlockEditorEventCallback = (block : BlockEditor) => void;
 export type OnUserAddPortCallback = (block : BlockEditor, direction : BlockPortDirection, type : 'execute'|'param') => BlockPortRegData|BlockPortRegData[];
 export type OnAddBlockCheckCallback = (block : BlockRegData, graph : BlockGraphDocunment) => string|null;

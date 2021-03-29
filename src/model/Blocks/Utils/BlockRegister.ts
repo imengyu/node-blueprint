@@ -13,7 +13,9 @@ export default {
   registerAll,
   registerPack,
   unregisterPack,
+  isPackRegister,
   getAllPacks,
+  coreVersion: '1.0.300',
 }
 
 function registerAll() {
@@ -21,9 +23,13 @@ function registerAll() {
 }
 function registerPack(pack : PackageDef) {
   let blocks = pack.register();
+  BlockServiceInstance.registerBlockPack(pack);
   blocks.forEach(element => {
     BlockServiceInstance.registerBlock(element, pack, false);
   });
+}
+function isPackRegister(name : string) {
+  return BlockServiceInstance.getBlockPackRegistered(name);
 }
 function unregisterPack(pack : PackageDef) {
   let blocks = pack.register();

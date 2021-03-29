@@ -14,10 +14,10 @@ export class ConnectorDrawer {
    * @param viewZoom 缩放级别
    * @param pointPrecent 移动点的位置百分比（0-1），为负数则不显示
    */
-  drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, x1 : number, y1 : number, x2 : number, y2 : number, viewPort: Rect, hover = false, pointPrecent = -1, willHide = false) {
+  drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, x1 : number, y1 : number, x2 : number, y2 : number, viewPort: Rect, viewZoom: number, hover = false, pointPrecent = -1, willHide = false) {
     
-    let yAbs = Math.abs(y2 - y1); 
-    let xAbs = Math.abs(x2 - x1); 
+    let yAbs = Math.abs(y2 - y1) * viewZoom; 
+    let xAbs = Math.abs(x2 - x1) * viewZoom; 
 
     if(yAbs==0) yAbs=1;
     if(xAbs==0) xAbs=1;

@@ -3,11 +3,10 @@ import { Vector2 } from "../Vector2";
 import { Connector } from "./Connector";
 import { BlockPortRegData, BlockParameterEditorRegData } from "./BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
-import { BlockRunContextData } from "../WorkProvider/Runner";
+import { BlockRunContextData } from "../Runner/BlockRunContextData";
 import logger from "../../utils/Logger";
 import CommonUtils from "../../utils/CommonUtils";
 import ParamTypeServiceInstance, { ParamTypeService } from "../../sevices/ParamTypeService";
-import { homedir } from "os";
 import { BlockParameterSetType, BlockParameterType } from "./BlockParameterType";
 import { CustomStorageObject } from "./CommonDefine";
 
@@ -81,22 +80,16 @@ export class BlockPort {
   public removeConnectToPort(port : BlockPort) { 
     for(let i = this.connectedToPort.length - 1; i >= 0; i--) {
       if(this.connectedToPort[i].port == port) {
-        this.connectedToPort.remove(i);
-        return;
+        this.connectedToPort.remove(this.connectedToPort[i]);
       }
     }
   }
   public removeConnectByPort(port : BlockPort) { 
     for(let i = this.connectedFromPort.length - 1; i >= 0; i--) {
       if(this.connectedFromPort[i].port == port) {
-        this.connectedFromPort.remove(i);
-        return;
+        this.connectedFromPort.remove(this.connectedFromPort[i]);
       }
     }
-  }
-  public unconnectAllConnector() { 
-    if(this.parent.isEditorBlock)
-      (<BlockEditor>this.parent).unConnectPort(this);
   }
   public isConnected() { 
     if(this.direction == 'input')
@@ -161,6 +154,9 @@ export class BlockPort {
       str = typeName;
     return str;
   }
+  public getName() {
+    return `${this.parent.getName(true)}-${this.name}(${this.guid})`;
+  }
 
   /**
    * 对于这个执行端口，是否在新上下文执行端口。
@@ -176,19 +172,27 @@ export class BlockPort {
    * 获取当前端口变量在栈中的数据。
    */
   public getValue(runningContext: BlockRunContextData) : any {
-    if(this.paramStatic) return this.paramStaticValue;
+    if(this.paramStatic)
+     return this.paramStaticValue;
+    if(runningContext.graphBlockParamIndexs[this.stack] === -1) //未初始化栈
+      return this.paramUserSetValue;
+
     //遍历调用栈，找到数据
     let context = runningContext;
-    if(context == null)
+    if(context == null) {
+      logger.error(this.getName(), 'Port.getValue : Context not provided', logger.makeSrcPort(this))
       return undefined;
+     }
     do {
-      if(this.stack < context.graphBlockParamStack.length) 
-        return context.graphBlockParamStack[this.stack];
+      if(this.stack < context.graphBlockParamIndexs.length) 
+        return context.graphBlockParamStack[context.graphBlockParamIndexs[this.stack]];
       else if(context != null && context.parentContext != null) 
         context = context.parentContext.graph == context.graph ? context.parentContext : null;  
       else context = null;                                                                           
     } while(context != null);
 
+    
+    logger.error(this.getName(), 'Port.getValue : Not found param in context (Position: ' + this.stack + ')', logger.makeSrcPort(this))
     return undefined;
   }
   /**
@@ -198,22 +202,31 @@ export class BlockPort {
   public setValue(runningContext: BlockRunContextData, value : any) {
     if(this.paramStatic) {
       let oldV = this.paramStaticValue;
-      if(oldV != value) this.paramStaticValue = value;
+      if(oldV !== value) this.paramStaticValue = value;
       return oldV;
     }
-    let context = runningContext;
-    if(context == null)
+    if(runningContext.graphBlockParamIndexs[this.stack] === -1) {//未初始化栈
+      logger.error(this.getName(), 'Port.setValue : Port stack not initialized', logger.makeSrcPort(this))
       return undefined;
+    }
+    let context = runningContext;
+    if(context == null) {
+      logger.error(this.getName(), 'Port.setValue : Context not provided', logger.makeSrcPort(this))
+      return undefined;
+    }
     do {
-      if(this.stack < context.graphBlockParamStack.length) {
-        let oldV = context.graphBlockParamStack[this.stack];
-        if(oldV != value)
-          context.graphBlockParamStack[this.stack] = value;
+      if(this.stack < context.graphBlockParamIndexs.length) {
+        let index = context.graphBlockParamIndexs[this.stack];
+        let oldV = context.graphBlockParamStack[index];
+        if(oldV !== value)
+          context.graphBlockParamStack[index] = value;
         return oldV;
       } else if(context != null && context.parentContext != null) 
         context = context.parentContext.graph == context.graph ? context.parentContext : null;
       else context = null;
     } while(context != null);
+
+    logger.error(this.getName(), 'Port.setValue : Not found param in context (Position: ' + this.stack + ')', logger.makeSrcPort(this))
     return undefined;
   }
 
@@ -225,6 +238,10 @@ export class BlockPort {
    * 是否强制在输出端口显示编辑参数控件
    */
   public forceEditorControlOutput = false;
+  /**
+   * 强制不检查循环调用
+   */
+  public forceNoCycleDetection = false;
 
   /**
    * 获取当前端口是不是在编辑器模式中
@@ -241,7 +258,7 @@ export class BlockPort {
   public options : CustomStorageObject = {};
 
   /**
-   * 获取当前端口已缓存的参数
+   * 获取当前端口已缓存的参数（仅有上下文单元）
    * @param runningContext 正在运行的上下文
    */
   public getValueCached(runningContext: BlockRunContextData) {
@@ -255,46 +272,59 @@ export class BlockPort {
     }else if(this.direction == 'output') {
       return this.getValue(runningContext);
     }
+    return null;
   }
   /**
    * 强制请求出端口参数
    * @param runningContext 正在运行的上下文
    */
   public rquestOutputValue(runningContext: BlockRunContextData) {
-    this.parent.onPortParamRequest.invoke(this.parent, this, runningContext);
-    return this.getValueCached(runningContext);
+    let retVal = this.parent.onPortParamRequest.invoke(this.parent, this, runningContext);
+    return CommonUtils.isDefined(retVal) ? retVal : this.getValueCached(runningContext);
   }
   /**
    * 请求当前入端口参数
    * @param runningContext 正在运行的上下文
    */
   public rquestInputValue(runningContext: BlockRunContextData) {
-    if(this.direction != 'input') {
-      logger.warning('[port.rquestInputValue] Can not rquestInputValue on a non-input port.');
+
+    if(this.direction !== 'input') {
+      logger.warning(this.getName(), 'Port.rquestInputValue: Can not rquestInputValue on a non-input port.');
       return undefined;
     }
+
+    //没有连接，仅请求当前端口参数
     if(this.connectedFromPort.length == 0)
       return this.getValue(runningContext);
 
+    //请求连接的端口参数
     let port = this.connectedFromPort[0].port;
-    port.parent.onPortParamRequest.invoke(port.parent, port, runningContext);
+    let retVal = port.parent.onPortParamRequest.invoke(port.parent, port, runningContext);
 
-    if(this.paramRefPassing || port.paramRefPassing)
-      return port.getValue(runningContext);
+    //检测直接引用请求
+    if(this.paramRefPassing || port.paramRefPassing) {
+      return CommonUtils.isDefined(retVal) ? retVal : port.getValue(runningContext);
+    }
 
+    //防止循环更新
     let connector = this.connectedFromPort[0].connector;
     let iChangedChangedContext = connector.checkParamChangedChangedContext(runningContext);
     if(iChangedChangedContext >= 0) {
-      let v = port.getValue(runningContext);
+      let v = CommonUtils.isDefined(retVal) ? retVal : port.getValue(runningContext);
       this.setValue(runningContext, v);
       connector.deleteParamChangedChangedContext(iChangedChangedContext);
       return v;
-    } else if(!CommonUtils.isDefinedAndNotNull(this.getValue(runningContext))) {
-      let v = port.getValue(runningContext);
-      this.setValue(runningContext, v);
-      return v;
-    } else 
-      return this.getValue(runningContext);
+    } else {
+      //重复请求时只返回当前数据
+      let thisValue = this.getValue(runningContext);
+      if(CommonUtils.isDefinedAndNotNull(thisValue)) {
+        return thisValue
+      } else {
+        let v = CommonUtils.isDefined(retVal) ? retVal : port.getValue(runningContext);
+        this.setValue(runningContext, v);
+        return v;
+      }
+    }
   }
   /**
    * 更新当前出端口参数值
@@ -303,15 +333,16 @@ export class BlockPort {
    */
   public updateOnputValue(runningContext: BlockRunContextData, v : any)  {
     if(this.direction != 'output') {
-      logger.warning('[port.updateOnputValue] Can not updateOnputValue on a non-output port.');
+      logger.warning(this.getName(), 'Port.updateOnputValue: Can not updateOnputValue on a non-output port.');
       return;
     }
-    if(CommonUtils.isDefined(v))
+    if(CommonUtils.isDefined(v) && runningContext.graphBlockParamIndexs[this.stack] >= 0)
       this.setValue(runningContext, v);
     this.connectedToPort.forEach((p) => {
       p.connector.paramChangedContext.addOnce(runningContext);
     });
   }
+
   /**
    * 检查当前入端口参数是否更改
    * @param runningContext 正在运行的上下文
@@ -360,67 +391,29 @@ export class BlockPort {
    */
   public activeInNewContext() {
     if(!this.paramType.isExecute()) {
-      logger.warning('[Port.activeInNewContext] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
+      logger.error(this.getName(),'Port.activeInNewContext: Cannot execute port because it is not execute port.');
       return;
     }
     if(!this.executeInNewContext) {
-      logger.warning('[Port.activeInNewContext] Cannot execute port '+ this.parent.guid + '-' + this.guid +' in new context because executeInNewContext is not set to true.');
+      logger.error(this.getName(),'Port.activeInNewContext: Cannot execute port in new context because executeInNewContext is not set to true.');
       return;
     }
-    if(this.direction == 'output') {
-      let context = this.parent.currentRunner.push(this, this.parent.currentRunningContext, 'connector');
-      context.graph = this.parent.currentRunningContext.graph;
-    } else
-      logger.warning('[Port.activeInNewContext] You try to execute port '+ this.parent.guid + '-' + this.guid +' that is a input port.');
+    let context = this.parent.currentRunningContext;
+    context.runner.activeOutputPortInNewContext(context, this);
   }
   /**
    * 在当前队列中激活当前执行端口
    * @param runningContext 当前运行上下文
    */
-  public active(runningContext ?: BlockRunContextData) {
-
+  public active(runningContext: BlockRunContextData) {
     if(!this.paramType.isExecute()) {
-      logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because it is not execute port.');
+      logger.error(this.getName(), 'Port.active: Cannot execute port because it is not execute port.');
       return;
     }
-
-    if(this.direction == 'input') {
-
-      if(!CommonUtils.isDefinedAndNotNull(runningContext)) {
-        logger.warning('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because runningContext was not provided.');
-        return;
-      }
-
-      //断点触发
-      if(this.parent.breakpoint == 'enable' && runningContext.lastBreakPointPort != this) {
-        if(runningContext.runner.markInterrupt(runningContext, this, this.parent))
-          return;
-      }
-
-      runningContext.lastPort = this;
-      runningContext.currentBlock = this.parent;
-
-      this.parent.enterBlock(this, runningContext);
-      this.parent.onPortExecuteIn.invoke(this.parent, this);
-      
-    }
-    else if(this.direction == 'output') {
-
-      if(this.executeInNewContext && !CommonUtils.isDefinedAndNotNull(runningContext)) 
-        this.activeInNewContext();
-      else {
-        if(!CommonUtils.isDefinedAndNotNull(runningContext)) {
-          logger.error('[Port.active] Cannot execute port '+ this.parent.guid + '-' + this.guid +' because runningContext was not provided.');
-          return;
-        }
-
-        this.parent.leaveBlock(runningContext);
-
-        runningContext.lastPort = this;
-        runningContext.currentBlock = null;
-        runningContext.runner.callNextConnectedPort(runningContext, this);
-      }
-    }            
+    if(this.direction == 'input') 
+      runningContext.runner.activeInputPort(runningContext, this);
+    else if(this.direction == 'output')
+      runningContext.runner.activeOutputPort(runningContext, this);        
   }
 }
 

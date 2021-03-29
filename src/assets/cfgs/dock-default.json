@@ -10,10 +10,25 @@
     },
     {
       "size": 70,
-      "grids": [],
+      "grids": [
+        {
+          "size": 64,
+          "grids": [],
+          "panels": [],
+          "name": "areaMain",
+          "noPanelViewSlotName": "mainEmptyView",
+          "alwaysVisible": true
+        },
+        {
+          "size": 36,
+          "grids": [],
+          "panels": [],
+          "name": "areaMainBottom",
+          "alwaysVisible": false
+        }
+      ],
       "panels": [],  
-      "noPanelViewSlotName": "mainEmptyView",
-      "name": "areaMain",
+      "name": "areaMainOuter",
       "alwaysVisible": true
     },
     {

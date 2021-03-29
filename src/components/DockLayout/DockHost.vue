@@ -69,10 +69,16 @@ export default class DockHost extends Vue implements DockHostData {
 
   bulidAllSlots() : VNode[] {
 
-    let defSlot = this.$slots["default"];
     let dockPanels = this.dockPanels; 
-         
+    let defSlot = new Array<VNode>(); 
+
     this.dockData.currentDirection = this.startVerticalDirection ? "vertical" : "horizontal";
+
+    let defSlotRef = this.$slots["default"];;
+    for(let i = defSlotRef.length - 1; i >= 0; i--) {
+      if(!StringUtils.isNullOrEmpty(defSlotRef[i].key))
+        defSlot.push(defSlotRef[i]);
+    }
 
     if(defSlot.length == this.lastBuildSlotCount) {
       //在这里刷新一次所有VNode
@@ -120,13 +126,12 @@ export default class DockHost extends Vue implements DockHostData {
               panelData.insertTo = props['insertTo'];
               panelData.tabLeftOffset = props['tabLeftOffset'];
             }
-
-
           }
         });
       } 
     
       let hasNewItem = false;
+      let hasRemoveItem = false;
 
       this.needRemovePanels.empty();
       dockPanels.forEach((v, k) => {
@@ -162,12 +167,16 @@ export default class DockHost extends Vue implements DockHostData {
             let el = document.getElementById('dock-panel-'+dockData.uid);
             if(el) this.host.removeChild(el);
             this.checkAndRemoveEmptyGrid(parent);
+            hasRemoveItem = true;
           }
         });
+        if(hasRemoveItem)
+          this.forceFlushAllPanelPos();
       });
-      if(hasNewItem)
-        this.$forceUpdate();
+      if(hasNewItem) 
+        this.$nextTick(() => this.forceFlushAllPanelPos());
     }
+    
 
     this.lastBuildSlotCount = defSlot.length;
     let tabHeight = this.tabHeight - this.tabOffset;
@@ -221,6 +230,7 @@ export default class DockHost extends Vue implements DockHostData {
       this.dockData.lastLayoutSize.Set(rect.h);
       loopChild(this.dockData, rect);
     }
+
     return arrBuildSlot;
   }
 
@@ -293,10 +303,10 @@ export default class DockHost extends Vue implements DockHostData {
   }
   findAndInsertPanel(name : string, panel : DockPanelData) {
     let grid = this.findGrid(name);
-    if(grid) {
-      grid = this.loopForLastChildren(grid);
-      grid.addPanel(panel);
-    }
+    if(!grid) 
+      grid = this.dockData;
+    grid = this.loopForLastChildren(grid);
+    grid.addPanel(panel);
   }
 
   //#endregion
@@ -726,9 +736,15 @@ export default class DockHost extends Vue implements DockHostData {
 
   dataSetFinished = false;
 
+  /**
+   * 获取界面网格数据
+   */
   public getSaveData() : IDockGridData {
     return this.dockData.toJSON();
   }
+  /**
+   * 设置界面网格数据
+   */
   public setData(data : IDockGridData) {
     this.lastBuildSlotCount = 0;
     this.loadDockData(this.dockData, data, this.startVerticalDirection ? 'vertical' : 'horizontal');
@@ -774,6 +790,18 @@ export default class DockHost extends Vue implements DockHostData {
     });
   }
 
+  /**
+   * 激活指定的面板
+   */
+  public activePanel(key : string) {
+    let panel = this.dockPanels.get(key);
+    if(panel) {
+      let parent = panel.parent;
+      let last = parent.activeTab;
+      parent.activeTab = panel;
+      this.onActiveTabChange(this.dockData, last, panel);
+    }
+  }
 
   //#endregion
 

@@ -200,15 +200,15 @@ let stringEditor : BlockParameterEditorRegData = {
     if(nowVal != null && typeof nowVal == 'string')
       ele.value = <string>nowVal;
     ele.style.width = block && block.options[partuid + '_w'] ? block.options[partuid + '_w'] : '110px';
-    ele.style.height = block && block.options[partuid + '_h'] ? block.options[partuid + '_h'] : '23px';
-    ele.style.minHeight = '23px';
+    ele.style.height = block && block.options[partuid + '_h'] ? block.options[partuid + '_h'] : '20px';
+    ele.style.minHeight = '20px';
     ele.style.minWidth = '40px';
     ele.style.resize = 'both';
     ele.classList.add('custom-editor');
     ele.onmouseup = () => {
       if(block) {
-        block.options[partuid + '_w'] = ele.offsetWidth + 'px';
-        block.options[partuid + '_h'] = ele.offsetHeight + 'px';
+        block.options[partuid + '_w'] = ele.clientWidth + 'px';
+        block.options[partuid + '_h'] = ele.clientHeight + 'px';
       }
     };
     ele.onblur = () => changeCallBack(ele.value);

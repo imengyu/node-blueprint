@@ -3,25 +3,14 @@
     <CollapsePropHeader title="文档属性">
       <div class="prop-item">
         <span>文档名称: </span>
-        <input class="prop-item-editor" type="text" v-model="doc.mainGraph.name" placeholder="文档的名称" />
+        <input class="prop-item-editor" type="text" v-model="doc.name" placeholder="文档的名称" @blur="$emit('update-doc-title', doc.name)" />
       </div>
       <div class="prop-item">
         <span>文档注释: </span>
         <textarea class="prop-item-editor"  v-model="doc.mainGraph.comment" placeholder="文档的注释...">
         </textarea>
       </div>
-    </CollapsePropHeader>
-    <CollapsePropHeader title="主图表">
-
-      <GraphProp 
-        :blockOwnerData="blockOwnerData"
-        :graph="doc.mainGraph" 
-        @on-open-graph="(g)=>$emit('on-open-graph',g)"
-        @on-delete-graph="(g)=>$emit('on-delete-graph',g)"
-        @choose-graph-variable-type="(v,p)=>$emit('choose-graph-variable-type',v,p)"
-      ></GraphProp>
-    </CollapsePropHeader>
-    
+    </CollapsePropHeader>   
   </div>
 </template>
 
@@ -41,7 +30,8 @@ import { BlockEditorOwner } from "../../model/Editor/BlockEditorOwner";
 export default class DocunmentProp extends Vue {
 
   @Prop({ default: null }) doc : BlockDocunment;
-
   @Prop({ default: false }) blockOwnerData : BlockEditorOwner;
+
+
 }
 </script>

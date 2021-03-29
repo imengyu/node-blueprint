@@ -222,6 +222,7 @@ function registerCalcScalar() {
   let blockMaximum = new BlockRegData("62FCF10F-1891-9DD7-1C53-129F5F580E18", '最大值', '获取一些数中的最大值', '基础', '运算');
   let blockMinimum  = new BlockRegData("FA97A675-A872-0967-715D-57F0E0FFB75B", '最小值', '获取一些数中的最小值', '基础', '运算');
   let blockModulo = new BlockRegData("ECD228AA-D88D-E02D-51FB-DAEE67ABA31C", "求余", '求余单元，对两个参数求余', '基础', '运算');
+  let blockRandom = new BlockRegData("2076EDF9-91D4-5C77-28A1-D6390ECD5BFC", "随机数", '生成指定范围的随机数', '基础', '运算');
 
   //#region 最小值
 
@@ -459,6 +460,49 @@ function registerCalcScalar() {
   };
 
   //#endregion
+  
+  //#region 随机数
+
+  blockRandom.baseInfo.version = '2.0';
+  blockRandom.ports = [
+    {
+      direction: 'input',
+      guid: 'IN',
+      paramType: 'execute'
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'execute'
+    },
+    {
+      direction: 'input',
+      guid: 'MIN',
+      name: '最小值',
+      paramType: 'number',
+      paramDefaultValue: 0,
+    },
+    {
+      direction: 'input',
+      guid: 'MAX',
+      name: '最大值',
+      paramType: 'number',
+      paramDefaultValue: 10,
+    },
+    {
+      direction: 'output',
+      guid: 'VALUE',
+      paramType: 'number'
+    },
+  ];
+  blockRandom.callbacks.onPortExecuteIn = (block, port) => { 
+    let min = block.getInputParamValue('MIN') , max = block.getInputParamValue('MAX');
+    if(CommonUtils.isDefinedAndNotNull(min) && CommonUtils.isDefinedAndNotNull(max))
+      block.setOutputParamValue('VALUE', CommonUtils.genRandom(min, max));
+    block.activeOutputPort('OUT');
+  };
+
+  //#endregion
 
   return [   
     blockModulo, 
@@ -469,6 +513,7 @@ function registerCalcScalar() {
     blockRoot, 
     blockRound, 
     blockAverage, 
+    blockRandom,
   ];
 }
 

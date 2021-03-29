@@ -1,5 +1,5 @@
 import CommonUtils from "../../utils/CommonUtils";
-import { BlockRunContextData } from "../WorkProvider/Runner";
+import { BlockRunContextData } from "../Runner/BlockRunContextData";
 import { BlockPort } from "./Port";
 
 export class Connector {

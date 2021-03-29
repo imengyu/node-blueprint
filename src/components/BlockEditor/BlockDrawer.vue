@@ -9,18 +9,6 @@
       <span v-else-if="connectingCanConnect"><i class="iconfont icon-check- text-success"></i><span v-html="connectingSuccessText"></span></span>
       <span v-else><i class="iconfont icon-close- text-danger mr-1"></i><span v-html="connectingFailedText"></span></span>
     </div>
-    <!--节点提示-->
-    <div class="common-tip no-mouse-event"
-      v-show="isShowTooltip"
-      v-html="showTooltipText"
-      :style="{ 
-        left: (showTooltipPos.x > 0 ? showTooltipPos.x + 'px': ''), 
-        top: (showTooltipPos.y > 0 ? showTooltipPos.y + 'px' : ''),
-        right: (showTooltipPos.x < 0 ? -showTooltipPos.x + 'px': ''), 
-        bottom: (showTooltipPos.y < 0 ? -showTooltipPos.y + 'px' : '') ,
-      }"
-    >
-    </div>
     <!--背景画布-->
     <BlockEditorCanvasDrawer ref="editorCanvas" 
       :viewPort="viewPort"
@@ -72,8 +60,6 @@
       @on-mouse-zoom-view="onMouseZoomView"
       @on-editor-key="onEditorKey"
       @on-update-editor-host-absolute-pos="(p) => editorHostAbsolutePos.Set(p)"
-      @show-tooltip="onShowTooltip"
-      @hide-tooltip="onHideTooltip"
       >
       <BlockEditorConnectorsDrawer ref="editorConnectorsCanvas" 
         :connectors="connectors"
@@ -89,12 +75,6 @@
       </BlockEditorConnectorsDrawer>
 
     </BlockEditorWorker>
-    <!--剪贴板-->
-    <BlockEditorClipBoard 
-      ref="editoClipboard"
-      @update-clipboard-state="(v) => $emit('update-clipboard-state', v)"
-      >
-    </BlockEditorClipBoard>
     <div class="zoom_tool">
       <a href="javascript:;" class="left iconfont icon-zoom-out" title="缩小" @click="zoomOut()"></a>
       <select v-model="zoomSelectValue" @change="zoomUpdate(zoomSelectValue)">
@@ -117,7 +97,7 @@ import BlockEditorConnectorsDrawer from "./BlockEditorConnectorsDrawer.vue";
 import BlockEditorWorker from "./BlockEditorWorker.vue";
 import BlockEditorClipBoard from "./BlockEditorClipBoard.vue";
 import { BlockPort, BlockPortConnectorData } from "../../model/Define/Port";
-import { BlockRunner } from "../../model/WorkProvider/Runner";
+import { BlockRunner } from "../../model/Runner/Runner";
 import { BlockRegData } from "../../model/Define/BlockDef";
 import { BlockEditorOwner, BlockGraphVariableChangeCallback, BlockGraphPortChangeCallback, 
   BlockGraphVariableFullChangeCallback, BlockGraphChangeCallback } from "../../model/Editor/BlockEditorOwner";
@@ -263,6 +243,7 @@ export default class BlockDrawer extends Vue {
         if(a.flexableCoonIndex == b.flexableCoonIndex) return 0;
         return a.flexableCoonIndex > b.flexableCoonIndex ? 1 : -1;
       })
+      
       //刷新弹性端口的连接
       setTimeout(() => {
         for(let i = 0; i < this.connectors.length; i++) {
@@ -273,11 +254,12 @@ export default class BlockDrawer extends Vue {
               ConnectorEditor.flexableCoonSource = connector.flexableCoonIndex + 1;
           }
         }
-      }, 666);
-
-      //开始绘制
-      this.editorCanvas.draw();
-      this.editorConnectorsCanvas.draw();
+      }, 400);
+      setTimeout(() => {
+        //开始绘制
+        this.editorCanvas.draw();
+        this.editorConnectorsCanvas.draw();
+      }, 200);
     }else {
       DebugWorkProviderInstance.ModalProvider('warning', '加载失败', '目标文档是运行版本，不能被编辑器打开', () => {});
       this.currentGraph = null;
@@ -392,10 +374,11 @@ export default class BlockDrawer extends Vue {
   public getScale()  { return this.viewScale; }
 
   public viewPortPosToWindowPos(pos : Vector2) {
-    return new Vector2(pos.x - this.viewPort.x + this.elOffestPos.x, pos.y - this.viewPort.y + this.elOffestPos.y);
+    return new Vector2((pos.x - this.viewPort.x + this.elOffestPos.x) * this.viewZoom, (pos.y - this.viewPort.y + this.elOffestPos.y) * this.viewZoom);
   }
   public windowPosToViewPortPos(pos : Vector2) {
-    return new Vector2(this.viewPort.x + pos.x - this.elOffestPos.x,  this.viewPort.y + pos.y - this.elOffestPos.y);
+    let zoom = 1 / this.viewZoom;
+    return new Vector2((this.viewPort.x + pos.x - this.elOffestPos.x) * zoom, (this.viewPort.y + pos.y - this.elOffestPos.y) * zoom);
   }
   public recalcViewPort() {
     this.viewZoom = this.viewScale / 100;
@@ -452,7 +435,7 @@ export default class BlockDrawer extends Vue {
     this.viewPort.setPos(pos);
   }
 
-  private onMouseZoomView(e : WheelEvent) {
+  public onMouseZoomView(e : WheelEvent) {
     let mouseCurrentPos = this.editorWorker.getMouseCurrentPos();
     let oldScale = this.viewScale;
     let pos = new Vector2(this.viewPort.x + mouseCurrentPos.x, this.viewPort.y + mouseCurrentPos.y);
@@ -488,20 +471,20 @@ export default class BlockDrawer extends Vue {
     this.viewRealSize.h = this.editorHost.offsetHeight;
     this.recalcViewPort();
   }
-  private onEditorKey(keyCode : number) {
+  public onEditorKey(keyCode : number) {
     let controlKeyDown = this.editorWorker.getIsControlKeyDown();
     switch(keyCode) {
       case 67://C
-        this.clipboardCopySelect();
+        if(controlKeyDown) this.clipboardCopySelect();
         break;
       case 86://V
-        this.clipboardPaste();
+        if(controlKeyDown) this.clipboardPaste();
         break; 
       case 88://X
-        this.clipboardCutSelect();
+        if(controlKeyDown) this.clipboardCutSelect();
         break; 
       case 83://S
-        this.$emit('on-want-save');
+        if(controlKeyDown) this.$emit('on-want-save');
         break; 
     }
   }
@@ -514,7 +497,7 @@ export default class BlockDrawer extends Vue {
   editorWorker : BlockEditorWorker = null;
   editorCanvas : BlockEditorCanvasDrawer = null;
   editorConnectorsCanvas : BlockEditorConnectorsDrawer = null;
-  editoClipboard : BlockEditorClipBoard = null;
+  @Prop({default: null}) editoClipboard : BlockEditorClipBoard;
 
   blockOwnerData : BlockEditorOwner = null;
   testSizeChangeTimer : any = null;
@@ -533,16 +516,10 @@ export default class BlockDrawer extends Vue {
       this.testSizeChangeTimer = setInterval(() => {
         if(this.viewRealSize.w != this.editorHost.offsetWidth || this.viewRealSize.h != this.editorHost.offsetHeight)
           this.onWindowSizeChanged();
-      }, 2000);
-
-      ToolTipUtils.setTooltipProvider({
-        showTooltip: (t, v) => this.onShowTooltip(t, v),
-        hideTooltip: (id) => this.onHideTooltip(id),
-      });
+      }, 1000);
 
       this.editorWorker = <BlockEditorWorker>this.$refs.editorWorker;
       this.editorCanvas = <BlockEditorCanvasDrawer>this.$refs.editorCanvas;
-      this.editoClipboard = <BlockEditorClipBoard>this.$refs.editoClipboard;
       this.editorConnectorsCanvas = <BlockEditorConnectorsDrawer>this.$refs.editorConnectorsCanvas;
 
       this.editorHost = <HTMLDivElement>this.$refs.editorHost;
@@ -609,6 +586,7 @@ export default class BlockDrawer extends Vue {
           onGraphDelete: new EventHandler<BlockGraphChangeCallback>(),
           onGraphUpdate: new EventHandler<BlockGraphChangeCallback>(),
         },
+        getViewZoom: () => this.viewZoom,
         getVue: () => this,
         viewPortPosToWindowPos: (v) => this.viewPortPosToWindowPos(v),
         windowPosToViewPortPos: (v) => this.windowPosToViewPortPos(v),
@@ -641,11 +619,15 @@ export default class BlockDrawer extends Vue {
         case 'graph': {
           let block = new BlockEditor(BaseBlocks.getScriptBaseGraphCall());
           block.options['graph'] = datav[2];
-          this.editorWorker.addBlock(block, this.editorWorker.getMouseCurrentPosInViewPort());
+           let pos = this.editorWorker.getMouseCurrentPosInViewPort();
+          let zoom = this.viewZoom;
+          this.editorWorker.addBlock(block, new Vector2(pos.x / zoom, pos.y / zoom));
           break;
         }
         case 'block': {
-          this.setAddBlockInpos(this.editorWorker.getMouseCurrentPosInViewPort());
+          let pos = this.editorWorker.getMouseCurrentPosInViewPort();
+          let zoom = this.viewZoom;
+          this.setAddBlockInpos(new Vector2(pos.x / zoom, pos.y / zoom));
           this.userAddBlock(BlockServiceInstance.getRegisteredBlock(datav[2]));
           break;
         }
@@ -676,32 +658,6 @@ export default class BlockDrawer extends Vue {
     })
   }
 
-
-  //弹出提示
-  //========================
-
-  isShowTooltip = false;
-  showTooltipPos = new Vector2();
-  showTooltipText = '';
-  showTooltipId = 0;
-
-  onShowTooltip(text : string, pos : Vector2) {
-    this.isShowTooltip = !CommonUtils.isNullOrEmpty(text);
-    if (CommonUtils.isDefinedAndNotNull(pos)) {
-      pos.x -= this.editorHostAbsolutePos.x;
-      pos.y -= this.editorHostAbsolutePos.y - 30;
-      if(pos.x > this.viewRealSize.w - 200) pos.x = -20;
-      if(pos.y > this.viewRealSize.h - 50) pos.y = -20;
-      this.showTooltipPos = pos;
-      this.showTooltipId = CommonUtils.genRandom(0, 1024);
-    }
-    this.showTooltipText = text;
-    return this.showTooltipId;
-  }
-  onHideTooltip(id : number) {
-    if(this.showTooltipId == id)
-      this.isShowTooltip = false;
-  }
 
   //组件数据共享
   //========================
@@ -811,14 +767,17 @@ export default class BlockDrawer extends Vue {
   public clipboardCopySelect() { 
     let selectedBlock = this.editorWorker.getSelectedBlocks();
     let allConnectors = this.editorWorker.getBlocksAllConnector(selectedBlock);
-
-    this.editoClipboard.clearClipboard();
-    this.editoClipboard.writeToClipboard(selectedBlock, allConnectors, this.editorWorker.calcBlocksRegion(selectedBlock).calcCenter());
+    if(selectedBlock.length > 0) {
+      this.editoClipboard.clearClipboard();
+      this.editoClipboard.writeToClipboard(selectedBlock, allConnectors, this.editorWorker.calcBlocksRegion(selectedBlock).calcCenter());
+      this.$message.success('已复制');
+    } else {
+      this.$message.warning('请选中你要复制的单元');
+    }
   }
   public clipboardCutSelect() { 
     let selectedBlock = this.editorWorker.getSelectedBlocks();
     let allConnectors = this.editorWorker.getBlocksAllConnector(selectedBlock);
-
     this.editoClipboard.clearClipboard();
     this.editoClipboard.writeToClipboard(selectedBlock, allConnectors, this.editorWorker.calcBlocksRegion(selectedBlock).calcCenter());
     this.editorWorker.deleteSelectedBlocks();
@@ -831,7 +790,7 @@ export default class BlockDrawer extends Vue {
       let targetPos = mouseDownPosInViewport ? mouseDownPosInViewport : this.viewPort.calcCenter();
       let offest = {
         x: targetPos.x - refPos.x,
-        y: targetPos.x - refPos.y,
+        y: targetPos.y - refPos.y,
       };
 
       let oldBlocks = new Array<{
@@ -879,6 +838,8 @@ export default class BlockDrawer extends Vue {
 
   //撤销重做
   //=======================
+
+  //TODO: 撤销重做
 
   public redo() { 
 
@@ -930,6 +891,27 @@ export default class BlockDrawer extends Vue {
     this.editorWorker.currentSelectedBlock = block;
     let selectedCount = this.editorWorker.getSelecteBlockCount();
     let selectedBlocks = this.editorWorker.getSelectedBlocks();
+
+    let blockMenuSettingsMenuItems : MenuItem[] = null;
+
+    if(selectedCount == 1) {
+      //修复菜单的点击事件this
+      blockMenuSettingsMenuItems = selectedBlocks[0].blockMenuSettings.items;
+      let loopMenuClick = (items : MenuItem[]) => {
+        items.forEach((item) => {
+          if(item.children) loopMenuClick(item.children);
+          if(typeof item.onClick === 'function' && (<any>item.onClick)['a'] != true) {
+            let old = item.onClick;
+            item.onClick = function() {
+              old.call(selectedBlocks[0]);
+            };
+            (<any>item.onClick)['a'] = true;
+          }
+        })
+      }
+      loopMenuClick(blockMenuSettingsMenuItems);
+    }
+
     let menuItems = (selectedCount == 1 ? selectedBlocks[0].blockMenuSettings.items : []).concat(
       <MenuItem[]>[
         { label: "删除", onClick: () => this.deleteSelectedBlocks(), divided: true },
@@ -939,6 +921,7 @@ export default class BlockDrawer extends Vue {
           onClick: () => this.clipboardPaste(this.editorWorker.getMouseCurrentPosInViewPort()),
           divided: true },
         { label: "刷新节点", onClick: () => this.editorWorker.refreshSelectedBlock() },
+        { label: "清除报错信息", onClick: () => this.editorWorker.clearErrForSelectedBlock() },
         { label: "断开连接", onClick: () => this.editorWorker.unConnectSelectedBlock(), divided: true },
         { label: "对齐", disabled: selectedCount < 2, children: [
           { label: "左对齐", onClick: () => this.editorWorker.alignSelectedBlock(block, 'left') },
@@ -956,6 +939,7 @@ export default class BlockDrawer extends Vue {
         { label: "为选中项创建注释", disabled: selectedCount < 2,  onClick: () => this.editorWorker.genCommentForSelectedBlock() },
       ]
     );
+
 
     this.$contextmenu({
       x: screenPos.x,

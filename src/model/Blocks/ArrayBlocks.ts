@@ -56,8 +56,11 @@ function register() {
 
       Object.keys(block.inputPorts).forEach((key) => {
         let port = (<BlockPort>block.inputPorts[key]);
-        if(!port.paramType.isExecute()) 
-          array.push(block.getInputParamValue(port));
+        if(!port.paramType.isExecute()) {
+          let v = block.getInputParamValue(port);
+          if(CommonUtils.isDefinedAndNotNull(v))
+            array.push(v);
+        }
       });
 
       block.setOutputParamValue('ARRAY', array);
@@ -92,18 +95,35 @@ function register() {
       guid: 'INARRAY',
       paramType: 'any',
       paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
     },
     {
       direction: 'output',
       guid: 'OUT',
       paramType: 'execute',
     },
-  ];
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
+  ];  
+  EmptyArray.portAnyFlexables = {
+    flexable: {}
+  };
   EmptyArray.callbacks.onPortExecuteIn = (block, port) => {
     if(port.guid == 'IN') {
 
       let array = <Array<any>>block.getInputParamValue('INARRAY');
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
       array.empty();
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort('OUT');
     }
   };
@@ -143,6 +163,13 @@ function register() {
       name: '元素',
       portAnyFlexable: { flexable: true },
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayGetItem.portAnyFlexables = {
     flexable: {}
@@ -154,8 +181,18 @@ function register() {
       let index = <number>block.getInputParamValue('ININDEX', context);
       let ref = <boolean>block.getInputParamValue('INISREF', context);
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(index)) {
+        block.throwError('输入索引参数不能为空', block.getPortByGUID('ININDEX'), 'error', true);
+        return;
+      }
+
       if(index < 0) index = array.length - 1;
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTITEM', ref ? CommonUtils.clone(array[index]) : array[index], context);
     }
   };
@@ -207,6 +244,13 @@ function register() {
       name: '数组长度',
       description: '修改之后的数组长度',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayInsert.portAnyFlexables = {
     flexable: {}
@@ -218,10 +262,16 @@ function register() {
       let index = <number>block.getInputParamValue('ININDEX');
       let item = <number>block.getInputParamValue('INITEM');
 
-      if(index < 0) index = array.length - 1;
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      if(!index || index < 0) index = array.length - 1;
 
       array.splice(index, 2, item);
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTARRLEN', array.length);
       block.activeOutputPort('OUT');
     }
@@ -267,6 +317,13 @@ function register() {
       name: '数组长度',
       description: '修改之后的数组长度',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayAdd.portAnyFlexables = {
     flexable: {}
@@ -277,8 +334,18 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let item = <number>block.getInputParamValue('INITEM');
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(item)) {
+        block.throwError('输入参数不能为空', block.getPortByGUID('INITEM'), 'error', true);
+        return;
+      }
+
       array.push(item);
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTARRLEN', array.length);
       block.activeOutputPort('OUT');
     }
@@ -324,6 +391,13 @@ function register() {
       name: '数组长度',
       description: '修改之后的数组长度',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayAddOnce.portAnyFlexables = {
     flexable: {}
@@ -334,8 +408,18 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let item = <number>block.getInputParamValue('INITEM');
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(item)) {
+        block.throwError('输入参数不能为空', block.getPortByGUID('INITEM'), 'error', true);
+        return;
+      }
+
       array.addOnce(item);
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTARRLEN', array.length);
       block.activeOutputPort('OUT');
     }
@@ -369,6 +453,13 @@ function register() {
       paramType: 'boolean',
       name: '包含?',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayContains.portAnyFlexables = {
     flexable: {}
@@ -379,6 +470,12 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY', context);
       let item = block.getInputParamValue('INITEM', context);
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTCONTAINS', array.contains(item), context);
     }
   };
@@ -412,6 +509,13 @@ function register() {
       name: '索引',
       description: '返回这个元素在此数组中的索引位置，如果没有找到，则返回-1',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayFind.portAnyFlexables = {
     flexable: {}
@@ -423,6 +527,12 @@ function register() {
       let item = block.getInputParamValue('INITEM', context);
       let index = array.indexOf(item);
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTINDEX', index, context);
     }
   };
@@ -456,6 +566,13 @@ function register() {
       name: '索引',
       description: '返回这个元素在此数组中的索引位置，如果没有找到，则返回-1',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayFindReverse.portAnyFlexables = {
     flexable: {}
@@ -467,6 +584,13 @@ function register() {
       let item = block.getInputParamValue('INITEM', context);
       let index = array.lastIndexOf(item);
 
+      
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTINDEX', index, context);
     }
   };
@@ -497,13 +621,26 @@ function register() {
       paramType: 'boolean',
       name: '是否有效',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayIndexValid.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTVALID') {
 
       let array = <Array<any>>block.getInputParamValue('INARRAY', context);
       let index = block.getInputParamValue('ININDEX', context);
+      
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTVALID', index >= 0 && index < array.length, context);
     }
   };
@@ -528,10 +665,24 @@ function register() {
       name: '索引',
       description: '数组的最后一个有效索引',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayLastIndex.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTVALIDINDEX') {
       let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTVALIDINDEX', array.length - 1, context);
     }
   };
@@ -576,6 +727,13 @@ function register() {
       paramType: 'boolean',
       description: '如果元素不在数组中，返回假，如果在数组中并且被移除，返回真',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayRemove.portAnyFlexables = {
     flexable: {}
@@ -586,7 +744,13 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let item = <number>block.getInputParamValue('INITEM');
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
       block.setOutputParamValue('OUTRMED', array.remove(item));
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort('OUT');
     }
   };
@@ -628,6 +792,13 @@ function register() {
       paramType: 'boolean',
       description: '如果索引在数组中并且元素被移除，返回真',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayRemoveIndex.callbacks.onPortExecuteIn = (block, port) => {
     if(port.guid == 'IN') {
@@ -635,9 +806,15 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let index = <number>block.getInputParamValue('ININDEX');
 
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
       if(index < 0) index = array.length - 1;
 
       block.setOutputParamValue('OUTARRLEN', array.remove(index));
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort('OUT');
     }
   };
@@ -678,6 +855,13 @@ function register() {
       guid: 'OUT',
       paramType: 'execute',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayRemoveIndex.callbacks.onPortExecuteIn = (block, port) => {
     if(port.guid == 'IN') {
@@ -685,7 +869,22 @@ function register() {
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let index2 = <number>block.getInputParamValue('ININDEX2');
       let index1 = <number>block.getInputParamValue('ININDEX1');
+
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(index2)) {
+        block.throwError('输入索引2参数不能为空', block.getPortByGUID('ININDEX2'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(index1)) {
+        block.throwError('输入索引1参数不能为空', block.getPortByGUID('ININDEX1'), 'error', true);
+        return;
+      }
+
       CommonUtils.swapItems(array, index1, index2);
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort('OUT');
     }
   };
@@ -708,10 +907,24 @@ function register() {
       paramType: 'number',
       description: '数组的元素个数',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArrayLength.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTLEN') {
       let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+
+      block.setOutputParamValue('OUTARRAY', array);
       block.setOutputParamValue('OUTLEN', array.length, context);
     }
   };
@@ -746,13 +959,31 @@ function register() {
       guid: 'OUT',
       paramType: 'execute',
     },
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    }
   ];
   ArraySetLength.callbacks.onPortExecuteIn = (block, port) => {
     if(port.guid == 'IN') {
 
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let len = <number>block.getInputParamValue('INSIZE');
+
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      if(!CommonUtils.isDefinedAndNotNull(len)) {
+        block.throwError('输入数组的新长度参数不能为空', block.getPortByGUID('INSIZE'), 'error', true);
+        return;
+      }
+
       array.length = len;
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort('OUT');
     }
   };
@@ -806,6 +1037,17 @@ function register() {
 
       let array = <Array<any>>block.getInputParamValue('INARRAY');
       let array2 = <Array<any>>block.getInputParamValue('INARRAY2');
+
+      
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }
+      
+      if(!CommonUtils.isDefinedAndNotNull(array2)) {
+        block.throwError('输入数组2参数不能为空', block.getPortByGUID('INARRA2Y'), 'error', true);
+        return;
+      }
       
       block.setOutputParamValue('OUTARRAY', array.concat(array2));
       block.activeOutputPort('OUT');
@@ -844,12 +1086,6 @@ function register() {
       paramType: 'execute',
     },
     {
-      guid: 'EXIT',
-      paramType: 'execute',
-      direction: 'output',
-      name: '循环结束'
-    },
-    {
       guid: 'LOOPBODY',
       paramType: 'execute',
       direction: 'output',
@@ -868,7 +1104,19 @@ function register() {
       direction: 'output',
       name: '当前索引',
     },
-    
+    {
+      direction: 'output',
+      guid: 'OUTARRAY',
+      paramType: 'any',
+      paramSetType: 'array',
+      portAnyFlexable: { flexable: true }
+    },
+    {
+      guid: 'EXIT',
+      paramType: 'execute',
+      direction: 'output',
+      name: '循环结束'
+    },
   ];
   ArrayForeach.portAnyFlexables = {
     flexable: {}
@@ -881,20 +1129,26 @@ function register() {
       let INDEX = block.getPortByGUID('INDEX');
       let ELEMENT = block.getPortByGUID('ELEMENT');
       let EXIT = block.getPortByGUID('EXIT');
-      let LOOP = block.getPortByGUID('LOOP');
+      let LOOPBODY = block.getPortByGUID('LOOPBODY');
 
       let array = <Array<any>>block.getInputParamValue('ARRAY');
       let breakActived = variables['breakActived'];
+   
+      if(!CommonUtils.isDefinedAndNotNull(array)) {
+        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+        return;
+      }    
 
       for(let i = 0, len = array.length; i < len; i++) {
           
         block.setOutputParamValue(ELEMENT, array[i]);
         block.setOutputParamValue(INDEX, i);
-        block.activeOutputPort(LOOP);
+        block.activeOutputPort(LOOPBODY);
 
         breakActived = variables['breakActived']; if(breakActived) break;
       }
 
+      block.setOutputParamValue('OUTARRAY', array);
       block.activeOutputPort(EXIT);
 
     }else if(port.guid == 'BREAK') {

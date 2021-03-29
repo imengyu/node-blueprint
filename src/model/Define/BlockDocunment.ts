@@ -3,7 +3,7 @@ import { Block } from "./Block";
 import { Connector } from "./Connector";
 import { BlockPortRegData } from "./BlockDef";
 import { EventHandler } from "../../utils/EventHandler";
-import { BlockRunContextData } from "../WorkProvider/Runner";
+import { BlockRunContextData } from "../Runner/BlockRunContextData";
 import { BlockParameterSetType, BlockParameterType, createParameterTypeFromString } from "./BlockParameterType";
 import CommonUtils from "../../utils/CommonUtils";
 

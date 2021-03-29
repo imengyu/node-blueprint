@@ -118,6 +118,7 @@ export class DockData {
       grids: this.grids.map((v) => v.toJSON()),
       panels: this.panels.map((v) => v.toJSON()),
       alwaysVisible: this.alwaysVisible,
+      noPanelViewSlotName: this.noPanelViewSlotName,
       name: this.name
     }
   }

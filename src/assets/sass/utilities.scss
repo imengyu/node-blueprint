@@ -3685,3 +3685,18 @@ $delay-ms: 300ms, 400ms, 500ms, 600ms, 700ms, 800ms, 900ms, 1s;
     animation-delay: $delay;
   }
 }
+
+.cursor-default {
+  cursor: default!important;
+}
+.cursor-pointer {
+  cursor: pointer!important;
+}
+
+.fill-absolute {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}

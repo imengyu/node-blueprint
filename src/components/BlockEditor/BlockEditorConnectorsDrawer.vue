@@ -60,6 +60,7 @@ export default class BlockEditorConnectorsDrawer extends Vue {
   private connectingConnector = new ConnectorEditor();
   private connectingConnectorPortMoveable : BlockPortEditor = null;
   private connectingConnectorPortMoveableFakeEditorData : BlockPortEditorDataFake = null;
+  private connectingEndPosZoomed = new Vector2();
 
   //绘制连接线
   private drawConnectors() {
@@ -73,14 +74,17 @@ export default class BlockEditorConnectorsDrawer extends Vue {
       if(this.connectingIsFail) this.ctx.strokeStyle = "#e9412a";
       else this.ctx.strokeStyle = "#efefef";
 
+      this.connectingEndPosZoomed.Set(this.connectingEndPos);
+      this.connectingEndPosZoomed.divide(this.viewZoom);
+      
       this.connectingConnector.startPort = this.connectingStartPort;
       if(this.connectingStartPort.direction == 'input') {
-        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPos);
+        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPosZoomed);
         this.connectingConnector.startPort = this.connectingConnectorPortMoveable;
         this.connectingConnector.endPort = this.connectingStartPort;
       }
       else if(this.connectingStartPort.direction == 'output') {
-        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPos);
+        this.connectingConnectorPortMoveableFakeEditorData.setPosition(this.connectingEndPosZoomed);
         this.connectingConnector.startPort = this.connectingStartPort;
         this.connectingConnector.endPort = this.connectingConnectorPortMoveable;
       }
@@ -89,7 +93,7 @@ export default class BlockEditorConnectorsDrawer extends Vue {
     }
   }
 
-  private onContextMenu(e : MouseEvent) {
+  public onContextMenu(e : MouseEvent) {
     e.preventDefault();
     this.$emit('contextmenu', e);
     return false;

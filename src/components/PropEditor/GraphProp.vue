@@ -2,7 +2,7 @@
   <div>
     <div class="position-relative">
       <div v-if="!graph.isMainGraph" class="prop-list-dragger" @dragstart="onGraphChildGraphDrag(graph, $event)" draggable="true"
-        title="可拖拽此箭头来添加此图表的调用至图表中">
+        v-tooltip data-title="可拖拽此箭头来添加此图表的调用至图表中">
         <i class="iconfont icon-arrow-left-"></i>
       </div>
       <div class="prop-item">
@@ -23,9 +23,9 @@
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 200px);" @blur="onUpdateGraphPort(port)" />
             <div v-if="port" class="prop-box">
 
-              <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
+              <span v-if="port.paramSetType=='dictionary'" v-tooltip data-title="映射键类型">
                 {{ getTypeNameRemap(port.paramDictionaryKeyType.getType()) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" v-tooltip data-title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
@@ -38,24 +38,24 @@
 
               <span>
                 {{ getTypeNameRemap(port.paramType.getType()) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输入类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" v-tooltip data-title="选择输入类型"></a>
               </span>
 
             </div>
-            <a href="javascript:;" title="上移" @click="onMoveUpGraphPort(port, 'input')">
+            <a href="javascript:;" v-tooltip data-title="上移" @click="onMoveUpGraphPort(port, 'input')">
               <i class="iconfont icon-arrow-up-"></i>
             </a>
-            <a href="javascript:;" title="下移" @click="onMoveDownGraphPort(port, 'input')">
+            <a href="javascript:;" v-tooltip data-title="下移" @click="onMoveDownGraphPort(port, 'input')">
               <i class="iconfont icon-arrow-down-"></i>
             </a>
             <el-popconfirm title="确定删除输入吗？" @confirm="onDeleteGraphPort(port, 'input')">
-              <a slot="reference" href="javascript:;" title="删除输入">
+              <a slot="reference" href="javascript:;" v-tooltip data-title="删除输入">
                 <i class="iconfont icon-close-1"></i>
               </a>
             </el-popconfirm>
             <div v-if="port && !port.paramType.isExecute()" class="prop-item">
               <span>输入默认值: </span>
-              <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
+              <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType" :variableSetType="port.paramSetType"></VariableTypeEditor>
             </div>
           </div> 
           <div class="prop-list-item flex-center cursor-pointer" @click="onAddGraphPort('input')">
@@ -69,9 +69,9 @@
             <input v-if="port" type="text" v-model="port.name" style="width: calc(100% - 190px);" @blur="onUpdateGraphPort(port)"  />
             <div v-if="port" class="prop-box">
 
-              <span v-if="port.paramSetType=='dictionary'" title="映射键类型">
+              <span v-if="port.paramSetType=='dictionary'" v-tooltip data-title="映射键类型">
                 {{ getTypeNameRemap(port.paramDictionaryKeyType.getType()) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" title="选择映射键类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortKeyType(port, $event)" v-tooltip data-title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
@@ -84,24 +84,24 @@
 
               <span>
                 {{ getTypeNameRemap(port.paramType.getType()) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" title="选择输出类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphPortType(port, $event)" v-tooltip data-title="选择输出类型"></a>
               </span>
 
             </div>
-            <a href="javascript:;" title="上移" @click="onMoveUpGraphPort(port, 'output')">
+            <a href="javascript:;" v-tooltip data-title="上移" @click="onMoveUpGraphPort(port, 'output')">
               <i class="iconfont icon-arrow-up-"></i>
             </a>
-            <a href="javascript:;" title="下移" @click="onMoveDownGraphPort(port, 'output')">
+            <a href="javascript:;" v-tooltip data-title="下移" @click="onMoveDownGraphPort(port, 'output')">
               <i class="iconfont icon-arrow-down-"></i>
             </a>
             <el-popconfirm title="确定删除输出吗？" @confirm="onDeleteGraphPort(port, 'output')">
-              <a slot="reference" href="javascript:;" title="删除输出">
+              <a slot="reference" href="javascript:;" v-tooltip data-title="删除输出">
                 <i class="iconfont icon-close-1"></i>
               </a>
             </el-popconfirm>
             <div v-if="port && !port.paramType.isExecute()" class="prop-item">
               <span>输出默认值: </span>
-              <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType"></VariableTypeEditor>
+              <VariableTypeEditor class="prop-item-editor" v-model="port.paramDefaultValue" :variableType="port.paramType" :variableSetType="port.paramSetType"></VariableTypeEditor>
             </div>
           </div> 
           <div class="prop-list-item flex-center cursor-pointer" @click="onAddGraphPort('output')">
@@ -115,7 +115,7 @@
       <div class="prop-list">
         <div v-for="(variable,i) in graph.variables" :key="i" class="prop-list-item">
           <div class="prop-list-dragger" @dragstart="onGraphVariableDrag(variable, $event)" draggable="true"
-            title="可直接拖拽此箭头以添加变量至图表中">
+            v-tooltip data-title="可直接拖拽此箭头以添加变量至图表中">
             <i class="iconfont icon-arrow-left-"></i>
           </div>
           <div class="prop-item">
@@ -130,9 +130,9 @@
             <span>变量类型</span>
             <div class="prop-item-editor">
 
-              <span v-if="variable.setType=='dictionary'" title="映射键类型">
+              <span v-if="variable.setType=='dictionary'" v-tooltip data-title="映射键类型">
                 {{ getTypeNameRemap(variable.dictionaryKeyType.getType()) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" title="选择映射键类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableKeyType(variable, $event)" v-tooltip data-title="选择映射键类型"></a>
               </span> 
 
               <VariableSetTypeEditor class="prop-item-editor" 
@@ -144,7 +144,7 @@
 
               <span>
                 {{ getTypeNameRemap(variable.type) }}
-                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableType(variable, $event)" title="选择变量类型"></a>
+                <a class="ml-2 iconfont icon-arrow-down-1" @click="onChooseGraphVariableType(variable, $event)" v-tooltip data-title="选择变量类型"></a>
               </span>
 
             </div>
@@ -156,7 +156,7 @@
           <div class="prop-item">
             <span>静态</span>
             <div class="prop-item-editor">
-              <input type="checkbox" v-model="variable.static" title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
+              <input type="checkbox" v-model="variable.static" v-tooltip data-title="指示此变量是否是全局静态分配的，反之为图表局部变量" />
             </div>
           </div>
           <div class="prop-item">
@@ -164,7 +164,7 @@
             <VariableViewer class="prop-item-editor" :variable="variable" :graph="graph"></VariableViewer>
           </div>
           <el-popconfirm title="确定删除子变量吗？" @confirm="onDeleteGraphVariable(variable)">
-            <a slot="reference" href="javascript:;" class="prop-delete" title="删除子变量">
+            <a slot="reference" href="javascript:;" class="prop-delete" v-tooltip data-title="删除子变量">
               <i class="iconfont icon-close-1"></i>
             </a>
           </el-popconfirm>
@@ -178,7 +178,7 @@
     <CollapsePropHeader title="子图表">
       <div class="prop-list">
         <div v-for="(childGraph,i) in graph.children" :key="i" class="prop-list-item">
-          <div class="prop-list-dragger" @dragstart="onGraphChildGraphDrag(childGraph, $event)" draggable="true" title="可拖拽此箭头来添加此图表的调用至图表中">
+          <div class="prop-list-dragger" @dragstart="onGraphChildGraphDrag(childGraph, $event)" draggable="true" v-tooltip data-title="可拖拽此箭头来添加此图表的调用至图表中">
             <i class="iconfont icon-arrow-left-"></i>
           </div>
           <div class="prop-item">
@@ -197,7 +197,7 @@
             <a class="mr-5" @click="onOpenGraph(childGraph)">编辑图表</a>
           </div>
           <el-popconfirm title="确定删除子图表吗？" @confirm="onDeleteChildGraph(childGraph)">
-            <a slot="reference" href="javascript:;" class="prop-delete" title="删除子图表">
+            <a slot="reference" href="javascript:;" class="prop-delete" v-tooltip data-title="删除子图表">
               <i class="iconfont icon-close-1"></i>
             </a>
           </el-popconfirm>
@@ -429,14 +429,14 @@ export default class GraphProp extends Vue {
       name: '进入',
       guid: 'PI0',
       direction: 'input',
-      paramType: 'execute',
+      paramType: createParameterTypeFromString('execute'),
       paramSetType: 'variable',
     });
     doc.outputPorts.push({
       name: '退出',
       guid: 'PO0',
       direction: 'output',
-      paramType: 'execute',
+      paramType: createParameterTypeFromString('execute'),
       paramSetType: 'variable',
     });
     this.graph.children.push(doc);
