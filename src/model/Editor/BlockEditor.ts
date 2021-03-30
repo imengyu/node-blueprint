@@ -932,8 +932,7 @@ export class BlockEditor extends Block {
   //抛出错误处理
   public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error', breakFlow = false) {
 
-    super.throwError(err, port, level, breakFlow);
-
+    
     //添加错误提示
     let errorNode = document.createElement('div');
     errorNode.classList.add('block-error');
@@ -950,6 +949,8 @@ export class BlockEditor extends Block {
       (<BlockPortEditor>port).editorData.forceDotErrorState = true;
       (<BlockPortEditor>port).updatePortConnectStatusElement();
     }
+    
+    super.throwError(err, port, level, breakFlow);
   }
   /**
    * 清空所有错误

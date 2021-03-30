@@ -82,7 +82,8 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
       this.stackLevel = this.parentContext.stackLevel + 1;
     }
     if(this.stackLevel > this.runner.maxStackCount) {
-      logger.error(this.TAG, 'Stack overflow at level ' + this.stackLevel + '.');
+      logger.error(this.TAG, 'Stack overflow at level ' + this.stackLevel + (this.runner.mainContext ? ('.\nStack:\n' + 
+        this.runner.mainContext.printCallStack(true)) : '\n[No stack information was found]'));
       throw new Error("Stack overflow");
     }
   }
@@ -155,7 +156,6 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
     return this.graphBlockParamStack[this.stackPointer];
   }
 
-  
 
   /**
    * 子上下文
@@ -191,18 +191,25 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
    * 打印调用堆栈
    * @param full 是否打印全部的子级调用堆栈
    */
-  public printCallStack(full = false) {
+  public printCallStack(full = false, level = 0) {
+    let lineSpace = '\n'; for(let i = 0; i < level; i++) lineSpace += ' ';
     let str = '\nStack count:' + this.stackCalls.length + ' (level ' + this.stackLevel + ')';
     this.stackCalls.forEach((d) => {
-      if(d.block!=null)
-        str += '\n' + d.block.regData.baseInfo.name + '(' + d.block.uid + ') => ' + d.port.name + '(' + d.port.guid + ')';
-      else if(d.childContext != null && full)
-        str += '\nChild call: \n' + d.childContext.printCallStack(full);
+      if(d.block !== null) {
+        let ref = JSON.stringify({
+          ref: `${d.block.regData.baseInfo.name}.${d.port.name}`,
+          refDoc:`${d.block.currentGraph.docunment.uid}:${d.block.currentGraph.uid}`,
+          refBlock:`${d.block.uid}`,
+          refPort:`${d.port.guid}`
+        });
+        str += `${lineSpace}${ref}`
+      } else if(d.childContext !== null && full)
+        str += `${lineSpace}Child call:${lineSpace}\n${d.childContext.printCallStack(full, level + 1)}`;
     });
 
     if(full) {
       this.childContext.forEach((c) => {
-        str += c.printCallStack(full);
+        str += c.printCallStack(full, level + 1);
       });
     }
 
@@ -210,11 +217,11 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
   }
 
   /**
-   * Don't use
+   * 设置当前上下文被离线使用，防止其相关信息被回收
    */
   public markContexInUse() { this.loopForceInUse = true; }
   /**
-   * Don't use
+   * 设置当前上下文取消离线使用
    */
   public unsetContexInUse() { this.loopForceInUse = false; }
 }

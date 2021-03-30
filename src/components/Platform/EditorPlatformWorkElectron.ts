@@ -1,17 +1,17 @@
 import { EditorSettings } from "@/model/Editor/EditorSettings";
-import SettingsServiceInstance from "@/sevices/SettingsService";
 import { BrowserWindow } from "electron";
+import SettingsServiceInstance from "@/sevices/SettingsService";
 import { EditorNotifyCallback, EditorPlatformWorkAbstract } from "./EditorPlatformWorkAbstract";
 
 //Get nodejs require function
-var _require = (<any>global)['__ORIGINAL_NODEJS_REQUIRE__'];
-var fs : any = null;
-var electron : any = null; 
+var _require = (<any>global)['__ORIGINAL_NODEJS_REQUIRE__'] as NodeRequire;
+var fs : typeof import('fs') = null;
+var electron : typeof import('electron') = null; 
 
 if(typeof _require === 'function') {
   //Load this moduls from local file
-  fs = require('fs');
-  electron = require('electron');
+  fs = _require('fs');
+  electron = _require('electron');
 }
 
 /**
@@ -65,10 +65,10 @@ export class EditorPlatformWorkElectron implements EditorPlatformWorkAbstract {
   writeFile(path: string, data: string, callback: () => void) {
     fs.writeFile(path, data, { encoding: 'utf-8' }, callback);
   }
-  readFile(path: string, callback: (data: string, err: Error|string) => void)  {
+  readFile(path: string, callback: (data: string, err: Error) => void)  {
     if(!fs.existsSync(path)) {
-      callback(null, '文件 ' + path + ' 不存在');
-    } else fs.readFile(path, { encoding: 'utf-8' }, (data: any, err: any) => {
+      callback(null, new Error('文件 ' + path + ' 不存在'));
+    } else fs.readFile(path, { encoding: 'utf-8' }, (err, data) => {
       callback(data, err);
     });
   }

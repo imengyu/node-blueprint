@@ -186,14 +186,14 @@ function registerControl() {
     let el = document.createElement('div');
     let typeSelector = document.createElement('input');
     typeSelector.type = 'text';
-    typeSelector.value = block.options['opType'];
+    typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(block.options['opType']);
     typeSelector.style.width = '111px';
     typeSelector.readOnly = true;
     typeSelector.onclick = (e) => {
       block.editor.chooseType(new Vector2(e.x, e.y), (type, isBaseType) => {
         if(block.options['opType'] != type.name) {
           block.options['opType'] = type.name;
-          typeSelector.value = type.name;
+          typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(type.name);
           reloadSwitchBlockPorts(block);
         }
       }, false)
@@ -361,7 +361,7 @@ function registerControl() {
   blockSelect.callbacks.onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => { 
     let el = document.createElement('div');
     let typeSelector = document.createElement('input');
-    typeSelector.value = block.options['opType'];
+    typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(block.options['opType']);
     typeSelector.type = 'text';
     typeSelector.style.width = '111px';
     typeSelector.readOnly = true;
@@ -369,7 +369,7 @@ function registerControl() {
       block.editor.chooseType(new Vector2(e.x, e.y), (type, isBaseType) => {
         if(block.options['opType'] != type.name) {
           block.options['opType'] = type.name;
-          typeSelector.value = type.name;
+          typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(type.name);
           reloadSelectBlockPorts(block);
         }
       }, false)

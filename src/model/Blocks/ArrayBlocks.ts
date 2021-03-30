@@ -175,25 +175,24 @@ function register() {
     flexable: {}
   };
   ArrayGetItem.callbacks.onPortParamRequest = (block, port, context) => {
-    if(port.guid == 'OUTITEM') {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    let index = <number>block.getInputParamValue('ININDEX', context);
+    let ref = <boolean>block.getInputParamValue('INISREF', context);
 
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
-      let index = <number>block.getInputParamValue('ININDEX', context);
-      let ref = <boolean>block.getInputParamValue('INISREF', context);
+    if(!CommonUtils.isDefinedAndNotNull(array)) {
+      block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
+      return;
+    }
+    if(!CommonUtils.isDefinedAndNotNull(index)) {
+      block.throwError('输入索引参数不能为空', block.getPortByGUID('ININDEX'), 'error', true);
+      return;
+    }
 
-      if(!CommonUtils.isDefinedAndNotNull(array)) {
-        block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
-        return;
-      }
-      if(!CommonUtils.isDefinedAndNotNull(index)) {
-        block.throwError('输入索引参数不能为空', block.getPortByGUID('ININDEX'), 'error', true);
-        return;
-      }
-
-      if(index < 0) index = array.length - 1;
-
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTITEM', ref ? CommonUtils.clone(array[index]) : array[index], context);
+    switch(port.guid) {
+      case 'OUTITEM':
+        return ref ? CommonUtils.clone(array[index]) : array[index], context
+      case 'OUTARRAY':
+        return array;
     }
   };
 
@@ -465,18 +464,16 @@ function register() {
     flexable: {}
   };
   ArrayContains.callbacks.onPortParamRequest = (block, port, context) => {
-    if(port.guid == 'OUTCONTAINS') {
-
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
+    else if(port.guid == 'OUTCONTAINS') {
       let item = block.getInputParamValue('INITEM', context);
-
       if(!CommonUtils.isDefinedAndNotNull(array)) {
         block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
         return;
       }
-
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTCONTAINS', array.contains(item), context);
+      return array.contains(item);
     }
   };
 
@@ -521,9 +518,11 @@ function register() {
     flexable: {}
   };
   ArrayFind.callbacks.onPortParamRequest = (block, port, context) => {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
     if(port.guid == 'OUTINDEX') {
 
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
       let item = block.getInputParamValue('INITEM', context);
       let index = array.indexOf(item);
 
@@ -531,9 +530,7 @@ function register() {
         block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
         return;
       }
-
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTINDEX', index, context);
+      return index;
     }
   };
 
@@ -578,20 +575,20 @@ function register() {
     flexable: {}
   };
   ArrayFindReverse.callbacks.onPortParamRequest = (block, port, context) => {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
     if(port.guid == 'OUTINDEX') {
 
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
       let item = block.getInputParamValue('INITEM', context);
       let index = array.lastIndexOf(item);
-
-      
+     
       if(!CommonUtils.isDefinedAndNotNull(array)) {
         block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
         return;
       }
 
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTINDEX', index, context);
+      return index;
     }
   };
 
@@ -630,9 +627,11 @@ function register() {
     }
   ];
   ArrayIndexValid.callbacks.onPortParamRequest = (block, port, context) => {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
     if(port.guid == 'OUTVALID') {
 
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
       let index = block.getInputParamValue('ININDEX', context);
       
       if(!CommonUtils.isDefinedAndNotNull(array)) {
@@ -640,8 +639,7 @@ function register() {
         return;
       }
 
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTVALID', index >= 0 && index < array.length, context);
+      return index >= 0 && index < array.length;
     }
   };
 
@@ -674,16 +672,17 @@ function register() {
     }
   ];
   ArrayLastIndex.callbacks.onPortParamRequest = (block, port, context) => {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
     if(port.guid == 'OUTVALIDINDEX') {
-      let array = <Array<any>>block.getInputParamValue('INARRAY', context);
 
       if(!CommonUtils.isDefinedAndNotNull(array)) {
         block.throwError('输入数组参数不能为空', block.getPortByGUID('INARRAY'), 'error', true);
         return;
       }
 
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTVALIDINDEX', array.length - 1, context);
+      return array.length - 1;
     }
   };
 
@@ -916,6 +915,9 @@ function register() {
     }
   ];
   ArrayLength.callbacks.onPortParamRequest = (block, port, context) => {
+    let array = <Array<any>>block.getInputParamValue('INARRAY', context);
+    if(port.guid == 'OUTARRAY')  
+      return array;
     if(port.guid == 'OUTLEN') {
       let array = <Array<any>>block.getInputParamValue('INARRAY', context);
 
@@ -924,8 +926,7 @@ function register() {
         return;
       }
 
-      block.setOutputParamValue('OUTARRAY', array);
-      block.setOutputParamValue('OUTLEN', array.length, context);
+      return array.length;
     }
   };
 

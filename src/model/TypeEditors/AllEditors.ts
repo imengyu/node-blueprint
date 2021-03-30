@@ -199,7 +199,7 @@ let stringEditor : BlockParameterEditorRegData = {
     let ele = document.createElement('textarea')
     if(nowVal != null && typeof nowVal == 'string')
       ele.value = <string>nowVal;
-    ele.style.width = block && block.options[partuid + '_w'] ? block.options[partuid + '_w'] : '110px';
+    ele.style.width = block && block.options[partuid + '_w'] ? block.options[partuid + '_w'] : '80px';
     ele.style.height = block && block.options[partuid + '_h'] ? block.options[partuid + '_h'] : '20px';
     ele.style.minHeight = '20px';
     ele.style.minWidth = '40px';
@@ -207,8 +207,8 @@ let stringEditor : BlockParameterEditorRegData = {
     ele.classList.add('custom-editor');
     ele.onmouseup = () => {
       if(block) {
-        block.options[partuid + '_w'] = ele.clientWidth + 'px';
-        block.options[partuid + '_h'] = ele.clientHeight + 'px';
+        block.options[partuid + '_w'] = ele.style.width;
+        block.options[partuid + '_h'] = ele.style.height;
       }
     };
     ele.onblur = () => changeCallBack(ele.value);

@@ -115,7 +115,7 @@ function register() {
       let set = <Set<any>>block.getInputParamValue('INSET', context);
       let item = block.getInputParamValue('INITEM', context);
 
-      block.setOutputParamValue('OUTCONTAINS', set.has(item), context);
+      return set.has(item);
     }
   };
   SetHas.blockStyle.noTitle = true;
@@ -286,7 +286,7 @@ function register() {
   SetLength.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTLEN') {
       let set = <Set<any>>block.getInputParamValue('INSET', context);
-      block.setOutputParamValue('OUTLEN', set.size, context);
+      return set.size;
     }
   };
   SetLength.blockStyle.noTitle = true;

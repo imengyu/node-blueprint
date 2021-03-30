@@ -120,7 +120,7 @@
         iconClass="iconfont icon-develop"
         insertTo="areaMainBottom"
       >
-        <Console />
+        <Console @on-go-ref="onGoRef" />
       </DockPanel>
       <!--属性编辑器-->
       <DockPanel key="Props" title="属性" iconClass="iconfont icon-new_custom19" :tabLeftOffset="31">
@@ -1056,7 +1056,7 @@ export default class Editor extends Vue {
   private loadRecentList() {
     this.platformWork.loadRecentList((data: any) => {
       if (data) {
-        this.recentList = data.recentList || [];
+        this.recentList = data || [];
         this.recentList.forEach((s) => {
           this.menuItemRecent.childs.unshift(new MenuData(s, () => this.doLoadFile(s)));
         });
@@ -1293,6 +1293,38 @@ export default class Editor extends Vue {
       this.isShowTooltip = false;
   }
 
+  //控制台的逻辑
+  //========================
+
+  onGoRef(refDoc : string, refBlock : string, refPort : string) {
+
+    let str = refDoc.split(':');
+    let docUid = str[0];
+    let graphUid = str[1];
+
+    let goBlock = () => {
+      let editor = this.getCurrentDocEditor(this.currentDocunment);
+      let graph = this.currentDocunment.findChildGraph(graphUid);
+      if(graph) {
+        let block = graph.getOneBlockByUID(refBlock);
+        if(block) {
+          editor.goGraph(graph);
+          setTimeout(() => {
+            editor.moveViewportToBlockPos(block as BlockEditor, true);
+          }, 300);
+        }
+      }
+    };
+
+    if(!this.currentDocunment || this.currentDocunment.uid !== docUid) {
+      let doc = this.isFileOpenedByUid(docUid);
+      if(doc) {
+        this.goDoc(doc);
+        setTimeout(() => goBlock(), 600);
+      } else this.$toasted.error('目标文档已经关闭！', { duration: 3000 });
+    } else goBlock();
+  }
+
   //#endregion
 
   //#region 文件保存写入控制
@@ -1433,7 +1465,7 @@ export default class Editor extends Vue {
       let toast = this.$toasted.show("正在保存中，请稍后...", {
         duration: null,
         closeOnSwipe: false,
-        position: "top-center",
+        position: "top-center"
       });
 
       let str = this.parser.saveToString(this.currentDocunment, true);
@@ -1443,7 +1475,9 @@ export default class Editor extends Vue {
 
         toast.goAway();
         g.fileChanged = false;
-        this.$toasted.success("保存文档成功", { duration: 1000, position: 'top-center' });
+        setTimeout(() =>
+          this.$toasted.success("保存文档成功", { duration: 1000, position: 'top-center' })
+        );
       });
 
       //网页保存
@@ -1548,7 +1582,15 @@ export default class Editor extends Vue {
     }
     return null;
   }
-
+  /**
+   * 文件是否已经打开
+   */
+  public isFileOpenedByUid(uid: string): BlockDocunment | null {
+    for (let i = 0; i < this.openedDocunments.length; i++) {
+      if (this.openedDocunments[i].uid == uid) return this.openedDocunments[i];
+    }
+    return null;
+  }
   //关闭回调
   public onEditorMainTabClose(data: DockPanelData) {
     let uid = data.key.substring(4);
@@ -1612,7 +1654,7 @@ export default class Editor extends Vue {
       this.editorControls.forEach((element) => element.clearAllBlockDebugStyles());
     }, 300);
 
-    logger.log("流图运行器", "脚本已经运行完成");
+    logger.log(BlockRunner.TAG, "脚本已经运行完成");
   }
   private onRunnerIdle() {}
   private onRunnerBreakPoint(currentPort: BlockPort, block: Block) {
@@ -1637,14 +1679,14 @@ export default class Editor extends Vue {
         this.runner.start();
         this.runningState = "running";
         this.runnerStopByBreakPoint = false;
-        logger.log('流图运行器', "继续运行脚本");
+        logger.log(BlockRunner.TAG, "继续运行脚本");
       } else {
         //开始执行文档
         if (this.runner.executeStart(this.currentDocunment)) {
           this.runningState = "running";
-          logger.log('流图运行器', "开始运行脚本");
+          logger.log(BlockRunner.TAG, "开始运行脚本");
         } else {
-          logger.warning('流图运行器', "运行脚本失败：" + this.runner.lastError);
+          logger.warning(BlockRunner.TAG, "运行脚本失败：" + this.runner.lastError);
           this.showRunFailedModal = true;
           this.showRunFailedModalContent = this.runner.lastError;
         }
@@ -1663,11 +1705,11 @@ export default class Editor extends Vue {
     this.runner.clear();
     this.onRunnerEnd();
     
-    logger.log('流图运行器', "停止运行脚本");
+    logger.log(BlockRunner.TAG, "停止运行脚本");
   }
   public pauseRun() {
     this.runner.stepMode = true;
-    logger.log('流图运行器', "暂停运行脚本");
+    logger.log(BlockRunner.TAG, "暂停运行脚本");
   }
   public stepNext() {
     this.runner.stepMode = true;

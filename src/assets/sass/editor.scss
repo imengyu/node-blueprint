@@ -441,6 +441,10 @@ $top-breadcrumb-height: 30px;
 
       li {
         color: rgb(13, 139, 212);
+
+        small {
+          color: #efefef;
+        }
       }
 
       a {

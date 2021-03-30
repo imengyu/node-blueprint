@@ -154,8 +154,8 @@ export class BlockPort {
       str = typeName;
     return str;
   }
-  public getName() {
-    return `${this.parent.getName(true)}-${this.name}(${this.guid})`;
+  public getName(withBlockName = true) {
+    return `${withBlockName ? this.parent.getName(true) : ''}-${this.name}(${this.guid})`;
   }
 
   /**
@@ -262,6 +262,10 @@ export class BlockPort {
    * @param runningContext 正在运行的上下文
    */
   public getValueCached(runningContext: BlockRunContextData) {
+    if(runningContext === null) {
+      logger.error(this.getName(), 'Port.getValueCached: Must provide a context in non-context block.');
+      return undefined;
+    }
     if(this.direction == 'input') {
       if(this.connectedFromPort.length == 0)
         return this.getValue(runningContext);
@@ -279,6 +283,10 @@ export class BlockPort {
    * @param runningContext 正在运行的上下文
    */
   public rquestOutputValue(runningContext: BlockRunContextData) {
+    if(runningContext === null) {
+      logger.error(this.getName(), 'Port.rquestOutputValue: Must provide a context in non-context block.');
+      return undefined;
+    }
     let retVal = this.parent.onPortParamRequest.invoke(this.parent, this, runningContext);
     return CommonUtils.isDefined(retVal) ? retVal : this.getValueCached(runningContext);
   }
@@ -289,7 +297,11 @@ export class BlockPort {
   public rquestInputValue(runningContext: BlockRunContextData) {
 
     if(this.direction !== 'input') {
-      logger.warning(this.getName(), 'Port.rquestInputValue: Can not rquestInputValue on a non-input port.');
+      logger.error(this.getName(), 'Port.rquestInputValue: Can not rquestInputValue on a non-input port.');
+      return undefined;
+    }
+    if(runningContext === null && this.parent.currentRunningContext === null) {
+      logger.error(this.getName(), 'Port.rquestInputValue: Must provide a context in non-context block.');
       return undefined;
     }
 
@@ -301,8 +313,12 @@ export class BlockPort {
     let port = this.connectedFromPort[0].port;
     let retVal = port.parent.onPortParamRequest.invoke(port.parent, port, runningContext);
 
+    //端口是直接回传数据，直接回传
+    if(CommonUtils.isDefined(retVal) )
+      return retVal;
+
     //检测直接引用请求
-    if(this.paramRefPassing || port.paramRefPassing) {
+    if(this.paramRefPassing || port.paramRefPassing || this.parent.currentRunningContext === null) {
       return CommonUtils.isDefined(retVal) ? retVal : port.getValue(runningContext);
     }
 
@@ -334,6 +350,10 @@ export class BlockPort {
   public updateOnputValue(runningContext: BlockRunContextData, v : any)  {
     if(this.direction != 'output') {
       logger.warning(this.getName(), 'Port.updateOnputValue: Can not updateOnputValue on a non-output port.');
+      return;
+    }
+    if(runningContext === null) {
+      logger.error(this.getName(), 'Port.updateOnputValue: Must provide a context in non-context block.');
       return;
     }
     if(CommonUtils.isDefined(v) && runningContext.graphBlockParamIndexs[this.stack] >= 0)

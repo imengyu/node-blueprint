@@ -23,9 +23,8 @@ function register() {
     },
   ]; 
   OSEOL.callbacks.onPortParamRequest = (block, port, context) => {
-    if(port.guid == 'OUTEOL') {
-      block.setOutputParamValue('OUTEOL', os.EOL, context);
-    }
+    if(port.guid == 'OUTEOL')
+      return os.EOL;
   };
   OSEOL.blockStyle.noTitle = true;
   OSEOL.blockStyle.logoBackground = 'title:EOL';
@@ -49,7 +48,7 @@ function register() {
   ]; 
   OSarch.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTARCH') {
-      block.setOutputParamValue('OUTARCH', os.arch(), context);
+      return os.arch();
     }
   };
   OSarch.blockStyle.noTitle = true;
@@ -73,7 +72,7 @@ function register() {
   ]; 
   OSconstants.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUT') {
-      block.setOutputParamValue('OUT', os.constants, context);
+      return os.constants;
     }
   };
   OSconstants.blockStyle.noTitle = true;

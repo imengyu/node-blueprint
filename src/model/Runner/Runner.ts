@@ -12,6 +12,8 @@ import BlockServiceInstance from "@/sevices/BlockService";
  */
 export class BlockRunner {
 
+  public static TAG = '流图运行器';
+
   /**
    * 队列 FIFO
    */
@@ -140,7 +142,10 @@ export class BlockRunner {
     }
     runningContext.destroyed = true;
 
+    //移除
     this.contexts.remove(runningContext);
+    if(this.currentRunningContext === runningContext)
+      this.currentRunningContext = null;
   }
   private mainloop() {
 
@@ -165,6 +170,10 @@ export class BlockRunner {
     this.state = 'running';
 
     let currentPort = this.currentRunningContext.currentPort;
+    if(!currentPort) {
+      logger.warning(BlockRunner.TAG, `Context ${this.currentRunningContext.stackLevel} should be remove when destroy`);
+      return;
+    }
     if(this.currentRunningContext.loopLifeTime > 0) {//周期允许
       this.currentRunningContext.loopLifeTime--;
       if(currentPort.paramType.isExecute()) {
@@ -198,9 +207,16 @@ export class BlockRunner {
           runningContext.loopNotStart = false;
         
         //激活端口
+
         let nextPort = currentPort.connectedToPort[0].port;
-        nextPort.parent.onPortConnectorActive.invoke(nextPort, currentPort.connectedToPort[0].connector);
-        nextPort.active(runningContext);
+        try{
+          nextPort.parent.onPortConnectorActive.invoke(nextPort, currentPort.connectedToPort[0].connector);
+          nextPort.active(runningContext);
+        }catch(e) {
+          logger.warning(BlockRunner.TAG, `Catch exception in context ${this.currentRunningContext.stackLevel} when active ` + 
+            `port ${nextPort.getName()}\nStack: ${runningContext.printCallStack(false)}`);
+        }
+
         this.testContextEnd(runningContext);
       }
     }
@@ -231,6 +247,7 @@ export class BlockRunner {
         runningContext.loopLifeTime = 5;
         this.endRunningContext(runningContext);
         this.queue.push(runningContext);
+        runningContext.currentPort = currentPort;
       }
     }
   }
@@ -264,7 +281,7 @@ export class BlockRunner {
     if(typeof this.onRunnerEnd == 'function') 
       this.onRunnerEnd();
     
-    logger.log("流图运行器", this.mainContext.printCallStack(true));
+    logger.log(BlockRunner.TAG, this.mainContext.printCallStack(true));
     this.stop();
   }
   /**
@@ -458,7 +475,7 @@ export class BlockRunner {
     block.blockCurrentCreateNewContext = true;
   }
   public activeOutputPort(runningContext: BlockRunContextData, port: BlockPort) {
-    if(port.executeInNewContext && !CommonUtils.isDefinedAndNotNull(runningContext)) 
+    if(port.executeInNewContext && CommonUtils.isDefinedAndNotNull(runningContext)) 
       port.activeInNewContext();
     else {
       if(!CommonUtils.isDefinedAndNotNull(runningContext)) {

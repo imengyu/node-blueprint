@@ -1,5 +1,5 @@
 import { BlockDocunment, BlockGraphDocunment, BlockGraphVariable } from "../Define/BlockDocunment";
-import { BlockRegData } from "../Define/BlockDef";
+import { BlockPortRegData, BlockRegData } from "../Define/BlockDef";
 import { BlockEditor } from "../Editor/BlockEditor";
 import BlockServiceInstance from "../../sevices/BlockService";
 import StringUtils from "../../utils/StringUtils";
@@ -23,13 +23,14 @@ interface BlockFileDocData {
 }
 interface BlockFileGraphData {
   name: string,
+  uid: string,
   viewPort: Rect,
   scale: number,
   childGraphs: BlockFileGraphData[],
 
   comment: string,
-  inputPorts: any[],
-  outputPorts: any[],
+  inputPorts: BlockPortRegData[],
+  outputPorts: BlockPortRegData[],
   variables: any[],
   
   blocks: any[],
@@ -56,6 +57,7 @@ export class BlockFileParser {
   }, saveToEditor : boolean) {
     let data : BlockFileGraphData = {
       name: graph.name,
+      uid: graph.uid,
       viewPort: graph.viewPort,
       scale: graph.scale,
       childGraphs: [],
@@ -189,20 +191,22 @@ export class BlockFileParser {
 
     //写入图表的输入输出接口
     graph.inputPorts.forEach((p) => {
-      p.paramType = p.paramType.toString();
+      let port = CommonUtils.clone(p); 
+      port.paramType = p.paramType.toString();
       if(CommonUtils.isDefinedAndNotNull(p.paramDictionaryKeyType))
-        p.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
+        port.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
       else
-        p.paramDictionaryKeyType = 'any';
-      data.inputPorts.push(p);
+        port.paramDictionaryKeyType = 'any';
+      data.inputPorts.push(port);
     });
     graph.outputPorts.forEach((p) => {
-      p.paramType = p.paramType.toString();
+      let port = CommonUtils.clone(p); 
+      port.paramType = p.paramType.toString();
       if(CommonUtils.isDefinedAndNotNull(p.paramDictionaryKeyType))
-        p.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
+        port.paramDictionaryKeyType = p.paramDictionaryKeyType.toString();
       else
-        p.paramDictionaryKeyType = 'any';
-      data.outputPorts.push(p);
+        port.paramDictionaryKeyType = 'any';
+      data.outputPorts.push(port);
     });
 
     //递归保存子图表
@@ -240,6 +244,7 @@ export class BlockFileParser {
     graph.variables = [];
     graph.isMainGraph = false;
     graph.docunment = doc;
+    graph.uid = graphData.uid || CommonUtils.genNonDuplicateIDHEX(16);
 
     //递归加载子图表
     graphData.childGraphs.forEach(childGraph => {
@@ -302,14 +307,14 @@ export class BlockFileParser {
 
     graph.inputPorts = [];
     graphData.inputPorts.forEach((p) => {
-      p.paramType = createParameterTypeFromString(p.paramType);
-      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType);
+      p.paramType = createParameterTypeFromString(p.paramType as string);
+      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType as string);
       graph.inputPorts.push(p);
     });
     graph.outputPorts = [];
     graphData.outputPorts.forEach((p) => {
-      p.paramType = createParameterTypeFromString(p.paramType);
-      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType);
+      p.paramType = createParameterTypeFromString(p.paramType as string);
+      p.paramDictionaryKeyType = createParameterTypeFromString(p.paramDictionaryKeyType as string);
       graph.outputPorts.push(p);
     });
 

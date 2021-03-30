@@ -388,7 +388,9 @@ export class Block {
    * @param newCustomType 新的自定义类型
    */
   public changePortParamType(port : BlockPort, newType : BlockParameterType|string, newSetType ?: BlockParameterSetType, newKeyType ?: BlockParameterType|string) {
-    if(port.parent == this) {
+    if(!port)
+      logger.error(this.getName(true), 'changePortParamType: Must provide port');
+    else if(port.parent == this) {
 
       if(CommonUtils.isDefined(newType))
         if(typeof newType == 'string') port.paramType = createParameterTypeFromString(newType);
@@ -486,7 +488,7 @@ export class Block {
    * 注意，终止后流图将停止运行。单元内部请勿继续调用其他端口。
    */
   public throwError(err : string, port ?: BlockPort, level : 'warning'|'error' = 'error', breakFlow = false) {
-    let errorString = `单元 ${this.getName()} (${this.uid}) ${port?'=>  端口'+port.guid:''} 发生错误： ${err}`;
+    let errorString = `单元 ${this.getName()} (${this.uid}) ${port?port.getName(false):''} 发生错误： ${err}`;
     switch(level) {
       case 'error': 
         logger.error('单元错误', errorString, {
@@ -508,12 +510,15 @@ export class Block {
         break;
     }
     //触发断点
-    if(breakFlow && this.currentRunningContext) {
-      this.currentRunningContext.runner.markInterrupt(
-        this.currentRunningContext,
-        null,
-        this
-      )
+    if(breakFlow) {
+      if(this.currentRunningContext) {
+        this.currentRunningContext.runner.markInterrupt(
+          this.currentRunningContext,
+          null,
+          this
+        )
+      }
+      throw new Error(errorString);
     }
   }
 }

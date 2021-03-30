@@ -290,6 +290,12 @@ export default class BlockDrawer extends Vue {
    */
   public getBlocks() { return this.blocks;}
   /**
+   * 通过单元UID获取当前绘制器中单元
+   */
+  public getBlockByUid() { 
+    return this.blocks;
+  }
+  /**
    * 获取当前绘制器中所有连接
    */
   public getConnectors() { return this.connectors;}
@@ -389,10 +395,14 @@ export default class BlockDrawer extends Vue {
   public moveViewportToPos(pos : Vector2) {
     this.viewPort.setPos(pos.x - this.viewPort.w / 2, pos.y - this.viewPort.h / 2);
   }
-  public moveViewportToBlockPos(block : BlockEditor) {
+  public moveViewportToBlockPos(block : BlockEditor, flashBlock = false) {
     this.moveViewportToPos(new Vector2(
       block.position.x + block.size.x / 2, 
       block.position.y + block.size.y / 2));
+    if(flashBlock) {
+      block.markActive();
+      setTimeout(() => block.markDective(true), 300);
+    }
   }
 
   zoomValues = [ 30, 50, 60, 80, 100, 110, 120, 130, 150, 170, 190, 200 ];

@@ -22,33 +22,47 @@
         <i v-if="i.hasWarp" :class="'switch iconfont icon-zuo' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen"></i>
 
         <i v-if="i.level==='error'" class="icon iconfont icon-error- text-danger"></i>
-        <i v-if="i.level==='warning'" class="icon iconfont icon-error-1 text-warning"></i>
-        <i v-if="i.level==='info'" class="icon iconfont icon-info-1 text-info"></i>
-        <span class="tag">{{ i.tag }}</span>
-        <span v-if="i.speicalType==='undefined'" class="speical">undefined</span>
-        <span v-else-if="i.speicalType==='null'" class="speical">null</span>
-        <span v-else>{{ i.content }}</span>
+        <i v-else-if="i.level==='warning'" class="icon iconfont icon-error-1 text-warning"></i>
+        <i v-else-if="i.level==='info'" class="icon iconfont icon-info-1 text-info"></i>
+
+        <span class="tag mr-2">{{ i.tag }}</span>
+        
+        <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d,b,p) => onGoRef(d,b,p)"></ConsoleObjectShower>
+        <ConsoleRefShower v-else :value="i.content" @on-go-ref="(d,b,p) => onGoRef(d,b,p)" :isTop="true"></ConsoleRefShower>
+
+        <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc, i.srcBlock, i.srcPort)">{{i.srcText}}</a>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import logger, { LogLevel } from "@/utils/Logger";
+import logger, { LogExtendData, LogLevel } from "@/utils/Logger";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import ConsoleRefShower from "./EditorComponents/ConsoleRefShower.vue";
+import ConsoleObjectShower from "./EditorComponents/ConsoleObjectShower.vue";
+import CommonUtils from "@/utils/CommonUtils";
 
 interface LogItem {
   tag: string,
-  content: string,
+  content: any,
   level: LogLevel,
   hasWarp: boolean,
   warpOpen: boolean,
   speicalType: LogSpeicalType,
+  srcText?: string,
+  srcDoc?: string,
+  srcBlock?: string,
+  srcPort?: string,
 }
-type LogSpeicalType = 'none'|'undefined'|'null';
+type LogSpeicalType = 'none'|'undefined'|'null'|'true'|'false'|'object'|'number';
 
 @Component({
   name: 'Console',
+  components: {
+    ConsoleRefShower,
+    ConsoleObjectShower,
+  }
 })
 export default class Console extends Vue {
 
@@ -72,15 +86,46 @@ export default class Console extends Vue {
   beforeDestroy() {
     logger.removeListener(this.logListener);
   }
-  logListener(tag : string, level : LogLevel, content : string, extendObj ?: object) {
+  logListener(tag : string, level : LogLevel, content : string|number|boolean|object, extendObj ?: LogExtendData) {
     let hasWarp = false;
     let speicalType : LogSpeicalType = 'none';
-    if(typeof content === 'string') 
+    
+    if(content === null)
+      speicalType = 'null';
+    else if(typeof content === 'string') 
       hasWarp = content.contains('\n');
     else if(typeof content === 'undefined')
       speicalType = 'undefined';
-    else if(content === null)
-      speicalType = 'null';
+    else if(typeof content === 'object')
+      speicalType = 'object';
+    else if(typeof content === 'number')
+      speicalType = 'number';
+    else if(typeof content === 'boolean')
+      speicalType = content ? 'true' : 'false'; 
+
+    let srcText = '';
+    let srcBlock = '';
+    let srcPort = '';
+    let srcDoc = '';
+    if(extendObj) {
+      if(extendObj.srcDoc) {
+        srcText += extendObj.srcDoc.name;
+        srcDoc = extendObj.srcDoc.uid + ':' + extendObj.srcBlock.currentGraph.uid;
+      }
+      if(extendObj.srcBlock) {
+        if(!CommonUtils.isDefinedAndNotNull(extendObj.srcDoc)) {
+          extendObj.srcDoc = extendObj.srcBlock.currentGraph.docunment;
+          srcText += extendObj.srcDoc.name;
+          srcDoc = extendObj.srcDoc.uid + ':' + extendObj.srcBlock.currentGraph.uid;
+        }
+        srcText += '.' + extendObj.srcBlock.regData.baseInfo.name;
+        srcBlock = extendObj.srcBlock.uid;
+      }
+      if(extendObj.srcPort) {
+        srcText += '.' + extendObj.srcPort.name;
+        srcPort = extendObj.srcPort.guid;
+      }
+    }
 
     this.outputs.push({
       tag: tag,
@@ -89,9 +134,15 @@ export default class Console extends Vue {
       level: level,
       speicalType: speicalType,
       warpOpen: false,
+      srcText: srcText,
+      srcBlock: srcBlock,
+      srcPort: srcPort,
+      srcDoc: srcDoc,
     });
     if(level === 'warning') this.waringCount++;
     if(level === 'error') this.errorCount++;
+
+
 
     if(this.authScrool && this.list) 
       this.list.scrollTo(0, this.list.scrollHeight);
@@ -110,7 +161,9 @@ export default class Console extends Vue {
       return true;
     return false;
   }
-
+  onGoRef(refDoc : string, refBlock : string, refPort : string) {
+    this.$emit('on-go-ref', refDoc, refBlock, refPort);
+  }
 }
 
 </script>

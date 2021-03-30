@@ -13,8 +13,8 @@ import { BlockRunContextData } from "../Runner/BlockRunContextData";
 import { BlockParameterType, cloneParameterTypeFromString, createParameterTypeFromString } from "../Define/BlockParameterType";
 import { Vector2 } from "../Vector2";
 import { Rect } from "../Rect";
-import BlockServiceInstance from "@/sevices/BlockService";
 import BlockRegister from "./Utils/BlockRegister";
+import BlockServiceInstance from "@/sevices/BlockService";
 
 export default { 
   register,
@@ -111,6 +111,149 @@ function registerScriptBase()  {
   blockIn = new BlockRegData('0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F', '脚本入口', '脚本在这里开始运行');
   blockOut = new BlockRegData('77885802-92C8-569B-1E7F-48938943A549', '脚本出口', '调用此单元结束整个脚本的运行');
 
+  //运行库平台
+  //==============================
+
+  let blockPlatform = new BlockRegData("522E5C4D-16E1-9D48-1916-19830B6F5B35", "运行库平台", "获取当前流图所在的运行库的平台", 'imengyu', '基础');
+  blockPlatform.blockStyle.logoBackground = 'title:运行库平台';
+  blockPlatform.blockStyle.minWidth = '140px';
+  blockPlatform.baseInfo.logo = require('../../assets/images/BlockIcon/switch.svg');
+  blockPlatform.baseInfo.version = '2.0';
+  blockPlatform.ports = [
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'BasePlatformType',
+    },
+  ];
+  blockPlatform.callbacks.onPortParamRequest = (block, port) => {
+    return BlockServiceInstance.getCurrentPlatform();
+  };
+  blockPlatform.blockStyle.titleBakgroundColor = "rgba(255,20,147,0.6)";
+  blockPlatform.blockStyle.smallTitle = true;
+  blockPlatform.blockStyle.noTitle = true;
+  blockPlatform.blockStyle.hideLogo = true;
+
+  //延时
+  //==============================
+
+  let blockDelay = new BlockRegData("6C01D858-CF4D-D9EF-C18E-DE5DAE400702", "延时", '延迟流程图的运行', '基础', '基础');
+  
+  blockDelay.baseInfo.version = '2.0';
+  blockDelay.baseInfo.logo = require('../../assets/images/BlockIcon/clock.svg');
+  blockDelay.ports = [
+    {
+      name: "",
+      description: '',
+      direction: 'input',
+      guid: 'IN',
+      defaultConnectPort: false,
+      paramType: 'execute',
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      executeInNewContext: true,
+      defaultConnectPort: false,
+      paramType: 'execute',
+    },
+    {
+      name: "时长",
+      description: '延迟时长（毫秒）',
+      direction: 'input',
+      guid: 'TIME',
+      paramType: 'number',
+      paramDefaultValue: 1000,
+      defaultConnectPort: false,
+    },
+  ];
+  blockDelay.callbacks.onCreate = (block) => {};
+  blockDelay.callbacks.onPortExecuteIn = (block, port) => {
+    let v = block.getInputParamValue('TIME');
+    let context = block.currentRunningContext;
+    context.markContexInUse();
+    setTimeout(() => {
+      block.activeOutputPortInNewContext('OUT');
+      context.unsetContexInUse();
+    }, v ? v : 1000);
+  };
+  blockDelay.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
+  blockDelay.blockStyle.logoRight = blockDelay.baseInfo.logo;
+
+
+  //延时
+  //==============================
+
+  let blockTimer = new BlockRegData("713EDD7E-8C92-099F-5CD7-A7E10FF77060", "定时器", '定时器用于定时执行某些任务', '基础', '基础');
+  
+  blockTimer.baseInfo.version = '2.0';
+  blockTimer.baseInfo.logo = require('../../assets/images/BlockIcon/clock2.svg');
+  blockTimer.ports = [
+    {
+      name: '开始',
+      description: '开始定时器',
+      direction: 'input',
+      guid: 'START',
+      defaultConnectPort: true,
+      paramType: 'execute',
+    },
+    {
+      name: '停止',
+      description: '停止定时器',
+      direction: 'input',
+      guid: 'STOP',
+      defaultConnectPort: false,
+      forceNoCycleDetection: true,
+      paramType: 'execute',
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      executeInNewContext: true,
+      defaultConnectPort: false,
+      paramType: 'execute',
+    },
+    {
+      name: "时长",
+      description: '周期时长（毫秒）',
+      direction: 'input',
+      guid: 'TIME',
+      paramType: 'number',
+      paramDefaultValue: 2000,
+      defaultConnectPort: false,
+    },
+  ];
+  blockTimer.callbacks.onCreate = (block) => {};
+  blockTimer.callbacks.onPortExecuteIn = (block, port) => {
+    let context = block.currentRunningContext;
+    let variables = block.variables();
+    switch(port.guid) {
+      case 'START': {
+        let v = block.getInputParamValue('TIME');
+        context.markContexInUse();
+        variables['intervalId'] = setInterval(() => {
+          block.activeOutputPortInNewContext('OUT');
+        }, v ? v : 1000);
+        break;
+      }
+      case 'STOP': {
+        let id = variables['intervalId'];
+        if(id) {
+          context.unsetContexInUse();
+          clearInterval(id);
+          variables['intervalId'] = undefined;
+        }
+        break; 
+      }
+    }
+    
+  };
+  blockTimer.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
+  blockTimer.blockStyle.logoRight = blockDelay.baseInfo.logo;
+
+  //脚本出口
+  //==============================
+
   blockIn.baseInfo.author = 'imengyu';
   blockIn.baseInfo.category = '基础/脚本';
   blockIn.baseInfo.version = '2.0';
@@ -133,6 +276,9 @@ function registerScriptBase()  {
   blockIn.type = 'base';
   blockIn.blockStyle.titleBakgroundColor = "rgba(25,25,112,0.6)";
 
+  //脚本入口
+  //==============================
+
   blockOut.baseInfo.author = 'imengyu';
   blockOut.baseInfo.category = '基础/脚本';
   blockOut.baseInfo.version = '2.0';
@@ -150,7 +296,7 @@ function registerScriptBase()  {
   blockOut.type = 'base';
   blockOut.blockStyle.titleBakgroundColor = "rgba(112,30,133,0.6)";
 
-  return [ blockIn, blockOut ];
+  return [ blockIn, blockOut, blockDelay, blockPlatform ];
 }
 function registerScriptVariableBase()  {
 
@@ -220,7 +366,7 @@ function registerScriptVariableBase()  {
   };
   variableGet.callbacks.onPortParamRequest = (block, port, context) => {
     let variableReal = <BlockGraphVariable>block.data['variableReal'];
-    port.updateOnputValue(context, variableReal.get(context));
+    return variableReal.get(context);
   };
   variableGet.callbacks.onDestroy = (block) => {
     
@@ -348,7 +494,9 @@ function registerScriptVariableBase()  {
   };
   variableSet.callbacks.onPortParamRequest = (block, port, context) => {
     let variableReal = <BlockGraphVariable>block.data['variableReal'];
-    port.updateOnputValue(context, variableReal.get(context));
+    let variable = variableReal.get(context || block.currentRunningContext);
+    port.updateOnputValue(context, variable);
+    return variable
   };
   variableSet.callbacks.onDestroy = (block) => {
     let variable = block.currentGraph.findGraphVariable(block.options['variable']);
@@ -438,6 +586,7 @@ function registerScriptGraphBase()  {
     let outerPort = outerBlock.getPortByGUID(port.guid);
     let val = outerPort.rquestInputValue(context.getUpperParentContext());
     port.updateOnputValue(context, val);
+    return val;
   };
   graphIn.settings.oneBlockOnly = true;
   graphIn.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
@@ -468,9 +617,9 @@ function registerScriptGraphBase()  {
     block.data['onGraphPortUpdate'] = block.editor.editorEvents.onGraphPortUpdate.addListener(null, (graph, port) => {
       if(graph == block.currentGraph && port.direction == 'output') {
         let portReal = block.getPortByGUID(port.guid);
+        portReal.name = port.name;
         portReal.paramType = typeof port.paramType === 'string' ? createParameterTypeFromString(port.paramType) : <BlockParameterType>cloneParameterTypeFromString(port.paramType);
         portReal.paramDictionaryKeyType = typeof port.paramDictionaryKeyType === 'string' ? createParameterTypeFromString(port.paramDictionaryKeyType) : <BlockParameterType>cloneParameterTypeFromString(port.paramDictionaryKeyType);
-        (port.paramDictionaryKeyType);
         portReal.paramDefaultValue = port.paramDefaultValue;
         portReal.paramSetType = port.paramSetType;
         block.updatePort(portReal);
@@ -519,8 +668,7 @@ function registerScriptGraphBase()  {
     outerBlock.currentRunningContext = parentContext;
     //激活外部单元
     outerBlock.activeOutputPort(port.guid);
-  };
-  
+  }; 
   graphOut.callbacks.onDestroy = (block) => {
     
     if(block.isEditorBlock) {
@@ -667,7 +815,7 @@ function registerScriptGraphBase()  {
         srcBlock: block,
         srcPort: port
       });
-      return;
+      return undefined;
     }
 
     //子端口数据更新到父端口
@@ -677,9 +825,10 @@ function registerScriptGraphBase()  {
         let outerPort = outBlock.getPortByGUID(port.guid);
         let val = outerPort.rquestInputValue(currentRunningContexts[i]);
         port.updateOnputValue(context, val);
-        break;
+        return val;
       }
     }
+    return undefined;
   };
   graphCall.callbacks.onDestroy = (block) => {
     
@@ -708,76 +857,97 @@ function registerDebugBase() {
   ], '#8552a1'));
 
   let blockDebug = new BlockRegData("4B6EA737-9702-A383-A268-AADC332038DF", "输出日志", '输出调试日志至控制台', '基础', '基础/调试');
-  let blockModal = new BlockRegData("CB1FB757-631D-8A95-0AB1-3CB28CB04FBC", "显示一个信息对话框", '显示一个对话框', '基础', '基础/调试');
-  let blockConfirm = new BlockRegData("84AB5443-1998-B4FB-773A-5F41F364BB7A", "显示一个确认对话框", '显示一个确认对话框，用户可选择确认或取消', '基础', '基础/调试');
-  let blockDelay = new BlockRegData("6C01D858-CF4D-D9EF-C18E-DE5DAE400702", "延时", '延迟流程图的运行', '基础', '基础');
-  let blockPlatform = new BlockRegData("522E5C4D-16E1-9D48-1916-19830B6F5B35", "运行库平台", "获取当前流图所在的运行库的平台", 'imengyu', '基础');
-  
-  //blockPlatform
+  let blockModal = new BlockRegData("CB1FB757-631D-8A95-0AB1-3CB28CB04FBC", "信息对话框（Alert）", '显示一个对话框', '基础', '基础/调试');
+  let blockConfirm = new BlockRegData("84AB5443-1998-B4FB-773A-5F41F364BB7A", "确认对话框（Confirm）", '显示一个确认对话框，用户可选择确认或取消', '基础', '基础/调试');
+  let blockTrace = new BlockRegData("31B04B93-FE15-4D35-B673-BDBEA8597547", "追踪（Trace）", '在控制台中打印当前执行的代码在堆栈中的调用路径', '基础', '基础/调试');
+  let blockAssert = new BlockRegData("F726A2CE-2285-A9D7-9252-9FC3EEAC7BDC", "断言（Assert）", '检查一个条件，如果条件不满足则抛出异常并终止流图的运行', '基础', '基础/调试');
+
+  //Assert
   //===================
 
-  blockPlatform.blockStyle.logoBackground = 'title:运行库平台';
-  blockPlatform.blockStyle.minWidth = '140px';
-  blockPlatform.baseInfo.logo = require('../../assets/images/BlockIcon/switch.svg');
-  blockPlatform.baseInfo.version = '2.0';
-  blockPlatform.ports = [
+  blockAssert.baseInfo.logo = require('../../assets/images/BlockIcon/warning.svg');
+  blockAssert.baseInfo.version = '2.0';
+  blockAssert.ports = [
+    {
+      direction: 'input',
+      name: '进入',
+      guid: 'IN',
+      paramType: 'execute',
+    },
+    {
+      direction: 'input',
+      name: '判断条件',
+      guid: 'CONDITION',
+      paramRefPassing: true,
+      paramType: 'boolean',
+    },
+    {
+      direction: 'input',
+      name: '抛出错误',
+      description: '是否在条件为 false 时抛出错误并终止运行',
+      guid: 'THROWERR',
+      paramType: 'boolean',
+    },
     {
       direction: 'output',
-      guid: 'OUT',
-      paramType: 'BasePlatformType',
+      name: '成功',
+      guid: 'SUCCESS',
+      defaultConnectPort: false,
+      paramType: 'execute',
+    },
+    {
+      direction: 'output',
+      name: '失败',
+      guid: 'FAILED',
+      defaultConnectPort: false,
+      paramType: 'execute',
     },
   ];
-  blockPlatform.callbacks.onPortParamRequest = (block, port) => {
-
+  blockAssert.callbacks.onPortExecuteIn = (block, port) => {
+    let con = block.getInputParamValue('CONDITION');
+    let throwError = block.getInputParamValue('THROWERR');
+    if(con)
+      block.activeOutputPort('SUCCESS');
+    else {
+      if(throwError)
+        block.throwError('条件断言失败！', port, 'error', true);
+      else {
+        block.throwError('条件断言失败！', port, 'warning', false);
+        block.activeOutputPort('FAILED');
+      }
+    }
   };
-  blockPlatform.blockStyle.titleBakgroundColor = "rgba(255,20,147,0.6)";
-  blockPlatform.blockStyle.smallTitle = true;
-  blockPlatform.blockStyle.noTitle = true;
-  blockPlatform.blockStyle.hideLogo = true;
+  blockAssert.callbacks.onCreateCustomEditor = null;
+  blockAssert.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  //blockModal
+  //追踪
   //===================
 
-  blockDelay.baseInfo.version = '2.0';
-  blockDelay.baseInfo.logo = require('../../assets/images/BlockIcon/clock.svg');
-  blockDelay.ports = [
+  blockTrace.baseInfo.logo = require('../../assets/images/BlockIcon/trace.svg');
+  blockTrace.baseInfo.version = '2.0';
+  blockTrace.ports = [
     {
-      name: "",
-      description: '',
       direction: 'input',
       guid: 'IN',
-      defaultConnectPort: false,
+      defaultConnectPort: true,
       paramType: 'execute',
     },
     {
       direction: 'output',
       guid: 'OUT',
-      executeInNewContext: true,
-      defaultConnectPort: false,
       paramType: 'execute',
     },
-    {
-      name: "时长",
-      description: '延迟时长（毫秒）',
-      direction: 'input',
-      guid: 'TIME',
-      paramType: 'number',
-      paramDefaultValue: 1000,
-      defaultConnectPort: false,
-    },
   ];
-  blockDelay.callbacks.onCreate = (block) => {};
-  blockDelay.callbacks.onPortExecuteIn = (block, port) => {
-    let v = block.getInputParamValue('TIME');
-    let context = block.currentRunningContext;
-    context.markContexInUse();
-    setTimeout(() => {
-      block.activeOutputPortInNewContext('OUT');
-      context.unsetContexInUse();
-    }, v ? v : 1000);
+  blockTrace.callbacks.onPortExecuteIn = (block, port) => {
+    //打印调用堆栈
+    logger.log(block.getName(), block.currentRunningContext.runner.mainContext.printCallStack(true));
+    block.activeOutputPort('OUT');
   };
-  blockDelay.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
-  blockDelay.blockStyle.logoRight = blockDelay.baseInfo.logo;
+  blockTrace.callbacks.onCreateCustomEditor = null;
+  blockTrace.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
+
+  //输出日志
+  //===================
 
   blockDebug.baseInfo.version = '2.0';
   blockDebug.ports = [
@@ -792,6 +962,15 @@ function registerDebugBase() {
       guid: 'OUT',
       defaultConnectPort: false,
       paramType: 'execute',
+    },
+    {
+      name: "标签",
+      description: '可以定义一个输出标签，方便查找',
+      direction: 'input',
+      guid: 'TAG',
+      paramType: 'string',
+      paramDefaultValue: null,
+      defaultConnectPort: false,
     },
     {
       name: "输出",
@@ -815,40 +994,90 @@ function registerDebugBase() {
   blockDebug.callbacks.onPortExecuteIn = (block, port) => {
     let paramInput = block.getInputParamValue('PRINT');
     let paramLevel = block.getInputParamValue('LEVEL');
+    let paramTag = block.getInputParamValue('TAG');
+    let tag = CommonUtils.isNullOrEmpty(paramTag) ? block.getName() : paramTag;
 
     switch(paramLevel) {
       case 'log':
-        logger.log(block.getName(), paramInput, {
+        logger.log(tag, paramInput, {
           srcBlock: block,
           srcPort: port
         });
         break;
       case 'info':
-        logger.info(block.getName(), paramInput, {
+        logger.info(tag, paramInput, {
           srcBlock: block,
           srcPort: port
         });
         break; 
       case 'warn':
-        logger.warning(block.getName(), paramInput, {
+        logger.warning(tag, paramInput, {
           srcBlock: block,
           srcPort: port
         });
         break;
       case 'error':
-        logger.error(block.getName(), paramInput, {
+        logger.error(tag, paramInput, {
           srcBlock: block,
           srcPort: port
         });
+        break;
+      default:
+        block.throwError('未知等级 ' + paramLevel + '，日志没有输出', port, 'warning');
         break;
     }
 
     block.activeOutputPort('OUT');
   };
   blockDebug.callbacks.onCreateCustomEditor = null;
+  blockDebug.callbacks.onCreate = (block : Block) => {
+    let type = block.options['type'];
+    if(!StringUtils.isNullOrEmpty(type)) {
+      block.changePortParamType(block.getPortByGUID('PRINT'), undefined, type); 
+    }
+  };
+  blockDebug.blockMenu.items.push({
+    label: '集合类型',
+    children: [
+      {
+        label: '变量',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('PRINT'), undefined, 'variable'); 
+          this.options['type'] = 'variable';
+        }
+      },
+      {
+        label: '数组',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('PRINT'), undefined, 'array'); 
+          this.options['type'] = 'array';
+        }
+      },
+      {
+        label: '集合',
+        onClick: function() {
+          this.changePortParamType(this.getPortByGUID('PRINT'), undefined, 'set'); 
+          this.options['type'] = 'set';
+        }
+      },
+      {
+        label: '映射',
+        onClick: function() { 
+          this.changePortParamType(this.getPortByGUID('PRINT'), undefined, 'dictionary'); 
+          this.options['type'] = 'dictionary';
+        }
+      },
+    ]
+  }, {
+    label: '重置输出类型',
+    onClick: function() {
+      this.changePortParamType(this.getPortByGUID('PRINT'), 'any', 'variable'); 
+      this.options['type'] = 'variable';
+    }
+  })
   blockDebug.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  //blockModal
+  //显示一个信息对话框
   //===================
 
   blockModal.baseInfo.version = '2.0';
@@ -906,7 +1135,7 @@ function registerDebugBase() {
   blockModal.callbacks.onCreateCustomEditor = null;
   blockModal.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  //Confirm
+  //显示一个确认对话框
   //====================
 
   blockConfirm.baseInfo.author = 'imengyu';
@@ -973,7 +1202,7 @@ function registerDebugBase() {
   blockConfirm.callbacks.onCreateCustomEditor = null;
   blockConfirm.blockStyle.titleBakgroundColor = "rgba(120,200,254,0.6)";
 
-  return [ blockPlatform, blockDelay, blockConfirm, blockDebug, blockModal ]
+  return [ blockDebug, blockConfirm, blockModal, blockAssert, blockTrace  ]
 }
 function registerTypeBase() {
 
@@ -1077,6 +1306,71 @@ function registerTypeBase() {
   block.blockStyle.noTitle = true;
   block.blockStyle.hideLogo = true;
 
+  blocks.push(block);
+
+  let reloadSelectBlockPorts = function(block : Block) {
+    let type = block.options['opType'];
+    block.changePortParamType(block.getPortByGUID('PIN'), createParameterTypeFromString(type), 'variable');
+    block.changePortParamType(block.getPortByGUID('POUT'), createParameterTypeFromString(type), 'variable');
+  }
+
+  block = new BlockRegData("27284141-843F-E9AC-AE51-52AC14DF80CD", "类型变量参数", "类型变量参数单元。该单元带执行，其会开辟栈空间用以存储参数", 'imengyu', '基础/类型');
+  block.baseInfo.logo = require('../../assets/images/BlockIcon/circle.svg');
+  block.ports = [
+    {
+      direction: 'input',
+      guid: 'IN',
+      paramType: 'execute',
+    },
+    {
+      direction: 'input',
+      guid: 'PIN',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
+    },
+    {
+      direction: 'output',
+      guid: 'OUT',
+      paramType: 'execute',
+    },
+    {
+      direction: 'output',
+      guid: 'POUT',
+      paramType: 'any',
+      portAnyFlexable: { flexable: true }
+    },
+  ];
+  block.portAnyFlexables = {
+    flexable: {}
+  };
+  block.callbacks.onCreate = (block) => {
+    if(typeof block.options['opType'] == 'undefined') block.options['opType'] = 'any';
+    reloadSelectBlockPorts(block);
+  };
+  block.callbacks.onCreateCustomEditor = (parentEle, block : BlockEditor, regData) => { 
+    let el = document.createElement('div');
+    let typeSelector = document.createElement('input');
+    typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(block.options['opType']);
+    typeSelector.type = 'text';
+    typeSelector.style.width = '111px';
+    typeSelector.readOnly = true;
+    typeSelector.onclick = (e) => {
+      block.editor.chooseType(new Vector2(e.x, e.y), (type, isBaseType) => {
+        if(block.options['opType'] != type.name) {
+          block.options['opType'] = type.name;
+          typeSelector.value = ParamTypeServiceInstance.getTypeNameForUserMapping(type.name);
+          reloadSelectBlockPorts(block);
+        }
+      }, false)
+    };
+    el.innerText = '类型：';
+    el.style.whiteSpace = 'nowrap';
+    el.appendChild(typeSelector);
+    parentEle.appendChild(el);
+  };
+  block.callbacks.onPortExecuteIn = (block, port) => { 
+    if(port.guid === 'IN') block.setOutputParamValue('POUT', block.getInputParamValue('PIN'));
+  };
   blocks.push(block);
 
   return blocks;
@@ -1349,10 +1643,11 @@ function registerConvertBlock() {
   block.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
     let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
     if(coverter) {
-      let input = block.getInputParamValue('INPUT');
-      block.setOutputParamValue('OUTPUT', coverter.converter(input));
+      let input = block.getInputParamValue('INPUT', context);
+      return coverter.converter(input);
     } else {
       block.throwError('转换器没有设置转换方法，请删除之后重新添加', port, 'error');
+      return undefined;
     }
   };
   
@@ -1381,8 +1676,8 @@ function registerConvertBlock() {
   parseFloatBlock.blockStyle.logoBackground = 'title:parseInt';
   parseFloatBlock.blockStyle.minWidth = '130px';
   parseFloatBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    let input = block.getInputParamValue('INPUT');
-      block.setOutputParamValue('OUTPUT', parseFloat(input));
+    let input = block.getInputParamValue('INPUT', context);
+    return parseFloat(input);
   };
 
   let parseIntBlock = new BlockRegData("824AB4F0-7C8F-A12F-6CA6-87266464BD6E", "parseInt", '转换为整数', 'imengyu', '基础/转换');
@@ -1409,14 +1704,14 @@ function registerConvertBlock() {
   parseIntBlock.blockStyle.minWidth = '130px';
 
   parseIntBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    let input = block.getInputParamValue('INPUT');
-      block.setOutputParamValue('OUTPUT', parseInt(input));
+    let input = block.getInputParamValue('INPUT', context);
+    return parseInt(input);
   };
 
   return [ block, parseFloatBlock, parseIntBlock ];
 }
 function registerConnBlock() {
-  let block = new BlockRegData("8A94A788-ED4E-E521-5BC2-4D69B59BAB80", "数据延长线", "", 'imengyu', '基础');
+  let block = new BlockRegData("8A94A788-ED4E-E521-5BC2-4D69B59BAB80", "数据延长线", "", 'imengyu', '');
 
   block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
   block.baseInfo.description = '';
@@ -1440,7 +1735,6 @@ function registerConnBlock() {
   block.portAnyFlexables = {
     flexable: {}
   };
-  block.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
   block.blockStyle.noTitle = true;
   block.blockStyle.noComment = true;
   block.blockStyle.minWidth = '0px';

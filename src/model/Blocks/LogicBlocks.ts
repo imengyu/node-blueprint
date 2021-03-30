@@ -125,7 +125,7 @@ function register() {
       
     });
 
-    if(rs != null) block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   And.portAnyFlexables = LogicBase_portAnyFlexables;
 
@@ -161,7 +161,7 @@ function register() {
       
     });
 
-    if(rs != null) block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   Or.portAnyFlexables = LogicBase_portAnyFlexables;
 
@@ -198,7 +198,8 @@ function register() {
   Not.callbacks.onPortParamRequest = (block, port, context) => { 
     let v = block.getInputParamValue('PI1', context);    
     if(CommonUtils.isDefinedAndNotNull(v))
-      block.setOutputParamValue('PO1', (block.options['opType'] == 'boolean' ? !v : ~v), context);
+      return (block.options['opType'] == 'boolean' ? !v : ~v);
+    return false;
   };
 
   //#endregion
@@ -239,7 +240,8 @@ function register() {
     let v1 = block.getInputParamValue('PI1', context);
     let v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO1', v1 ^ v2, context);
+      return v1 ^ v2;
+    return null;
   };
   
 
@@ -260,7 +262,8 @@ function register() {
   Equal.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 == v2, context);
+      return v1 === v2;
+    return false;
   };
 
   //#endregion
@@ -279,7 +282,8 @@ function register() {
   NotEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 != v2, context);
+      return v1 !== v2;
+    return false;
   };
 
   //#endregion
@@ -299,7 +303,8 @@ function register() {
   Less.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 < v2, context);
+      return v1 < v2;
+    return false;
   };
 
   //#endregion
@@ -319,7 +324,8 @@ function register() {
   Greater.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 > v2, context);
+      return v1 > v2;
+    return false;
   };
 
   //#endregion
@@ -339,7 +345,8 @@ function register() {
   LessOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 <= v2, context);
+      return v1 <= v2;
+    return false;
   };
 
   //#endregion
@@ -359,7 +366,8 @@ function register() {
   GreaterOrEqual.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 >= v2, context);
+      return v1 >= v2;
+    return false;
   };
 
   //#endregion
@@ -379,7 +387,8 @@ function register() {
   LeftMove.callbacks.onPortParamRequest = (block, port, context) => { 
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 << v2, context);
+      return v1 << v2;
+    return null;
   };
 
   //#endregion
@@ -399,7 +408,8 @@ function register() {
   RightMove.callbacks.onPortParamRequest = (block, port, context) => {
     let v1 = block.getInputParamValue('PI1', context), v2 = block.getInputParamValue('PI2', context);    
     if(CommonUtils.isDefinedAndNotNull(v1) && CommonUtils.isDefinedAndNotNull(v2))
-      block.setOutputParamValue('PO', v1 >> v2, context);
+      return v1 >> v2;
+    return null;
   };
 
   //#endregion

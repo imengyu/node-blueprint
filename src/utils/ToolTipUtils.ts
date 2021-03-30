@@ -19,12 +19,11 @@ export default {
     tooltipProvider = pv; 
     setTimeout(() => {
       let ele = pv.getEle();
-      let currentHideEl
       ele.addEventListener('mouseenter', () => {
-        HtmlUtils.clearHideTooltipDelay();
+        clearHideTooltipDelay();
       })
       ele.addEventListener('mouseleave', () => {
-        HtmlUtils.registerHideTooltipDelay(() => tooltipProvider.hideTooltip(lastHideTooltipId));
+        registerHideTooltipDelay(() => tooltipProvider.hideTooltip(lastHideTooltipId));
       })
     }, 500);
   },
@@ -67,7 +66,7 @@ function closeElementTooltip(el : HTMLElement) {
   let id = el.getAttribute('data-tooltip-id');
   if(StringUtils.isNumber(id)) {
     lastHideTooltipId = parseInt(el.getAttribute('data-tooltip-id'));
-    HtmlUtils.registerHideTooltipDelay(() => tooltipProvider.hideTooltip(lastHideTooltipId));
+    registerHideTooltipDelay(() => tooltipProvider.hideTooltip(lastHideTooltipId));
   }
   el.removeAttribute('data-tooltip-id');
 }
@@ -82,12 +81,12 @@ function elementTooltipMouseEnter(e : MouseEvent) {
   let title = el.getAttribute('title') || el.getAttribute('data-title');
   el.setAttribute('data-tooltip-enter', 'true');
   if(!CommonUtils.isNullOrEmpty(title)) {
-    HtmlUtils.clearHideTooltipDelay();
-    HtmlUtils.registerShowTooltipDelay(() => {
+    
+    registerShowTooltipDelay(() => {
+      clearHideTooltipDelay();
       if(el.getAttribute('data-tooltip-enter') == 'true'){
-        el.setAttribute('data-tooltip-id', tooltipProvider.showTooltip(
-          title, new Vector2(e.x, e.y)
-        ).toString());
+        lastHideTooltipId = tooltipProvider.showTooltip(title, new Vector2(e.x, e.y))
+        el.setAttribute('data-tooltip-id', lastHideTooltipId.toString());
       }
     });
   }
@@ -96,7 +95,42 @@ function elementTooltipMouseLeave(e : MouseEvent) {
   let el = (<HTMLElement>e.currentTarget);
   el.setAttribute('data-tooltip-enter', 'false');
   closeElementTooltip(el);
+  clearShowTooltipDelay();
 }
 function elementTooltipMouseDown(e : MouseEvent) {
   closeElementTooltip(<HTMLElement>e.currentTarget);
+}
+
+
+
+let timerShowTooltipDelay : any = null;
+let timerHidetooltipDelay : any = null;
+
+function registerHideTooltipDelay(callback: () => void) {
+  if(timerHidetooltipDelay != null)
+    clearTimeout(timerHidetooltipDelay);
+  timerHidetooltipDelay = setTimeout(() => {
+    timerHidetooltipDelay = null;
+    callback();
+  }, 200);
+}
+function clearHideTooltipDelay() {
+  if(timerHidetooltipDelay != null) {
+    clearTimeout(timerHidetooltipDelay);
+    timerHidetooltipDelay = null;
+  }
+}
+function clearShowTooltipDelay() {
+  if(timerShowTooltipDelay != null) {
+    clearTimeout(timerShowTooltipDelay);
+    timerShowTooltipDelay = null;
+  }
+}
+function registerShowTooltipDelay(callback: () => void) {
+  if(timerShowTooltipDelay != null)
+    clearTimeout(timerShowTooltipDelay);
+  timerShowTooltipDelay = setTimeout(() => {
+    timerShowTooltipDelay = null;
+    callback()
+  }, 400);
 }

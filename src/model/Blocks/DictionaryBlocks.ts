@@ -164,7 +164,7 @@ function register() {
       let map = <ValMap>block.getInputParamValue('INSET', context);
       let key = block.getInputParamValue('INKEY', context);
 
-      block.setOutputParamValue('OUTCONTAINS', map.has(key), context);
+      return map.has(key);
     }
   };
 
@@ -346,7 +346,7 @@ function register() {
   DictionaryLength.callbacks.onPortParamRequest = (block, port, context) => {
     if(port.guid == 'OUTLEN') {
       let map = <ValMap>block.getInputParamValue('INSET', context);
-      block.setOutputParamValue('OUTLEN', map.map.size, context);
+      return map.map.size;
     }
   };
   DictionaryLength.portAnyFlexables = {

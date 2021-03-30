@@ -11,6 +11,7 @@ import ParamTypeServiceInstance from "../../sevices/ParamTypeService";
 import AllEditors from "../../model/TypeEditors/AllEditors";
 import { BlockParameterEditorRegData, BlockParameterEnumRegData, BlockParameterTypeRegData } from "../../model/Define/BlockDef";
 import { BlockParameterBaseType, BlockParameterSetType, BlockParameterType } from "../../model/Define/BlockParameterType";
+import CommonUtils from "@/utils/CommonUtils";
 
 @Component
 export default class VariableTypeEditor extends Vue {
@@ -43,7 +44,7 @@ export default class VariableTypeEditor extends Vue {
       this.currentEditorEl = null;
     }
 
-    if(this.variableSetType === 'variable') {
+    if(CommonUtils.isNullOrEmpty(this.variableSetType) ||  this.variableSetType === 'variable') {
       let customType : BlockParameterTypeRegData = null;
       if(!this.variableType.isAny()) {
         this.currentEditor = AllEditors.getBaseEditors(<BlockParameterBaseType>this.variableType.getType());

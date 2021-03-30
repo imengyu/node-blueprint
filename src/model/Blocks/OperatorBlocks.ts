@@ -85,7 +85,7 @@ function registerCalcBase() {
         if(rs == null) rs = v
         else rs += v;
     });
-    block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   blockAddition.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockAddition.blockStyle.logoBackground = blockAddition.baseInfo.logo;
@@ -109,7 +109,7 @@ function registerCalcBase() {
         if(rs == null) rs = v;
         else rs -= v;
     });
-    block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   blockSubstract.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockSubstract.blockStyle.logoBackground = blockSubstract.baseInfo.logo;
@@ -133,7 +133,7 @@ function registerCalcBase() {
         if(rs == null) rs = v;
         else rs *= v;
     });
-    block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   blockMultiply.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockMultiply.blockStyle.logoBackground = blockMultiply.baseInfo.logo;
@@ -157,7 +157,7 @@ function registerCalcBase() {
         if(rs == null) rs = v;
         else rs /= v;
     });
-    block.setOutputParamValue('PO1', rs, context);
+    return rs;
   };
   blockDivide.callbacks.onUserAddPort = CalcBase_onUserAddPort;
   blockDivide.blockStyle.noTitle = true;

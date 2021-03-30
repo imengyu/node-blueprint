@@ -58,6 +58,28 @@ export class BlockDocunment {
   currentGraph : BlockGraphDocunment = null;
   
   currentEditor : any = null;
+
+  /**
+   * 通过UID查找子图表
+   * @param uid 子图表UID
+   * @returns 
+   */
+  public findChildGraph(uid : string) {
+    let loopChild = function(graph : BlockGraphDocunment) : BlockGraphDocunment|null {
+      let children = graph.children;
+      for (let index = 0, c = children.length; index < c; index++) {
+        let item = graph.children[index];
+        if(item.uid === uid)
+          return item;
+        else if(item.children.length > 0)
+          return loopChild(item);
+      }
+      return null;
+    }
+    if(this.mainGraph.uid === uid)
+      return this.mainGraph;
+    return loopChild(this.mainGraph);
+  }
 }
 
 /**
@@ -67,6 +89,7 @@ export class BlockGraphDocunment {
 
   public constructor(name = '') {
     this.name = name;
+    this.uid = CommonUtils.genNonDuplicateIDHEX(16);
   }
 
   /**
@@ -119,6 +142,17 @@ export class BlockGraphDocunment {
     }
     return null;
   }
+  /**
+   * 根据单元UID获取当前文档单元
+   * @param guid 单元UID
+   */
+  public getOneBlockByUID(uid : string) { 
+    for (let index = 0; index < this.blocks.length; index++) {
+      if(this.blocks[index].uid==uid)
+        return this.blocks[index];
+    }
+    return null;
+  }
 
   /**
    * 连接
@@ -135,6 +169,11 @@ export class BlockGraphDocunment {
 
   inputPorts: Array<BlockPortRegData> = [];
   outputPorts: Array<BlockPortRegData> = [];
+  
+  /**
+   * 
+   */
+  uid = '';
 
   /**
    * 图表变量
@@ -160,7 +199,6 @@ export class BlockGraphDocunment {
     }
     return null;
   }
-
   /**
    * 父图表
    */
@@ -211,7 +249,7 @@ export class BlockGraphVariable {
         this.value = newV;
         this.changeCallbacks.invoke(this);
       }
-    }else if(this.stack >= 0) {
+    }else if(runningContext && this.stack >= 0) {
       if(runningContext.graphParamStack[this.stack] != newV) {
         runningContext.graphParamStack[this.stack] = newV;
         this.changeCallbacks.invoke(this);
@@ -224,6 +262,6 @@ export class BlockGraphVariable {
    */
   get(runningContext : BlockRunContextData) {
     if(this.static) return this.value;
-    else if(!runningContext && this.stack >= 0) return runningContext.graphParamStack[this.stack];
+    else if(runningContext && this.stack >= 0) return runningContext.graphParamStack[this.stack];
   }
 }
