@@ -1,0 +1,31 @@
+input[type="text"],input[type="password"], textarea, select, .prop-box {
+  display: inline-block;
+  padding: 2px 5px;
+  background-color: rgba(104, 104, 104, 0.5);
+  color: rgb(255, 255, 255);
+  outline: none;
+  border: none;
+  border-radius: 6px;
+  vertical-align: middle;    
+  font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 12px;
+
+  &::-webkit-input-placeholder {
+    color: #bbbbbb;
+  }
+
+  &:disabled {
+    background-color: rgba(75, 75, 75, 0.514);
+    color: #919191;
+
+    &:hover , &:active {
+      background-color: #686868;
+      color: #e7e7e7;
+    }
+  }
+
+  &:hover , &:active {
+    background-color: #fff;
+    color: #000;
+  }
+}
