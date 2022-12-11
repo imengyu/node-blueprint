@@ -1,5 +1,5 @@
-import { printError } from "@/Utils/Logger/DevLog";
-import ObjectUtils from "@/Utils/ObjectUtils";
+import { IKeyValueObject } from "@/Utils/BaseTypes";
+import { SerializableObject } from "@/Utils/Serializable/SerializableObject";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 
 const TAG = 'NodeParamTypeRegistry';
@@ -14,62 +14,163 @@ export type NodeParamBaseTypes =
   | 'number'
   | 'object'
   | 'enum'
+  | 'any'
   | 'null';
+
+export interface NodeParamTypeDefine {
+  /**
+   * 基础类型
+   */
+  baseType: NodeParamBaseTypes;
+  /**
+   * object 继承类型
+   */
+  inheritType: NodeParamType|null;
+  /**
+   * 默认值
+   */
+  defaultValue: () => unknown;
+  /**
+   * 当此类型是 enum 时，是否自动创建转换器 
+   */
+  autoCreateEnumConverter?: boolean;
+  /**
+   * [Editor only] Type color
+   */
+  typeColor: string;
+  /**
+   * [Editor only] Description of this type
+   */
+  typeDescription: string;
+  /**
+   * [Editor only] Title of this type
+   */
+  typeTitle: string;
+}
 
 /**
  * Type instance
  */
-export class NodeParamType {
+export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
-  typeName = '';
-  genericCount = 0;
+  constructor() {
+    super('NodeParamType');
+    this.serializableProperties = [];
+  }
+
+  /**
+   * 内置类型 通配符
+   */
+  public static Any: NodeParamType;
+  /**
+   * 内置类型 字符串
+   */
+  public static String: NodeParamType;
+  /**
+   * 内置类型 数字
+   */
+  public static Number: NodeParamType;
+  /**
+   * 内置类型 布尔值
+   */
+  public static Boolean: NodeParamType;
+  /**
+   * 内置类型 执行
+   */
+  public static Execute: NodeParamType;
+
+  override save(): IKeyValueObject {
+    return {
+      name: this.toString(),
+    };
+  }
+  override load(data: NodeParamTypeDefine) {
+    return NodeParamTypeRegistry.getInstance().getTypeByString((data as unknown as IKeyValueObject).name as string)
+      || NodeParamTypeRegistry.getInstance().getTypeByString('any') as NodeParamType;
+  }
+
+  /**
+   * 类型名称
+   */
+  name = '';
+  /**
+   * 类型名称
+   */
   genericTypes: NodeParamType[] = [];
+  /**
+   * 基础类型名称
+   */
   baseType: NodeParamBaseTypes = 'null';
+  /**
+   * object 继承类型
+   */
+  inheritType: NodeParamType|null = null;
 
   define : NodeParamTypeDefine|null = null;
 
   /**
-   * Create Type instance
-   * @param typeDefineStringOrInstance Type definition string or another type instance
+   * Get whether the current type is generic
    */
-  constructor(typeDefineStringOrInstance: string|NodeParamType) {
-    if (typeof typeDefineStringOrInstance === 'string') {
-      const str = typeDefineStringOrInstance.split('@');
-      this.baseType = str[0] as NodeParamBaseTypes;
-      this.typeName = str[1];
-      this.typeName = str[2];
-      str[3].split(',').forEach((typeStr) => this.genericTypes.push(new NodeParamType(typeStr)));
-
-      const typeData = NodeParamTypeRegistry.getInstance().getCustomType(this.baseType);
-      if (!typeData) {
-        printError(TAG, '')
-        return;
-      }
-
-
-    } else {
-      this.typeName = typeDefineStringOrInstance.typeName;
-      this.baseType = typeDefineStringOrInstance.baseType;
-      this.genericCount = typeDefineStringOrInstance.genericCount;
-      this.define = typeDefineStringOrInstance.define;
-      this.genericTypes = ObjectUtils.clone(typeDefineStringOrInstance.genericTypes, true);
-    }
+  get isGeneric() {
+    return this.genericTypes.length > 0;
+  }
+  /**
+   * 获取类型是不是执行
+   */
+  get isExecute() {
+    return this.baseType === 'execute';
+  }
+  /**
+   * 获取类型是不是通配符
+   */
+  get isAny() {
+    return this.baseType === 'any';
   }
 
   /**
-   * 
+   * Get the definition string for this type.
    * @returns 
    */
   toString() : string {
-    return `${this.baseType}@${this.typeName}@${this.genericCount}@${this.genericTypes.join(',')}`;
+    return `${this.name}${this.genericTypes.length > 0 ? ('<' + this.genericTypes.join(',') + '>') : ''}`;
   }
-}
 
-export interface NodeParamTypeDefine {
-  genericTypes: NodeParamType[];
-  genericCount: number;
-  typeDefaultValue: () => unknown;
-  typeColor: string;
-  typeDescription: string;
-  typeTitle: string;
+  /**
+   * Check whether the current type and other types are acceptable
+   * @param another 
+   */
+  acceptable(another: NodeParamType) {
+    //通配符
+    if (this.baseType === 'any' || another.baseType === 'any')
+      return true;
+    //检查类型
+    if (
+      this.baseType === another.baseType
+      && this.name === another.name
+      && this.genericTypes.length === another.genericTypes.length) {
+
+      //没有泛型
+      if (this.genericTypes.length === 0)
+        return true;
+
+      //检查泛型的通配符
+      for (let i = 0; i < this.genericTypes.length; i++) {
+        if (this.genericTypes[i] !== another.genericTypes[i] 
+          && !(this.genericTypes[i].baseType === 'any'
+          || another.genericTypes[i].baseType === 'any')) {
+            return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check that the current type is the same as another type
+   * @param another 
+   */
+  equal(another: NodeParamType) {
+    return this.toString() == another.toString();
+  }
 }
