@@ -14,9 +14,7 @@
   "dependencies": {
     "pinia": "^2.0.28",
     "vue": "^3.2.45",
-    "vue-router": "^4.1.6",
-    "@node-blueprint/core": "file:packages/node-blueprint",
-    "@node-blueprint/editor": "file:packages/node-blueprint-editor"
+    "vue-router": "^4.1.6"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
