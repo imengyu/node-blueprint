@@ -1,6 +1,6 @@
 import { IKeyValueObject, ISaveableTypes } from "../BaseTypes";
 
-const createObjectFactorys = new Map<string, () => SerializableObject<IKeyValueObject>>();
+const createObjectFactorys = new Map<string, () => SerializableObject<unknown>>();
 
 /**
  * SerializableObject Object Creation Factory
@@ -11,7 +11,7 @@ export const CreateObjectFactory = {
    * @param name Object Name
    * @param createFn Create callback
    */
-  addObjectFactory(name : string, createFn : () => SerializableObject<IKeyValueObject>) : void {
+  addObjectFactory(name : string, createFn : () => SerializableObject<unknown>) : void {
     createObjectFactorys.set(name, createFn);
   },
   /**
@@ -61,6 +61,10 @@ export class SerializableObject<T> {
    */
   noSerializableProperties : string[] = [ 'define' ];
   /**
+   * Properties that need force load whith class, key is the Propertiy name, value is class name.
+   */
+  foeceSerializableClassProperties : { [index: string]: string } = {};
+  /**
    * The source define data
    */
   define: T|null = null;
@@ -92,7 +96,7 @@ export class SerializableObject<T> {
     }
     return undefined;
   }
-  private loadProp(element: IKeyValueObject) : unknown {
+  private loadProp(element: IKeyValueObject, key: string) : unknown {
     if (typeof element === 'bigint'
       || typeof element === 'number'
       || typeof element === 'boolean'
@@ -102,11 +106,15 @@ export class SerializableObject<T> {
     else if(element && typeof element === 'object') {
       if (element instanceof Array) {
         //This is array
-        return element.map(k => this.loadProp(k));
+        return element.map((k, i) => this.loadProp(k, `${key}[${i}]`));
       }
       else if (typeof element.class === 'string' && typeof element.obj === 'object') {
         //This is a SerializableObject
         return CreateObjectFactory.createSerializableObject(element.class, element.obj as IKeyValueObject);
+      }
+      else if (this.foeceSerializableClassProperties[key]) {
+        //This is a SerializableObject
+        return CreateObjectFactory.createSerializableObject(this.foeceSerializableClassProperties[key], element.obj as IKeyValueObject);
       }
     }
 
@@ -148,7 +156,7 @@ export class SerializableObject<T> {
       for (const key in data) {
         if(this.noSerializableProperties.includes(key) || (!isAll && !this.serializableProperties.includes(key)))
           continue;
-        const value = this.loadProp(data[key] as IKeyValueObject) as IKeyValueObject;
+        const value = this.loadProp(data[key] as IKeyValueObject, key) as IKeyValueObject;
         o[key] = value !== undefined ? value : o[key];
       }
     }

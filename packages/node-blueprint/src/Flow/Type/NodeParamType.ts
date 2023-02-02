@@ -2,8 +2,6 @@ import { IKeyValueObject } from "@/Utils/BaseTypes";
 import { SerializableObject } from "@/Utils/Serializable/SerializableObject";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 
-const TAG = 'NodeParamTypeRegistry';
-
 /**
  * Base types
  */
