@@ -1,5 +1,106 @@
+$background-color: #282d33;
+
+//编辑器主体
 .node-graph-editor {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background-color: $background-color;
+
+  > canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+  }
 }
+.node-graph-continer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+}
+
+//调整缩放工具
+.node-graph-editorzoom-tool {
+
+  position: absolute;
+  width: 90px;
+  height: 26px;
+  right: 40px;
+  bottom: 25px;
+  border-radius: 15px;
+  background-color: #2F2F2C;
+  opacity: 0.4;
+  transition: opacity ease-in-out 0.2s;
+  text-align: center;
+  z-index: 20;
+
+  &:hover, &:active {
+    outline: none;
+    opacity: 1;
+  }
+
+  .button {
+    position: absolute;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    padding: 0;
+    font-size: 16px;
+    top: 1px;
+    line-height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+
+    svg {
+      fill: #fff;;
+    }
+
+    &.left { left: 1px; }
+    &.right { right: 1px; }
+
+    &:hover {
+      svg {
+        fill: #2F2F2C;
+      }
+      color: #2F2F2C;
+      background-color: #fff;
+    }
+
+
+  }
+  select {
+    position: absolute;
+    opacity: 0;
+    left: 28px;
+    top: 4px;
+    width: 35px;
+    cursor: pointer;
+    z-index: 2;
+  }
+  span {
+    position: absolute;
+    display: inline-block;
+    text-align: center;
+    height: 15px;
+    width: 35px;
+    line-height: 15px;
+    left: 28px;
+    top: 6px;    
+    font-size: 0.7rem;
+
+    color: #fff;
+    cursor: pointer;
+  }
+
+}
+
+@import './Node/Node.scss';

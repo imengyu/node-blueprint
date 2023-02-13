@@ -1,0 +1,395 @@
+//单元
+.flow-block {
+  display: inline-block;
+  position: absolute;
+  cursor: default;
+  user-select: none;
+  min-width: 111px;
+
+  border-radius: 8px;
+  border: 3px solid rgba(0, 0, 0, 0.666);
+
+  background-color: rgba(0, 0, 0, 0.466);
+  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.3);
+
+  color: #fff;
+
+  &.selected {
+    border: 3px solid rgb(231, 157, 0);
+  }
+
+  &.actived {
+    border: 3px solid rgb(72, 203, 255);
+  }
+
+  &.breakpoint-actived {
+    border: 3px solid rgb(184, 43, 0);
+  }
+
+  &.breakpoint-actived.actived {
+    border: 3px solid rgb(255, 74, 61);
+  }
+
+  &:hover {
+    .flow-block-comment-open {
+      display: inline-block;
+    }
+  }
+
+  &.round {
+    border-radius: 30px;
+  }
+
+  
+  .background {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-size: 55px;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    .big-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  }
+  .breakpoint-status {
+    position: absolute;
+    display: inline-block;
+    line-height: 32px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    left: -16px;
+    top: -16px;
+    color: #cf1010;
+    text-shadow: 0 0 10px #af0000;
+    z-index: 3;
+  }
+  .breakpoint-arrow {
+    display: inline-block;
+    position: absolute;
+    color: rgba(214, 59, 0, 0.72);
+    text-shadow: 0px 0px 10px #9e3300;
+    font-size: 50px;
+    top: -50px;
+    left: calc(50% - 20px);
+    z-index: 2;
+  }
+
+}
+
+//标题
+.flow-header {
+  position: relative;
+  text-align: center;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  padding: 4px 8px;
+  font-size: 1rem;
+  user-select: none;
+  background-color: rgba(255, 255, 255, 0.3);
+
+  &.state-small {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    right: 0;
+    height: 0;
+    padding: 0;
+  }
+  &.state-hide,&.state-false {
+    display: none;
+  }
+
+  .title {
+    display: inline-block;
+    color: #ffffff;
+    user-select: none;
+    margin: 0;
+    font-size: 0.8rem;
+    margin-right: 10px;
+    vertical-align: middle;
+    user-select: none;
+  }
+  .logo {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    background-size: contain;
+    background-position: center;
+    vertical-align: middle;
+    user-select: none;
+  }
+
+  .logo-right {
+    position: absolute;
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background-size: contain;
+    background-position: center;
+    right: -15px;
+    top: -15px;
+    user-select: none;
+  }
+  .logo-bottom {
+    position: absolute;
+    display: inline-block;
+    background-size: contain;
+    background-position: center;
+    width: 16px;
+    height: 16px;
+    left: -5px;
+    bottom: -5px;
+    user-select: none;
+  }
+
+}
+
+//自定义编辑区域
+.flow-block-custom-editor {
+  position: relative;
+  padding: 3px 0;
+  white-space: nowrap;
+  background-color: rgba(255, 255, 255, 0.266);
+}
+//
+.flow-block-base {
+  position: relative;    
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  padding: 6px 3px 4px 6px;
+
+  .custom-editor {
+    position: relative;
+  }
+}
+
+//注释
+.flow-block-comment {
+
+  position: absolute;
+  font-size: 1.2rem;
+  left: -3px;
+  top: -40px;
+  min-width: 110px;
+  background-color: rgba(228, 228, 228, 0.76);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(202, 202, 202, 0.5);
+  padding: 3px 23px 3px 3px;
+
+  &::after {
+    position: absolute;
+    bottom: -16px;
+    left: 14px;
+    display: inline-block;
+    content: '';
+    width: 0px;
+    height: 0px;
+    border: 8px solid transparent;
+    border-top-color: rgba(228, 228, 228, 0.76);
+  }
+
+  a {
+    font-size: 0.9rem;
+    position: absolute;
+    right: 7px;
+    top: 9px;
+    z-index: 6;
+  }
+
+  .flow-block-comment-text {
+    display: inline-block;
+    font-size: 0.8rem;
+    min-width: 80px;
+    border-radius: 6px;
+    color: #000;
+    white-space: pre;
+    padding: 2px 3px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    outline: none;
+
+    &:focus, &:hover {
+      background-color: #fff;
+    }
+    &:focus {
+      outline: none;
+      border: 1px solid rgb(111, 161, 236);
+    }
+  }
+  .flow-block-comment-place-holder {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 6px;
+    padding-left: 10px;
+    color: #888;
+    font-size: 0.8rem;
+  }
+}
+.flow-block-comment-open {
+  position: absolute;
+  font-size: 1rem;
+  left: 15px;
+  top: -20px;
+  display: none;
+  transition: all ease-in-out 0.2s;
+  color: rgba(255, 255, 255, 0.637);
+  text-shadow: 0 0 rgba(202, 202, 202, 0.466);
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+.flow-block-extended-line {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  width: 30px;
+  min-width: 0;
+
+  .flow-block-ports {
+    margin: 0!important;
+
+    .left {
+      margin: 0;
+
+      .flow-port {
+        width: 7px;
+        overflow: hidden;
+      }
+    }
+    .right {
+      margin: 0;
+
+      .flow-port {
+        width: 12px;
+        overflow: hidden;
+
+        .port {
+          transform: translateX(-60%);
+        }
+      }
+    }
+  }
+}
+
+.flow-block-ports {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  .small-button {
+    font-size: 0.8rem;
+    margin-top: 5px;
+  }
+
+  > .left {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    margin-right: 5px;
+
+    .flow-port {
+      padding-right: 4px;
+    }
+  }
+  > .right {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    margin-left: 5px;
+
+    .flow-port {
+      padding-left: 4px;
+    }
+  }
+}
+.flow-port {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  min-height: 21px;
+  cursor: crosshair;
+
+  > .editor {
+    display: inline-block;
+    vertical-align: top;
+  }
+  > .port {
+    display: inline-block;
+    vertical-align: top;
+    border-radius: 6px;
+  }
+
+  &:hover {
+    > .port {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .port-dot {
+    display: inline-block;
+    margin: 0 5px;
+    vertical-align: middle;
+
+    &.error {
+      color: #ff7562!important;
+    }
+  }
+  .port-dot-async {
+    width: 14px;
+    vertical-align: middle;
+  }
+
+  span {
+    white-space: nowrap;
+  }
+
+  .param-editor {
+    margin: 0 8px;
+    cursor: initial;
+  }
+  .port-delete {
+    margin: 0 8px;
+    cursor: pointer;
+  }
+
+  .icon-port-dictionary-left {
+    width: 8px; 
+    display: inline-block;
+    margin-left: -5px; 
+  }
+  .icon-port-dictionary-right {
+    margin-left: -2px;
+  }
+
+  &.error {
+    i {
+      color: #ff7562;
+    }
+  }
+  &.success {
+    i {
+      color: #2bd614;
+    }
+  }
+}

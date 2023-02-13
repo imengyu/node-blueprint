@@ -1,4 +1,4 @@
-import { IKeyValueObject } from "../../Utils/BaseTypes";
+import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 

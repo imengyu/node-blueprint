@@ -36,9 +36,9 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
    */
   public set(x : number|Vector2, y = 0) : Vector2 {
     if(typeof x === "number") {
-      this.y = y;
+      this.y = typeof y === 'number' ? y : x;
       this.x = x;
-    }else {
+    } else {
       this.y = x.y;
       this.x = x.x;
     }
