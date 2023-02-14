@@ -58,6 +58,7 @@ import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
 import { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { initBase } from '../../Base';
 
 const editorHost = ref<HTMLElement>();
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
@@ -86,32 +87,156 @@ const {
 //=========================
 
 onMounted(() => {
+  initBase();
   initRenderer();
+
 
   const node = new Node({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BD',
     version: 1,
     name: '测试单元',
-    description: 'string',
+    description: '测试单元说明说明说明说明',
     ports: [
       {
         guid: 'IN',
-        type: NodeParamType.Execute,
+        paramType: NodeParamType.Execute,
+        name: '入口',
+        description: '测试入口',
+        direction: 'input',
+      },
+      {
+        guid: 'IN-NUMBER',
+        paramType: NodeParamType.Number,
+        name: '数字',
+        description: '数字输入参数',
+        direction: 'input',
+      },
+      {
+        guid: 'IN-STRING',
+        paramType: NodeParamType.String,
+        name: '字符串',
+        description: '字符串输入参数',
+        direction: 'input',
+      },
+      {
+        guid: 'IN-BOOL',
+        paramType: NodeParamType.Boolean,
+        name: '布尔',
+        description: '布尔输入参数',
+        direction: 'input',
+      },
+      {
+        guid: 'IN-ANY',
+        paramType: NodeParamType.Any,
+        name: '通配符',
+        description: '通配符输入参数',
+        direction: 'input',
+      },
+      {
+        guid: 'OUT',
+        paramType: NodeParamType.Execute,
+        name: '出口',
+        description: '测试出口',
+        direction: 'output',
+      },
+      {
+        guid: 'OUT-NUMBER',
+        paramType: NodeParamType.Number,
+        name: '数字',
+        description: '数字输出参数',
+        direction: 'output',
+      },
+      {
+        guid: 'OUT-STRING',
+        paramType: NodeParamType.String,
+        name: '字符串',
+        description: '字符串输出参数',
+        direction: 'output',
+      },
+      {
+        guid: 'OUT-BOOL',
+        paramType: NodeParamType.Boolean,
+        name: '布尔',
+        description: '布尔输出参数',
+        direction: 'output',
+      },
+      {
+        guid: 'OUT-ANY',
+        paramType: NodeParamType.Any,
+        name: '通配符',
+        description: '通配符输出参数',
+        direction: 'output',
+      },
+    ],
+  });
+
+  const node1 = new Node({
+    guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BA',
+    version: 1,
+    name: '测试单元',
+    description: '测试单元说明说明说明说明',
+    ports: [
+      {
+        guid: 'IN',
+        paramType: NodeParamType.Number,
+        name: '入口',
+        description: '测试入口',
+        direction: 'input',
+      },
+      {
+        guid: 'IN2',
+        paramType: NodeParamType.Number,
         name: '入口',
         description: '测试入口',
         direction: 'input',
       },
       {
         guid: 'OUT',
-        type: NodeParamType.Execute,
-        name: '出口',
-        description: '测试出口',
+        paramType: NodeParamType.Number,
+        name: '通配符',
+        description: '通配符输出参数',
         direction: 'output',
       },
     ],
+    userCanAddInputParam: true,
+    style: {
+      titleState: 'hide',
+      logoBackground: 'icon:icon-add',
+    },
+  });
+  const node2 = new Node({
+    guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BC',
+    version: 1,
+    name: 'Constants',
+    description: '测试单元说明说明说明说明',
+    ports: [
+      {
+        guid: 'OUT',
+        paramType: NodeParamType.Number,
+        name: '',
+        description: '通配符输出参数',
+        direction: 'output',
+      },
+    ],
+    style: {
+      titleState: 'hide',
+      logoBackground: 'title:Constants',
+      minWidth: 150,
+    },
   });
 
-  foregroundNodes.value.push(node);
+  node1.position.set(-200, -100);
+  node2.position.set(-200, 100);
+
+  foregroundNodes.value.push(
+    node,
+    node1,
+    node2,
+  );
+
+  setTimeout(() => {
+    viewPort.value.position.set(-viewPort.value.size.x / 2, -viewPort.value.size.y / 2);
+  }, 100);
 })
 function initRenderer() {
   onWindowSizeChanged();

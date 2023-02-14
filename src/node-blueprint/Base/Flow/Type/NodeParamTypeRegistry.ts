@@ -1,5 +1,5 @@
 import { EventHandler } from "../../Utils/Events/EventHandler";
-import { printError, printWarning } from "../../Utils/Logger/DevLog";
+import { printWarning } from "../../Utils/Logger/DevLog";
 import { Singleton } from "../../Utils/Singleton/Singleton";
 import { registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";

@@ -5,7 +5,7 @@ export default {
    */
   isEventInControl(e: Event): boolean {
     const target = e.target as HTMLElement;
-    return target.tagName == "INPUT" || target.tagName == "SELECT";
+    return target.tagName == "INPUT" || target.tagName == "SELECT" || target.tagName == "TEXTAREA";
   },
   isEleEditable,
   getTop,

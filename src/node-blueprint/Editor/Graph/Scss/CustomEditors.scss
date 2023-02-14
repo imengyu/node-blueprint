@@ -1,0 +1,83 @@
+.node-custom-editor {
+  display: inline-block;
+
+  input[type="text"],input[type="password"], textarea, select, .prop-box {
+    display: inline-block;
+    padding: 2px 5px;
+    background-color: rgba(104, 104, 104, 0.5);
+    color: rgb(255, 255, 255);
+    outline: none;
+    border: none;
+    border-radius: 6px;
+    vertical-align: middle;    
+    font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 12px;
+
+    &::-webkit-input-placeholder {
+      color: #bbbbbb;
+    }
+
+    &:disabled {
+      background-color: rgba(75, 75, 75, 0.514);
+      color: #919191;
+
+      &:hover , &:active {
+        background-color: #686868;
+        color: #e7e7e7;
+      }
+    }
+
+    &:hover , &:active {
+      background-color: #fff;
+      color: #000;
+    }
+  }
+}
+.node-checkbox {
+  vertical-align: middle;
+  display: inline-block;
+  position: relative;
+  background: transparent;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 6px;
+
+  svg {
+    display: inline-block;
+    width: 18px;
+    height: 15px;
+    background-color: #292929;
+    padding-top: 2px;
+    color: #ffffff;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+
+    &:hover {
+      background-color:#777777;
+    }
+    &:active {
+      background-color:#181818;
+    }
+  }
+  &[disabled=disabled].svg {
+    background-color:#8f8f8f;
+    color: #e2e2e2;
+
+    &:hover {
+      background-color:#8f8f8f;
+    }
+  }
+
+  &:active {
+    outline: none;
+  }
+  &:focus {
+    outline: none;
+    border-color: rgb(231, 157, 0);
+  }
+}

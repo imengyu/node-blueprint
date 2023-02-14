@@ -6,8 +6,9 @@ import { SerializableObject } from "../../Utils/Serializable/SerializableObject"
 export class NodeGraph extends SerializableObject<INodeGraphDefine> {
 
   constructor(define: INodeGraphDefine) {
-    super('NodeGraph', define);
+    super('NodeGraph', define, false);
     this.serializableProperties = [ 'all' ];
+    this.load(define);
   }
 
 }

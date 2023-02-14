@@ -1,21 +1,27 @@
 import ArrayUtils from "../../Utils/ArrayUtils";
-import type { ISaveableTypes } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
 import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";
+import type { ISaveableTypes } from "../../Utils/BaseTypes";
 
 /**
  * 节点端口
  */
 export class NodePort extends SerializableObject<INodePortDefine> {
 
-  constructor(parent: Node, define: INodePortDefine) {
-    super('NodePort', define);
-    this.parent = parent;
+  constructor(define: INodePortDefine, parent: Node) {
+    super('NodePort', define, false);
+    this.parent = parent as Node;
     this.define = define;
     this.serializableProperties = [ 'all' ];
-    this.noSerializableProperties = [ 'connectedFromPort', 'connectedToPort' ];
+    this.noSerializableProperties.push(
+      'guid',
+      'editorState',
+      'connectedFromPort',
+      'connectedToPort',
+    );
+    this.load(define);
   }
 
   /**
@@ -87,6 +93,13 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   forceNoCycleDetection = false;
 
+  public getValue() : unknown {
+    return null;
+  }
+  public setValue(value: unknown) {
+
+  }
+
   /**
    * 获取是否连接至指定端口
    * @param port 指定端口
@@ -148,8 +161,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public checkTypeAllow(targetPort : NodePort) : boolean {
 
-    const targetType = targetPort.define.type;
-    const thisType = this.define.type;
+    const targetType = targetPort.define.paramType;
+    const thisType = this.define.paramType;
 
     //判断是否是执行
     if(thisType.isExecute)
@@ -159,6 +172,13 @@ export class NodePort extends SerializableObject<INodePortDefine> {
 
     return thisType.acceptable(targetType); 
   }
+
+  //编辑器运行数据
+  //=====================
+
+  public editorState = {
+    state: 'normal' as NodePortState,
+  };
 }
 
 /**
@@ -168,6 +188,11 @@ export class NodePort extends SerializableObject<INodePortDefine> {
  * * output：出端口
  */
 export type NodePortDirection = "input" | "output";
+/**
+ * 状态
+ */
+export type NodePortState = "normal" | "active" | "error" | "success";
+
 
 /**
  * 端口定义
@@ -176,7 +201,7 @@ export interface INodePortDefine {
   /**
    * 端口参数类型
    */
-  type: NodeParamType;
+  paramType: NodeParamType;
   /**
    * 节点 的唯一ID (不能为空，数字或字符串，可以随便写，在16个字符之内)，只要保证一个单元内不能重复即可
    */

@@ -23,7 +23,8 @@
     @mousemove="onMouseMove($event)"
     @mousewheel="onMouseWhell($event)"
     @mouseup="onMouseUp($event)"
-    @contextmenu="onContextmenu($event)">
+    @contextmenu="onContextmenu($event)"
+  >
     <!--注释区域-->
     <div
       class="flow-block-comment flow-block-no-move" 
@@ -38,12 +39,9 @@
         @input="onCommentInputInput"
         @blur="onCommentInputBlur">
       </div>
-      <Tooltip content="隐藏注释气泡">
-        <a
-          class="flow-block-comment-open" 
-          @click="closeComment"
-        >
-          <Icon icon="icon-close-" />
+      <Tooltip content="隐藏注释气泡" class="close">
+        <a @click="closeComment">
+          <Icon icon="icon-close-bold" />
         </a>
       </Tooltip>
     </div>
@@ -57,10 +55,11 @@
       </a>
     </Tooltip>
     <!--标题和图标-->
-    <Tooltip
-      :enable="!instance.style.noTooltip"
-      :content="`<h5>${instance.define.name}</h5>${instance.define.description}`"
-    >
+    <Tooltip :enable="!instance.style.noTooltip">
+      <template #content>
+        <h4>{{instance.define.name}}</h4>
+        <p>{{ instance.define.description }}</p>
+      </template>
       <div 
         :class="'flow-header state-'+(instance.style.titleState)"
         :style="{
@@ -68,35 +67,72 @@
           backgroundColor: instance.style.titleBakgroundColor,
         }"
       >
-        <div class='logo' v-show="!instance.style.noLogo" :style="{ backgroundImage: `url('${instance.style.logo || DefaultBlockLogo}')` }" />
-        <div class='title'>{{ instance.define.name }}</div>
-
-        <div class="logo-right" :style="{ display: 'inline-block', backgroundImage: `url('${instance.style.logoRight}')` }"></div>
-        <div class="logo-bottom" :style="{ display: 'inline-block', backgroundImage: `url('${instance.style.logoBottom}')` }"></div>
+        <NodeIconImageRender 
+          v-show="!instance.style.noLogo"
+          class="logo" 
+          :imageUrlOrIcon="instance.style.logo || DefaultBlockLogo"
+          :size="20"
+        />
+        <div class="title">{{ instance.define.name }}</div>
+        
+        <NodeIconImageRender
+          class="logo-right"
+          :imageUrlOrIcon="instance.style.logoRight"
+          :size="32"
+        />
+        <NodeIconImageRender
+          class="logo-bottom"
+          :imageUrlOrIcon="instance.style.logoBottom"
+          :size="16"
+        />
       </div>
     </Tooltip>
+    <!--断点指示-->
     <div 
       v-show="instance.breakpoint!=='none'"
-      :class="'breakpoint-status iconfont'+
-        (instance.breakpoint==='enable'?' icon-breakpoint-active':'')+
-        (instance.breakpoint==='disable'?' icon-breakpoint':'')"
+      :class="'breakpoint-status'"
     >
+      <Icon 
+        :icon="(instance.breakpoint==='enable'?'icon-breakpoint-active':
+          (instance.breakpoint==='disable'?' icon-breakpoint':''))"
+      />
     </div>
     <div 
       v-show="instance.editorState.breakpointTriggered"
-      class="breakpoint-arrow iconfont icon-arrow-down-"></div>
-    <!--背景-->
-    <div 
-      class="background"
-      :style="{
-        background: (typeof instance.style.logoBackground==='string' && !instance.style.logoBackground.startsWith('title:')) ? `url(${instance.style.logoBackground})` : '',
-      }">
-      <span class="big-title" v-if="typeof instance.style.logoBackground==='string'&&instance.style.logoBackground.startsWith('title:')">
-        {{ instance.style.logoBackground.substr(6) }}
-      </span>
+      class="breakpoint-arrow">
+      <Icon icon="icon-arrow-down-filling" />
     </div>
+    <!--背景-->
+    <NodeIconImageRender 
+      class="background"
+      :imageUrlOrIcon="instance.style.logoBackground"
+      :size="55"
+      :noContainerSize="true"
+    >
+      <span 
+        v-if="typeof instance.style.logoBackground === 'string' 
+          && instance.style.logoBackground.startsWith('title:')"
+        class="big-title" 
+      >
+        {{ instance.style.logoBackground.substring(6) }}
+      </span>
+    </NodeIconImageRender>
     <!--TODO: 自定义编辑器区域-->
-    <!--TODO: 主区域-->
+    <!--主区域-->
+    <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='flow-block-base'>
+      <div class='flow-block-ports'>
+        <div class='left'>
+          <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+          <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
+          <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
+        </div>
+        <div class='right'>
+          <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+          <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
+          <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -104,14 +140,19 @@
 import { ref, toRefs, type PropType } from 'vue';
 import Tooltip from '../../Base/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
+import NodePort from './NodePort.vue';
+import SmallButton from '../../Base/SmallButton.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
+import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
+import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
-import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
+import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
+import NodeIconImageRender from './NodeIconImageRender.vue';
 
 const props = defineProps({
   instance: {
@@ -370,17 +411,13 @@ const dragMouseHandler = createMouseDragHandler({
   },
 })
 
-function testIsDownInControl(e : MouseEvent) {
-  return (HtmlUtils.isEventInControl(e));
-}
 function onMouseDown(e : MouseEvent) {
   lastMovedBlock = false;
   lastBlockPos.set(instance.value.position);
   lastBlockSize.set(getRealSize());
 
-  if(testIsDownInControl(e)) 
+  if (isMouseEventInNoDragControl(e))
     return;
-
   if (dragMouseHandler(e))
     return;
 
@@ -388,7 +425,7 @@ function onMouseDown(e : MouseEvent) {
   e.stopPropagation();
 }
 function onMouseWhell(e : WheelEvent) {
-  if(testIsDownInControl(e)) 
+  if(isMouseEventInNoDragControl(e)) 
     e.stopPropagation();
 }
 function onMouseMove(e : MouseEvent) {
@@ -403,7 +440,7 @@ function onMouseEnter(e : MouseEvent) {
 function onMouseLeave(e : MouseEvent) {
 }
 function onMouseUp(e : MouseEvent) {
-  if(testIsDownInControl(e)) {
+  if(isMouseEventInNoDragControl(e)) {
     //大小更改
     if(!getRealSize().equal(lastBlockSize)) {
       //_instance.updateRegion();
@@ -422,5 +459,12 @@ function onContextmenu(e : MouseEvent) {
 }
 
 //#endregion
+
+//#region 添加端口
+
+function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
+  //TODO: 添加端口
+}
+//#endregion 
 
 </script>

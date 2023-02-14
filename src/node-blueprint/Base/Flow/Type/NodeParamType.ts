@@ -1,5 +1,7 @@
+import type { VNode } from "vue";
 import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import type { NodePort } from "../Node/NodePort";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 
 /**
@@ -44,7 +46,19 @@ export interface NodeParamTypeDefine {
    * [Editor only] Title of this type
    */
   typeTitle: string;
+  /**
+   * 编辑器：编辑器
+   */
+  typeEditor?: NodeParamEditorCreateCallback|undefined;
+  /**
+   * 编辑器：自定义端口渲染
+   */
+  customPortIconRender?: NodeParamCustomPortIconRenderCallback|undefined;
 }
+
+export type NodeParamEditorCreateCallback = (props: IKeyValueObject) => VNode;
+
+export type NodeParamCustomPortIconRenderCallback = (port: NodePort, param: NodeParamType) => VNode;
 
 /**
  * Type instance
@@ -75,7 +89,7 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
   /**
    * 内置类型 执行
    */
-  public static Execute: NodeParamType;
+  public static Execute = new NodeParamType();
 
   override save(): IKeyValueObject {
     return {

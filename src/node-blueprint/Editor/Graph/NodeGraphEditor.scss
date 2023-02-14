@@ -23,6 +23,7 @@ $background-color: #282d33;
   overflow: visible;
   width: 100%;
   height: 100%;
+  transform-origin: left top;
 }
 
 //调整缩放工具
@@ -103,4 +104,6 @@ $background-color: #282d33;
 
 }
 
-@import './Node/Node.scss';
+@import './Scss/Node.scss';
+@import './Scss/CustomEditors.scss';
+@import './Scss/Text.scss';

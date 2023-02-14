@@ -1,11 +1,9 @@
 <template>
-  <div class="tooltip-container">
-    <div ref="triggerEle" class="tigger">
-      <slot>
-      </slot>
-    </div>
-    <div v-show="show" 
-      :class="'tooltip '+placement "
+  <div ref="triggerEle" class="node-tooltip-container">
+    <slot>
+    </slot>
+    <div v-show="showInner" 
+      :class="'node-tooltip '+placement "
       :style="{
         left: position.left + 'px',
         top: position.top + 'px',
@@ -15,7 +13,9 @@
       @mouseenter="mouseControl.tooltipMouseEvent('mouseenter')"
       @mouseleave="mouseControl.tooltipMouseEvent('mouseleave')"
       @mousedown="onMouseDown">
-      <slot name="content" v-html="content"></slot>
+      <slot name="content" >
+        <span v-html="content"></span>
+      </slot>
     </div>
   </div>
 </template>
@@ -23,6 +23,7 @@
 <script lang="ts">
 import type { EventListenerEvent } from '@/node-blueprint/Base/Utils/Events/EventListener';
 import EventListener from '@/node-blueprint/Base/Utils/Events/EventListener';
+import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import { defineComponent, onBeforeUnmount, onMounted, reactive, ref, toRefs, watch } from 'vue'
 
 export default defineComponent({
@@ -30,7 +31,7 @@ export default defineComponent({
   props: {
     trigger: {
       type: String,
-      default: 'click'
+      default: 'hover'
     },
     content: {
       type: String,
@@ -45,8 +46,8 @@ export default defineComponent({
       default: 0,
     },
     show: {
-      type: Boolean,
-      default: false,
+      type: [Boolean,Object],
+      default: null,
     },
     enable: {
       type: Boolean,
@@ -56,7 +57,16 @@ export default defineComponent({
   emits: [ 'update:show' ],
   setup(props, context) {
 
-    const { placement, trigger, hideDelay, show, enable } = toRefs(props);
+    const {
+      placement,
+      trigger,
+      hideDelay,
+      show,
+      enable,
+      content,
+    } = toRefs(props);
+
+    const showInner = ref(typeof show.value === 'boolean' ? show.value : false);
 
     const popover = ref<HTMLElement>();
     const triggerEle = ref<HTMLElement>();
@@ -73,8 +83,19 @@ export default defineComponent({
     };
     mouseControl.onHideTooltip = hideTooltip;
 
-    function hideTooltip() { context.emit('update:show', false); }
-    function showTooltip() { if(enable.value) context.emit('update:show', true); }
+    function hideTooltip() {
+      if (typeof show.value === 'boolean')
+        context.emit('update:show', false);
+      else
+        showInner.value = false;
+    }
+    function showTooltip() {
+      if(enable.value && (context.slots.content || !StringUtils.isNullOrBlank(content.value))) 
+        if (typeof show.value === 'boolean')
+          context.emit('update:show', true);
+        else
+          showInner.value = true;
+    }
 
     let _blurEvent : EventListenerEvent|null = null;
     let _focusEvent : EventListenerEvent|null = null;
@@ -82,7 +103,11 @@ export default defineComponent({
     let _mouseleaveEvent : EventListenerEvent|null = null;
     let _clickEvent : EventListenerEvent|null = null;
 
-    watch(show, (val : boolean) => {
+    watch(show, (val) => {
+      if (typeof val === 'boolean')
+        showInner.value = val;
+    });
+    watch(showInner, (val : boolean) => {
       if (val && trigger.value && popover.value) {
         const _trigger = (triggerEle.value as HTMLElement).children[0] as HTMLElement;
         const _popover = popover.value;
@@ -145,7 +170,7 @@ export default defineComponent({
     });
 
     function toggle() {
-      if(show.value) hideTooltip();
+      if(showInner.value) hideTooltip();
       else showTooltip();
     }
 
@@ -160,6 +185,7 @@ export default defineComponent({
       popover,
       triggerEle,
       mouseControl,
+      showInner,
       toggle,
       onMouseDown,
     };
@@ -194,8 +220,6 @@ class ToolTipMouseControlUtils {
     }
   }
   elementTooltipMouseEnter(e: MouseEvent) : void {
-    if (e.buttons > 0) return;
-    
     this.clearHideTooltipDelay();
     this.registerShowTooltipDelay(() => this.showTooltip(e));
   }
@@ -240,3 +264,45 @@ class ToolTipMouseControlUtils {
   }
 }
 </script>
+
+<style lang="scss">
+.node-tooltip {
+  position: absolute;
+  padding: 2px 5px;
+  background-color: #fff;
+  border: 1px solid #bdbdbd;
+  border-radius: 0 3px 3px 3px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  z-index: 200;
+  white-space: pre;
+  font-size: 0.8rem;
+  color: #555;
+  user-select: text;
+
+  h6 {
+    margin: 0 0 2px 0;
+  }
+  h5,
+  h4 {
+    margin: 0 0 3px 0;
+  }
+  h3,
+  h2,
+  h1 {
+    margin: 0 0 5px 0;
+  }
+
+  p {
+    font-size: 0.6rem;
+    margin-bottom: 2px;
+  }
+}
+.node-tooltip-container {
+  position: relative;
+  display: inherit;
+
+  > .tigger {
+    display: inherit;
+  }
+}
+</style>

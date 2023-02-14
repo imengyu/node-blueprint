@@ -1,8 +1,12 @@
 import { Vector2 } from "../../Utils/Base/Vector2";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
-import type { NodeGraph } from "../Graph/NodeGraph";
-import type { INodePortDefine, NodePort, NodePortDirection } from "./NodePort";
+import { printError } from "../../Utils/Logger/DevLog";
+import type { INodePortDefine } from "./NodePort";
+import type { NodePort } from "./NodePort";
 import RandomUtils from "../../Utils/RandomUtils";
+import type { IKeyValueObject } from "../../Utils/BaseTypes";
+
+const TAG = 'Node';
 
 /**
  * 节点
@@ -10,10 +14,20 @@ import RandomUtils from "../../Utils/RandomUtils";
 export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine) {
-    super('Node', define);
+    super('Node', define, false);
     this.define = define;
     this.serializableProperties = [ 'all' ];
+    this.noSerializableProperties.push(
+      'editorState',
+      'inputPorts',
+      'outputPorts',
+      'guid',
+    );
+    this.forceSerializableClassProperties = {
+      ports: 'NodePort'
+    };
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
+    this.load(define);
   }
 
   //基础数据
@@ -26,10 +40,17 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public get guid() : string { return this.define.guid; }
   public breakpoint : NodeBreakPoint = 'none';
+  public ports : NodePort[] = [];
+  public inputPorts = new Map<string, NodePort>();
+  public outputPorts = new Map<string, NodePort>();
+  public get inputPortCount() { return this.inputPorts.size; }
+  public get outputPortCount() { return this.outputPorts.size; }
+
 
   //编辑器运行数据
   //=====================
 
+  public options = {} as IKeyValueObject;
   public markContent = '';
   public markOpen = false;
   public position = new Vector2();
@@ -39,6 +60,26 @@ export class Node extends SerializableObject<INodeDefine> {
     breakpointTriggered: false,
   };
   public style = new NodeStyleSettings();
+
+  public load(data : INodeDefine) {
+    const ret = super.load(data);
+
+    this.inputPorts.clear();
+    this.outputPorts.clear();
+
+    //加载端口
+    this.ports.forEach((port) => {
+      if (port.direction === 'input') {
+        this.inputPorts.set(port.guid, port);
+      } else if (port.direction === 'output') {
+        this.outputPorts.set(port.guid, port);
+      } else {
+        printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
+      }
+    });
+
+    return ret;
+  }
 }
 
 export type NodeBreakPoint = 'none'|'disable'|'enable';
@@ -67,6 +108,8 @@ export class NodeStyleSettings extends SerializableObject<INodekStyleSettings> {
   public minHeight = 0;
   public maxWidth = 0;
   public maxHeight = 0;
+  public inputPortMinWidth = '40px';
+  public outputPortMinWidth = '';
   public layer : 'normal'|'background' = 'normal';
   public customClassNames = "";
 }
@@ -89,7 +132,8 @@ export interface INodekStyleSettings {
   logoBottom ?: string;
   /**
    * 单元背景的图标 16x16
-   * 如果设置为 “title:xxxxx” 那么将会显示为文字 xxxxx
+   * * 如果设置为 “title:xxxxx” 那么将会显示为文字 xxxxx
+   * * 如果设置为 “icon:xxxxx” 那么将会显示为文字 xxxxx
    */
   logoBackground ?: string;
   /**
@@ -151,6 +195,14 @@ export interface INodekStyleSettings {
    * 单元的自定义类名
    */
   customClassNames?: string,
+  /**
+   * 入端口的文字最窄宽度。规定此宽度用于美观
+   */
+  inputPortMinWidth ?: number|string,
+  /**
+   * 出端口的文字最窄宽度。规定此宽度用于美观
+   */
+  outputPortMinWidth ?: number|string,
 }
 
 /**
@@ -181,4 +233,36 @@ export interface INodeDefine {
    * 单元的预定义端口
    */
   ports ?: Array<INodePortDefine>,
+  /**
+   * 指定这个单元是不是在用户添加菜单中隐藏。默认为 false
+   */
+  hideInAddPanel ?: boolean;
+  /**
+   * 指定这个单元在每个图表中是否只能出现一次。默认为 false
+   */
+  oneBlockOnly ?: boolean;
+  /**
+   * 指定这个单元是基础单元，不能被用户移除。默认为 false
+   */
+  canNotDelete ?: boolean;
+  /**
+   * 指示用户是否可以手动添加入执行端口。默认为 false
+   */
+  userCanAddInputExecute ?: boolean;
+  /**
+   * 指示用户是否可以手动添加出执行端口。默认为 false
+   */
+  userCanAddOutputExecute ?: boolean;
+  /**
+   * 指示用户是否可以手动添加入参数端口。默认为 false
+   */
+  userCanAddInputParam ?: boolean;
+  /**
+   * 指示用户是否可以手动添加出参数端口。默认为 false
+   */
+  userCanAddOutputParam ?: boolean;
+  /**
+   * 单元的自定义样式设置
+   */
+  style ?: INodekStyleSettings;
 }

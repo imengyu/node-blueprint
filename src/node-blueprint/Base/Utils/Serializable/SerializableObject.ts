@@ -1,6 +1,11 @@
 import type { IKeyValueObject, ISaveableTypes } from "../BaseTypes";
 
-const createObjectFactorys = new Map<string, () => SerializableObject<unknown>>();
+const createObjectFactorys = new Map<string, CreateObjectClassCallback<any>>();
+
+export type CreateObjectClassCallback<T> = (
+  define: T,
+  parent: SerializableObject<any>, 
+) => SerializableObject<T>
 
 /**
  * SerializableObject Object Creation Factory
@@ -11,7 +16,7 @@ export const CreateObjectFactory = {
    * @param name Object Name
    * @param createFn Create callback
    */
-  addObjectFactory(name : string, createFn : () => SerializableObject<unknown>) : void {
+  addObjectFactory<T>(name : string, createFn : CreateObjectClassCallback<T>) : void {
     createObjectFactorys.set(name, createFn);
   },
   /**
@@ -20,10 +25,10 @@ export const CreateObjectFactory = {
    * @param k data Object
    * @returns 
    */
-  createSerializableObject<T>(name : string, k : T) : SerializableObject<T>|null {
+  createSerializableObject<T>(name : string, parent: SerializableObject<any>, k : T) : SerializableObject<T>|null {
     const objCreate = createObjectFactorys.get(name);
     if(objCreate) {
-      const obj = objCreate() as SerializableObject<T>;
+      const obj = objCreate(k, parent) as SerializableObject<T>;
       return obj.load(k);
     }
     return null;
@@ -40,11 +45,13 @@ export class SerializableObject<T> {
    * @param saveClassName Class name, same as object name when register in `addObjectFactory`.
    * @param define Inittal source data
    */
-  constructor(saveClassName: string, define?: T) {
+  constructor(saveClassName: string, define?: T, loadAtStart = true) {
     this.saveClassName = saveClassName;
     if (define) {
-      this.load(define);
       this.define = define;
+      if (loadAtStart) {
+        this.load(define);
+      }
     }
   }
 
@@ -63,7 +70,7 @@ export class SerializableObject<T> {
   /**
    * Properties that need force load whith class, key is the Propertiy name, value is class name.
    */
-  foeceSerializableClassProperties : { [index: string]: string } = {};
+  forceSerializableClassProperties : { [index: string]: string } = {};
   /**
    * The source define data
    */
@@ -106,15 +113,19 @@ export class SerializableObject<T> {
     else if(element && typeof element === 'object') {
       if (element instanceof Array) {
         //This is array
-        return element.map((k, i) => this.loadProp(k, `${key}[${i}]`));
+        return element.map((k) => this.loadProp(k, key));
       }
       else if (typeof element.class === 'string' && typeof element.obj === 'object') {
         //This is a SerializableObject
-        return CreateObjectFactory.createSerializableObject(element.class, element.obj as IKeyValueObject);
+        return CreateObjectFactory.createSerializableObject(element.class, this, element.obj as any);
       }
-      else if (this.foeceSerializableClassProperties[key]) {
+      else if (this.forceSerializableClassProperties[key]) {
         //This is a SerializableObject
-        return CreateObjectFactory.createSerializableObject(this.foeceSerializableClassProperties[key], element.obj as IKeyValueObject);
+        return CreateObjectFactory.createSerializableObject(this.forceSerializableClassProperties[key], this, element as any);
+      } 
+      else 
+      {
+        return element;
       }
     }
 

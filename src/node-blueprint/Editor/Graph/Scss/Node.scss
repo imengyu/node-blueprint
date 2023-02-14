@@ -17,19 +17,15 @@
   &.selected {
     border: 3px solid rgb(231, 157, 0);
   }
-
   &.actived {
     border: 3px solid rgb(72, 203, 255);
   }
-
   &.breakpoint-actived {
     border: 3px solid rgb(184, 43, 0);
   }
-
   &.breakpoint-actived.actived {
     border: 3px solid rgb(255, 74, 61);
   }
-
   &:hover {
     .flow-block-comment-open {
       display: inline-block;
@@ -40,18 +36,15 @@
     border-radius: 30px;
   }
 
-  
   .background {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    background-size: 55px;
     background-position: center;
     background-repeat: no-repeat;
-    z-index: -1;
-  
+    z-index: -1;  
     display: flex;
     justify-content: center;
     align-items: center;
@@ -74,6 +67,10 @@
     color: #cf1010;
     text-shadow: 0 0 10px #af0000;
     z-index: 3;
+
+    svg {
+      fill: #cf1010;
+    }
   }
   .breakpoint-arrow {
     display: inline-block;
@@ -84,6 +81,10 @@
     top: -50px;
     left: calc(50% - 20px);
     z-index: 2;
+
+    svg {
+      fill: rgba(214, 59, 0, 0.72);
+    }
   }
 
 }
@@ -123,8 +124,6 @@
   }
   .logo {
     display: inline-block;
-    width: 20px;
-    height: 20px;
     margin-right: 5px;
     background-size: contain;
     background-position: center;
@@ -135,8 +134,6 @@
   .logo-right {
     position: absolute;
     display: inline-block;
-    width: 32px;
-    height: 32px;
     background-size: contain;
     background-position: center;
     right: -15px;
@@ -148,8 +145,6 @@
     display: inline-block;
     background-size: contain;
     background-position: center;
-    width: 16px;
-    height: 16px;
     left: -5px;
     bottom: -5px;
     user-select: none;
@@ -188,6 +183,7 @@
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(202, 202, 202, 0.5);
   padding: 3px 23px 3px 3px;
+  transition: all ease-in-out 0.2s;
 
   &::after {
     position: absolute;
@@ -201,12 +197,13 @@
     border-top-color: rgba(228, 228, 228, 0.76);
   }
 
-  a {
+  .close {
     font-size: 0.9rem;
     position: absolute;
     right: 7px;
-    top: 9px;
+    top: 8px;
     z-index: 6;
+    fill: #9e3300;
   }
 
   .flow-block-comment-text {
@@ -220,6 +217,7 @@
     border: 1px solid transparent;
     background-color: transparent;
     outline: none;
+    cursor: text;
 
     &:focus, &:hover {
       background-color: #fff;
@@ -248,11 +246,17 @@
   top: -20px;
   display: none;
   transition: all ease-in-out 0.2s;
-  color: rgba(255, 255, 255, 0.637);
   text-shadow: 0 0 rgba(202, 202, 202, 0.466);
 
+  svg {
+    fill: rgba(255, 255, 255, 0.637);
+  }
+
   &:hover {
-    color: #fff;
+
+    svg {
+      fill: #fff;
+    }
   }
 }
 
@@ -289,6 +293,7 @@
   }
 }
 
+//端口容器
 .flow-block-ports {
   display: flex;
   flex-direction: row;
@@ -298,6 +303,10 @@
   .small-button {
     font-size: 0.8rem;
     margin-top: 5px;
+
+    svg {
+      fill: #fff
+    }
   }
 
   > .left {
@@ -310,6 +319,9 @@
     .flow-port {
       padding-right: 4px;
     }
+    .dot {
+      margin-right: 5px;
+    }
   }
   > .right {
     display: inline-flex;
@@ -321,41 +333,56 @@
     .flow-port {
       padding-left: 4px;
     }
+    .dot {
+      margin-left: 5px;
+    }
   }
 }
+
+//端口
 .flow-port {
-  display: inline-block;
+  display: inline-flex;
+  flex: 1;
+  flex-direction: row;
+  justify-content: space-evenly;
   white-space: nowrap;
   font-size: 0.8rem;
-  min-height: 21px;
+  min-height: 22px;
   cursor: crosshair;
 
   > .editor {
     display: inline-block;
     vertical-align: top;
   }
-  > .port {
-    display: inline-block;
-    vertical-align: top;
+  > .default-content {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
     border-radius: 6px;
+    padding: 1px 2px;
   }
 
   &:hover {
-    > .port {
+    > .default-content {
       background-color: rgba(255, 255, 255, 0.3);
     }
   }
 
-  .port-dot {
-    display: inline-block;
-    margin: 0 5px;
-    vertical-align: middle;
+  .dot {
+    margin-top: 1px;
 
     &.error {
-      color: #ff7562!important;
+      svg {
+        fill: #ff7562;
+      }
+    }
+    &.success {
+      svg {
+        fill: #2bd614;
+      }
     }
   }
-  .port-dot-async {
+  .async {
     width: 14px;
     vertical-align: middle;
   }
@@ -364,32 +391,18 @@
     white-space: nowrap;
   }
 
+  .delete {
+    margin: 0 8px;
+    cursor: pointer;
+
+    svg {
+      fill: #fff;
+    }
+  }
+
   .param-editor {
     margin: 0 8px;
     cursor: initial;
   }
-  .port-delete {
-    margin: 0 8px;
-    cursor: pointer;
-  }
-
-  .icon-port-dictionary-left {
-    width: 8px; 
-    display: inline-block;
-    margin-left: -5px; 
-  }
-  .icon-port-dictionary-right {
-    margin-left: -2px;
-  }
-
-  &.error {
-    i {
-      color: #ff7562;
-    }
-  }
-  &.success {
-    i {
-      color: #2bd614;
-    }
-  }
+  
 }

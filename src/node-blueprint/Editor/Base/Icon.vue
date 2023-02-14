@@ -3,6 +3,7 @@
     :class="['node-icon', spin ? 'spin' : '' ]"
     :style="{
       transform: rotate !== 0 ? `rotate(${rotate}deg)` : '',
+      fill: fill ? fill : undefined,
       width: size,
       height: size,
     }"
@@ -14,6 +15,10 @@
 <script lang="ts" setup>
 defineProps({
   icon: {
+    type: String,
+    default: '',
+  },
+  fill: {
     type: String,
     default: '',
   },

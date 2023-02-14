@@ -1,7 +1,16 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import type { Ref } from "vue";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { createMouseDragHandler } from "./MouseHandler"
+
+//鼠标事件目标元素是否不可拖动
+export function isMouseEventInNoDragControl(e: MouseEvent) {
+  return (
+    HtmlUtils.isEventInControl(e) 
+    || (e.target as HTMLElement).classList.contains('flow-block-no-move')
+  );
+}
 
 /**
  * 编辑器的鼠标处理
@@ -22,6 +31,8 @@ export function useEditorMousHandler(options: {
   const viewDragDownPos = new Vector2();
   const viewDragHandler = createMouseDragHandler({
     onDown(e) {
+      if (isMouseEventInNoDragControl(e))
+        return false;
       e.stopPropagation();
       mouseInfo.mouseDowned = true;
       mouseInfo.mouseMoved = false;

@@ -1,31 +1,31 @@
 <template>
   <div class="small-button" @click="$emit('click')">
-    <i v-if="icon && iconPlace==='before'" :class="'iconfont mr-1 '+icon" />
+    <Icon v-if="icon && iconPlace === 'before'" class="mr-1" :icon="icon" />
     {{ text }}
     <slot />
-    <i v-if="icon && iconPlace==='after'" :class="'iconfont mr-1 '+icon" />
+    <Icon v-if="icon && iconPlace === 'after'" class="mr-1" :icon="icon" />
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script lang="ts" setup>
+import Icon from './Icon.vue';
 
-export default defineComponent({
-  name: 'SmallButton',
-  emits: [ 'click' ],
-  props: {
-    icon: String,
-    iconPlace: { 
-      type:String,
-      default: 'before'
-    },
-    text: String
+defineProps({
+  icon: String,
+  iconPlace: {
+    type: String,
+    default: "before"
   },
+  text: String
 })
 </script>
 
 <style lang="scss">
 .small-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
   text-decoration: none;
   color: #cccccc;
   user-select: none;
@@ -37,6 +37,10 @@ export default defineComponent({
     background-color: #7e7e7e;
     border-radius: 3px;
     color: #fff;
+  }
+
+  .node-icon {
+    margin-right: 3px;
   }
 }
 </style>
