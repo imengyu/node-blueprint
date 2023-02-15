@@ -169,7 +169,6 @@ onMounted(() => {
       },
     ],
   });
-
   const node1 = new Node({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BA',
     version: 1,
@@ -179,21 +178,21 @@ onMounted(() => {
       {
         guid: 'IN',
         paramType: NodeParamType.Number,
-        name: '入口',
+        name: '',
         description: '测试入口',
         direction: 'input',
       },
       {
         guid: 'IN2',
         paramType: NodeParamType.Number,
-        name: '入口',
+        name: '',
         description: '测试入口',
         direction: 'input',
       },
       {
         guid: 'OUT',
         paramType: NodeParamType.Number,
-        name: '通配符',
+        name: '',
         description: '通配符输出参数',
         direction: 'output',
       },
@@ -224,14 +223,59 @@ onMounted(() => {
       minWidth: 150,
     },
   });
+  const node3 = new Node({
+    guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012AC',
+    version: 1,
+    name: '定时器',
+    description: '定时器',
+    ports: [
+      {
+        guid: 'START',
+        paramType: NodeParamType.Execute,
+        name: '开始',
+        direction: 'input',
+      },
+      {
+        guid: 'STOP',
+        paramType: NodeParamType.Execute,
+        name: '停止',
+        direction: 'input',
+      },
+      {
+        guid: 'RESERT',
+        paramType: NodeParamType.Execute,
+        name: '重置',
+        direction: 'input',
+      },
+      {
+        guid: 'INTERVAL',
+        paramType: NodeParamType.Number,
+        name: '延时',
+        direction: 'input',
+      },
+      {
+        guid: 'OUT',
+        paramType: NodeParamType.Execute,
+        name: '执行',
+        direction: 'output',
+      },
+    ],
+    style: {
+      logo: 'icon:icon-clock1',
+      logoRight: 'icon:icon-clock1',
+      minWidth: 150,
+    },
+  });
 
   node1.position.set(-200, -100);
   node2.position.set(-200, 100);
+  node3.position.set(-460, 100);
 
   foregroundNodes.value.push(
     node,
     node1,
     node2,
+    node3,
   );
 
   setTimeout(() => {
@@ -244,8 +288,7 @@ function initRenderer() {
   const render = backgroundRenderer.value;
   const _viewPort = viewPort.value;
   if(render) {
-    render.addDebugInfoItem(() => `position: ${_viewPort.position}`);
-    render.addDebugInfoItem(() => `size: ${_viewPort.size} scale: ${_viewPort.scale}`);
+    render.addDebugInfoItem(() => `position: ${_viewPort.position} size: ${_viewPort.size} scale: ${_viewPort.scale}`);
     render.addDebugInfoItem(() => `mouseCurrentPos: ${mouseInfo.mouseCurrentPosScreen} -> ${mouseInfo.mouseCurrentPosViewPort}`);
     render.addDebugInfoItem(() => `mouseDownPos: ${mouseInfo.mouseDownPosScreen} -> ${mouseInfo.mouseDownPosViewPort}`);
   }

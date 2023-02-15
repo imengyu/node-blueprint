@@ -15,6 +15,7 @@
 </template>
 
 <script lang="ts">
+import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import { defineComponent, onMounted, type PropType, ref, toRefs } from 'vue'
 
@@ -23,6 +24,7 @@ export default defineComponent({
   emits: [ 'update-value', 'update-custom-data'  ],
   props: {
     value: String,
+    port: Object as PropType<NodePort>,
     customData: Object as PropType<IKeyValueObject>,
   },
   setup(props, context) {

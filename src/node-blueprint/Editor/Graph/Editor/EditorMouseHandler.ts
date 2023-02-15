@@ -52,13 +52,14 @@ export function useEditorMousHandler(options: {
 
   //按下入口
   function onMouseDown(e: MouseEvent) {
+    //坐标更新
+    viewPort.value.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
+    mouseInfo.mouseDownPosScreen.set(e.x, e.y);
+    mouseInfo.mouseMoved = false;
+
     if (viewDragHandler(e))
       return;
       
-    //坐标更新
-    mouseInfo.mouseMoved = false;
-    mouseInfo.mouseDownPosScreen.set(e.x, e.y);
-    viewPort.value.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
     updateMousePos(e);
   }
   //移动入口
@@ -76,12 +77,10 @@ export function useEditorMousHandler(options: {
 
     //缩放功能
     if (e.deltaY !== 0) {
-      const mousePosRefViewPort = new Vector2(mouseInfo.mouseCurrentPosViewPort);
-      mousePosRefViewPort.substract(viewPort.value.position);
       if (e.deltaY < 0) {
-        viewPort.value.scaleAndCenter(Math.min(2, Math.floor(Math.floor(viewPort.value.scale * 100) + 5) / 100), mousePosRefViewPort);
+        viewPort.value.scaleAndCenter(Math.min(2, Math.floor(Math.floor(viewPort.value.scale * 100) + 5) / 100), mouseInfo.mouseCurrentPosScreen);
       } else {
-        viewPort.value.scaleAndCenter(Math.max(0.5, Math.floor(Math.floor(viewPort.value.scale * 100) - 5) / 100), mousePosRefViewPort);
+        viewPort.value.scaleAndCenter(Math.max(0.5, Math.floor(Math.floor(viewPort.value.scale * 100) - 5) / 100), mouseInfo.mouseCurrentPosScreen);
       }
     }
   }
@@ -89,6 +88,8 @@ export function useEditorMousHandler(options: {
   function updateMousePos(e: MouseEvent) {
     mouseInfo.mouseCurrentPosScreen.x = e.clientX;
     mouseInfo.mouseCurrentPosScreen.y = e.clientY;
+
+    viewPort.value.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseCurrentPosScreen);
     viewPort.value.screenPointToViewportPoint(
       mouseInfo.mouseCurrentPosScreen,
       mouseInfo.mouseCurrentPosViewPort

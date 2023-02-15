@@ -355,6 +355,20 @@ function onMouseResize(e : MouseEvent) {
   }
   return false;
 }
+const resizeMouseHandler = createMouseDragHandler({
+  onDown(e) {
+    lastResized = false;
+    if(e.buttons == 1)
+      return testInResize(e);
+    return false;
+  },
+  onMove(downPos, movedPos, e) {
+    lastResized = true;
+    onMouseResize(e);
+  },
+  onUp() {
+  }
+});
 
 //#endregion
 
@@ -368,10 +382,6 @@ const lastBlockSize = new Vector2();
 const dragMouseHandler = createMouseDragHandler({
   onDown(e) {
     lastResized = false;
-    mouseDown = false;
-    if(instance.value.style.userResize) 
-      return !testInResize(e);
-    
     mouseDown = true;
     return true;
   },
@@ -379,31 +389,27 @@ const dragMouseHandler = createMouseDragHandler({
     if(!mouseDown)
       return;
     
-    if(e.buttons == 1){ 
-      if(!onMouseResize(e) /*Handle mouse resize*/) { 
-        let zoom = viewPort.value.scale;
-        let pos = new Vector2(
-          lastBlockPos.x + (movedPos.x * zoom),
-          lastBlockPos.y + (movedPos.y * zoom)
-        );
-        if(pos.x != instance.value.position.x || pos.y != instance.value.position.y) {
+    if(e.buttons == 1) {
+      let pos = new Vector2(
+        lastBlockPos.x + (viewPort.value.scaleScreenSizeToViewportSize(movedPos.x)),
+        lastBlockPos.y + (viewPort.value.scaleScreenSizeToViewportSize(movedPos.y))
+      );
+      if(pos.x != instance.value.position.x || pos.y != instance.value.position.y) {
 
-          /*
-          TODO: 如果当前块没有选中，在这里切换选中状态
-          if(!_instance.selected) {
-            let multiSelectBlocks = _editor.getSelectBlocks();
-            if(multiSelectBlocks.length == 0 || !multiSelectBlocks.contains(_instance as BluePrintFlowBlock)) 
-              _editor.selectBlock(_instance as BluePrintFlowBlock, false);
-            else 
-              _editor.selectBlock(_instance as BluePrintFlowBlock, true);
-          }*/
+        /*
+        TODO: 如果当前块没有选中，在这里切换选中状态
+        if(!_instance.selected) {
+          let multiSelectBlocks = _editor.getSelectBlocks();
+          if(multiSelectBlocks.length == 0 || !multiSelectBlocks.contains(_instance as BluePrintFlowBlock)) 
+            _editor.selectBlock(_instance as BluePrintFlowBlock, false);
+          else 
+            _editor.selectBlock(_instance as BluePrintFlowBlock, true);
+        }*/
 
-          //移动
-          lastMovedBlock = true;
-          instance.value.position = pos;
-        }
+        //移动
+        lastMovedBlock = true;
+        instance.value.position = pos;
       }
-      return;
     }
   },
   onUp() {
@@ -417,6 +423,8 @@ function onMouseDown(e : MouseEvent) {
   lastBlockSize.set(getRealSize());
 
   if (isMouseEventInNoDragControl(e))
+    return;
+  if(instance.value.style.userResize && resizeMouseHandler(e))
     return;
   if (dragMouseHandler(e))
     return;

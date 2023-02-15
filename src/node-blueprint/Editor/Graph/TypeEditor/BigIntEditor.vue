@@ -10,6 +10,7 @@
 </template>
 
 <script lang="ts">
+import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import { defineComponent, type PropType } from 'vue'
@@ -19,6 +20,7 @@ export default defineComponent({
   emits: [ 'update-value', 'update-custom-data' ],
   props: {
     value: Object as PropType<BigInt>,
+    port: Object as PropType<NodePort>,
     customData: Object as PropType<IKeyValueObject>,
   },
   data() {

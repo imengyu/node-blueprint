@@ -25,7 +25,7 @@ import Icon from '../../Base/Icon.vue';
 defineProps({
   imageUrlOrIcon: {
     type: String,
-    required: true,
+    default: '',
   },
   size: {
     type: Number,

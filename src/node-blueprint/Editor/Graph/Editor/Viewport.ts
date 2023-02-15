@@ -8,15 +8,15 @@ import { SerializableObject } from "@/node-blueprint/Base/Utils/Serializable/Ser
  */
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
   /**
-   * 编辑器的元素绝对位置
+   * 编辑器的元素绝对位置（屏幕坐标）
    */
   editorAbsolutePos = new Vector2();
   /**
-   * 视图位置
+   * 视图位置（屏幕坐标）
    */
   position = new Vector2();
   /**
-   * 视图的真实大小
+   * 视图的真实大小（屏幕坐标）
    */
   size = new Vector2();
   /**
@@ -26,7 +26,7 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
 
   constructor() {
     super('NodeGraphEditorViewport');
-    this.serializableProperties = [ 'position', 'scale' ]
+    this.serializableProperties = [ 'position', 'scale', 'scaledPosition', '_scaledPosition' ]
   }
 
   /**
@@ -47,19 +47,35 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
     let viewZoom = this.scale;
     if (viewZoom === newScale)
       return;
+    
+    const isZoomIn = this.scale > newScale;
     const viewSize = this.size;
-    const pos = center ? center : this.rect().calcCenter();
+    const pos = this.rect().calcCenter();
+
     pos.x = pos.x / viewZoom;
     pos.y = pos.y / viewZoom;
     this.scale = newScale;
     viewZoom = this.scale;
-    pos.x = pos.x * viewZoom - viewSize.x / 2;
-    pos.y = pos.y * viewZoom - viewSize.y / 2;
+    pos.x = pos.x * viewZoom - (viewSize.x / 2);
+    pos.y = pos.y * viewZoom - (viewSize.y / 2);
+
+    if (center) {
+      center.x -= viewSize.x / 2;
+      center.y -= viewSize.y / 2;
+      center.divide(isZoomIn ? 10 : 4);
+      center.multiply(isZoomIn ? 1 : -1);
+
+      center.x = Math.min(center.x, viewSize.x / 4);
+      center.y = Math.min(center.y, viewSize.y / 4);
+
+      pos.substract(center);
+    }
+
     this.position = pos;
   }
 
   /**
-   * 获取视口矩形
+   * 获取视口矩形（屏幕坐标）
    * @returns 
    */
   rect(): Rect {
@@ -83,9 +99,10 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
    * @param dest 编辑器坐标，结果被赋值到这里
    */
   viewportPointToScreenPoint(point: Vector2, dest: Vector2): void {
+    const scaleMul = (2 - this.scale);
     dest.set(
-      point.x - this.position.x + this.editorAbsolutePos.x,
-      point.y - this.position.y + this.editorAbsolutePos.y
+      point.x / scaleMul - this.position.x + this.editorAbsolutePos.x,
+      point.y / scaleMul - this.position.y + this.editorAbsolutePos.y,
     );
   }
   /**
@@ -94,10 +111,26 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
    * @param dest 编辑器坐标，结果被赋值到这里
    */
   screenPointToViewportPoint(point: Vector2, dest: Vector2): void {
+    const scaleMul = (2 - this.scale);
     dest.set(
-      this.position.x + (point.x - this.editorAbsolutePos.x),
-      this.position.y + (point.y - this.editorAbsolutePos.y)
+      (this.position.x + (point.x - this.editorAbsolutePos.x)) * scaleMul,
+      (this.position.y + (point.y - this.editorAbsolutePos.y)) * scaleMul,
     );
+  }
+
+  /**
+   * 转换屏幕真实像素大小为视口画布大小
+   * @param size 
+   */
+  scaleScreenSizeToViewportSize(size: number) {
+    return size / this.scale;
+  }
+  /**
+   * 转换视口画布大小为屏幕真实像素大小
+   * @param size 
+   */
+  scaleViewportSizeToScreenSize(size: number) {
+    return size * this.scale;
   }
   /**
    * 屏幕坐标减去编辑器绝对坐标

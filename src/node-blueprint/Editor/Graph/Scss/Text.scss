@@ -1,6 +1,21 @@
 .text-danger {
   color: #e94200;
 }
+.text-warning {
+  color: #c5a100;
+}
 .text-secondary {
   color: #969696;
+}
+
+svg {
+  &.text-danger {
+    fill: #e94200;
+  }
+  &.text-warning {
+    fill: #c5a100;
+  }
+  &.text-secondary {
+    fill: #969696;
+  }
 }
