@@ -23,8 +23,11 @@ function insert<T>(array: T[], i: number, item: T) {
 function contains<T>(array: T[], item: T) {
   return array.indexOf(item) >= 0;
 }
-function empty<T>(array: T[]) {
+function clear<T>(array: T[]) {
   return array.splice(0, array.length);
+}
+function isEmpty(array: unknown[]) {
+  return array.length === 0;
 }
 function addOnce<T>(array: T[], item: T) {
   if (array.indexOf(item) >= 0) return array.length;
@@ -33,7 +36,8 @@ function addOnce<T>(array: T[], item: T) {
 
 export default {
   addOnce,
-  empty,
+  isEmpty,
+  clear,
   contains,
   insert,
   removeAt,

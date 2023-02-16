@@ -7,6 +7,7 @@ import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
 import { FPSCalculator } from './FPSCalculator';
 import { onBeforeMount, onMounted, ref, type PropType } from 'vue';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
+import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -18,6 +19,10 @@ const props = defineProps({
    */
   viewPort: {
     type: Object as PropType<NodeGraphEditorViewport>,
+    default: null,
+  },
+  chunkedPanel: {
+    type: Object as PropType<ChunkedPanel>,
     default: null,
   },
   drawDebugInfo: {
@@ -70,6 +75,7 @@ function render() {
   if(props.gridVisible)
     renderGrid();
   if(props.drawDebugInfo) {
+    props.chunkedPanel.renderDebugInfo(props.viewPort, ctx);
     renderDebugText();
   }
   renderAnimId = requestAnimationFrame(render);

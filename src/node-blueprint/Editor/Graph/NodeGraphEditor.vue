@@ -11,6 +11,7 @@
       style="z-index: 0" 
       :viewPort="(viewPort as NodeGraphEditorViewport)"
       :drawDebugInfo="true"
+      :chunkedPanel="(chunkedPanel as ChunkedPanel)"
     />
     <NodeContainer 
       style="z-index: 1"
@@ -59,8 +60,10 @@ import { useEditorGraphController } from './Editor/EditorGraphController';
 import { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { initBase } from '../../Base';
+import { ChunkedPanel } from './Cast/ChunkedPanel';
 
 const editorHost = ref<HTMLElement>();
+const chunkedPanel = new ChunkedPanel()
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
 
 const {
