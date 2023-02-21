@@ -238,8 +238,8 @@ export class ChunkInstance {
    */
   tag = '';
 
-  constructor(rect : Rect, tag : string, data : null|ISaveableTypes = null) {
-    this.rect = rect;
+  constructor(rect : Rect|undefined, tag : string, data : null|ISaveableTypes = null) {
+    this.rect = rect || new Rect();
     this.data = data;
     this.tag = tag;
   }

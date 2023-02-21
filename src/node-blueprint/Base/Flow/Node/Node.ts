@@ -1,10 +1,11 @@
+import RandomUtils from "../../Utils/RandomUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
-import { printError } from "../../Utils/Logger/DevLog";
-import type { INodePortDefine } from "./NodePort";
-import type { NodePort } from "./NodePort";
-import RandomUtils from "../../Utils/RandomUtils";
-import type { IKeyValueObject } from "../../Utils/BaseTypes";
+import { printError, printWarning } from "../../Utils/Logger/DevLog";
+import { ChunkInstance } from "@/node-blueprint/Editor/Graph/Cast/ChunkedPanel";
+import { NodePort } from "./NodePort";
+import type { INodePortDefine, NodePortDirection } from "./NodePort";
+import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
 
 const TAG = 'Node';
 
@@ -19,12 +20,15 @@ export class Node extends SerializableObject<INodeDefine> {
     this.serializableProperties = [ 'all' ];
     this.noSerializableProperties.push(
       'editorState',
+      'editorHooks',
       'inputPorts',
       'outputPorts',
       'guid',
     );
     this.forceSerializableClassProperties = {
-      ports: 'NodePort'
+      ports: 'NodePort',
+      style: 'NodeStyleSettings',
+      events: 'NodeEventSettings',
     };
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
     this.load(define);
@@ -41,6 +45,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public get guid() : string { return this.define.guid; }
   public breakpoint : NodeBreakPoint = 'none';
   public ports : NodePort[] = [];
+  public mapPorts = new Map<string, NodePort>();
   public inputPorts = new Map<string, NodePort>();
   public outputPorts = new Map<string, NodePort>();
   public get inputPortCount() { return this.inputPorts.size; }
@@ -55,24 +60,42 @@ export class Node extends SerializableObject<INodeDefine> {
   public markOpen = false;
   public position = new Vector2();
   public customSize = new Vector2();
+
+  //非序列化
+
+  public editorHooks = {
+    callbackOnAddToEditor: null as null|(() => void),
+    callbackOnRemoveFromEditor: null as null|(() => void),
+    callbackGetRealSize: null as null|(() => Vector2),
+    callbackGetCurrentSizeType: null as null|(() => number),
+    callbackTwinkle: null as null|((time: number) => void),
+  };
   public editorState = {
     selected: false,
     breakpointTriggered: false,
+    chunkInfo: new ChunkInstance(undefined, 'node'),
   };
   public style = new NodeStyleSettings();
+  public events = new NodeEventSettings();
+
+  //加载函数
+  //=====================
 
   public load(data : INodeDefine) {
     const ret = super.load(data);
 
     this.inputPorts.clear();
     this.outputPorts.clear();
+    this.mapPorts.clear();
 
     //加载端口
     this.ports.forEach((port) => {
       if (port.direction === 'input') {
         this.inputPorts.set(port.guid, port);
+        this.mapPorts.set(port.guid, port);
       } else if (port.direction === 'output') {
         this.outputPorts.set(port.guid, port);
+        this.mapPorts.set(port.guid, port);
       } else {
         printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
       }
@@ -80,39 +103,121 @@ export class Node extends SerializableObject<INodeDefine> {
 
     return ret;
   }
+
+  //通用函数
+  //=====================
+
+  /**
+   * [仅编辑器] 触发闪烁
+   * @param time 闪烁时长，毫秒
+   */
+  public twinkle(time = 1000) {
+    this.editorHooks.callbackTwinkle?.(time);
+  }
+  /**
+   * [仅编辑器] 获取节点真实大小
+   */
+  public getRealSize() {
+    return this.editorHooks.callbackGetRealSize?.() || this.customSize;
+  }
+  /**
+   * [仅编辑器] 获取单元当前调整大小类型
+   * @returns 
+   */
+  public getGetCurrentSizeTypee() : number  {
+    return this.editorHooks.callbackGetCurrentSizeType?.() || 0;
+  }
+  /**
+   * 获取名称
+   * @returns 
+   */
+  public getName() : string {
+    return this.define.name;
+  }
+
+  /**
+   * 添加端口
+   * @param data 端口数据
+   * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
+   */
+  public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null = null, forceChangeDirection ?: NodePortDirection) : NodePort {
+    const oldData = this.getPort(data.guid, data.direction);
+    if(oldData != null && oldData != undefined) {
+      printWarning(this.getName() + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
+        srcNode: this
+      });
+      return oldData;
+    }
+
+    const newPort = new NodePort(data, this);
+    newPort.direction = forceChangeDirection || data.direction;
+    newPort.dyamicAdd = isDyamicAdd;
+    newPort.initialValue = initialValue;
+
+    if(newPort.direction == 'input')
+      this.inputPorts.set(newPort.guid, newPort);
+    else if(newPort.direction == 'output')
+      this.outputPorts.set(newPort.guid, newPort);
+
+    if (data.defaultConnectPort)
+      this.ports.unshift(newPort);
+    else
+      this.ports.push(newPort);
+    this.mapPorts.set(newPort.guid, newPort);
+
+    this.events.onPortAdd?.(this, newPort);
+    return newPort;
+  }
+  /**
+   * 删除端口
+   * @param guid 端口GUID
+   * @param direction 端口方向
+   */
+  public deletePort(guid : string|NodePort, direction ?: NodePortDirection) : void {
+    const oldData = typeof guid == 'string' ? this.getPort(guid, direction) : guid;
+    if(oldData == null || oldData == undefined) {
+      printWarning(this.getName() + ".deletePort", guid + " port not exist !", {
+        srcNode: this,
+      });
+      return;
+    }
+
+    this.mapPorts.delete(oldData.guid);
+
+    //TODO: this.define.events.onPortRemove(this, oldData);
+
+    if(direction == 'input')
+      this.inputPorts.delete(typeof guid == 'string' ? guid : guid.guid);
+    else if(direction == 'output')
+      this.outputPorts.delete(typeof guid == 'string' ? guid : guid.guid);
+  }
+  /**
+   * 根据方向获取某个端口
+   * @param guid 端口GUID
+   * @param direction 端口方向
+   */
+  public getPort(guid : string, direction ?: NodePortDirection) : NodePort|null {
+    if(direction == 'input')
+      return this.inputPorts.get(guid) || null;
+    else if(direction == 'output')
+      return this.outputPorts.get(guid) || null;
+    else
+      return this.getPortByGUID(guid);
+  }
+  /**
+   * 根据GUID获取某个端口
+   * @param guid 
+   */
+  public getPortByGUID(guid : string) : NodePort|null {
+    if(this.mapPorts.has(guid))
+      return this.mapPorts.get(guid) || null;
+    return null;
+  }
+
+
 }
 
 export type NodeBreakPoint = 'none'|'disable'|'enable';
-
-/**
- * 节点样式结构
- */
-export class NodeStyleSettings extends SerializableObject<INodekStyleSettings> {
-  constructor(define?: INodekStyleSettings) {
-    super('NodeStyleSettings', define);
-    this.serializableProperties = [ 'all' ];
-  }
-
-  public logo = '';
-  public logoRight = "";
-  public logoBottom = "";
-  public logoBackground = "";
-  public titleBakgroundColor = 'rgba(255,255,255,0.3)';
-  public titleColor = '#fff';
-  public titleState : 'normal'|'small'|'hide'|false = 'normal';
-  public userResize : 'width'|'height'|'all'|false = false;
-  public noTooltip = false;
-  public noComment = false;
-  public noLogo = false;
-  public minWidth = 0;
-  public minHeight = 0;
-  public maxWidth = 0;
-  public maxHeight = 0;
-  public inputPortMinWidth = '40px';
-  public outputPortMinWidth = '';
-  public layer : 'normal'|'background' = 'normal';
-  public customClassNames = "";
-}
 
 /**
  * 单元样式设置
@@ -204,6 +309,35 @@ export interface INodekStyleSettings {
    */
   outputPortMinWidth ?: number|string,
 }
+/**
+ * 节点样式结构
+ */
+export class NodeStyleSettings extends SerializableObject<INodekStyleSettings> {
+  constructor(define?: INodekStyleSettings) {
+    super('NodeStyleSettings', define);
+    this.serializableProperties = [ 'all' ];
+  }
+
+  public logo = '';
+  public logoRight = "";
+  public logoBottom = "";
+  public logoBackground = "";
+  public titleBakgroundColor = 'rgba(255,255,255,0.3)';
+  public titleColor = '#fff';
+  public titleState : 'normal'|'small'|'hide'|false = 'normal';
+  public userResize : 'width'|'height'|'all'|false = false;
+  public noTooltip = false;
+  public noComment = false;
+  public noLogo = false;
+  public minWidth = 0;
+  public minHeight = 0;
+  public maxWidth = 0;
+  public maxHeight = 0;
+  public inputPortMinWidth = '40px';
+  public outputPortMinWidth = '';
+  public layer : 'normal'|'background' = 'normal';
+  public customClassNames = "";
+}
 
 /**
  * 节点定义
@@ -240,7 +374,7 @@ export interface INodeDefine {
   /**
    * 指定这个单元在每个图表中是否只能出现一次。默认为 false
    */
-  oneBlockOnly ?: boolean;
+  oneNodeOnly ?: boolean;
   /**
    * 指定这个单元是基础单元，不能被用户移除。默认为 false
    */
@@ -265,4 +399,54 @@ export interface INodeDefine {
    * 单元的自定义样式设置
    */
   style ?: INodekStyleSettings;
+}
+
+export type NodeEventCallback = (srcNode : Node) => void;
+export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
+
+/**
+ * 单元自定义事件设置
+ */
+export interface INodeEventSettings {
+  /**
+   * 单元初始化时的回调。
+   * 通常在这个回调里面进行单元初始化的一些工作.
+   */
+  onCreate ?: NodeEventCallback,
+  /**
+   * 单元释放时(删除)的回调。
+   */
+  onDestroy ?: NodeEventCallback,
+  /**
+   * 单元加载到编辑器中时的回调。
+   */
+  onAddToEditor ?: NodeEventCallback,
+  /**
+   * 单元从编辑器中卸载时的回调。（不是删除）
+   */
+  onRemoveFormEditor ?: NodeEventCallback,
+  /**
+   * 用户添加了一个端口时的回调。
+   */
+  onPortAdd ?: NodePortEventCallback,
+  /**
+   * 用户删除了一个端口时的回调。
+   */
+  onPortRemove ?: NodePortEventCallback,
+}
+/**
+ * 单元自定义事件设置
+ */
+export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
+  constructor(define?: INodeEventSettings) {
+    super('NodeEventSettings', define);
+    this.serializableProperties = [ 'all' ];
+  }
+
+  onCreate ?: NodeEventCallback;
+  onDestroy ?: NodeEventCallback;
+  onAddToEditor ?: NodeEventCallback;
+  onRemoveFormEditor ?: NodeEventCallback;
+  onPortAdd ?: NodePortEventCallback;
+  onPortRemove ?: NodePortEventCallback;
 }

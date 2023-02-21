@@ -22,7 +22,6 @@
     @mouseleave="onMouseLeave($event)"
     @mousemove="onMouseMove($event)"
     @mousewheel="onMouseWhell($event)"
-    @mouseup="onMouseUp($event)"
     @contextmenu="onContextmenu($event)"
   >
     <!--注释区域-->
@@ -137,13 +136,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, toRefs, type PropType } from 'vue';
+import { onMounted, ref, toRefs, type PropType } from 'vue';
 import Tooltip from '../../Base/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
 import NodePort from './NodePort.vue';
 import SmallButton from '../../Base/SmallButton.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
@@ -153,6 +151,7 @@ import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import NodeIconImageRender from './NodeIconImageRender.vue';
+import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 
 const props = defineProps({
   instance: {
@@ -163,21 +162,59 @@ const props = defineProps({
     type: Object as PropType<NodeGraphEditorViewport>,
     default: null,
   },
+  chunkedPanel: {
+    type: Object as PropType<ChunkedPanel>,
+    default: null,
+  },
 });
 const {
   instance,
   viewPort,
+  chunkedPanel,
 } = toRefs(props);
 
 const cursor = ref('');
 const nodeRef = ref<HTMLDivElement>();
 
-//#region 
+//初始化
 
+onMounted(() => {
+  instance.value.editorHooks.callbackGetRealSize = getRealSize;
+  instance.value.editorHooks.callbackTwinkle = twinkle;
+  instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
+  instance.value.editorHooks.callbackOnAddToEditor = () => {
+    chunkedPanel.value.addInstance(instance.value.editorState.chunkInfo);
+    updateRegion();
+  };
+  instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
+    chunkedPanel.value.removeInstance(instance.value.editorState.chunkInfo);
+  };
+});
+
+//#region 区块大小与区块功能
+
+/**
+ * 获取真实节点大小
+ */
 function getRealSize() {
   if(nodeRef.value)
     return new Vector2(nodeRef.value.offsetWidth, nodeRef.value.offsetHeight);
   return new Vector2();
+}
+/**
+ * 更新单元编辑器区块信息。在更改位置、大小之后必须调用才能让区块检测器正常检测。
+ */
+function updateRegion() {
+  const realSize = getRealSize();
+  const chunkInfo = instance.value.editorState.chunkInfo;
+
+  chunkInfo.rect.set( 
+    instance.value.position.x,
+    instance.value.position.y,
+    realSize.x,
+    realSize.y,
+  );
+  chunkedPanel.value.updateInstance(chunkInfo);
 }
 
 //#endregion
@@ -367,6 +404,10 @@ const resizeMouseHandler = createMouseDragHandler({
     onMouseResize(e);
   },
   onUp() {
+    //大小更改后更新区块
+    if(lastResized || !getRealSize().equal(lastBlockSize)) {
+      updateRegion();
+    }
   }
 });
 
@@ -380,7 +421,7 @@ const lastBlockPos = new Vector2();
 const lastBlockSize = new Vector2();
 
 const dragMouseHandler = createMouseDragHandler({
-  onDown(e) {
+  onDown() {
     lastResized = false;
     mouseDown = true;
     return true;
@@ -414,6 +455,11 @@ const dragMouseHandler = createMouseDragHandler({
   },
   onUp() {
     mouseDown = false;
+
+    //移动后更新区块
+    if (lastMovedBlock) {
+      updateRegion();
+    }
   },
 })
 
@@ -446,14 +492,6 @@ function onMouseMove(e : MouseEvent) {
 function onMouseEnter(e : MouseEvent) {
 }
 function onMouseLeave(e : MouseEvent) {
-}
-function onMouseUp(e : MouseEvent) {
-  if(isMouseEventInNoDragControl(e)) {
-    //大小更改
-    if(!getRealSize().equal(lastBlockSize)) {
-      //_instance.updateRegion();
-    }
-  }
 }
 
 //#endregion

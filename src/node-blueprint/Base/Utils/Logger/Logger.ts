@@ -1,7 +1,8 @@
 import ArrayUtils from '../ArrayUtils';
-import type { IKeyValueObject } from '../BaseTypes';
 
-export type LogExtendData = IKeyValueObject;
+export type LogExtendData = {
+  [index: string]: any;
+};
 
 export type LogLevel = 'log'|'info'|'warning'|'error'|'unknow'
 export type LogListener = (tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: LogExtendData) => void;
@@ -71,7 +72,7 @@ export class Logger {
     this.listeners.forEach((c) => {
       this.logTempary.forEach(({ tag, level, content, extendObj }) => c(tag, level, content, extendObj));
     })
-    ArrayUtils.empty(this.logTempary);
+    ArrayUtils.clear(this.logTempary);
   }
 }
 

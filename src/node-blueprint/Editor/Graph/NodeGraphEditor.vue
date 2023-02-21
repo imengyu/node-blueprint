@@ -21,6 +21,7 @@
         v-for="(node, key) in backgroundNodes" 
         :instance="(node as Node)" 
         :viewPort="(viewPort as NodeGraphEditorViewport)"
+        :chunkedPanel="chunkedPanel"
         :key="key" 
       />
     </NodeContainer>
@@ -36,6 +37,7 @@
         v-for="(node, key) in foregroundNodes" 
         :instance="(node as Node)" 
         :viewPort="(viewPort as NodeGraphEditorViewport)"
+        :chunkedPanel="chunkedPanel"
         :key="key" 
       />
     </NodeContainer>
@@ -84,6 +86,7 @@ const {
 const {
   backgroundNodes,
   foregroundNodes,
+  pushNodes,
 } = useEditorGraphController();
 
 //init
@@ -274,7 +277,7 @@ onMounted(() => {
   node2.position.set(-200, 100);
   node3.position.set(-460, 100);
 
-  foregroundNodes.value.push(
+  pushNodes(
     node,
     node1,
     node2,
