@@ -183,8 +183,7 @@ export class Node extends SerializableObject<INodeDefine> {
     }
 
     this.mapPorts.delete(oldData.guid);
-
-    //TODO: this.define.events.onPortRemove(this, oldData);
+    this.events.onPortRemove?.(this, oldData);
 
     if(direction == 'input')
       this.inputPorts.delete(typeof guid == 'string' ? guid : guid.guid);
@@ -401,7 +400,7 @@ export interface INodeDefine {
   style ?: INodekStyleSettings;
 }
 
-export type NodeEventCallback = (srcNode : Node) => void;
+export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
 
 /**
@@ -446,6 +445,10 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onCreate ?: NodeEventCallback;
   onDestroy ?: NodeEventCallback;
   onAddToEditor ?: NodeEventCallback;
+  onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
+    direction : NodePortDirection,
+    type : 'execute'|'param',
+  }>;
   onRemoveFormEditor ?: NodeEventCallback;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;

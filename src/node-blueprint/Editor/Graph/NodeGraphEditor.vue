@@ -207,6 +207,7 @@ onMounted(() => {
     style: {
       titleState: 'hide',
       logoBackground: 'icon:icon-add',
+      inputPortMinWidth: 0,
     },
   });
   const node2 = new Node({

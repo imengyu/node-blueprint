@@ -167,7 +167,7 @@ function renderGrid() {
 
   //Draw xy debug line
   if (props.drawDebugInfo) {
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4;
 
     const x = -startPos.x;
     const y = -startPos.y;

@@ -1,6 +1,8 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 
 
+export type IMouseDragHandlerEntry = (e: MouseEvent) => boolean;
+
 /**
  * 创建鼠标按下移动处理器
  * @param options 处理器
@@ -25,7 +27,7 @@ export function createMouseDragHandler(options: {
    * @returns 
    */
   onUp: (e: MouseEvent) => void;
-}) {
+}) : IMouseDragHandlerEntry{
 
   const { onDown, onMove, onUp } = options;
   const mouseDownPosition = new Vector2();

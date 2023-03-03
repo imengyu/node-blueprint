@@ -2,7 +2,7 @@ import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import type { Ref } from "vue";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
-import { createMouseDragHandler } from "./MouseHandler"
+import { createMouseDragHandler, type IMouseDragHandlerEntry } from "./MouseHandler"
 
 //鼠标事件目标元素是否不可拖动
 export function isMouseEventInNoDragControl(e: MouseEvent) {
@@ -20,18 +20,18 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
 export function useEditorMousHandler(options: {
   viewPort: Ref<NodeGraphEditorViewport>,
 }) {
-  const {
-    viewPort
-  } = options;
+  const { viewPort } = options;
 
   const mouseInfo = new NodeGraphEditorMouseInfo();
+  const mouseDownHandlers = [] as IMouseDragHandlerEntry[];
   
-
   //拖拽处理
   const viewDragDownPos = new Vector2();
   const viewDragHandler = createMouseDragHandler({
     onDown(e) {
       if (isMouseEventInNoDragControl(e))
+        return false;
+      if (e.button !== 2 && e.button !== 1)
         return false;
       e.stopPropagation();
       mouseInfo.mouseDowned = true;
@@ -50,6 +50,8 @@ export function useEditorMousHandler(options: {
     },
   });
 
+  mouseDownHandlers.push(viewDragHandler);
+
   //按下入口
   function onMouseDown(e: MouseEvent) {
     //坐标更新
@@ -57,9 +59,11 @@ export function useEditorMousHandler(options: {
     mouseInfo.mouseDownPosScreen.set(e.x, e.y);
     mouseInfo.mouseMoved = false;
 
-    if (viewDragHandler(e))
-      return;
-      
+    for (const handler of mouseDownHandlers) {
+      if (handler(e))
+        return;
+    }
+
     updateMousePos(e);
   }
   //移动入口
@@ -101,6 +105,7 @@ export function useEditorMousHandler(options: {
     onMouseDown,
     onMouseMove,
     onMouseWhell,
+    mouseDownHandlers,
     mouseInfo,
   }
 }

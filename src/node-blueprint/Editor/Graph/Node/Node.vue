@@ -152,6 +152,7 @@ import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import NodeIconImageRender from './NodeIconImageRender.vue';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
+import { printWarning } from '@/node-blueprint/Base/Utils/Logger/DevLog';
 
 const props = defineProps({
   instance: {
@@ -173,6 +174,7 @@ const {
   chunkedPanel,
 } = toRefs(props);
 
+const TAG = 'Node';
 const cursor = ref('');
 const nodeRef = ref<HTMLDivElement>();
 
@@ -508,8 +510,16 @@ function onContextmenu(e : MouseEvent) {
 
 //#region 添加端口
 
-function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
-  //TODO: 添加端口
+async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
+  //添加端口
+  const ret = props.instance.events.onUserAddPort?.(props.instance, { direction, type });
+  if (!ret) {
+    printWarning(TAG, `Faild to execute onUserAddPort, events.onUserAddPort configue not right.`);
+    return;
+  }
+  const port = await ret;
+  if (port)
+    props.instance.addPort(port, true);
 }
 //#endregion 
 

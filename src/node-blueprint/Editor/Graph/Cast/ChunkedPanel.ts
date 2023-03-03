@@ -11,7 +11,7 @@ import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 export class ChunkedPanel {
   chunkWidth = 500;
   chunkHeight = 300;
-  chunk = new Map<string, ChunkContatiner>();
+  chunk = new Map<number, ChunkContatiner>();
 
   /**
    * 绘制调试信息
@@ -22,6 +22,7 @@ export class ChunkedPanel {
   renderDebugInfo(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
     if(!ctx) return;
 
+    ctx.lineWidth = 1;
     ctx.strokeStyle = '#00f';
 
     const startPos = viewPort.position;
@@ -48,15 +49,16 @@ export class ChunkedPanel {
       ctx.stroke();      
     }
 
-    for(let x = -xStartOffset; x < viewPortSize.x; x += scaledGridWidth) {
-      for(let y = -yStartOffset; y < viewPortSize.y; y += scaledGridHeight) {
+    for(let x = -xStartOffset - scaledGridWidth; x < viewPortSize.x; x += scaledGridWidth) {
+      for(let y = -yStartOffset - scaledGridHeight; y < viewPortSize.y; y += scaledGridHeight) {
         const chunkIndex = this.getPointChunkIndex(x, y);
         const chunk = this.getChunk(chunkIndex.x, chunkIndex.y, true);
         const xc = chunkIndex.x * scaledGridWidth - startPos.x;
         const yc = chunkIndex.y * scaledGridHeight - startPos.y;
-        if(!chunk) 
-          continue;
         
+        if (!chunk)
+          continue;
+
         ctx.strokeStyle = '#ff0';
         ctx.strokeRect(xc, yc, scaledGridWidth, scaledGridHeight);
         ctx.fillText(chunkIndex.toString(), xc, yc);
@@ -64,6 +66,7 @@ export class ChunkedPanel {
         ctx.strokeStyle = '#f00';
         chunk.childs.forEach((c) => {
           const pos = new Vector2(c.rect.x, c.rect.y);
+          viewPort.viewportPointToScreenPoint(pos, pos);
           ctx.strokeRect(pos.x, pos.y, c.rect.w * scale, c.rect.h * scale);
           ctx.fillText(c.rect.toString(), pos.x, pos.y);
         });
@@ -90,6 +93,7 @@ export class ChunkedPanel {
   removeInstance(instance : ChunkInstance) : void {
     instance.parents.forEach((p) => {
       ArrayUtils.remove(p.childs, instance);
+      this.checkChunkContatinerIfEmptyRemove(p);
     });
     ArrayUtils.clear(instance.parents);
   }
@@ -113,17 +117,17 @@ export class ChunkedPanel {
     })
   }
 
-  
 
   private getChunk(x : number, y : number, forceNoCreate = false) {
-    const chunkStr = `${x}:${y}`;
-    let chunk = this.chunk.get(chunkStr);
+    const chunkHash = x + y * 1000;
+    let chunk = this.chunk.get(chunkHash);
     if(!forceNoCreate && !chunk) {
       chunk = new ChunkContatiner();
+      chunk.hash = chunkHash;
       chunk.pos.set(x, y);
-      this.chunk.set(chunkStr, chunk);
+      this.chunk.set(chunkHash, chunk);
     }
-    return chunk as ChunkContatiner;
+    return chunk;
   }
   private getRectChunks(rect : Rect, forceNoCreate = false) {
     const result = new Array<ChunkContatiner>();
@@ -149,6 +153,12 @@ export class ChunkedPanel {
     }
     else {
       return new Vector2(Math.floor(x / this.chunkWidth), Math.floor((y || 0) / this.chunkHeight));
+    }
+  }
+  private checkChunkContatinerIfEmptyRemove(chunkContatiner: ChunkContatiner) {
+    //移除容器
+    if (chunkContatiner.childs.length === 0) {
+      this.chunk.delete(chunkContatiner.hash);
     }
   }
 
@@ -212,6 +222,7 @@ export class ChunkedPanel {
  * 区块容器
  */
 export class ChunkContatiner {
+  hash = 0;
   pos = new Vector2();
   childs = new Array<ChunkInstance>();
 }
