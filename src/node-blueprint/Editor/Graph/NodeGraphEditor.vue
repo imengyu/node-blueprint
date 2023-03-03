@@ -63,10 +63,15 @@ import { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { initBase } from '../../Base';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
+import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
+const context = {
+  getBaseChunkedPanel: () => chunkedPanel,
+  getViewPort: () => viewPort.value,
+} as NodeGraphEditorInternalContext;
 
 const {
   backgroundRenderer,
@@ -79,15 +84,14 @@ const {
   onMouseMove,
   onMouseWhell,
   mouseInfo,
-} = useEditorMousHandler({
-  viewPort: (viewPort as Ref<NodeGraphEditorViewport>),
-});
+} = useEditorMousHandler(context);
 
 const {
   backgroundNodes,
   foregroundNodes,
   pushNodes,
-} = useEditorGraphController();
+} = useEditorGraphController(context);
+
 
 //init
 //=========================

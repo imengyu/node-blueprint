@@ -1,7 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import type { Ref } from "vue";
-import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
+import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { createMouseDragHandler, type IMouseDragHandlerEntry } from "./MouseHandler"
 
 //鼠标事件目标元素是否不可拖动
@@ -17,14 +17,11 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
  * @param options 
  * @returns 
  */
-export function useEditorMousHandler(options: {
-  viewPort: Ref<NodeGraphEditorViewport>,
-}) {
-  const { viewPort } = options;
-
+export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   const mouseInfo = new NodeGraphEditorMouseInfo();
   const mouseDownHandlers = [] as IMouseDragHandlerEntry[];
-  
+  const viewPort = context.getViewPort();
+   
   //拖拽处理
   const viewDragDownPos = new Vector2();
   const viewDragHandler = createMouseDragHandler({
@@ -36,14 +33,14 @@ export function useEditorMousHandler(options: {
       e.stopPropagation();
       mouseInfo.mouseDowned = true;
       mouseInfo.mouseMoved = false;
-      viewDragDownPos.set(viewPort.value.position);
+      viewDragDownPos.set(viewPort.position);
       return true;
     },
     onMove(_, m, e) {
       e.stopPropagation();
       mouseInfo.mouseMoved = true;
-      viewPort.value.position.set(viewDragDownPos);
-      viewPort.value.position.substract(m);
+      viewPort.position.set(viewDragDownPos);
+      viewPort.position.substract(m);
     },
     onUp() {
       mouseInfo.mouseDowned = false;
@@ -55,7 +52,7 @@ export function useEditorMousHandler(options: {
   //按下入口
   function onMouseDown(e: MouseEvent) {
     //坐标更新
-    viewPort.value.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
+    viewPort.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
     mouseInfo.mouseDownPosScreen.set(e.x, e.y);
     mouseInfo.mouseMoved = false;
 
@@ -82,9 +79,9 @@ export function useEditorMousHandler(options: {
     //缩放功能
     if (e.deltaY !== 0) {
       if (e.deltaY < 0) {
-        viewPort.value.scaleAndCenter(Math.min(2, Math.floor(Math.floor(viewPort.value.scale * 100) + 5) / 100), mouseInfo.mouseCurrentPosScreen);
+        viewPort.scaleAndCenter(Math.min(2, Math.floor(Math.floor(viewPort.scale * 100) + 5) / 100), mouseInfo.mouseCurrentPosScreen);
       } else {
-        viewPort.value.scaleAndCenter(Math.max(0.5, Math.floor(Math.floor(viewPort.value.scale * 100) - 5) / 100), mouseInfo.mouseCurrentPosScreen);
+        viewPort.scaleAndCenter(Math.max(0.5, Math.floor(Math.floor(viewPort.scale * 100) - 5) / 100), mouseInfo.mouseCurrentPosScreen);
       }
     }
   }
@@ -93,13 +90,16 @@ export function useEditorMousHandler(options: {
     mouseInfo.mouseCurrentPosScreen.x = e.clientX;
     mouseInfo.mouseCurrentPosScreen.y = e.clientY;
 
-    viewPort.value.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseCurrentPosScreen);
-    viewPort.value.screenPointToViewportPoint(
+    viewPort.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseCurrentPosScreen);
+    viewPort.screenPointToViewportPoint(
       mouseInfo.mouseCurrentPosScreen,
       mouseInfo.mouseCurrentPosViewPort
     );
   }
 
+
+  context.getMouseDownHandlers = () => mouseDownHandlers;
+  context.getMouseInfo = () => mouseInfo;
 
   return {
     onMouseDown,
