@@ -1,7 +1,8 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-
+import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
 
 export type IMouseDragHandlerEntry = (e: MouseEvent) => boolean;
+export type IMouseMoveHandlerEntry = (mouseInfo : NodeGraphEditorMouseInfo, e: MouseEvent) => boolean;
 
 /**
  * 创建鼠标按下移动处理器

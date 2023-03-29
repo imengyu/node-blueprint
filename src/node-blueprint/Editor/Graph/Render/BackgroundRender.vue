@@ -1,5 +1,8 @@
 <template>
-  <canvas ref="canvas" @contextmenu="$emit('contextmenu', $event)"></canvas>
+  <canvas 
+    ref="canvas" 
+    @contextmenu="$emit('contextmenu', $event)"
+  ></canvas>
 </template>
 
 <script lang="ts" setup>

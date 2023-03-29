@@ -3,11 +3,10 @@ import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnecto
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { ref, type Ref } from "vue";
-import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { isMouseEventInNoDragControl, NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
-import { createMouseDragHandler, type IMouseDragHandlerEntry } from "./MouseHandler";
-import type { NodeGraphEditorViewport } from "./Viewport";
+import { ref } from "vue";
+import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
+import { isMouseEventInNoDragControl } from "./EditorMouseHandler";
+import { createMouseDragHandler } from "./MouseHandler";
 
 /**
  * 选择控制器
@@ -26,7 +25,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
 
   const mouseInfo = context.getMouseInfo();
   const viewPort = context.getViewPort();
-  const mouseDownHandlers = context.getMouseDownHandlers();
+  const mouseHandlers = context.getMouseHandler();
 
   //多选处理
   const selectDragDownPos = new Vector2();
@@ -37,25 +36,27 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       if (e.button !== 0)
         return false;
       e.stopPropagation();
-      mouseInfo.mouseDowned = true;
-      mouseInfo.mouseMoved = false;
+      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Down);
       isMulitSelect.value = true;
       selectDragDownPos.set(viewPort.position);
       return true;
     },
     onMove(_, m, e) {
       e.stopPropagation();
-      mouseInfo.mouseMoved = true;
-
-
+      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
+      doSelectNodes();
     },
-    onUp() {
+    onUp(e) {
       isMulitSelect.value = false;
-      mouseInfo.mouseDowned = false;
+      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
+      if (mouseInfo.mouseMoved)
+        endSelectNodes();
+      else
+        unSelectAllNodes();
     },
   });
 
-  mouseDownHandlers.push(selectDragHandler);
+  mouseHandlers.pushMouseDownHandler(selectDragHandler);
 
   /**
    * 取消选中所有连接线
@@ -148,28 +149,31 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     const _multiSelectRect = multiSelectRect.value;
     const _selectNodes = selectNodes.value;
 
-    //多选框的方向处理
-    {
-      if (mouseInfo.mouseCurrentPosViewPort.x > mouseInfo.mouseDownPosViewPort.x) {
-        _multiSelectRect.x = mouseInfo.mouseDownPosViewPort.x;
-        _multiSelectRect.w = mouseInfo.mouseCurrentPosViewPort.x - mouseInfo.mouseDownPosViewPort.x;
-      } else {
-        _multiSelectRect.x = mouseInfo.mouseCurrentPosViewPort.x;
-        _multiSelectRect.w = mouseInfo.mouseDownPosViewPort.x - mouseInfo.mouseCurrentPosViewPort.x;
-      }
-      if (mouseInfo.mouseCurrentPosViewPort.y > mouseInfo.mouseDownPosViewPort.y) {
-        _multiSelectRect.y = mouseInfo.mouseDownPosViewPort.y;
-        _multiSelectRect.h = mouseInfo.mouseCurrentPosViewPort.y - mouseInfo.mouseDownPosViewPort.y;
-      } else {
-        _multiSelectRect.y = mouseInfo.mouseCurrentPosViewPort.y;
-        _multiSelectRect.h = mouseInfo.mouseDownPosViewPort.y - mouseInfo.mouseCurrentPosViewPort.y;
-      }
+    /**
+     * 多选框的方向处理
+     * 保证用户无论向哪个方向选择，都可以统一数据
+     */
+    if (mouseInfo.mouseCurrentPosViewPort.x > mouseInfo.mouseDownPosViewPort.x) {
+      _multiSelectRect.x = mouseInfo.mouseDownPosViewPort.x;
+      _multiSelectRect.w = mouseInfo.mouseCurrentPosViewPort.x - mouseInfo.mouseDownPosViewPort.x;
+    } else {
+      _multiSelectRect.x = mouseInfo.mouseCurrentPosViewPort.x;
+      _multiSelectRect.w = mouseInfo.mouseDownPosViewPort.x - mouseInfo.mouseCurrentPosViewPort.x;
+    }
+    if (mouseInfo.mouseCurrentPosViewPort.y > mouseInfo.mouseDownPosViewPort.y) {
+      _multiSelectRect.y = mouseInfo.mouseDownPosViewPort.y;
+      _multiSelectRect.h = mouseInfo.mouseCurrentPosViewPort.y - mouseInfo.mouseDownPosViewPort.y;
+    } else {
+      _multiSelectRect.y = mouseInfo.mouseCurrentPosViewPort.y;
+      _multiSelectRect.h = mouseInfo.mouseDownPosViewPort.y - mouseInfo.mouseCurrentPosViewPort.y;
     }
     //多选单元和连接
     if (_multiSelectRect.w > 0 && _multiSelectRect.h > 0) {
 
-      //选择单元
-      const castNodes = context.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "block");
+      /**
+       * 选择单元
+       */
+      const castNodes = context.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "node");
       const thisTimeSelectedNode = new Array<Node>();
       castNodes.forEach((i) => {
         const block = context.getNodes().get(i.data as string);
@@ -189,7 +193,9 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
         ArrayUtils.addOnce(_selectNodes, b);
       });
 
-      //选择单元
+      /**
+       * 选择连接线
+       */
       selectConnectors.value.forEach((c) => {
         //c.hover = false;
         //c.selected = false;
@@ -209,6 +215,14 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     }
 
     notifySelectNodeChanged();
+  }
+  function endSelectNodes() {
+    isMulitSelect.value = false;
+    multiSelectRect.value.set(0, 0, 0, 0);
+    selectNodes.value.forEach((node) => {
+      //保存单元位置，以供后续多选移动使用
+      node.editorState.saveLastBlockPos();
+    });
   }
 
   /**
@@ -236,10 +250,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     notifySelectConnectorChanged();
   }
 
-  function clearMulitSelect() {
-    isMulitSelect.value = false;
-    multiSelectRect.value.set(0, 0, 0, 0);
-  }
+
 
   function notifySelectConnectorChanged() {
     

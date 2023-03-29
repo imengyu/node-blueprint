@@ -108,18 +108,20 @@ export class ChunkedPanel {
    */
   updateInstance(instance : ChunkInstance) : void {
     const chunks = this.getRectChunks(instance.rect);
+    const needCheckEmptyChunks : ChunkContatiner[] = [];
     for (let i = instance.parents.length - 1; i >= 0; i--) {
       const p = instance.parents[i];
       if(!chunks.includes(p)) {
         ArrayUtils.remove(p.childs, instance);
         ArrayUtils.removeAt(instance.parents, i);
+        needCheckEmptyChunks.push(p);
       }
-      this.checkChunkContatinerIfEmptyRemove(p);
     }
     chunks.forEach((c) => {
       ArrayUtils.addOnce(c.childs, instance);
       ArrayUtils.addOnce(instance.parents, c);
     });
+    needCheckEmptyChunks.forEach(p =>  this.checkChunkContatinerIfEmptyRemove(p));
   }
 
 

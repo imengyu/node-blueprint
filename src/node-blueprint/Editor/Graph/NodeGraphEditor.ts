@@ -1,8 +1,7 @@
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { NodeConnector } from '@/node-blueprint/Base/Flow/Node/NodeConnector';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
-import type { NodeGraphEditorMouseInfo } from './Editor/EditorMouseHandler';
-import type { IMouseDragHandlerEntry } from './Editor/MouseHandler';
+import type { EditorMousHandlerExtendHandlers, NodeGraphEditorMouseInfo } from './Editor/EditorMouseHandler';
 import type { NodeGraphEditorViewport } from './Editor/Viewport';
 
 export * from './Editor/Viewport';
@@ -95,6 +94,12 @@ export interface NodeGraphEditorContext {
   isMulitSelect: () => boolean;
 }
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
+  mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
   getMouseInfo: () => NodeGraphEditorMouseInfo,
-  getMouseDownHandlers: () => IMouseDragHandlerEntry[],
+  getMouseHandler: () => EditorMousHandlerExtendHandlers,
+}
+export enum MouseEventUpdateMouseInfoType {
+  Down,
+  Move,
+  Up,
 }

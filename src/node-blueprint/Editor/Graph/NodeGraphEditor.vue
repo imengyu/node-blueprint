@@ -26,11 +26,15 @@
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel"
         :key="key" 
+        :context="context"
       />
     </NodeContainer>
     <ConnectorRender
       ref="foregroundRenderer"
       style="z-index: 2"
+      :viewPort="(viewPort as NodeGraphEditorViewport)"
+      :isMulitSelect="isMulitSelect"
+      :multiSelectRect="(multiSelectRect as Rect)"
       @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
@@ -44,6 +48,7 @@
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel"
         :key="key" 
+        :context="context"
       />
     </NodeContainer>
     <ZoomTool
@@ -70,6 +75,8 @@ import { initBase } from '../../Base';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
+import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
+import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -101,6 +108,11 @@ const {
   foregroundNodes,
   pushNodes,
 } = useEditorGraphController(context);
+
+const {
+  multiSelectRect,
+  isMulitSelect,
+} = useEditorSelectionContoller(context);
 
 
 //init
@@ -288,16 +300,16 @@ onMounted(() => {
     },
   });
 
-  node.position.set(-600, -100);
+  //node.position.set(-600, -100);
   node1.position.set(-200, -100);
   node2.position.set(-200, 100);
   node3.position.set(-460, 100);
 
   pushNodes(
     node,
-    //node1,
-    //node2,
-    //node3,
+    node1,
+    node2,
+    node3,
   );
 
   setTimeout(() => {
@@ -313,6 +325,7 @@ function initRenderer() {
     render.addDebugInfoItem(() => `position: ${_viewPort.position} size: ${_viewPort.size} scale: ${_viewPort.scale}`);
     render.addDebugInfoItem(() => `mouseCurrentPos: ${mouseInfo.mouseCurrentPosScreen} -> ${mouseInfo.mouseCurrentPosViewPort}`);
     render.addDebugInfoItem(() => `mouseDownPos: ${mouseInfo.mouseDownPosScreen} -> ${mouseInfo.mouseDownPosViewPort}`);
+    render.addDebugInfoItem(() => `isMulitSelect: ${isMulitSelect.value} rect: ${multiSelectRect.value.toString()}`);
   }
 }
 

@@ -1,8 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
-import type { Ref } from "vue";
-import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from "../NodeGraphEditor";
-import { createMouseDragHandler, type IMouseDragHandlerEntry } from "./MouseHandler"
+import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
+import { createMouseDragHandler, type IMouseDragHandlerEntry, type IMouseMoveHandlerEntry } from "./MouseHandler"
 
 //鼠标事件目标元素是否不可拖动
 export function isMouseEventInNoDragControl(e: MouseEvent) {
@@ -13,14 +12,33 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
 }
 
 /**
+ * 扩展鼠标事件接口
+ */
+export class EditorMousHandlerExtendHandlers {
+  mouseDownHandlers = [] as IMouseDragHandlerEntry[];
+  mouseMoveHandlers = [] as IMouseMoveHandlerEntry[];
+
+  pushMouseDownHandler(handler: IMouseDragHandlerEntry) {
+    this.mouseDownHandlers.push(handler);
+  }
+  pushMouseMoveHandlers(handler: IMouseMoveHandlerEntry) {
+    this.mouseMoveHandlers.push(handler);
+  }
+}
+
+/**
  * 编辑器的鼠标处理
  * @param options 
  * @returns 
  */
 export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   const mouseInfo = new NodeGraphEditorMouseInfo();
-  const mouseDownHandlers = [] as IMouseDragHandlerEntry[];
   const viewPort = context.getViewPort();
+
+  /**
+   * 对外鼠标事件接口
+   */
+  const extendHandlerObject = new EditorMousHandlerExtendHandlers();
    
   //拖拽处理
   const viewDragDownPos = new Vector2();
@@ -42,33 +60,32 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
       viewPort.position.set(viewDragDownPos);
       viewPort.position.substract(m);
     },
-    onUp() {
+    onUp(e) {
       mouseInfo.mouseDowned = false;
+      mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
     },
   });
 
-  mouseDownHandlers.push(viewDragHandler);
+  extendHandlerObject.pushMouseDownHandler(viewDragHandler);
 
   //按下入口
   function onMouseDown(e: MouseEvent) {
-    //坐标更新
-    viewPort.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
-    mouseInfo.mouseDownPosScreen.set(e.x, e.y);
-    mouseInfo.mouseMoved = false;
+    mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Down);
 
-    for (const handler of mouseDownHandlers) {
+    for (const handler of extendHandlerObject.mouseDownHandlers) {
       if (handler(e))
         return;
     }
-
-    updateMousePos(e);
   }
   //移动入口
   function onMouseMove(e: MouseEvent) {
-    if (!mouseInfo.mouseDowned) {
-      mouseInfo.mouseMoved = true;
-      updateMousePos(e);
-      //TODO: connectorCast();
+    mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
+
+    //TODO: connectorCast();
+    
+    for (const handler of extendHandlerObject.mouseMoveHandlers) {
+      if (handler(mouseInfo, e))
+        return;
     }
   }
   //滚轮
@@ -97,18 +114,38 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     );
   }
 
+  function mouseEventUpdateMouseInfo(e: MouseEvent, type: MouseEventUpdateMouseInfoType) {
+    switch(type) {
+      case MouseEventUpdateMouseInfoType.Down:
+        //坐标更新
+        viewPort.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
+        mouseInfo.mouseDownPosScreen.set(e.x, e.y);
+        mouseInfo.mouseMoved = false;
+        break;
+      case MouseEventUpdateMouseInfoType.Move:
+        mouseInfo.mouseMoved = true;
+        break;
+      case MouseEventUpdateMouseInfoType.Up:
+        mouseInfo.mouseDowned = false;
+        break;
+    }
+    updateMousePos(e);
+  }
 
-  context.getMouseDownHandlers = () => mouseDownHandlers;
+
+  context.getMouseHandler = () => extendHandlerObject;
   context.getMouseInfo = () => mouseInfo;
+  context.mouseEventUpdateMouseInfo = mouseEventUpdateMouseInfo;
 
   return {
     onMouseDown,
     onMouseMove,
     onMouseWhell,
-    mouseDownHandlers,
     mouseInfo,
   }
 }
+
+
 
 /**
  * 编辑器鼠标状态

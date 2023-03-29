@@ -64,6 +64,7 @@ export class Node extends SerializableObject<INodeDefine> {
   //非序列化
 
   public editorHooks = {
+    callbackUpdateRegion: null as null|(() => void),
     callbackOnAddToEditor: null as null|(() => void),
     callbackOnRemoveFromEditor: null as null|(() => void),
     callbackGetRealSize: null as null|(() => Vector2),
@@ -74,6 +75,14 @@ export class Node extends SerializableObject<INodeDefine> {
     selected: false,
     breakpointTriggered: false,
     chunkInfo: new ChunkInstance(undefined, 'node'),
+    lastBlockPos: new Vector2(),
+    lastBlockSize: new Vector2(),
+    /**
+     * 保存块当前位置，以供移动使用
+     */
+    saveLastBlockPos: () => {
+      this.editorState.lastBlockPos.set(this.position);
+    }
   };
   public style = new NodeStyleSettings();
   public events = new NodeEventSettings();
