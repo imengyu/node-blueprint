@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="canvas"></canvas>
+  <canvas ref="canvas" @contextmenu="$emit('contextmenu', $event)"></canvas>
 </template>
 
 <script lang="ts" setup>
@@ -194,6 +194,8 @@ function renderGrid() {
 }
 
 //#endregion
+
+defineEmits([ 'contextmenu' ])
 
 defineExpose({
   onWindowSizeChanged(x: number, y: number) {

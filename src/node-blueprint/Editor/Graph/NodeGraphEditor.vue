@@ -5,6 +5,7 @@
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
     @wheel="onMouseWhell"
+    @contextmenu="onCanvasContextMenu"
   >
     <BackgroundRender
       ref="backgroundRenderer"
@@ -12,10 +13,12 @@
       :viewPort="(viewPort as NodeGraphEditorViewport)"
       :drawDebugInfo="true"
       :chunkedPanel="(chunkedPanel as ChunkedPanel)"
+      @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
       style="z-index: 1"
       :viewPort="(viewPort as NodeGraphEditorViewport)"
+      @contextmenu="onCanvasContextMenu"
     >
       <NodeComponent
         v-for="(node, key) in backgroundNodes" 
@@ -27,11 +30,13 @@
     </NodeContainer>
     <ConnectorRender
       ref="foregroundRenderer"
-      style="z-index: 2" 
+      style="z-index: 2"
+      @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
       style="z-index: 3" 
       :viewPort="(viewPort as NodeGraphEditorViewport)"
+      @contextmenu="onCanvasContextMenu"
     >
       <NodeComponent
         v-for="(node, key) in foregroundNodes" 
@@ -64,6 +69,7 @@ import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { initBase } from '../../Base';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
+import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -85,6 +91,10 @@ const {
   onMouseWhell,
   mouseInfo,
 } = useEditorMousHandler(context);
+
+const {
+  onCanvasContextMenu
+} = useEditorContextMenuHandler(context);
 
 const {
   backgroundNodes,
@@ -278,15 +288,16 @@ onMounted(() => {
     },
   });
 
+  node.position.set(-600, -100);
   node1.position.set(-200, -100);
   node2.position.set(-200, 100);
   node3.position.set(-460, 100);
 
   pushNodes(
     node,
-    node1,
-    node2,
-    node3,
+    //node1,
+    //node2,
+    //node3,
   );
 
   setTimeout(() => {

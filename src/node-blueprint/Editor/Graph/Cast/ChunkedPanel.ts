@@ -49,19 +49,23 @@ export class ChunkedPanel {
       ctx.stroke();      
     }
 
-    for(let x = -xStartOffset - scaledGridWidth; x < viewPortSize.x; x += scaledGridWidth) {
-      for(let y = -yStartOffset - scaledGridHeight; y < viewPortSize.y; y += scaledGridHeight) {
-        const chunkIndex = this.getPointChunkIndex(x, y);
-        const chunk = this.getChunk(chunkIndex.x, chunkIndex.y, true);
-        const xc = chunkIndex.x * scaledGridWidth - startPos.x;
-        const yc = chunkIndex.y * scaledGridHeight - startPos.y;
+    const regionStartIndexX = Math.floor(startPos.x / scaledGridWidth);
+    const regionStartIndexY = Math.floor(startPos.y / scaledGridHeight);
+    const regionVisibleX = Math.ceil(viewPortSize.x / scaledGridWidth);
+    const regionVisibleY = Math.ceil(viewPortSize.y / scaledGridHeight);
+  
+    for(let x = regionStartIndexX; x < regionStartIndexX + regionVisibleX; x ++) {
+      for(let y = regionStartIndexY; y < regionStartIndexY + regionVisibleY; y++) {
+        const chunk = this.getChunk(x, y, true);
+        const xc = x * scaledGridWidth - startPos.x;
+        const yc = y * scaledGridHeight - startPos.y;
         
         if (!chunk)
           continue;
 
         ctx.strokeStyle = '#ff0';
         ctx.strokeRect(xc, yc, scaledGridWidth, scaledGridHeight);
-        ctx.fillText(chunkIndex.toString(), xc, yc);
+        ctx.fillText(`Chunk:${x},${y}`, xc, yc);
 
         ctx.strokeStyle = '#f00';
         chunk.childs.forEach((c) => {
@@ -110,14 +114,22 @@ export class ChunkedPanel {
         ArrayUtils.remove(p.childs, instance);
         ArrayUtils.removeAt(instance.parents, i);
       }
+      this.checkChunkContatinerIfEmptyRemove(p);
     }
     chunks.forEach((c) => {
       ArrayUtils.addOnce(c.childs, instance);
       ArrayUtils.addOnce(instance.parents, c);
-    })
+    });
   }
 
 
+  /**
+   * 获取块容器
+   * @param x 索引X
+   * @param y 索引Y
+   * @param forceNoCreate 强制不创建
+   * @returns 
+   */
   private getChunk(x : number, y : number, forceNoCreate = false) {
     const chunkHash = x + y * 1000;
     let chunk = this.chunk.get(chunkHash);
@@ -129,6 +141,13 @@ export class ChunkedPanel {
     }
     return chunk;
   }
+
+  /**
+   * 根据坐标轴矩形获取与矩形相交的块容器
+   * @param rect 坐标轴矩形
+   * @param forceNoCreate 强制不创建
+   * @returns 
+   */
   private getRectChunks(rect : Rect, forceNoCreate = false) {
     const result = new Array<ChunkContatiner>();
     const start = this.getPointChunkIndex(rect.x, rect.y);
@@ -143,10 +162,22 @@ export class ChunkedPanel {
 
     return result;
   }
+  /**
+   * 根据坐标轴XY坐标计算获取块容器
+   * @param pt 坐标轴XY坐标
+   * @param forceNoCreate 强制不创建
+   * @returns 
+   */
   private getPointChunk(pt : Vector2, forceNoCreate = false) {
     const index = this.getPointChunkIndex(pt);
     return this.getChunk(index.x, index.y, forceNoCreate);
   }
+  /**
+   * 根据坐标轴XY坐标计算获取块容器索引
+   * @param x X坐标
+   * @param y Y坐标
+   * @returns 
+   */
   private getPointChunkIndex(x : Vector2|number, y ?:number) {
     if(typeof x === 'object') {
       return new Vector2(Math.floor(x.x / this.chunkWidth), Math.floor(x.y / this.chunkHeight));
@@ -155,6 +186,11 @@ export class ChunkedPanel {
       return new Vector2(Math.floor(x / this.chunkWidth), Math.floor((y || 0) / this.chunkHeight));
     }
   }
+
+  /**
+   * 检查块是否空的，如果为空，则执行删除操作
+   * @param chunkContatiner 
+   */
   private checkChunkContatinerIfEmptyRemove(chunkContatiner: ChunkContatiner) {
     //移除容器
     if (chunkContatiner.childs.length === 0) {

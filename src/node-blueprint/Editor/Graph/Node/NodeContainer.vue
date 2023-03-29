@@ -6,7 +6,7 @@
       left: `${-(viewPort.position.x)}px`,
       top: `${-(viewPort.position.y)}px`,
     }"
-    @contextmenu="$emit('contextmenu')"
+    @contextmenu="$emit('contextmenu', $event)"
   >
     <slot></slot>
   </div>
