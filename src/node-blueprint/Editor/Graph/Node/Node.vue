@@ -1,138 +1,152 @@
 <template>
-  <div v-if="instance" 
-    ref="nodeRef"
-    :class="['flow-block',
-      (instance.editorState.selected ? 'selected ' : ''),
-      (instance.style.customClassNames),
-      (twinkleActive ? 'actived' : ''),
-    ]"
-    :style="{
-      left: `${instance.position.x}px`,
-      top: `${instance.position.y}px`,
-      width: (instance.style.userResize == 'width' || instance.style.userResize == 'all') ? (`${instance.customSize.x}px`) : 'auto',
-      height: (instance.style.userResize == 'height' || instance.style.userResize == 'all') ? (`${instance.customSize.y}px`) : 'auto',
-      minWidth: instance.style.minWidth > 0 ? `${instance.style.minWidth}px` : '',
-      minHeight: instance.style.minHeight > 0 ? `${instance.style.minHeight}px` : '',
-      maxWidth: instance.style.maxWidth > 0 ? `${instance.style.maxWidth}px` : '',
-      maxHeight: instance.style.maxHeight > 0 ? `${instance.style.maxHeight}px` : '',
-      cursor: cursor,
-    }"
-    @mousedown="onMouseDown($event)"
-    @mouseenter="onMouseEnter($event)"
-    @mouseleave="onMouseLeave($event)"
-    @mousemove="onMouseMove($event)"
-    @mousewheel="onMouseWhell($event)"
-    @contextmenu="onContextmenu($event)"
+  <Tooltip 
+    v-if="instance" 
+    mutex="NodeToolTip"
+    :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
-    <!--注释区域-->
-    <div
-      class="flow-block-comment flow-block-no-move" 
-      v-show="instance.markOpen && !instance.style.noComment"
-      :style="{ top: commentTop }"
+    <template #content>
+      <h4>{{instance.define.name}}</h4>
+      <p>{{ instance.define.description }}</p>
+    </template>
+    <div 
+      ref="nodeRef"
+      :class="['flow-block',
+        (instance.editorState.selected ? 'selected ' : ''),
+        (instance.style.customClassNames),
+        (twinkleActive ? 'actived' : ''),
+      ]"
+      :style="{
+        left: `${instance.position.x}px`,
+        top: `${instance.position.y}px`,
+        width: (instance.style.userResize == 'width' || instance.style.userResize == 'all') ? (`${instance.customSize.x}px`) : 'auto',
+        height: (instance.style.userResize == 'height' || instance.style.userResize == 'all') ? (`${instance.customSize.y}px`) : 'auto',
+        minWidth: instance.style.minWidth > 0 ? `${instance.style.minWidth}px` : '',
+        minHeight: instance.style.minHeight > 0 ? `${instance.style.minHeight}px` : '',
+        maxWidth: instance.style.maxWidth > 0 ? `${instance.style.maxWidth}px` : '',
+        maxHeight: instance.style.maxHeight > 0 ? `${instance.style.maxHeight}px` : '',
+        cursor: cursor,
+      }"
+      @mousedown="onMouseDown($event)"
+      @mouseenter="onMouseEnter($event)"
+      @mouseleave="onMouseLeave($event)"
+      @mousemove="onMouseMove($event)"
+      @mousewheel="onMouseWhell($event)"
+      @contextmenu="onContextmenu($event)"
     >
-      <span class="flow-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
-      <div 
-        ref="commentInput"
-        class="flow-block-comment-text flow-block-no-move" 
-        contenteditable="true"
-        @input="onCommentInputInput"
-        @blur="onCommentInputBlur">
+      <!--注释区域-->
+      <div
+        class="flow-block-comment flow-block-no-move" 
+        v-show="instance.markOpen && !instance.style.noComment"
+        :style="{ top: commentTop }"
+      >
+        <span class="flow-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
+        <div 
+          ref="commentInput"
+          class="flow-block-comment-text flow-block-no-move" 
+          contenteditable="true"
+          @input="onCommentInputInput"
+          @blur="onCommentInputBlur">
+        </div>
+        <Tooltip content="隐藏注释气泡" class="close">
+          <a @click="closeComment">
+            <Icon icon="icon-close-bold" />
+          </a>
+        </Tooltip>
       </div>
-      <Tooltip content="隐藏注释气泡" class="close">
-        <a @click="closeComment">
-          <Icon icon="icon-close-bold" />
+      <Tooltip content="打开注释气泡" mutex="NodeToolTip">
+        <a 
+          v-show="!instance.markOpen && !instance.style.noComment"
+          class="flow-block-comment-open" 
+          @click="openComment"
+        >
+          <Icon icon="icon-qipao" />
         </a>
       </Tooltip>
-    </div>
-    <Tooltip content="打开注释气泡">
-      <a 
-        v-show="!instance.markOpen && !instance.style.noComment"
-        class="flow-block-comment-open" 
-        @click="openComment"
+      <!--标题和图标-->
+      <Tooltip 
+        v-if="instance" 
+        mutex="NodeToolTip"
+        :enable="!instance.style.noTooltip"
       >
-        <Icon icon="icon-qipao" />
-      </a>
-    </Tooltip>
-    <!--标题和图标-->
-    <Tooltip :enable="!instance.style.noTooltip">
-      <template #content>
-        <h4>{{instance.define.name}}</h4>
-        <p>{{ instance.define.description }}</p>
-      </template>
+        <template #content>
+          <h4>{{instance.define.name}}</h4>
+          <p>{{ instance.define.description }}</p>
+        </template>
+        <div 
+          :class="'flow-header state-'+(instance.style.titleState)"
+          :style="{
+            color: instance.style.titleColor,
+            backgroundColor: instance.style.titleBakgroundColor,
+          }"
+        >
+          <NodeIconImageRender 
+            v-show="!instance.style.noLogo"
+            class="logo" 
+            :imageUrlOrIcon="instance.style.logo || DefaultBlockLogo"
+            :size="20"
+          />
+          <div class="title">{{ instance.define.name }}</div>
+          
+          <NodeIconImageRender
+            class="logo-right"
+            :imageUrlOrIcon="instance.style.logoRight"
+            :size="32"
+          />
+          <NodeIconImageRender
+            class="logo-bottom"
+            :imageUrlOrIcon="instance.style.logoBottom"
+            :size="16"
+          />
+        </div>
+      </Tooltip>
+      <!--断点指示-->
       <div 
-        :class="'flow-header state-'+(instance.style.titleState)"
-        :style="{
-          color: instance.style.titleColor,
-          backgroundColor: instance.style.titleBakgroundColor,
-        }"
+        v-show="instance.breakpoint!=='none'"
+        :class="'breakpoint-status'"
       >
-        <NodeIconImageRender 
-          v-show="!instance.style.noLogo"
-          class="logo" 
-          :imageUrlOrIcon="instance.style.logo || DefaultBlockLogo"
-          :size="20"
-        />
-        <div class="title">{{ instance.define.name }}</div>
-        
-        <NodeIconImageRender
-          class="logo-right"
-          :imageUrlOrIcon="instance.style.logoRight"
-          :size="32"
-        />
-        <NodeIconImageRender
-          class="logo-bottom"
-          :imageUrlOrIcon="instance.style.logoBottom"
-          :size="16"
+        <Icon 
+          :icon="(instance.breakpoint==='enable'?'icon-breakpoint-active':
+            (instance.breakpoint==='disable'?' icon-breakpoint':''))"
         />
       </div>
-    </Tooltip>
-    <!--断点指示-->
-    <div 
-      v-show="instance.breakpoint!=='none'"
-      :class="'breakpoint-status'"
-    >
-      <Icon 
-        :icon="(instance.breakpoint==='enable'?'icon-breakpoint-active':
-          (instance.breakpoint==='disable'?' icon-breakpoint':''))"
-      />
-    </div>
-    <div 
-      v-show="instance.editorState.breakpointTriggered"
-      class="breakpoint-arrow">
-      <Icon icon="icon-arrow-down-filling" />
-    </div>
-    <!--背景-->
-    <NodeIconImageRender 
-      class="background"
-      :imageUrlOrIcon="instance.style.logoBackground"
-      :size="55"
-      :noContainerSize="true"
-    >
-      <span 
-        v-if="typeof instance.style.logoBackground === 'string' 
-          && instance.style.logoBackground.startsWith('title:')"
-        class="big-title" 
+      <div 
+        v-show="instance.editorState.breakpointTriggered"
+        class="breakpoint-arrow">
+        <Icon icon="icon-arrow-down-filling" />
+      </div>
+      <!--背景-->
+      <NodeIconImageRender 
+        class="background"
+        :imageUrlOrIcon="instance.style.logoBackground"
+        :size="55"
+        :noContainerSize="true"
       >
-        {{ instance.style.logoBackground.substring(6) }}
-      </span>
-    </NodeIconImageRender>
-    <!--TODO: 自定义编辑器区域-->
-    <!--主区域-->
-    <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='flow-block-base'>
-      <div class='flow-block-ports'>
-        <div class='left'>
-          <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
-          <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
-          <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
-        </div>
-        <div class='right'>
-          <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
-          <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
-          <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
+        <span 
+          v-if="typeof instance.style.logoBackground === 'string' 
+            && instance.style.logoBackground.startsWith('title:')"
+          class="big-title" 
+        >
+          {{ instance.style.logoBackground.substring(6) }}
+        </span>
+      </NodeIconImageRender>
+      <!--TODO: 自定义编辑器区域-->
+      <!--主区域-->
+      <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='flow-block-base'>
+        <div class='flow-block-ports'>
+          <div class='left'>
+            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
+            <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
+          </div>
+          <div class='right'>
+            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
+            <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </Tooltip>
 </template>
 
 <script lang="ts" setup>
@@ -194,7 +208,7 @@ onMounted(() => {
     chunkedPanel.value.addInstance(instance.value.editorState.chunkInfo);
     updateRegion();
   };
-  instance.value.editorHooks.callbackUpdateRegion = () => updateRegion;
+  instance.value.editorHooks.callbackUpdateRegion = updateRegion;
   instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
     chunkedPanel.value.removeInstance(instance.value.editorState.chunkInfo);
   };
@@ -450,7 +464,7 @@ const dragMouseHandler = createMouseDragHandler({
 
         if(!instance.value.editorState.selected) {
           //如果当前块没有选中，在这里切换选中状态
-          context.value.selectNode(instance.value as Node, true);
+          context.value.selectNode(instance.value as Node, false);
         }
         else {
           //选中后，如果有选择其他块，则同时移动其他块

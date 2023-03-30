@@ -1,5 +1,5 @@
 <template>
-  <Tooltip trigger="hover">
+  <Tooltip trigger="hover" mutex="NodeToolTip">
     <!--端口-->
     <div 
       v-if="instance" 
@@ -15,7 +15,7 @@
       </div>
       <div class="default-content">
         <!--删除端口按扭-->
-        <Tooltip v-if="instance.dyamicAdd" content="删除参数">
+        <Tooltip v-if="instance.dyamicAdd" content="删除参数" mutex="NodeToolTip">
           <Icon class="delete" icon="icon-close" @click="onDeleteParam" />
         </Tooltip>
         <!--标题-->
