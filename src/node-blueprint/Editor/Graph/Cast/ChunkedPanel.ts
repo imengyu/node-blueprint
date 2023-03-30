@@ -11,7 +11,8 @@ import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 export class ChunkedPanel {
   chunkWidth = 500;
   chunkHeight = 300;
-  chunk = new Map<number, ChunkContatiner>();
+  private chunk = new Map<number, ChunkContatiner>();
+  private postSizeTemp = new Vector2();
 
   /**
    * 绘制调试信息
@@ -25,11 +26,14 @@ export class ChunkedPanel {
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#00f';
 
-    const startPos = viewPort.position;
+    this.postSizeTemp.set(viewPort.position);
+    viewPort.scaleViewportSizeToScreenSize(this.postSizeTemp);
+
+    const startPos = this.postSizeTemp;
     const viewPortSize = viewPort.size;
     const scale = viewPort.scale;
-    const scaledGridWidth = scale * this.chunkWidth;
-    const scaledGridHeight = scale * this.chunkHeight;
+    const scaledGridWidth = viewPort.scaleViewportSizeToScreenSize(this.chunkWidth);
+    const scaledGridHeight = viewPort.scaleViewportSizeToScreenSize(this.chunkHeight);
 
     const xStartOffset = startPos.x % scaledGridWidth;
     const yStartOffset = startPos.y % scaledGridHeight;

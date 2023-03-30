@@ -58,6 +58,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
       e.stopPropagation();
       mouseInfo.mouseMoved = true;
       viewPort.position.set(viewDragDownPos);
+      viewPort.scaleScreenSizeToViewportSize(m);
       viewPort.position.substract(m);
     },
     onUp(e) {

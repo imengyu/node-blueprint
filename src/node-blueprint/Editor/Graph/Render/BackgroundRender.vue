@@ -11,6 +11,7 @@ import { FPSCalculator } from './FPSCalculator';
 import { onBeforeMount, onMounted, ref, type PropType } from 'vue';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -123,25 +124,29 @@ function renderDebugText() {
 
 //#region Grid
 
+const postSizeTemp = new Vector2();
+
 function renderGrid() {
   if(!ctx) return;
 
   const viewPort = props.viewPort;
-  const startPos = viewPort.position;
   const viewPortSize = viewPort.size;
-  const scaledGridSize = viewPort.scale * props.gridSize;
+  const scaledGridSize = viewPort.scaleViewportSizeToScreenSize(props.gridSize);
   const scaledStepSize = 5;
+
+  postSizeTemp.set(viewPort.position);
+  viewPort.scaleViewportSizeToScreenSize(postSizeTemp);
 
   const gridColorSmall = props.gridColorSmall;
   const gridColorBig = props.gridColorBig;
 
-  const xStartOffset = startPos.x % scaledGridSize;
-  const yStartOffset = startPos.y % scaledGridSize;
+  const xStartOffset = postSizeTemp.x % scaledGridSize;
+  const yStartOffset = postSizeTemp.y % scaledGridSize;
 
   ctx.lineWidth = 1;
 
-  let c = Math.floor(startPos.x / scaledGridSize) % scaledStepSize;
-  if(startPos.x < 0) c++;
+  let c = Math.floor(postSizeTemp.x / scaledGridSize) % scaledStepSize;
+  if(postSizeTemp.x < 0) c++;
 
   for(let x = -xStartOffset; x < viewPortSize.x; x += scaledGridSize, c++) {
     if(c % scaledStepSize == 0) ctx.strokeStyle = gridColorBig;
@@ -154,8 +159,8 @@ function renderGrid() {
     ctx.stroke();
   }
 
-  c = Math.floor(startPos.y / scaledGridSize) % scaledStepSize;
-  if(startPos.y < 0) c++;
+  c = Math.floor(postSizeTemp.y / scaledGridSize) % scaledStepSize;
+  if(postSizeTemp.y < 0) c++;
 
   for(let y = -yStartOffset; y < viewPortSize.y; y += scaledGridSize, c++) {
     if(c % scaledStepSize == 0) ctx.strokeStyle = gridColorBig;
@@ -172,8 +177,8 @@ function renderGrid() {
   if (props.drawDebugInfo) {
     ctx.lineWidth = 4;
 
-    const x = -startPos.x;
-    const y = -startPos.y;
+    const x = -postSizeTemp.x;
+    const y = -postSizeTemp.y;
 
     if (x >= 0 && x <= viewPortSize.x) {
       ctx.strokeStyle = '#0f0';

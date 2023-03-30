@@ -1,3 +1,4 @@
+
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
@@ -7,12 +8,18 @@ import { SerializableObject } from "@/node-blueprint/Base/Utils/Serializable/Ser
  * 编辑器视图信息结构体
  */
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
+
+  constructor() {
+    super('NodeGraphEditorViewport');
+    this.serializableProperties = [ 'position', 'scale', 'scaledPosition', '_scaledPosition' ]
+  }
+
   /**
    * 编辑器的元素绝对位置（屏幕坐标）
    */
   editorAbsolutePos = new Vector2();
   /**
-   * 视图位置（屏幕坐标）
+   * 视图位置（图表坐标）
    */
   position = new Vector2();
   /**
@@ -20,14 +27,19 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
    */
   size = new Vector2();
   /**
+   * 视图的大小（图表坐标）
+   */
+  get viewportSize() {
+    this.viewportSizeTemp.set(this.size);
+    this.scaleScreenSizeToViewportSize(this.viewportSizeTemp);
+    return this.viewportSizeTemp;
+  }
+  /**
    * 视图缩放 (0-2, 0%-200%, 默认1)
    */
   scale = 1;
 
-  constructor() {
-    super('NodeGraphEditorViewport');
-    this.serializableProperties = [ 'position', 'scale', 'scaledPosition', '_scaledPosition' ]
-  }
+  private viewportSizeTemp = new Vector2();
 
   /**
    * 设置为另一个结构的数据
@@ -40,61 +52,47 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
 
   /**
    * 按照指定坐标缩放视图
-   * @param newScale 
-   * @param center 
+   * @param newScale 新的缩放大小
+   * @param center 居中坐标，如果不填写，则默认按照矩形的中心进行缩放
    */
   scaleAndCenter(newScale: number, center?: Vector2) {
-    let viewZoom = this.scale;
+    const viewZoom = this.scale;
     if (viewZoom === newScale)
       return;
     
-    const isZoomIn = this.scale > newScale;
-    const viewSize = this.size;
-    const pos = this.rect().calcCenter();
-
-    pos.x = pos.x / viewZoom;
-    pos.y = pos.y / viewZoom;
     this.scale = newScale;
-    viewZoom = this.scale;
-    pos.x = pos.x * viewZoom - (viewSize.x / 2);
-    pos.y = pos.y * viewZoom - (viewSize.y / 2);
 
     if (center) {
-      center.x -= viewSize.x / 2;
-      center.y -= viewSize.y / 2;
-      center.divide(isZoomIn ? 10 : 4);
-      center.multiply(isZoomIn ? 1 : -1);
-
-      center.x = Math.min(center.x, viewSize.x / 4);
-      center.y = Math.min(center.y, viewSize.y / 4);
-
-      pos.substract(center);
+      const pecX = 1 + (center.x - this.size.x / 2) / (this.size.x / 2);
+      const pecY = 1 + (center.y - this.size.y / 2) / (this.size.y / 2);
+      /**
+       * 
+       * 偏心计算，目标位置减去矩形缩放后的差值/2*偏向百分比
+       */
+      this.position.x -= pecX * ((this.size.x / newScale - this.size.x / viewZoom) / 2);
+      this.position.y -= pecY * ((this.size.y / newScale - this.size.y / viewZoom) / 2);
+    } else {
+      /**
+       * 无偏心计算，目标位置减去矩形缩放后的差值/2
+       */
+      this.position.x -= (this.size.x / newScale - this.size.x / viewZoom) / 2;
+      this.position.y -= (this.size.y / newScale - this.size.y / viewZoom) / 2;
     }
-
-    this.position = pos;
   }
 
   /**
-   * 获取视口矩形（屏幕坐标）
+   * 获取视口矩形（图表坐标）
    * @returns 
    */
   rect(): Rect {
     const rect = new Rect();
     rect.setPos(this.position);
-    rect.setSize(this.size);
+    rect.setSize(this.viewportSize);
     return rect;
   }
 
   /**
-   * 检测一个屏幕坐标是否显示在视口中
-   * @param point
-   */
-  testPointVisibleInViewport(point: Vector2): boolean {
-    return point.x > this.position.x && point.y > this.position.y 
-      && point.x < this.position.x + this.size.x && point.y > this.position.y + this.size.y;
-  }
-  /**
-   * 编辑器坐标转屏幕坐标
+   * TODO: 编辑器坐标转屏幕坐标
    * @param point 编辑器坐标
    * @param dest 编辑器坐标，结果被赋值到这里
    */
@@ -106,7 +104,7 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
     );
   }
   /**
-   * 屏幕坐标转编辑器坐标
+   * TODO: 屏幕坐标转编辑器坐标
    * @param point 屏幕坐标
    * @param dest 编辑器坐标，结果被赋值到这里
    */
@@ -122,15 +120,23 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
    * 转换屏幕真实像素大小为视口画布大小
    * @param size 
    */
-  scaleScreenSizeToViewportSize(size: number) {
-    return size / this.scale;
+  scaleScreenSizeToViewportSize<T>(size: T) : T {
+    if (typeof size === 'number')
+      return size / this.scale as T;
+    if (size instanceof Vector2)
+      return size.divide(this.scale) as T;
+    return size;
   }
   /**
    * 转换视口画布大小为屏幕真实像素大小
    * @param size 
    */
-  scaleViewportSizeToScreenSize(size: number) {
-    return size * this.scale;
+  scaleViewportSizeToScreenSize<T>(size: T) : T {
+    if (typeof size === 'number')
+      return size * this.scale as T;
+    if (size instanceof Vector2)
+      return size.multiply(this.scale) as T;
+    return size;
   }
   /**
    * 屏幕坐标减去编辑器绝对坐标
