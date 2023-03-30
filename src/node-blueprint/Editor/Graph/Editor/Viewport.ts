@@ -92,27 +92,25 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
   }
 
   /**
-   * TODO: 编辑器坐标转屏幕坐标
+   * 编辑器坐标转屏幕坐标
    * @param point 编辑器坐标
    * @param dest 编辑器坐标，结果被赋值到这里
    */
   viewportPointToScreenPoint(point: Vector2, dest: Vector2): void {
-    const scaleMul = (this.scale);
     dest.set(
-      (point.x - this.position.x) / scaleMul + this.editorAbsolutePos.x,
-      (point.y - this.position.y) / scaleMul + this.editorAbsolutePos.y,
+      (point.x - this.position.x) * this.scale + this.editorAbsolutePos.x,
+      (point.y - this.position.y) * this.scale + this.editorAbsolutePos.y,
     );
   }
   /**
-   * TODO: 屏幕坐标转编辑器坐标
+   * 屏幕坐标转编辑器坐标
    * @param point 屏幕坐标
    * @param dest 编辑器坐标，结果被赋值到这里
    */
   screenPointToViewportPoint(point: Vector2, dest: Vector2): void {
-    const scaleMul = (2 - this.scale);
     dest.set(
-      (this.position.x + (point.x - this.editorAbsolutePos.x)) * scaleMul,
-      (this.position.y + (point.y - this.editorAbsolutePos.y)) * scaleMul,
+      (this.position.x + (point.x - this.editorAbsolutePos.x) / this.scale),
+      (this.position.y + (point.y - this.editorAbsolutePos.y) / this.scale),
     );
   }
 

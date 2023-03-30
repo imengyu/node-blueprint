@@ -45,6 +45,7 @@ onBeforeUnmount(() => {
 });
 
 const retPos = new Vector2();
+const retSize = new Vector2();
 
 function render() {
   if(!ctx) return;
@@ -53,20 +54,22 @@ function render() {
   
   if (props.isMulitSelect) {
     props.viewPort.viewportPointToScreenPoint(props.multiSelectRect.getPoint(), retPos);
+    retSize.set(props.multiSelectRect.w, props.multiSelectRect.h);
+    props.viewPort.scaleViewportSizeToScreenSize(retSize);
 
     ctx.lineWidth = 2;
     ctx.strokeStyle = "#e79d00";
     ctx.strokeRect(
       retPos.x, 
       retPos.y, 
-      props.multiSelectRect.w, 
-      props.multiSelectRect.h);
+      retSize.x, 
+      retSize.y);
     ctx.fillStyle = "rgba(230, 157, 0, 0.3)";
     ctx.fillRect(
       retPos.x, 
       retPos.y, 
-      props.multiSelectRect.w,
-      props.multiSelectRect.h
+      retSize.x,
+      retSize.y
     );
   }
 
