@@ -81,8 +81,6 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   //移动入口
   function onMouseMove(e: MouseEvent) {
     mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
-
-    //TODO: connectorCast();
     
     for (const handler of extendHandlerObject.mouseMoveHandlers) {
       if (handler(mouseInfo, e))

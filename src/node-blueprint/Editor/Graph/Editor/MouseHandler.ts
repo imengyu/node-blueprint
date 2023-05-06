@@ -59,3 +59,40 @@ export function createMouseDragHandler(options: {
     return false;
   };
 }
+
+/**
+ * 创建鼠标按下并且放开处理器
+ * @param options 
+ * @returns 
+ */
+export function createMouseDownAndUpHandler(options: {
+  /**
+   * 按下事件
+   * @param e 
+   * @returns 
+   */
+  onDown: (e: MouseEvent) => boolean;
+  /**
+   * 释放事件
+   * @param e 
+   * @returns 
+   */
+  onUp: (e: MouseEvent) => void;
+}) : IMouseDragHandlerEntry {
+  const { onDown, onUp } = options;
+
+  function mouseup(e: MouseEvent) {
+    onUp(e);
+    document.removeEventListener('mouseup', mouseup);
+  }
+  //MouseDown handler
+  return (e: MouseEvent) => {
+    if (onDown(e)) {
+      document.addEventListener('mouseup', mouseup);
+      e.preventDefault();
+      e.stopPropagation();
+      return true;
+    }
+    return false;
+  };
+}

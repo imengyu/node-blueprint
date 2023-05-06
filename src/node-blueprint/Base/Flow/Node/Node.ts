@@ -2,10 +2,10 @@ import RandomUtils from "../../Utils/RandomUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
 import { printError, printWarning } from "../../Utils/Logger/DevLog";
-import { ChunkInstance } from "@/node-blueprint/Editor/Graph/Cast/ChunkedPanel";
 import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
+import type { NodeParamType } from "../Type/NodeParamType";
 
 const TAG = 'Node';
 
@@ -63,27 +63,6 @@ export class Node extends SerializableObject<INodeDefine> {
 
   //非序列化
 
-  public editorHooks = {
-    callbackUpdateRegion: null as null|(() => void),
-    callbackOnAddToEditor: null as null|(() => void),
-    callbackOnRemoveFromEditor: null as null|(() => void),
-    callbackGetRealSize: null as null|(() => Vector2),
-    callbackGetCurrentSizeType: null as null|(() => number),
-    callbackTwinkle: null as null|((time: number) => void),
-  };
-  public editorState = {
-    selected: false,
-    breakpointTriggered: false,
-    chunkInfo: new ChunkInstance(undefined, 'node'),
-    lastBlockPos: new Vector2(),
-    lastBlockSize: new Vector2(),
-    /**
-     * 保存块当前位置，以供移动使用
-     */
-    saveLastBlockPos: () => {
-      this.editorState.lastBlockPos.set(this.position);
-    }
-  };
   public style = new NodeStyleSettings();
   public events = new NodeEventSettings();
 
@@ -116,26 +95,6 @@ export class Node extends SerializableObject<INodeDefine> {
   //通用函数
   //=====================
 
-  /**
-   * [仅编辑器] 触发闪烁
-   * @param time 闪烁时长，毫秒
-   */
-  public twinkle(time = 1000) {
-    this.editorHooks.callbackTwinkle?.(time);
-  }
-  /**
-   * [仅编辑器] 获取节点真实大小
-   */
-  public getRealSize() {
-    return this.editorHooks.callbackGetRealSize?.() || this.customSize;
-  }
-  /**
-   * [仅编辑器] 获取单元当前调整大小类型
-   * @returns 
-   */
-  public getGetCurrentSizeTypee() : number  {
-    return this.editorHooks.callbackGetCurrentSizeType?.() || 0;
-  }
   /**
    * 获取名称
    * @returns 
@@ -221,7 +180,20 @@ export class Node extends SerializableObject<INodeDefine> {
       return this.mapPorts.get(guid) || null;
     return null;
   }
-
+  /**
+   * 获取当前单元中与指定方向和类型匹配的第一个端口
+   * @param type 匹配类型
+   * @param direction 匹配方向
+   * @param includeAny 指定是否包括any类型的端口
+   * @returns 返回端口，如果没有匹配则返回null
+   */
+  public getPortByTypeAndDirection(type: NodeParamType, direction: NodePortDirection, includeAny = true) : NodePort|null  {
+    if(type.isExecute) {
+      return this.ports.find(p => p.direction == direction && p.define.paramType.isExecute) || null;
+    } else {
+      return this.ports.find(p => type.acceptable(p.paramType), includeAny) || null;
+    }
+  }
 
 }
 

@@ -73,6 +73,8 @@ function render() {
     );
   }
 
+  
+
   renderAnimId = requestAnimationFrame(render);
 }
 

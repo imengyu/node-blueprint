@@ -97,7 +97,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
     return null;
   }
   public setValue(value: unknown) {
-
+    //TODO: setValue
   }
 
   /**
@@ -172,13 +172,6 @@ export class NodePort extends SerializableObject<INodePortDefine> {
 
     return thisType.acceptable(targetType); 
   }
-
-  //编辑器运行数据
-  //=====================
-
-  public editorState = {
-    state: 'normal' as NodePortState,
-  };
 }
 
 /**

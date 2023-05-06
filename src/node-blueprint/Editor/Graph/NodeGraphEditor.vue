@@ -22,11 +22,10 @@
     >
       <NodeComponent
         v-for="(node, key) in backgroundNodes" 
-        :instance="(node as Node)" 
+        :instance="(node as NodeEditor)" 
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel"
         :key="key" 
-        :context="context"
       />
     </NodeContainer>
     <ConnectorRender
@@ -44,11 +43,10 @@
     >
       <NodeComponent
         v-for="(node, key) in foregroundNodes" 
-        :instance="(node as Node)" 
+        :instance="(node as NodeEditor)" 
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel"
         :key="key" 
-        :context="context"
       />
     </NodeContainer>
     <ZoomTool
@@ -59,7 +57,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, type Ref } from 'vue';
+import { onMounted, provide, ref, type Ref } from 'vue';
 import BackgroundRender from './Render/BackgroundRender.vue';
 import ConnectorRender from './Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
@@ -69,14 +67,16 @@ import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { NodeGraphEditorViewport } from './NodeGraphEditor';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
-import { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { initBase } from '../../Base';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
+import { NodeEditor } from './Flow/NodeEditor';
 import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
+import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
-import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
+import { useEditorConnectorController } from './Editor/EditorConnectorController';
+import { initEditorBase } from './Flow';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -85,6 +85,8 @@ const context = {
   getBaseChunkedPanel: () => chunkedPanel,
   getViewPort: () => viewPort.value,
 } as NodeGraphEditorInternalContext;
+
+provide('NodeGraphEditorContext', context);
 
 const {
   backgroundRenderer,
@@ -114,16 +116,20 @@ const {
   isMulitSelect,
 } = useEditorSelectionContoller(context);
 
+const {
+  //
+} = useEditorConnectorController(context);
 
 //init
 //=========================
 
 onMounted(() => {
   initBase();
+  initEditorBase();
   initRenderer();
 
 
-  const node = new Node({
+  const node = new NodeEditor({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BD',
     version: 1,
     name: '测试单元',
@@ -201,7 +207,7 @@ onMounted(() => {
       },
     ],
   });
-  const node1 = new Node({
+  const node1 = new NodeEditor({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BA',
     version: 1,
     name: '测试单元',
@@ -236,7 +242,7 @@ onMounted(() => {
       inputPortMinWidth: 0,
     },
   });
-  const node2 = new Node({
+  const node2 = new NodeEditor({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BC',
     version: 1,
     name: 'Constants',
@@ -256,7 +262,7 @@ onMounted(() => {
       minWidth: 150,
     },
   });
-  const node3 = new Node({
+  const node3 = new NodeEditor({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012AC',
     version: 1,
     name: '定时器',

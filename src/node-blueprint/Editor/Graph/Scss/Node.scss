@@ -319,7 +319,7 @@
     .flow-port {
       padding-right: 4px;
     }
-    .dot {
+    .connect-dot {
       margin-right: 5px;
     }
   }
@@ -333,7 +333,7 @@
     .flow-port {
       padding-left: 4px;
     }
-    .dot {
+    .connect-dot {
       margin-left: 5px;
     }
   }
@@ -368,6 +368,12 @@
     }
   }
 
+  .connect-dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+
+  }
   .dot {
     margin-top: 1px;
 

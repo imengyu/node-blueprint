@@ -11,7 +11,7 @@
     <div 
       ref="nodeRef"
       :class="['flow-block',
-        (instance.editorState.selected ? 'selected ' : ''),
+        (instance.selected ? 'selected ' : ''),
         (instance.style.customClassNames),
         (twinkleActive ? 'actived' : ''),
       ]"
@@ -110,7 +110,7 @@
         />
       </div>
       <div 
-        v-show="instance.editorState.breakpointTriggered"
+        v-show="instance.breakpointTriggered"
         class="breakpoint-arrow">
         <Icon icon="icon-arrow-down-filling" />
       </div>
@@ -134,12 +134,12 @@
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='flow-block-base'>
         <div class='flow-block-ports'>
           <div class='left'>
-            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @on-delete-port="(p) => $emit('on-delete-port', p)" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
           </div>
           <div class='right'>
-            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="port" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="(port as NodePortEditor)" @on-delete-port="(p) => $emit('on-delete-port', p)" />
             <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
           </div>
@@ -150,27 +150,29 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType } from 'vue';
+import { onMounted, ref, toRefs, type PropType, inject } from 'vue';
 import Tooltip from '../../Base/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
 import NodePort from './NodePort.vue';
 import SmallButton from '../../Base/SmallButton.vue';
+import NodeIconImageRender from './NodeIconImageRender.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
+import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { NodeGraphEditorContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
+import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
+import type { NodePortEditor } from '../Flow/NodePortEditor';
+import type { NodeEditor } from '../Flow/NodeEditor';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
-import NodeIconImageRender from './NodeIconImageRender.vue';
-import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 import { printWarning } from '@/node-blueprint/Base/Utils/Logger/DevLog';
 
 const props = defineProps({
   instance: {
-    type: Object as PropType<Node>,
+    type: Object as PropType<NodeEditor>,
     required: true,
   },
   viewPort: {
@@ -181,17 +183,14 @@ const props = defineProps({
     type: Object as PropType<ChunkedPanel>,
     default: null,
   },
-  context: {
-    type: Object as PropType<NodeGraphEditorContext>,
-    default: null,
-  },
 });
 const {
   instance,
   viewPort,
   chunkedPanel,
-  context,
 } = toRefs(props);
+
+const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
 const TAG = 'Node';
 const cursor = ref('');
@@ -204,13 +203,13 @@ onMounted(() => {
   instance.value.editorHooks.callbackTwinkle = twinkle;
   instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
   instance.value.editorHooks.callbackOnAddToEditor = () => {
-    instance.value.editorState.chunkInfo.data = instance.value.uid;
-    chunkedPanel.value.addInstance(instance.value.editorState.chunkInfo);
+    instance.value.chunkInfo.data = instance.value.uid;
+    chunkedPanel.value.addInstance(instance.value.chunkInfo);
     updateRegion();
   };
   instance.value.editorHooks.callbackUpdateRegion = updateRegion;
   instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
-    chunkedPanel.value.removeInstance(instance.value.editorState.chunkInfo);
+    chunkedPanel.value.removeInstance(instance.value.chunkInfo);
   };
 });
 
@@ -229,7 +228,7 @@ function getRealSize() {
  */
 function updateRegion() {
   const realSize = getRealSize();
-  const chunkInfo = instance.value.editorState.chunkInfo;
+  const chunkInfo = instance.value.chunkInfo;
 
   chunkInfo.rect.set( 
     instance.value.position.x,
@@ -358,8 +357,8 @@ function getCurrentSizeType() { return currentSizeType; }
 function onMouseResize(e : MouseEvent) {
   if(currentSizeType) { 
     const _instance = instance.value; 
-    const lastBlockPos = _instance.editorState.lastBlockPos;
-    const lastBlockSize = _instance.editorState.lastBlockSize;
+    const lastBlockPos = _instance.lastBlockPos;
+    const lastBlockSize = _instance.lastBlockSize;
     const size = new Vector2(_instance.customSize.x, _instance.customSize.y);
     const mousePos = new Vector2();
     viewPort.value.screenPointToViewportPoint(new Vector2(e.x, e.y), mousePos);
@@ -429,7 +428,7 @@ const resizeMouseHandler = createMouseDragHandler({
   },
   onUp() {
     //大小更改后更新区块
-    if(lastResized || !getRealSize().equal(instance.value.editorState.lastBlockSize)) {
+    if(lastResized || !getRealSize().equal(instance.value.lastBlockSize)) {
       updateRegion();
     }
   }
@@ -457,21 +456,21 @@ const dragMouseHandler = createMouseDragHandler({
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.x)),
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.y))
       );
-      const pos = new Vector2(instance.value.editorState.lastBlockPos);
+      const pos = new Vector2(instance.value.lastBlockPos);
       pos.add(movedScaledDistance);
 
       if(pos.x != instance.value.position.x || pos.y != instance.value.position.y) {
 
-        if(!instance.value.editorState.selected) {
+        if(!instance.value.selected) {
           //如果当前块没有选中，在这里切换选中状态
-          context.value.selectNode(instance.value as Node, false);
+          context.selectNode(instance.value as Node, false);
         }
         else {
           //选中后，如果有选择其他块，则同时移动其他块
-          const selectedNodes = context.value.getSelectNodes();
+          const selectedNodes = context.getSelectNodes();
           for (const node of selectedNodes) {
             if (node !== instance.value) {
-              const posOfThisBlock = new Vector2(node.editorState.lastBlockPos);
+              const posOfThisBlock = new Vector2((node as NodeEditor).lastBlockPos);
               posOfThisBlock.add(movedScaledDistance);
               node.position.set(posOfThisBlock)
             }
@@ -491,17 +490,18 @@ const dragMouseHandler = createMouseDragHandler({
       //移动后更新区块
       updateRegion();
       //如果有选择其他块，则同时更新区块
-      const selectedNodes = context.value.getSelectNodes();
-      for (const node of selectedNodes) {
+      const selectedNodes = context.getSelectNodes();
+      for (const n of selectedNodes) {
+        const node = n as NodeEditor;
         if (node !== instance.value) {
-          node.editorState.saveLastBlockPos();
+          node.saveLastBlockPos();
           node.editorHooks.callbackUpdateRegion?.();
         }
       }
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
-      if(!instance.value.editorState.selected) {
-        context.value.selectNode(instance.value as Node, false);
+      if(!instance.value.selected) {
+        context.selectNode(instance.value as Node, false);
       }
     }
   },
@@ -509,8 +509,8 @@ const dragMouseHandler = createMouseDragHandler({
 
 function onMouseDown(e : MouseEvent) {
   lastMovedBlock = false;
-  instance.value.editorState.saveLastBlockPos();
-  instance.value.editorState.lastBlockSize.set(getRealSize());
+  instance.value.saveLastBlockPos();
+  instance.value.lastBlockSize.set(getRealSize());
 
   if (isMouseEventInNoDragControl(e))
     return;

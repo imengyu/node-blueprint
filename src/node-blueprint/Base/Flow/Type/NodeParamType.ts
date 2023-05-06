@@ -148,28 +148,54 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
   }
 
   /**
-   * Check whether the current type and other types are acceptable
+   * 检查当前类是否继承自某个类(包括父级)
    * @param another 
    */
-  acceptable(another: NodeParamType) {
+  isInheritBy(another: NodeParamType) {
+    let parentClass = another.inheritType;
+    while(parentClass) {
+      if (parentClass === another)
+        return true;
+      parentClass = parentClass.inheritType;
+    }
+    return false;
+  }
+
+  /**
+   * Check whether the current type and other types are acceptable
+   * Dirction : this -> another : list<aa> -> list<a> / aa -> a
+   * @param another 
+   */
+  acceptable(another: NodeParamType, includeAny = true) {
     //通配符
-    if (this.baseType === 'any' || another.baseType === 'any')
+    if (includeAny && (this.baseType === 'any' || another.baseType === 'any'))
       return true;
     //检查类型
     if (
-      this.baseType === another.baseType
-      && this.name === another.name
-      && this.genericTypes.length === another.genericTypes.length) {
+      this.baseType === another.baseType //基础类型必须一致
+      && (
+        this.name === another.name //名称一致
+        || this.isInheritBy(another) //或者继承自另外一个类，可以从父类转为子类
+      )
+      && this.genericTypes.length === another.genericTypes.length //泛型参数个数一致
+    ) {
 
       //没有泛型
       if (this.genericTypes.length === 0)
         return true;
 
-      //检查泛型的通配符
+      //检查泛型
       for (let i = 0; i < this.genericTypes.length; i++) {
         if (this.genericTypes[i] !== another.genericTypes[i] 
-          && !(this.genericTypes[i].baseType === 'any'
-          || another.genericTypes[i].baseType === 'any')) {
+          && 
+            !(
+              (includeAny && this.genericTypes[i].baseType === 'any')
+              || (includeAny && another.genericTypes[i].baseType === 'any')
+            ) //检查泛型的通配符
+            && !(
+              this.genericTypes[i].isInheritBy(another.genericTypes[i])
+            ) //检查泛型的继承
+          ) {
             return false;
         }
       }
