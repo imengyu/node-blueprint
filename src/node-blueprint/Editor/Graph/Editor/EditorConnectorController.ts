@@ -10,6 +10,7 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import { reactive } from "vue";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
+import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 
 /**
  * 节点连接上下文函数
@@ -240,9 +241,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         connectingInfo.canConnect = connectingInfo.currentHoverPort.direction != connectingInfo.startPort.direction;
         if(!connectingInfo.canConnect) 
           connectingInfo.failedText ='不能连接相同方向的节点';
-
         //参数类型检查
-        if(connectingInfo.canConnect) {
+        else {
 
           if(connectingInfo.currentHoverPort.direction == 'input') {
             connectingInfo.canConnect = connectingInfo.currentHoverPort.checkTypeAllow(connectingInfo.startPort as NodePort); 
@@ -264,8 +264,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             const startType = startPot.define.paramType;
             const endType = endPot.define.paramType;
 
-            /*TODO:  //检查类型有没有转换器
-            const converter = ParamTypeService.getTypeCoverter(startType, endType);
+            //检查类型有没有转换器
+            const converter = NodeParamTypeRegistry.getInstance().getTypeCoverter(startType, endType);
             if(converter) {
               //设置转换器，在连接的时候会进行添加
               connectingInfo.shouldAddConverter = true;
@@ -275,7 +275,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             } else  {
               //没有转换器，不兼容连接
               connectingInfo.failedText = `${startType.define?.typeTitle} 与 ${endType.define?.typeTitle} 不兼容`;
-            } */
+            }
           }
           else {
             //TODO: 调用单元自己的检查函数检查是否可用连接

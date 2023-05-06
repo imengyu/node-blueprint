@@ -378,14 +378,10 @@
     margin-top: 1px;
 
     &.error {
-      svg {
-        fill: #ff7562;
-      }
+      fill: #ff7562;
     }
     &.success {
-      svg {
-        fill: #2bd614;
-      }
+      fill: #2bd614;
     }
   }
   .async {

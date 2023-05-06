@@ -7,8 +7,14 @@
 .text-secondary {
   color: #969696;
 }
+.text-success {
+  color:#05aa37;
+}
 
 svg {
+  &.text-success {
+    fill: #0eac3e;
+  }
   &.text-danger {
     fill: #e94200;
   }

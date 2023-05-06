@@ -49,6 +49,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
       if (e.button !== 2 && e.button !== 1)
         return false;
       e.stopPropagation();
+      context.setCursor('grab')
       mouseInfo.mouseDowned = true;
       mouseInfo.mouseMoved = false;
       viewDragDownPos.set(viewPort.position);
@@ -63,6 +64,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     },
     onUp(e) {
       mouseInfo.mouseDowned = false;
+      context.ressetCursor();
       mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
     },
   });

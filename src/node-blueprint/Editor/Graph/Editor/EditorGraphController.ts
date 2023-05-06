@@ -4,6 +4,8 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import { ChunkInstance } from "../Cast/ChunkedPanel";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
@@ -66,13 +68,39 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    */
   function addConnector(connector: NodeConnectorEditor) {
     allConnectors.set(connector.uid, connector);
+    //TODO: currentGraph.value?.connectors.push(connector);
+    ArrayUtils.addOnce((connector.startPort?.parent as NodeEditor).connectors, connector);
+    ArrayUtils.addOnce((connector.endPort?.parent as NodeEditor).connectors, connector);
+
+    //更新
+    if (connector != null) {
+      connector.chunkInfo = new ChunkInstance(
+        connector.updateRegion(),
+        "connector",
+        connector.uid
+      );
+      context.getBaseChunkedPanel().addInstance(connector.chunkInfo);
+    }
   }
   /**
    * 从当前图表中移除连接线
    * @param connector 
    */
   function removeConnector(connector: NodeConnectorEditor) {
+    
+    if (connector.chunkInfo) {
+      context.getBaseChunkedPanel().removeInstance(connector.chunkInfo);
+      connector.chunkInfo = null;
+    }
+    const 
+      start = connector.startPort,
+      end = connector.endPort;
+    if (start != null) 
+      ArrayUtils.remove((start.parent as NodeEditor).connectors, connector);
+    if (end != null) 
+    ArrayUtils.remove((end.parent as NodeEditor).connectors, connector);
     allConnectors.delete(connector.uid);
+    //TODO: currentGraph.value?.connectors.remove(connector);
   }
 
   context.getConnectors = () => allConnectors;
@@ -82,6 +110,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
 
   return {
     pushNodes,
+    allNodes,
+    allConnectors,
     foregroundNodes,
     backgroundNodes,
   }

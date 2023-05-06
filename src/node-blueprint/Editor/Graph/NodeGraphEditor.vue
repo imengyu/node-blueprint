@@ -2,6 +2,7 @@
   <div
     ref="editorHost"
     class="node-graph-editor"
+    :style="{ cursor }"
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
     @wheel="onMouseWhell"
@@ -32,8 +33,11 @@
       ref="foregroundRenderer"
       style="z-index: 2"
       :viewPort="(viewPort as NodeGraphEditorViewport)"
+      :chunkedPanel="(chunkedPanel as ChunkedPanel)"
       :isMulitSelect="isMulitSelect"
       :multiSelectRect="(multiSelectRect as Rect)"
+      :connectors="allConnectors"
+      :connectingInfo="connectingInfo"
       @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
@@ -52,6 +56,10 @@
     <ZoomTool
       :viewPort="(viewPort as NodeGraphEditorViewport)"
       style="z-index: 3" 
+    />
+    <BasePanels
+      :viewPort="(viewPort as NodeGraphEditorViewport)"
+      :connectingInfo="connectingInfo"
     />
   </div>
 </template>
@@ -77,13 +85,17 @@ import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
 import { useEditorConnectorController } from './Editor/EditorConnectorController';
 import { initEditorBase } from './Flow';
+import BasePanels from './Panel/BasePanels.vue';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
+const cursor = ref('default');
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
 const context = {
   getBaseChunkedPanel: () => chunkedPanel,
   getViewPort: () => viewPort.value,
+  setCursor: (v: string) => { cursor.value = v },
+  ressetCursor: () => { cursor.value = 'default' },
 } as NodeGraphEditorInternalContext;
 
 provide('NodeGraphEditorContext', context);
@@ -108,6 +120,7 @@ const {
 const {
   backgroundNodes,
   foregroundNodes,
+  allConnectors,
   pushNodes,
 } = useEditorGraphController(context);
 
@@ -117,7 +130,7 @@ const {
 } = useEditorSelectionContoller(context);
 
 const {
-  //
+  connectingInfo
 } = useEditorConnectorController(context);
 
 //init
@@ -317,6 +330,9 @@ onMounted(() => {
     node2,
     node3,
   );
+
+  context.connectConnector(node3.outputPorts.get('OUT')!, node.inputPorts.get('IN')!);
+  context.connectConnector(node1.outputPorts.get('OUT')!, node.inputPorts.get('IN-NUMBER')!);
 
   setTimeout(() => {
     viewPort.value.position.set(-viewPort.value.size.x / 2, -viewPort.value.size.y / 2);

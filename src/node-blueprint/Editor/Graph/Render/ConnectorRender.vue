@@ -10,6 +10,11 @@ import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { onBeforeUnmount, onMounted, ref, type PropType } from 'vue';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
+import type { IConnectingInfo } from '../Editor/EditorConnectorController';
+import type { NodeConnectorEditor } from '../Flow/NodeConnectorEditor';
+import type { ChunkedPanel } from '../Cast/ChunkedPanel';
+import { ConnectorDrawer } from './ConnectorDrawer';
+import type { NodePortEditor } from '../Flow/NodePortEditor';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -20,6 +25,10 @@ const props = defineProps({
     type: Object as PropType<NodeGraphEditorViewport>,
     default: null,
   },
+  chunkedPanel: {
+    type: Object as PropType<ChunkedPanel>,
+    default: null,
+  },
   multiSelectRect: {
     type: Object as PropType<Rect>,
     required: true,
@@ -27,6 +36,14 @@ const props = defineProps({
   isMulitSelect: {
     type: Boolean,
     default: false,
+  },
+  connectingInfo: {
+    type: Object as PropType<IConnectingInfo>,
+    default: null,
+  },
+  connectors: {
+    type: Object as PropType<Map<string, NodeConnectorEditor>>,
+    default: null,
   },
 });
 
@@ -46,12 +63,14 @@ onBeforeUnmount(() => {
 
 const retPos = new Vector2();
 const retSize = new Vector2();
+const drawerConnectingConnector = new ConnectorDrawer();
 
 function render() {
   if(!ctx) return;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   
+  //绘制多选框
   if (props.isMulitSelect) {
     props.viewPort.viewportPointToScreenPoint(props.multiSelectRect.getPoint(), retPos);
     retSize.set(props.multiSelectRect.w, props.multiSelectRect.h);
@@ -73,7 +92,37 @@ function render() {
     );
   }
 
-  
+  //绘制拖拽中连接线
+  if (props.connectingInfo) {
+    const _connectingInfo = props.connectingInfo;
+    const _startPort = _connectingInfo.startPort as NodePortEditor;
+    const _viewPort = props.viewPort;
+    if(_connectingInfo.isConnecting && _startPort && !_connectingInfo.isSamePort) {
+      const startPos = _startPort.direction === 'output' ? _startPort.getPortPositionViewport() : _connectingInfo.endPos;
+      const endPos = _startPort.direction === 'output' ? _connectingInfo.endPos : _startPort.getPortPositionViewport();
+      const scale = _viewPort.scale;
+      const x1 = startPos.x * scale, x2 = endPos.x * scale, 
+        y1 = startPos.y * scale, y2 = endPos.y * scale;
+
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#efefef';
+      ctx.fillStyle = ctx.strokeStyle;
+
+      drawerConnectingConnector.drawConnectorBezierCurve(ctx, x1, y1, x2, y2, _viewPort, true, -1, false);
+    }
+  }
+
+  //绘制连接线
+  if (props.connectors) {
+    //从区块检测器中选出当前显示在屏幕中的连接
+    const instances = props.chunkedPanel.testRectCastTag(props.viewPort.rect(), 'connector');
+    const _viewPort = props.viewPort;
+    for (let i = 0; i < instances.length; i++) {
+      const connector = props.connectors.get(instances[i].data as string);
+      if(connector)
+        connector.render(_viewPort, ctx);
+    }
+  }
 
   renderAnimId = requestAnimationFrame(render);
 }

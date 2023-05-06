@@ -1,0 +1,17 @@
+.node-editor-centertip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+
+  background-color: #fff;
+  border: 1px solid #bdbdbd;
+  border-radius: 0 3px 3px 3px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  z-index: 200;
+  white-space: pre;
+  font-size: 0.8rem;
+  color: #535353;
+  user-select: text;
+  padding: 6px 8px;
+}

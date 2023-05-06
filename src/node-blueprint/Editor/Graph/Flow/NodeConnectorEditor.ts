@@ -92,11 +92,14 @@ export class NodeConnectorEditor extends NodeConnector {
       this.colorGradientNeedCreate = false;
     }
   }
+
+  private tempPoint1 = new Vector2();
+  private tempPoint2 = new Vector2();
+
   public render(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
 
-    const scale = viewPort.scale;
-    const x1 = this.startPos.x * scale, x2 = this.endPos.x * scale, 
-      y1 = this.startPos.y * scale, y2 = this.endPos.y * scale;
+    viewPort.viewportPointToScreenPoint(this.startPos, this.tempPoint1);
+    viewPort.viewportPointToScreenPoint(this.endPos, this.tempPoint2);
 
     //鼠标悬浮时线加粗
     if(this.hover) ctx.lineWidth = 3;
@@ -140,6 +143,6 @@ export class NodeConnectorEditor extends NodeConnector {
     }
 
     //绘制
-    this.drawer.drawConnectorBezierCurve(ctx, x1, y1, x2, y2, viewPort, this.hover, this.dotPos, false);
+    this.drawer.drawConnectorBezierCurve(ctx, this.tempPoint1.x, this.tempPoint1.y, this.tempPoint2.x, this.tempPoint2.y, this.hover, this.dotPos, false);
   }
 }

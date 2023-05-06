@@ -1,6 +1,7 @@
 import { Node, type INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { ChunkInstance } from "../Cast/ChunkedPanel";
+import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
@@ -10,6 +11,16 @@ export class NodeEditor extends Node {
   constructor(define: INodeDefine) {
     super(define);
     this.forceSerializableClassProperties.ports = 'NodePortEditor';
+    this.noSerializableProperties.push(
+      'mouseConnectingPort',
+      'selected',
+      'breakpointTriggered',
+      'chunkInfo',
+      'connectors',
+      'lastBlockPos',
+      'lastBlockSize',
+      'editorHooks',
+    );
     this.load(define);
   }
 
@@ -29,6 +40,7 @@ export class NodeEditor extends Node {
   public selected = false;
   public breakpointTriggered = false;
   public chunkInfo = new ChunkInstance(undefined, 'node');
+  public connectors = [] as NodeConnectorEditor[];
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
   /**

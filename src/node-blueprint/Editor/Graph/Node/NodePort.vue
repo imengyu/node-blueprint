@@ -29,8 +29,8 @@
         <Icon v-show="instance.define.isAsync" class="async" icon="icon-port-async" />
         <!--连接图标-->
         <div ref="portDot" class="connect-dot">
-          <Icon v-show="instance.state==='error'" class="dot" icon="icon-close" />
-          <Icon v-show="instance.state==='success'" class="dot" icon="icon-select-bold" />
+          <Icon v-show="instance.state==='error'" class="dot error" icon="icon-close" />
+          <Icon v-show="instance.state==='success'" class="dot success" icon="icon-select-bold" />
           <!--普通状态图标-->
           <template v-if="instance.state==='normal' || instance.state==='active'">
             <VNodeRenderer
@@ -129,7 +129,7 @@ instance.value.getPortPositionRelative = function() {
     return dotPos;
   dotPos.set(
     HtmlUtils.getLeft(dot, 'flow-block') + dot.offsetWidth / 2,  
-    HtmlUtils.getTop(dot, 'flow-block') + dot.offsetHeight / 2 + 2
+    HtmlUtils.getTop(dot, 'flow-block') + dot.offsetHeight / 2 + 4
   );
   return dotPos;
 };
@@ -145,16 +145,28 @@ function onDeleteParam() {
 const connectDragHandler = createMouseDragHandler({
   onDown(e) {
     if (!isMouseEventInNoDragControl(e)) {
+      const parent = instance.value.parent as NodeEditor;
+      parent.mouseConnectingPort = true;
 
-      return true;
+      if(e.button == 0) {
+        context?.setCursor('crosshair')
+        context?.startConnect(instance.value);
+        context?.updateConnectEnd(new Vector2(e.x, e.y));
+        return true;
+      }
     }
     return false;
   },
   onMove(downPos, movedPos, e) {
-    
+    if(e.button == 0) {
+      const parent = instance.value.parent as NodeEditor;
+      parent.mouseConnectingPort = true;
+      context?.updateConnectEnd(new Vector2(e.x, e.y));
+    }
   },
-  onUp(e) {
-    
+  onUp() {
+    context?.ressetCursor()
+    context?.endConnect(instance.value);
   },
 })
 
@@ -163,10 +175,6 @@ function onPortMouseEnter() {
 }
 function onPortMouseLeave() {
   context?.updateCurrentHoverPort(instance.value, false);
-}
-function onPortMouseMove(e : MouseEvent) {
-
-  return true;
 }
 function onPortMouseDown(e : MouseEvent) {
   connectDragHandler(e);

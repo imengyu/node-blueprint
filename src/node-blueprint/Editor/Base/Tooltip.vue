@@ -231,6 +231,13 @@ export default defineComponent({
     font-size: 0.6rem;
     margin-bottom: 2px;
   }
+
+  .center {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
 }
 .node-tooltip-container {
   position: relative;

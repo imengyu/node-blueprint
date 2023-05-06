@@ -17,11 +17,11 @@ export class ConnectorDrawer {
    * @param pointPrecent 移动点的位置百分比（0-1），为负数则不显示
    */
   drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, 
-    x1 : number, y1 : number, x2 : number, y2 : number, viewPort: NodeGraphEditorViewport,
+    x1 : number, y1 : number, x2 : number, y2 : number,
     hover = false, pointPrecent = -1, willHide = false) : void {
     
-    let yAbs = Math.abs(y2 - y1) * viewPort.scale; 
-    let xAbs = Math.abs(x2 - x1) * viewPort.scale; 
+    let yAbs = Math.abs(y2 - y1); 
+    let xAbs = Math.abs(x2 - x1); 
 
     if(xAbs <= 1 && yAbs <= 1)
       return;
@@ -43,10 +43,10 @@ export class ConnectorDrawer {
       x2, y2
     ];
     const pos = [
-      x1 - viewPort.position.x, y1 - viewPort.position.y,
-      x1 - viewPort.position.x + xOff, y1 - viewPort.position.y + yOff, 
-      x2 - viewPort.position.x - xOff, y2 - viewPort.position.y - yOff, 
-      x2 - viewPort.position.x, y2 - viewPort.position.y
+      x1, y1,
+      x1 + xOff, y1 + yOff, 
+      x2 - xOff, y2 - yOff, 
+      x2, y2
     ];
 
     ctx.beginPath();

@@ -86,6 +86,16 @@ export class NodeParamTypeRegistry extends Singleton {
   }
 
   /**
+   * TODO: 获取类型转换器
+   * @param fromType 源类型
+   * @param endType 目标类型
+   * @returns 
+   */
+  public getTypeCoverter(fromType: NodeParamType, endType: NodeParamType) {
+    return null;
+  }
+
+  /**
    * 当系统类型注册或者移除时触发次事件
    */
   public onTypeChanged = new EventHandler<(act : 'add'|'remove', typeName ?: string, reg ?: NodeParamTypeDefine) => void>();

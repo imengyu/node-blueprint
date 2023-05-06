@@ -4,6 +4,7 @@ import type { NodeGraphEditorViewport } from './Editor/Viewport';
 import type { NodeGraphEditorSelectionContext } from './Editor/EditorSelectionContoller';
 import type { NodeGraphEditorConnectorContext } from './Editor/EditorConnectorController';
 import type { NodeGraphEditorGraphControllerContext } from './Editor/EditorGraphController';
+import type { NodeGraphEditorBasePanelsContext } from './Panel/BasePanels';
 export * from './Editor/Viewport';
 
 /**
@@ -12,7 +13,8 @@ export * from './Editor/Viewport';
 export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext, 
   NodeGraphEditorSelectionContext,
   NodeGraphEditorConnectorContext,
-  NodeGraphEditorGraphControllerContext {
+  NodeGraphEditorGraphControllerContext,
+  NodeGraphEditorBasePanelsContext {
 }
 
 /**
@@ -33,6 +35,8 @@ export interface NodeGraphEditorBaseContext {
  */
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
   mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
+  setCursor: (cursor: string) => void;
+  ressetCursor: () => void;
   getMouseInfo: () => NodeGraphEditorMouseInfo,
   getMouseHandler: () => EditorMousHandlerExtendHandlers,
 }

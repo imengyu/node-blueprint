@@ -237,6 +237,14 @@ function updateRegion() {
     realSize.y,
   );
   chunkedPanel.value.updateInstance(chunkInfo);
+
+  //同时更新连接到节点的连接线位置
+  instance.value.connectors.forEach((c) => {
+    if (c.chunkInfo) {
+      c.chunkInfo.rect.set(c.updateRegion());
+      chunkedPanel.value.updateInstance(c.chunkInfo);
+    }
+  });
 }
 
 //#endregion
@@ -480,6 +488,14 @@ const dragMouseHandler = createMouseDragHandler({
         //移动
         lastMovedBlock = true;
         instance.value.position = pos;
+
+        //同时更新连接到节点的连接线位置
+        instance.value.connectors.forEach((c) => {
+          if (c.chunkInfo) {
+            c.chunkInfo.rect.set(c.updateRegion());
+            chunkedPanel.value.updateInstance(c.chunkInfo);
+          }
+        });
       }
     }
   },
