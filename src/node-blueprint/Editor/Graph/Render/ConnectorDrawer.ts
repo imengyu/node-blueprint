@@ -1,5 +1,4 @@
 import { threeOrderBezier } from "../../Utils/BezierUtils";
-import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 
 /**
  * 节点连接线编辑器绘制类

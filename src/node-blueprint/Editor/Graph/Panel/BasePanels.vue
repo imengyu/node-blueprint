@@ -4,8 +4,8 @@
     v-if="connectingInfo"
     v-show="connectingInfo.isConnecting && !connectingInfo.isConnectingToNew"
     :style="{
-      left: (connectingInfo.endPos.x - viewPort.position.x + 10) + 'px', 
-      top:  (connectingInfo.endPos.y - viewPort.position.y + 10) + 'px' 
+      left: (connectingTooltipPos.x + 10) + 'px', 
+      top:  (connectingTooltipPos.y - 40) + 'px' 
     }"
   >
     <span v-if="connectingInfo.currentHoverPort==null" class="center">
@@ -30,10 +30,11 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, type PropType, toRefs, onMounted } from 'vue';
+import { inject, ref, type PropType, toRefs, onMounted, computed } from 'vue';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { IConnectingInfo } from '../Editor/EditorConnectorController';
 import Icon from '../../Base/Icon.vue';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
@@ -49,6 +50,10 @@ const props = defineProps({
 })
 
 const { viewPort, connectingInfo } = toRefs(props);
+
+const connectingTooltipPos = computed(() => {
+  return viewPort.value.viewportPointToScreenPoint(connectingInfo.value.endPos);
+})
 
 //#region 小信息提示
 

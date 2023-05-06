@@ -64,6 +64,8 @@ onBeforeUnmount(() => {
 const retPos = new Vector2();
 const retSize = new Vector2();
 const drawerConnectingConnector = new ConnectorDrawer();
+const tempPoint1 = new Vector2();
+const tempPoint2 = new Vector2();
 
 function render() {
   if(!ctx) return;
@@ -100,15 +102,15 @@ function render() {
     if(_connectingInfo.isConnecting && _startPort && !_connectingInfo.isSamePort) {
       const startPos = _startPort.direction === 'output' ? _startPort.getPortPositionViewport() : _connectingInfo.endPos;
       const endPos = _startPort.direction === 'output' ? _connectingInfo.endPos : _startPort.getPortPositionViewport();
-      const scale = _viewPort.scale;
-      const x1 = startPos.x * scale, x2 = endPos.x * scale, 
-        y1 = startPos.y * scale, y2 = endPos.y * scale;
+
+      _viewPort.viewportPointToScreenPoint(startPos, tempPoint1);
+      _viewPort.viewportPointToScreenPoint(endPos, tempPoint2);
 
       ctx.lineWidth = 2.5;
       ctx.strokeStyle = '#efefef';
       ctx.fillStyle = ctx.strokeStyle;
 
-      drawerConnectingConnector.drawConnectorBezierCurve(ctx, x1, y1, x2, y2, _viewPort, true, -1, false);
+      drawerConnectingConnector.drawConnectorBezierCurve(ctx, tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, true, -1, false);
     }
   }
 
