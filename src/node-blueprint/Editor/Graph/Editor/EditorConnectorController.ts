@@ -11,6 +11,8 @@ import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamTyp
 import { reactive } from "vue";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
+import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import type { NodeEditor } from "../Flow/NodeEditor";
 
 /**
  * 节点连接上下文函数
@@ -103,7 +105,6 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   function connectorCast(mouseInfo: NodeGraphEditorMouseInfo) {
     const _mousePos = mouseInfo.mouseCurrentPosViewPort;
-    const _viewScale = context.getViewPort().scale;
 
     lastHoverConnector.forEach(i => (i.hoverChecked = false));
     context
@@ -111,7 +112,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       .testPointCastTag(_mousePos, "connector")
       .forEach((i) => {
         const connector = context.getConnectors().get(i.data as string) as NodeConnectorEditor;
-        if (connector && connector.testInConnector(_mousePos, _viewScale)) {
+        if (connector && connector.testInConnector(_mousePos)) {
           connector.hoverChecked = true;
           connector.hover = true;
           ArrayUtils.addOnce(lastHoverConnector, connector);
@@ -127,7 +128,6 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   function selectOneConnector() : NodeConnectorEditor|null {
     const _mousePos = context.getMouseInfo().mouseCurrentPosViewPort;
-    const _viewScale = context.getViewPort().scale;
     const pointCastConnectors = context
       .getBaseChunkedPanel()
       .testPointCastTag(_mousePos, "connector");
@@ -136,7 +136,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         const connector = context
           .getConnectors()
           .get(pointCastConnectors[i].data as string) as NodeConnectorEditor;
-        if (connector && connector.testInConnector(_mousePos, _viewScale)) {
+        if (connector && connector.testInConnector(_mousePos)) {
           connector.hoverChecked = true;
           connector.hover = true;
           context.selectConnector(connector, false);
@@ -164,8 +164,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     onUp: () => {
       if (lastSelectAtDown) {
         //Alt按下，删除连接线
-        //TODO: if (context.isKeyAltDown())
-        //  context.unConnectConnector(lastSelectAtDown);
+        if (context.isKeyAltDown())
+          context.unConnectConnector(lastSelectAtDown);
         lastSelectAtDown = null;
       }
     },
@@ -258,21 +258,21 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             }
           }
           else {
-            //TODO: 调用单元自己的检查函数检查是否可用连接
-            /*let err : string|null = null;
+            //调用单元自己的检查函数检查是否可用连接
+            let err : string|null = null;
              if(connectingInfo.currentHoverPort.direction == 'input') {
-              if(typeof connectingInfo.currentHoverPort.parent.define.events.onPortConnectCheck === 'function') {
-                err = connectingInfo.currentHoverPort.parent.define.events.onPortConnectCheck(
-                  connectingInfo.currentHoverPort.parent as BluePrintFlowNode, 
+              if(typeof connectingInfo.currentHoverPort.parent.events.onPortConnectCheck === 'function') {
+                err = connectingInfo.currentHoverPort.parent.events.onPortConnectCheck(
+                  connectingInfo.currentHoverPort.parent as NodeEditor, 
                   connectingInfo.currentHoverPort as NodePort, 
                   connectingInfo.startPort as NodePort
                 ); 
                 connectingInfo.canConnect = !StringUtils.isNullOrEmpty(err);
               }
-            }else if(connectingInfo.startPort.direction == 'input') {
-              if(typeof connectingInfo.startPort.parent.define.events.onPortConnectCheck === 'function') {
-                err = connectingInfo.startPort.parent.define.events.onPortConnectCheck(
-                  connectingInfo.startPort.parent as BluePrintFlowNode, 
+            } else if(connectingInfo.startPort.direction == 'input') {
+              if(typeof connectingInfo.startPort.parent.events.onPortConnectCheck === 'function') {
+                err = connectingInfo.startPort.parent.events.onPortConnectCheck(
+                  connectingInfo.startPort.parent as NodeEditor, 
                   connectingInfo.startPort as NodePort, 
                   connectingInfo.currentHoverPort as NodePort
                 ); 
@@ -281,7 +281,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             }
             //如果不能连接，则显示错误
             if(!connectingInfo.canConnect && err) 
-              connectingInfo.failedText = err; */
+              connectingInfo.failedText = err;
           }
         }
       }
@@ -362,7 +362,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   //使用转换器连接两个端口
   function connectConnectorWithConverter() {
-    //TODO: 
+    //TODO: 使用转换器连接两个端口
   }
   //获取用户当前是否可以连接
   function getCanConnect() { 
@@ -404,20 +404,22 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       startPort: NodePortEditor,
       endPort: NodePortEditor
     ) => {
-      /* TODO: if (eventInfo.onPortConnect) eventInfo.onPortConnect(startPort, endPort);
-      if (startPort.parent.define.events.onPortConnect) startPort.parent.define.events.onPortConnect(startPort.parent, startPort);
-      if (endPort.parent.define.events.onPortConnect) endPort.parent.define.events.onPortConnect(endPort.parent, endPort);
+
+      if (startPort.parent.events.onPortConnect) 
+        startPort.parent.events.onPortConnect(startPort.parent, startPort);
+      if (endPort.parent.events.onPortConnect) 
+        endPort.parent.events.onPortConnect(endPort.parent, endPort);
 
       //两个端口有一个是弹性端口，并且两者类型不一样，则触发弹性端口事件
-      if(!startPort.define.type.equals(endPort.define.type)) {
-        if(startPort.define.type.isAny() && startPort.define.isFlexible) {
-          if (startPort.parent.define.events.onFlexPortConnect) 
-            startPort.parent.define.events.onFlexPortConnect(startPort.parent, startPort, endPort);
-        } else if(endPort.define.type.isAny() && endPort.define.isFlexible) {
-          if (endPort.parent.define.events.onFlexPortConnect) 
-          endPort.parent.define.events.onFlexPortConnect(endPort.parent, endPort, startPort);
+      if(!startPort.define.paramType.equal(endPort.define.paramType)) {
+        if(startPort.define.paramType.isAny && startPort.define.isFlexible) {
+          if (startPort.parent.events.onFlexPortConnect) 
+            startPort.parent.events.onFlexPortConnect(startPort.parent, startPort, endPort);
+        } else if(endPort.define.paramType.isAny && endPort.define.isFlexible) {
+          if (endPort.parent.events.onFlexPortConnect) 
+          endPort.parent.events.onFlexPortConnect(endPort.parent, endPort, startPort);
         }
-      } */
+      }
     };
 
     const 
@@ -518,9 +520,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       end.removeConnectByPort(start);
       end.state = end.isConnected() ? 'active' : 'normal';
 
-      //TODO: if (eventInfo.onPortUnConnect) eventInfo.onPortUnConnect(start, end);
-      //if (start.parent.define.events.onPortUnConnect) start.parent.define.events.onPortUnConnect(start.parent, start);
-      //if (end.parent.define.events.onPortUnConnect) end.parent.define.events.onPortUnConnect(end.parent, end);
+      if (start.parent.events.onPortUnConnect) start.parent.events.onPortUnConnect(start.parent, start);
+      if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);
     }
   }
   //删除端口连接

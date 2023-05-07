@@ -121,7 +121,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    */
   function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) {
     //TODO: 检查单元是否只能有一个
-    // if(define.settings.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
+    // if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
     //   DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + blockData.baseInfo.name + ' 了，此单元只能有一个', () => {});
     //   return;
     // }

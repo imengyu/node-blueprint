@@ -26,7 +26,6 @@ export class NodeConnectorEditor extends NodeConnector {
 
   private drawer = new ConnectorDrawer();
   private rect = new Rect();
-  private rectCast = new Rect();
   private startPos = new Vector2();
   private endPos = new Vector2();
   private startColor = '#efefef';
@@ -40,26 +39,21 @@ export class NodeConnectorEditor extends NodeConnector {
    * @param pos 要检查的点
    * @param viewScale 视图缩放系数
    */
-  public testInConnector(pos : Vector2, viewScale: number) : boolean {
+  public testInConnector(pos : Vector2) : boolean {
 
     if(!this.startPort || !this.endPort)
       return false;
 
     const startPos = (this.startPort as NodePortEditor).getPortPositionViewport();
     const endPos = (this.endPort as NodePortEditor).getPortPositionViewport();
-    const x1 = startPos.x * viewScale - 1, x2 = endPos.x * viewScale + 2, 
-      y1 = startPos.y * viewScale - 1, y2 = endPos.y * viewScale + 2;
+    const x1 = startPos.x - 1, x2 = endPos.x + 2;
 
-    this.rectCast.set(x1, y1, x2 - x1, y2 - y1);
-    this.rectCast.expand(5);
-    if(this.rectCast.testInRect(pos)) {
-      const xPec = (pos.x - x1) / (x2 - x1);
-      if(xPec >= 0 && xPec <= 1) {
-        const p = this.drawer.posData2;
-        const pp = threeOrderBezier(xPec, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-        const o = Math.abs(pp[1] - pos.y);
-        return o <= 20;
-      }
+    const xPec = (pos.x - x1) / (x2 - x1);
+    if(xPec >= 0 && xPec <= 1) {
+      const p = this.drawer.posData2;
+      const pp = threeOrderBezier(xPec, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+      const o = Math.abs(pp[1] - (pos.y - startPos.y));
+      return o <= 20;
     }
     return false;
   }

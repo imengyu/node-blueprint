@@ -6,6 +6,8 @@
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
     @wheel="onMouseWhell"
+    @keydown="onKeyDown"
+    @keyup="onKeyUp"
     @contextmenu="onCanvasContextMenu"
   >
     <BackgroundRender
@@ -86,6 +88,7 @@ import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
 import { useEditorConnectorController } from './Editor/EditorConnectorController';
 import { initEditorBase } from './Flow';
 import BasePanels from './Panel/BasePanels.vue';
+import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -132,6 +135,11 @@ const {
 const {
   connectingInfo
 } = useEditorConnectorController(context);
+
+const {
+  onKeyDown,
+  onKeyUp,
+} = useEditorKeyBoardControllerController(context);
 
 //init
 //=========================

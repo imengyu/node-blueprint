@@ -19,7 +19,7 @@ export default defineComponent({
   name: 'NumberEditor',
   emits: [ 'update-value', 'update-custom-data' ],
   props: {
-    value: Object as PropType<BigInt>,
+    value: Object as PropType<null>,
     port: Object as PropType<NodePort>,
     customData: Object as PropType<IKeyValueObject>,
   },

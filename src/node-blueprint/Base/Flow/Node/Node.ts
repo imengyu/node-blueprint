@@ -6,6 +6,7 @@ import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
 import type { NodeParamType } from "../Type/NodeParamType";
+import type { NodeGraph } from "../Graph/NodeGraph";
 
 const TAG = 'Node';
 
@@ -379,6 +380,8 @@ export interface INodeDefine {
    * 单元的自定义样式设置
    */
   style ?: INodekStyleSettings;
+
+
 }
 
 export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
@@ -413,6 +416,47 @@ export interface INodeEventSettings {
    * 用户删除了一个端口时的回调。
    */
   onPortRemove ?: NodePortEventCallback,
+  /**
+   * 自定义检查回调，在用户添加某个单元至图表中时触发。
+   * @param node 当前用户添加的某个单元
+   * @param graph 添加目标图表
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
+   */
+  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
+  /**
+   * 自定义检查回调，在用户删除某个单元至图表中时触发。
+   * @param node 当前用户删除的某个单元
+   * @param graph 删除目标图表
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
+   */
+  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
+  /**
+   * 自定义检查回调，在用户连接单元两个端口时触发。
+   * @param node 当前用户操作的单元
+   * @param startPort 起始端口
+   * @param endPort 结束端口
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续连接。
+   */
+  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
+  /**
+   * 弹性端口连接时触发。
+   * @param node 当前用户操作的单元
+   * @param thisPort 当前端口
+   * @param anotherPort 另外一个端口
+   */
+  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  /**
+   * 在用户连接端口时触发。
+   * @param node 当前用户操作的单元
+   * @param port 当前端口
+   */
+  onPortConnect ?: NodePortEventCallback;
+  /**
+   * 在用户断开端口的连接时触发。
+   * @param node 当前用户操作的单元
+   * @param port 当前端口
+   */
+  onPortUnConnect ?: NodePortEventCallback;
 }
 /**
  * 单元自定义事件设置
@@ -433,4 +477,10 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onRemoveFormEditor ?: NodeEventCallback;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;
+  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
+  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
+  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
+  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  onPortConnect ?: NodePortEventCallback;
+  onPortUnConnect ?: NodePortEventCallback;
 }
