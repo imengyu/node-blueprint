@@ -95,7 +95,7 @@ const context = {
   getBaseChunkedPanel: () => chunkedPanel,
   getViewPort: () => viewPort.value,
   setCursor: (v: string) => { cursor.value = v },
-  ressetCursor: () => { cursor.value = 'default' },
+  resetCursor: () => { cursor.value = 'default' },
 } as NodeGraphEditorInternalContext;
 
 provide('NodeGraphEditorContext', context);
@@ -136,11 +136,11 @@ const {
 //init
 //=========================
 
-onMounted(() => {
-  initBase();
-  initEditorBase();
-  initRenderer();
+initBase();
+initEditorBase();
 
+onMounted(() => {
+  initRenderer();
 
   const node = new NodeEditor({
     guid: '2FA7BA84-DA8A-F985-43F3-A12AEBB012BD',

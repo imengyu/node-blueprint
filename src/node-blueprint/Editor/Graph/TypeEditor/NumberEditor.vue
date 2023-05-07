@@ -11,12 +11,12 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, type PropType } from 'vue'
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import Icon from '../../Base/Icon.vue';
-import { defineComponent, type PropType } from 'vue'
-import Tooltip from '../../Base/Tooltip.vue';
+import Tooltip from '../../Base/Tooltip/Tooltip.vue';
 
 export default defineComponent({
   name: "NumberEditor",

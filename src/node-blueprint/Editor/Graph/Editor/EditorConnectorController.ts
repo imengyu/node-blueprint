@@ -22,34 +22,19 @@ export interface NodeGraphEditorConnectorContext {
    */
   isAnyConnectorHover: () => boolean;
   /**
-   * 
-   * @param port 
-   * @param active 
+   * 获取用户现在是否处于连接至新节点状态中
    * @returns 
    */
+  isConnectToNew: () => boolean;
+  /**
+   * 获取用户连接控制器的状态
+   * @returns 
+   */
+  getConnectingInfo: () => IConnectingInfo;
   updateCurrentHoverPort: (port : NodePort, active : boolean) => void,
-  /**
-   * 
-   * @param pos 
-   * @returns 
-   */
   updateConnectEnd: (pos : Vector2) => void;
-  /**
-   * 
-   * @param port 
-   * @returns 
-   */
   startConnect: (port : NodePort) => void;
-  /**
-   * 
-   * @param port 
-   * @returns 
-   */
   endConnect: (port : NodePort) => void;
-  /**
-   * 
-   * @returns 
-   */
   getCanConnect: () => boolean;
   /**
    * 
@@ -58,30 +43,25 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   connectConnector: (start : NodePort, end : NodePort) => NodeConnector|null;
-  /**
-   * 
-   * @param node 
-   * @returns 
-   */
   endConnectToNew: (node?: Node) => NodePort|null;
   /**
-   * 
+   * 断开连接线
    * @param conn 
    * @returns 
    */
   unConnectConnector: (conn : NodeConnector) => void;
   /**
-   * 
+   * 取消当前端口上的所有连接线
    * @param port 
    * @returns 
    */
   unConnectPortConnectors: (port: NodePort) => void;
   /**
-   * 
+   * 取消当前节点上的所有连接线
    * @param node 
    * @returns 
    */
-  unConnectBlockConnectors: (node: Node) => void;
+  unConnectNodeConnectors: (node: Node) => void;
 }
 
 
@@ -283,7 +263,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
              if(connectingInfo.currentHoverPort.direction == 'input') {
               if(typeof connectingInfo.currentHoverPort.parent.define.events.onPortConnectCheck === 'function') {
                 err = connectingInfo.currentHoverPort.parent.define.events.onPortConnectCheck(
-                  connectingInfo.currentHoverPort.parent as BluePrintFlowBlock, 
+                  connectingInfo.currentHoverPort.parent as BluePrintFlowNode, 
                   connectingInfo.currentHoverPort as NodePort, 
                   connectingInfo.startPort as NodePort
                 ); 
@@ -292,7 +272,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             }else if(connectingInfo.startPort.direction == 'input') {
               if(typeof connectingInfo.startPort.parent.define.events.onPortConnectCheck === 'function') {
                 err = connectingInfo.startPort.parent.define.events.onPortConnectCheck(
-                  connectingInfo.startPort.parent as BluePrintFlowBlock, 
+                  connectingInfo.startPort.parent as BluePrintFlowNode, 
                   connectingInfo.startPort as NodePort, 
                   connectingInfo.currentHoverPort as NodePort
                 ); 
@@ -350,11 +330,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       const panelPos = new Vector2();
       viewPort.viewportPointToScreenPoint(connectingInfo.endPos, panelPos);
 
-      /* TODO: 
-      context.showAddBlockPanel(
+      context.showAddNodePanel(
         viewPort.fixScreenPosWithEditorAbsolutePos(panelPos), 
         connectingInfo.otherSideRequireType, 
-        connectingInfo.otherSideRequireDirection); */
+        connectingInfo.otherSideRequireDirection
+      );
       
       connectingInfo.isConnectingToNew = true;
       return;
@@ -551,8 +531,16 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       unConnectConnector(port.connectedToPort[i]);
   }
   //删除单元连接
-  function unConnectBlockConnectors(block: Node) {
+  function unConnectNodeConnectors(block: Node) {
     block.ports.forEach((p) => unConnectPortConnectors(p));
+  }
+  //获取用户现在是否处于连接至新节点状态中
+  function isConnectToNew() {
+    return connectingInfo.isConnectingToNew;
+  }
+  //获取用户连接控制器的状态
+  function getConnectingInfo() {
+    return connectingInfo;
   }
 
   //#endregion
@@ -566,8 +554,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.connectConnector = connectConnector;
   context.unConnectConnector = unConnectConnector;
   context.unConnectPortConnectors = unConnectPortConnectors;
-  context.unConnectBlockConnectors = unConnectBlockConnectors;
+  context.unConnectNodeConnectors = unConnectNodeConnectors;
   context.isAnyConnectorHover = isAnyConnectorHover;
+  context.isConnectToNew = isConnectToNew;
+  context.getConnectingInfo = getConnectingInfo;
 
   return {
     connectingInfo,

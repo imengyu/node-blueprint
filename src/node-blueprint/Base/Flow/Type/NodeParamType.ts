@@ -47,6 +47,10 @@ export interface NodeParamTypeDefine {
    */
   typeTitle: string;
   /**
+   * [Editor only] Title of this type
+   */
+  typeGenericNameMerger: (genericNames: string[]) => string;
+  /**
    * 编辑器：编辑器
    */
   typeEditor?: NodeParamEditorCreateCallback|undefined;
@@ -145,6 +149,21 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    */
   toString() : string {
     return `${this.name}${this.genericTypes.length > 0 ? ('<' + this.genericTypes.join(',') + '>') : ''}`;
+  }
+  /**
+   * 获取当前类型对用户友好的说明文字
+   * @returns 
+   */
+  toUserFriendlyName() {
+    let string = `${this.define?.typeTitle || this.name} `;
+    if (this.genericTypes.length > 0) {
+      const genericNames = this.genericTypes.map(t => t.toUserFriendlyName());
+      if (this.define?.typeGenericNameMerger)
+        string += this.define.typeGenericNameMerger(genericNames);
+      else
+        string += '泛型参数' + this.genericTypes.map(t => t.toUserFriendlyName()).join(',');
+    }
+    return string;
   }
 
   /**

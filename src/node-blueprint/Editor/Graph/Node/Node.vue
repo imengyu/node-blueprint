@@ -151,10 +151,10 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, toRefs, type PropType, inject } from 'vue';
-import Tooltip from '../../Base/Tooltip.vue';
+import Tooltip from '../../Base/Tooltip/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
 import NodePort from './NodePort.vue';
-import SmallButton from '../../Base/SmallButton.vue';
+import SmallButton from '../../Base/Button/SmallButton.vue';
 import NodeIconImageRender from './NodeIconImageRender.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'

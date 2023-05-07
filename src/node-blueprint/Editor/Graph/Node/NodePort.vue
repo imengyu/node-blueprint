@@ -62,7 +62,10 @@
       </span>
       <span>
         <br>类型：
-        <span v-if="instance.define.paramType" v-html="instance.define.paramType.toString()"></span>
+        <span v-if="instance.define.paramType" v-html="
+          instance.define.paramType.toUserFriendlyName() + '<br/>(' +
+          instance.define.paramType.toString() + ')'
+        "></span>
         <span v-else class="text-danger">未知</span>
       </span>
       <span v-if="instance.define.isAsync">
@@ -76,7 +79,7 @@
 
 <script lang="ts" setup>
 import { computed, toRefs, type PropType, inject, ref } from 'vue';
-import Tooltip from '../../Base/Tooltip.vue';
+import Tooltip from '../../Base/Tooltip/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
 import VNodeRenderer from '../../Base/VNodeRenderer.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
@@ -165,7 +168,7 @@ const connectDragHandler = createMouseDragHandler({
     }
   },
   onUp() {
-    context?.ressetCursor()
+    context?.resetCursor()
     context?.endConnect(instance.value);
   },
 })

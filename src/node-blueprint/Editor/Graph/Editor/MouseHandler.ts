@@ -1,7 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
 
-export type IMouseDragHandlerEntry = (e: MouseEvent) => boolean;
+export type IMouseEventHandlerEntry = (e: MouseEvent) => boolean;
 export type IMouseMoveHandlerEntry = (mouseInfo : NodeGraphEditorMouseInfo, e: MouseEvent) => boolean;
 
 /**
@@ -28,7 +28,7 @@ export function createMouseDragHandler(options: {
    * @returns 
    */
   onUp: (e: MouseEvent) => void;
-}) : IMouseDragHandlerEntry{
+}) : IMouseEventHandlerEntry{
 
   const { onDown, onMove, onUp } = options;
   const mouseDownPosition = new Vector2();
@@ -78,7 +78,7 @@ export function createMouseDownAndUpHandler(options: {
    * @returns 
    */
   onUp: (e: MouseEvent) => void;
-}) : IMouseDragHandlerEntry {
+}) : IMouseEventHandlerEntry {
   const { onDown, onUp } = options;
 
   function mouseup(e: MouseEvent) {

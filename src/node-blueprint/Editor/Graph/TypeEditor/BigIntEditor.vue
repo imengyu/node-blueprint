@@ -4,7 +4,7 @@
     type="text" 
     :class="'param-editor'+(numberIsOk?'':' input-border input-warn')" 
     style="display: inline-block;; width: 88px">
-  <span v-if="!numberIsOk" v-tooltip="'输入数字格式不正确'">
+  <span v-if="!numberIsOk" title="'输入数字格式不正确'">
     <i class="iconfont icon-error-1 text-warning"></i>
   </span>
 </template>

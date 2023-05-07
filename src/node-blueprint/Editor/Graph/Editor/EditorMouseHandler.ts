@@ -1,7 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { createMouseDragHandler, type IMouseDragHandlerEntry, type IMouseMoveHandlerEntry } from "./MouseHandler"
+import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry } from "./MouseHandler"
 
 //鼠标事件目标元素是否不可拖动
 export function isMouseEventInNoDragControl(e: MouseEvent) {
@@ -15,14 +15,18 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
  * 扩展鼠标事件接口
  */
 export class EditorMousHandlerExtendHandlers {
-  mouseDownHandlers = [] as IMouseDragHandlerEntry[];
+  mouseDownHandlers = [] as IMouseEventHandlerEntry[];
   mouseMoveHandlers = [] as IMouseMoveHandlerEntry[];
+  mouseUpHandlers = [] as IMouseMoveHandlerEntry[];
 
-  pushMouseDownHandler(handler: IMouseDragHandlerEntry) {
+  pushMouseDownHandler(handler: IMouseEventHandlerEntry) {
     this.mouseDownHandlers.push(handler);
   }
   pushMouseMoveHandlers(handler: IMouseMoveHandlerEntry) {
     this.mouseMoveHandlers.push(handler);
+  }
+  pushMouseUpHandlers(handler: IMouseMoveHandlerEntry) {
+    this.mouseUpHandlers.push(handler);
   }
 }
 
@@ -64,8 +68,8 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     },
     onUp(e) {
       mouseInfo.mouseDowned = false;
-      context.ressetCursor();
-      mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
+      context.resetCursor();
+      onMouseUp(e);
     },
   });
 
@@ -85,6 +89,14 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
     
     for (const handler of extendHandlerObject.mouseMoveHandlers) {
+      if (handler(mouseInfo, e))
+        return;
+    }
+  }
+  //鼠标放开入口
+  function onMouseUp(e: MouseEvent) {
+    mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
+    for (const handler of extendHandlerObject.mouseUpHandlers) {
       if (handler(mouseInfo, e))
         return;
     }
@@ -141,12 +153,11 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   return {
     onMouseDown,
     onMouseMove,
+    onMouseUp,
     onMouseWhell,
     mouseInfo,
   }
 }
-
-
 
 /**
  * 编辑器鼠标状态

@@ -36,7 +36,7 @@ export interface NodeGraphEditorBaseContext {
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
   mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
   setCursor: (cursor: string) => void;
-  ressetCursor: () => void;
+  resetCursor: () => void;
   getMouseInfo: () => NodeGraphEditorMouseInfo,
   getMouseHandler: () => EditorMousHandlerExtendHandlers,
 }

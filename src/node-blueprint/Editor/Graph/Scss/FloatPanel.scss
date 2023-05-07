@@ -1,0 +1,72 @@
+@import "./Scroll.scss";
+
+$background-second-color: #282c34;
+$background-second-color-light: #4f5768;
+$border-color: #3e4053;
+$border-color-dark: #111216;
+
+
+//添加单元浮动菜单
+.node-float-panel {
+  background-color: $background-second-color;
+  border: 1px solid $border-color-dark;
+  border-radius: 5px;
+  font-size: 1rem;
+  position: absolute;
+  min-width: 230px;
+  padding: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  color: #929292;
+  z-index: 65;
+  max-height: 500px;
+  overflow: hidden;
+  overflow-y: scroll;
+  font-size: 0.8rem;
+
+  > .title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #3a3a3a;
+    user-select: none;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+
+    span {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .close {
+      padding: 3px;
+      width: 10px;
+      height: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      fill: #fff;
+
+      &:hover {
+        background-color: rgba(#e6e6e6, 0.2);
+      }
+    }
+  }
+
+  @include pc-fix-scrollbar();
+
+  > .input {
+    position: relative;
+    display: block;
+    margin: 6px 0 ;
+
+    input {
+      width: calc(100% - 8px);
+    }
+
+    .small-button {
+      position: absolute;
+      top: 2px;
+      right: 3px;
+    }
+  }
+}

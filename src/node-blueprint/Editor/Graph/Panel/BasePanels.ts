@@ -22,14 +22,14 @@ export interface NodeGraphEditorBasePanelsContext {
    * @param screenPos 显示位置（屏幕坐标） 
    * @param filterByPortType 按单元端口的类型进行筛选 
    * @param filterByPortDirection 按单元端口的方向进行筛选
-   * @param addBlockPos 设置添加单元的坐标
+   * @param addNodePos 设置添加单元的坐标
    * @param showAddDirectly 是否显示直接添加和拖动添加两个模式，否则只有直接添加一个模式，默认为 true
    */
-  showAddBlockPanel: (screenPos: Vector2, filterByPortType ?: NodeParamType|null, filterByPortDirection ?: NodePortDirection|null, addBlockPos ?: Vector2, showAddDirectly ?: boolean) => void;
+  showAddNodePanel: (screenPos: Vector2, filterByPortType ?: NodeParamType|undefined, filterByPortDirection ?: NodePortDirection|undefined, addNodePos ?: Vector2, showAddDirectly ?: boolean) => void;
   /**
    * 关闭添加单元菜单
    */
-  closeAddBlockPanel: () => void;
+  closeAddBodePanel: () => void;
   /**
    * 显示小信息提示
    * @param text 显示文字 
