@@ -89,6 +89,7 @@ import { useEditorConnectorController } from './Editor/EditorConnectorController
 import { initEditorBase } from './Flow';
 import BasePanels from './Panel/BasePanels.vue';
 import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
+import { useEditorUserController } from './Editor/EditorUserController';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -140,6 +141,10 @@ const {
   onKeyDown,
   onKeyUp,
 } = useEditorKeyBoardControllerController(context);
+
+const {
+  
+} = useEditorUserController(context);
 
 //init
 //=========================

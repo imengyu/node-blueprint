@@ -10,7 +10,7 @@
     </template>
     <div 
       ref="nodeRef"
-      :class="['flow-block',
+      :class="['node-block',
         (instance.selected ? 'selected ' : ''),
         (instance.style.customClassNames),
         (twinkleActive ? 'actived' : ''),
@@ -35,14 +35,14 @@
     >
       <!--注释区域-->
       <div
-        class="flow-block-comment flow-block-no-move" 
+        class="node-block-comment node-block-no-move" 
         v-show="instance.markOpen && !instance.style.noComment"
         :style="{ top: commentTop }"
       >
-        <span class="flow-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
+        <span class="node-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
         <div 
           ref="commentInput"
-          class="flow-block-comment-text flow-block-no-move" 
+          class="node-block-comment-text node-block-no-move" 
           contenteditable="true"
           @input="onCommentInputInput"
           @blur="onCommentInputBlur">
@@ -56,7 +56,7 @@
       <Tooltip content="打开注释气泡" mutex="NodeToolTip">
         <a 
           v-show="!instance.markOpen && !instance.style.noComment"
-          class="flow-block-comment-open" 
+          class="node-block-comment-open" 
           @click="openComment"
         >
           <Icon icon="icon-qipao" />
@@ -131,8 +131,8 @@
       </NodeIconImageRender>
       <!--TODO: 自定义编辑器区域-->
       <!--主区域-->
-      <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='flow-block-base'>
-        <div class='flow-block-ports'>
+      <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='node-block-base'>
+        <div class='node-block-ports'>
           <div class='left'>
             <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @on-delete-port="(p) => $emit('on-delete-port', p)" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
@@ -202,6 +202,7 @@ onMounted(() => {
   instance.value.editorHooks.callbackGetRealSize = getRealSize;
   instance.value.editorHooks.callbackTwinkle = twinkle;
   instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
+  instance.value.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
@@ -245,6 +246,22 @@ function updateRegion() {
       chunkedPanel.value.updateInstance(c.chunkInfo);
     }
   });
+}
+/**
+ * 单元位置或大小更改，刷新单元
+ */
+function updateNodeForMoveEnd() {
+  //移动后更新区块
+  updateRegion();
+  //如果有选择其他块，则同时更新区块
+  const selectedNodes = context.getSelectNodes();
+  for (const n of selectedNodes) {
+    const node = n as NodeEditor;
+    if (node !== instance.value) {
+      node.saveLastBlockPos();
+      node.editorHooks.callbackUpdateRegion?.();
+    }
+  }
 }
 
 //#endregion
@@ -503,17 +520,7 @@ const dragMouseHandler = createMouseDragHandler({
     mouseDown = false;
 
     if (lastMovedBlock) {
-      //移动后更新区块
-      updateRegion();
-      //如果有选择其他块，则同时更新区块
-      const selectedNodes = context.getSelectNodes();
-      for (const n of selectedNodes) {
-        const node = n as NodeEditor;
-        if (node !== instance.value) {
-          node.saveLastBlockPos();
-          node.editorHooks.callbackUpdateRegion?.();
-        }
-      }
+      updateNodeForMoveEnd();
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
       if(!instance.value.selected) {

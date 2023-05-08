@@ -4,7 +4,7 @@ import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 /**
  * 键盘控制器上下文函数
  */
-export interface EditorKeyBoardControllerContext {
+export interface NodeEditorKeyBoardControllerContext {
   /**
    * 获取用户是否在编辑器中按下了 Alt 键
    * @returns 

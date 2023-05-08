@@ -5,7 +5,9 @@ import type { NodeGraphEditorSelectionContext } from './Editor/EditorSelectionCo
 import type { NodeGraphEditorConnectorContext } from './Editor/EditorConnectorController';
 import type { NodeGraphEditorGraphControllerContext } from './Editor/EditorGraphController';
 import type { NodeGraphEditorBasePanelsContext } from './Panel/BasePanels';
-import type { EditorKeyBoardControllerContext } from './Editor/EditorKeyBoardController';
+import type { NodeEditorKeyBoardControllerContext } from './Editor/EditorKeyBoardController';
+import type { NodeEditorUserControllerContext } from './Editor/EditorUserController';
+import type { NodeEditorContextMenuContext } from './Editor/EditorContextMenuHandler';
 export * from './Editor/Viewport';
 
 /**
@@ -16,7 +18,10 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
   NodeGraphEditorConnectorContext,
   NodeGraphEditorGraphControllerContext,
   NodeGraphEditorBasePanelsContext,
-  EditorKeyBoardControllerContext {
+  NodeEditorKeyBoardControllerContext,
+  NodeEditorUserControllerContext,
+  NodeEditorContextMenuContext 
+{
 }
 
 /**

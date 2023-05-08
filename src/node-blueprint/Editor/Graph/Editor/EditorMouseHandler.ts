@@ -7,7 +7,7 @@ import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHa
 export function isMouseEventInNoDragControl(e: MouseEvent) {
   return (
     HtmlUtils.isEventInControl(e) 
-    || (e.target as HTMLElement).classList.contains('flow-block-no-move')
+    || (e.target as HTMLElement).classList.contains('node-block-no-move')
   );
 }
 
@@ -51,6 +51,8 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
       if (isMouseEventInNoDragControl(e))
         return false;
       if (e.button !== 2 && e.button !== 1)
+        return false;
+      if (context.isAnyConnectorHover())
         return false;
       e.stopPropagation();
       context.setCursor('grab')

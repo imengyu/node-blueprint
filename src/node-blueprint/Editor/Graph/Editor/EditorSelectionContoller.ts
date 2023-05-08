@@ -110,6 +110,8 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     onDown(e) {
       if (isMouseEventInNoDragControl(e))
         return false;
+      if (context.isAnyConnectorHover())
+        return false;
       if (e.button !== 0)
         return false;
       e.stopPropagation();
@@ -284,8 +286,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       ArrayUtils.clear(selectConnectors.value);
       context.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "connector").forEach((i) => {
         const connector = context.getConnectors().get(i.data as string);
-        if (connector)
+        if (connector) {
+          (connector as NodeConnectorEditor).selected = true;
           selectConnectors.value.push(connector as NodeConnectorEditor);
+        }
       });
 
       isMultiSelected.value = true;

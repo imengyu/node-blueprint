@@ -117,8 +117,8 @@ function render() {
   //绘制连接线
   if (props.connectors) {
     //从区块检测器中选出当前显示在屏幕中的连接
-    const instances = props.chunkedPanel.testRectCastTag(props.viewPort.rect(), 'connector');
     const _viewPort = props.viewPort;
+    const instances = props.chunkedPanel.testRectCastTag(_viewPort.rect(), 'connector');
     for (let i = 0; i < instances.length; i++) {
       const connector = props.connectors.get(instances[i].data as string);
       if(connector)

@@ -1,14 +1,14 @@
-import type { INodeDefine, Node } from "@/node-blueprint/Base/Flow/Node/Node";
+
 import { ref } from "vue";
-import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import { NodeEditor } from "../Flow/NodeEditor";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import { ChunkInstance } from "../Cast/ChunkedPanel";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
+import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
+import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
+import type { NodeEditor } from "../Flow/NodeEditor";
+import { printError, printWarning } from "@/node-blueprint/Base/Utils/Logger/DevLog";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
@@ -20,6 +20,22 @@ export interface NodeGraphEditorGraphControllerContext {
    */
   getConnectors(): Map<string, NodeConnector>;  
   /**
+    * 添加节点至当前图表中
+    * @param nodes 
+    */
+  addNode(nodes: NodeEditor) : void;
+  /**
+    * 添加节点至当前图表中
+    * @param nodes 
+    */
+  addNodes(nodes: NodeEditor[]) : void;
+  /**
+   * 移除节点
+   * @param node 
+   * @param byUser 是否是用户操作，如果是用户操作，则会调用删除检查回调
+   */
+  removeNode(node: NodeEditor, byUser: boolean) : void;
+  /**
     * 添加连接线至当前图表中
     * @param connector 
     */
@@ -29,14 +45,17 @@ export interface NodeGraphEditorGraphControllerContext {
     * @param connector 
     */
   removeConnector(connector: NodeConnectorEditor) : void;
-
   /**
-   * 用户添加单元
-   * @param define 单元定义
-   * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
+   * 获取当前打开的图表
    */
-  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) : void;
+  getCurrentGraph() : NodeGraph;
+  /**
+   * 标记当前图表已经被用户修改
+   */
+  markGraphChanged() : void;
 }
+
+const TAG = 'EditorGraphController';
 
 /**
  * 流程图信息（节点、连接、文件）管理器
@@ -58,11 +77,17 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     return new Promise<void>((resolve) => {
 
       for (const node of nodes) {
-        if (node.style.layer === 'normal')
-          foregroundNodes.value.push(node);
-        else if (node.style.layer === 'background')
-          backgroundNodes.value.push(node);
-        
+        switch(node.style.layer) {
+          case 'normal':
+            foregroundNodes.value.push(node);
+            break;
+          case 'background':
+            backgroundNodes.value.push(node);
+            break;
+          default:
+            printError(TAG, `Faild to add node: ${node.getName()} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
+            break;
+        }        
         allNodes.set(node.uid, node);
       }
 
@@ -113,60 +138,56 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     allConnectors.delete(connector.uid);
     //TODO: currentGraph.value?.connectors.remove(connector);
   }
+  /**
+   * 移除节点
+   * @param node 
+   */
+  function removeNode(node: NodeEditor, byUser: boolean) {
+    if (allNodes.has(node.uid)) {
+
+      //自定义检查回调
+      if (byUser) {
+        const err = node.events.onDeleteCheck?.(node, context.getCurrentGraph());
+        if (err) {
+          printWarning(
+            TAG,
+            `无法删除单元 ${node.define.name} ( ${node.uid}) : ${err}`
+          );
+          return false;
+        }
+      }
+
+      node.editorHooks.callbackOnRemoveFromEditor?.();
+
+      allNodes.delete(node.uid);
+      switch(node.style.layer) {
+        case 'normal':
+          ArrayUtils.remove(foregroundNodes.value, node);
+          break;
+        case 'background':
+          ArrayUtils.remove(backgroundNodes.value, node);
+          break;
+      }
+    }
+    return true;
+  }
 
   /**
-   * 用户添加单元
-   * @param define 单元定义
-   * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
+   * 标记当前图表已经被用户修改
    */
-  function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) {
-    //TODO: 检查单元是否只能有一个
-    // if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
-    //   DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + blockData.baseInfo.name + ' 了，此单元只能有一个', () => {});
-    //   return;
-    // }
-    //自定义检查回调
-    // if(typeof blockData.callbacks.onAddCheck == 'function') {
-    //   let err = blockData.callbacks.onAddCheck(blockData, this.currentGraph);
-    //   if(err != null) {
-    //     DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
-    //     return;
-    //   }
-    // }
-
-    let newNode = new NodeEditor(define);
-    if(addNodeInPos) { //在指定位置添加单元
-      newNode.position = addNodeInPos;
-      pushNodes(newNode)
-    } 
-    else { //在屏幕中央位置添加单元
-      const center = context.getViewPort().rect().calcCenter();
-      newNode.position = center;
-      pushNodes(newNode);
-    }
-
-    if(context.isConnectToNew()) { //添加单元并连接
-      const connectingEndPos = context.getConnectingInfo().endPos;
-      newNode.position = connectingEndPos;
-      pushNodes(newNode);
-
-      setTimeout(() => {
-        //重新定位单元位置至连接线末端位置
-        let port = context.endConnectToNew(newNode);
-        let pos = new Vector2();
-        pos.set((port as NodePortEditor).getPortPositionViewport());
-        pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
-        pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
-        newNode.position.set(pos);
-      }, 100);
-    } 
+  function markGraphChanged() {
+    
   }
 
   context.getConnectors = () => allConnectors;
   context.getNodes = () => allNodes;
   context.removeConnector = removeConnector;
   context.addConnector = addConnector;
-  context.userAddNode = userAddNode;
+  context.removeNode = removeNode;
+  context.addNodes = (nodes) => pushNodes(...nodes);
+  context.addNode = (node) => pushNodes(node);
+  context.getCurrentGraph = () => currentGraph.value as NodeGraph;
+  context.markGraphChanged = markGraphChanged;
 
   return {
     pushNodes,

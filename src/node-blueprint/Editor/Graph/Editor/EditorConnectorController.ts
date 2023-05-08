@@ -39,9 +39,9 @@ export interface NodeGraphEditorConnectorContext {
   endConnect: (port : NodePort) => void;
   getCanConnect: () => boolean;
   /**
-   * 
-   * @param start 
-   * @param end 
+   * 使用连接线连接两个节点。此函数无检查，直接创建连接
+   * @param start 开始节点
+   * @param end 结束节点
    * @returns 
    */
   connectConnector: (start : NodePort, end : NodePort) => NodeConnector|null;
@@ -105,6 +105,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   function connectorCast(mouseInfo: NodeGraphEditorMouseInfo) {
     const _mousePos = mouseInfo.mouseCurrentPosViewPort;
+    const _mousePosScreen = mouseInfo.mouseCurrentPosScreen;
 
     lastHoverConnector.forEach(i => (i.hoverChecked = false));
     context
@@ -112,7 +113,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       .testPointCastTag(_mousePos, "connector")
       .forEach((i) => {
         const connector = context.getConnectors().get(i.data as string) as NodeConnectorEditor;
-        if (connector && connector.testInConnector(_mousePos)) {
+        if (connector && connector.testInConnector(_mousePos, _mousePosScreen)) {
           connector.hoverChecked = true;
           connector.hover = true;
           ArrayUtils.addOnce(lastHoverConnector, connector);
@@ -136,7 +137,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         const connector = context
           .getConnectors()
           .get(pointCastConnectors[i].data as string) as NodeConnectorEditor;
-        if (connector && connector.testInConnector(_mousePos)) {
+        if (connector && connector.testInConnector(_mousePos, context.getMouseInfo().mouseCurrentPosScreen)) {
           connector.hoverChecked = true;
           connector.hover = true;
           context.selectConnector(connector, false);
@@ -511,6 +512,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       start = connector.startPort as NodePortEditor,
       end = connector.endPort as NodePortEditor;
 
+    context.unSelectConnector(connector);
     context.removeConnector(connector as NodeConnectorEditor);
 
     if (start != null && end != null) {

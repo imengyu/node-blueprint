@@ -36,27 +36,24 @@ export class NodeConnectorEditor extends NodeConnector {
 
   /**
    * 检查某个点是否在连接线上
-   * @param pos 要检查的点
-   * @param viewScale 视图缩放系数
+   * @param pos 要检查的点 (视口坐标)
+   * @param screenPos 要检查的点 (视口坐标)
    */
-  public testInConnector(pos : Vector2) : boolean {
-
-    if(!this.startPort || !this.endPort)
-      return false;
-
-    const startPos = (this.startPort as NodePortEditor).getPortPositionViewport();
-    const endPos = (this.endPort as NodePortEditor).getPortPositionViewport();
-    const x1 = startPos.x - 1, x2 = endPos.x + 2;
-
+  public testInConnector(pos: Vector2, screenPos: Vector2) : boolean {
+    const x1 = this.rect.x;
+    const x2 = this.rect.getRight();
     const xPec = (pos.x - x1) / (x2 - x1);
     if(xPec >= 0 && xPec <= 1) {
       const p = this.drawer.posData2;
       const pp = threeOrderBezier(xPec, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-      const o = Math.abs(pp[1] - (pos.y - startPos.y));
+      const o = Math.abs(pp[1] - screenPos.y);
       return o <= 20;
     }
     return false;
   }
+  /**
+   * 更新区位信息
+   */
   public updateRegion() : Rect {
     if(this.startPort && this.endPort) {
       this.startPos = (this.startPort as NodePortEditor).getPortPositionViewport();
@@ -70,6 +67,9 @@ export class NodeConnectorEditor extends NodeConnector {
     }
     return this.rect;
   }
+  /**
+   * 当端口类型更改之后，同步更新连接线颜色
+   */
   public updatePortValue() : void {
     if(this.startPort && this.endPort) {
       this.startColor = (this.startPort as NodePortEditor).getTypeColor();
@@ -97,7 +97,7 @@ export class NodeConnectorEditor extends NodeConnector {
 
     //鼠标悬浮时线加粗
     if(this.hover) ctx.lineWidth = 3;
-    else if(this.selected) ctx.lineWidth = 2.5;
+    else if(this.selected) ctx.lineWidth = 3;
     else ctx.lineWidth = 2;
 
     //移动线上的点

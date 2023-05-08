@@ -28,6 +28,7 @@ export class NodeEditor extends Node {
    * 钩子，仅供编辑器使用
    */
   public editorHooks = {
+    callbackUpdateNodeForMoveEnd: null as null|(() => void),
     callbackUpdateRegion: null as null|(() => void),
     callbackOnAddToEditor: null as null|(() => void),
     callbackOnRemoveFromEditor: null as null|(() => void),

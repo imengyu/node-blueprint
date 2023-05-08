@@ -1,5 +1,5 @@
 //单元
-.flow-block {
+.node-block {
   display: inline-block;
   position: absolute;
   cursor: default;
@@ -27,7 +27,7 @@
     border: 3px solid rgb(255, 74, 61);
   }
   &:hover {
-    .flow-block-comment-open {
+    .node-block-comment-open {
       display: inline-block;
     }
   }
@@ -153,14 +153,14 @@
 }
 
 //自定义编辑区域
-.flow-block-custom-editor {
+.node-block-custom-editor {
   position: relative;
   padding: 3px 0;
   white-space: nowrap;
   background-color: rgba(255, 255, 255, 0.266);
 }
 //
-.flow-block-base {
+.node-block-base {
   position: relative;    
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
@@ -172,7 +172,7 @@
 }
 
 //注释
-.flow-block-comment {
+.node-block-comment {
 
   position: absolute;
   font-size: 1.2rem;
@@ -206,7 +206,7 @@
     fill: #9e3300;
   }
 
-  .flow-block-comment-text {
+  .node-block-comment-text {
     display: inline-block;
     font-size: 0.8rem;
     min-width: 80px;
@@ -227,7 +227,7 @@
       border: 1px solid rgb(111, 161, 236);
     }
   }
-  .flow-block-comment-place-holder {
+  .node-block-comment-place-holder {
     position: absolute;
     left: 0;
     top: 0;
@@ -239,7 +239,7 @@
     font-size: 0.8rem;
   }
 }
-.flow-block-comment-open {
+.node-block-comment-open {
   position: absolute;
   font-size: 1rem;
   left: 15px;
@@ -260,14 +260,14 @@
   }
 }
 
-.flow-block-extended-line {
+.node-block-extended-line {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
   width: 30px;
   min-width: 0;
 
-  .flow-block-ports {
+  .node-block-ports {
     margin: 0!important;
 
     .left {
@@ -294,7 +294,7 @@
 }
 
 //端口容器
-.flow-block-ports {
+.node-block-ports {
   display: flex;
   flex-direction: row;
   justify-content: space-between;

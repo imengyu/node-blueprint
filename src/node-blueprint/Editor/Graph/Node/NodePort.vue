@@ -131,8 +131,8 @@ instance.value.getPortPositionRelative = function() {
   if (!dot)
     return dotPos;
   dotPos.set(
-    HtmlUtils.getLeft(dot, 'flow-block') + dot.offsetWidth / 2,  
-    HtmlUtils.getTop(dot, 'flow-block') + dot.offsetHeight / 2 + 4
+    HtmlUtils.getLeft(dot, 'node-block') + dot.offsetWidth / 2,  
+    HtmlUtils.getTop(dot, 'node-block') + dot.offsetHeight / 2 + 4
   );
   return dotPos;
 };
