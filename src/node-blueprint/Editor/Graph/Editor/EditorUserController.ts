@@ -248,6 +248,13 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   function updateNodeForMoveEnd(node: Node) {
     (node as NodeEditor).editorHooks.callbackUpdateNodeForMoveEnd?.();
   }
+  /**
+   * 移动视口至节点中心位置
+   * @param baseNode 
+   */
+  function moveViewportToNode(baseNode : Node) {
+    
+  }
 
   context.userAddNode = userAddNode;
   context.userDeleteNode = userDeleteNode;
@@ -257,6 +264,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.straightenConnector = straightenConnector;
   context.alignSelectedNode = alignSelectedNode;
   context.setSelectedNodeBreakpointState = setSelectedNodeBreakpointState;
+  context.moveViewportToNode = moveViewportToNode;
 
   return {
   }
