@@ -6,6 +6,7 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 
 export interface NodeEditorUserControllerContext {
   /**
@@ -19,7 +20,7 @@ export interface NodeEditorUserControllerContext {
    * @param node 
    * @returns 
    */
-  userDeleteNode(node: Node) : void;
+  userDeleteNode(node: NodeEditor) : void;
 
   /**
    * 删除选中连接线
@@ -43,18 +44,23 @@ export interface NodeEditorUserControllerContext {
    * @param connector 连接
    * @returns 
    */
-  straightenConnector(refPort : NodePort, connector : NodeConnector) : void;
+  straightenConnector(refPort : NodePortEditor, connector : NodeConnector) : void;
   /**
    * 对齐节点
    * @param baseNode 参考基准节点
    * @param align 对齐方向
    */
-  alignSelectedNode(baseNode : Node, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') : void;
+  alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') : void;
   /**
    * 移动视口至节点中心位置
    * @param baseNode 
    */
-  moveViewportToNode(baseNode : Node) : void;
+  moveViewportToNode(baseNode : NodeEditor) : void; 
+  /**
+   * 用户删除端口
+   * @param nodePort 
+   */
+  userDeletePort(nodePort: NodePortEditor) : void;
 }
 
 /**
@@ -95,12 +101,12 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param connector 连接
    * @returns 
    */
-  function straightenConnector(refPort : NodePort, connector : NodeConnector) {
+  function straightenConnector(refPort : NodePortEditor, connector : NodeConnectorEditor) {
 
     if(!connector.startPort || !connector.endPort)
       return;
 
-    const refPos = (refPort as NodePortEditor).getPortPositionViewport();
+    const refPos = refPort.getPortPositionViewport();
     let node : Node|null = null;
     let oldPos : Vector2|null = null;
 
@@ -126,9 +132,9 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param baseNode 参考基准节点
    * @param align 对齐方向
    */
-  function alignSelectedNode(baseNode : Node, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
+  function alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
     const selectedNodes = context.getSelectNodes();
-    const baseNodeSize = (baseNode as NodeEditor).getRealSize();
+    const baseNodeSize = baseNode.getRealSize();
     switch(align) {
       case 'left':
         selectedNodes.forEach((b) => {
@@ -145,7 +151,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       case 'center-x': {
         const center = baseNode.position.x + baseNodeSize.x / 2;
         selectedNodes.forEach((b) => {
-          b.position = (new Vector2(center + (b as NodeEditor).getRealSize().x / 2, b.position.y));
+          b.position = (new Vector2(center + b.getRealSize().x / 2, b.position.y));
           updateNodeForMoveEnd(b);
         });
         break;
@@ -153,7 +159,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       case 'center-y': {
         const center = baseNode.position.y + baseNodeSize.y / 2;
         selectedNodes.forEach((b) => {
-          b.position = (new Vector2(b.position.x, center + (b as NodeEditor).getRealSize().y / 2));
+          b.position = (new Vector2(b.position.x, center + b.getRealSize().y / 2));
           updateNodeForMoveEnd(b);
         });
         break;
@@ -186,14 +192,30 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
 
   /**
+   * 用户删除端口
+   * @param port 
+   */
+  function userDeletePort(port: NodePort) {
+    if (port.dyamicAdd) {
+      const parent = port.parent as NodeEditor;
+      parent.deletePort(port.guid);
+
+      for (let i = parent.connectors.length - 1; i >= 0; i--) {
+        const connector = parent.connectors[i];
+        if (connector.startPort === port || connector.endPort === port)
+          context.unConnectConnector(connector as NodeConnectorEditor);
+      }
+    }
+  }
+  /**
    * 用户删除单元
    * @param node 
    * @returns 
    */
-  function userDeleteNode(node: Node) {
+  function userDeleteNode(node: NodeEditor) {
     if (node.define.canNotDelete) 
       return false;
-    context.removeNode(node as NodeEditor, true);
+    context.removeNode(node, true);
     return true;
   }
   /**
@@ -202,19 +224,21 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
    */
   function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) {
-    //TODO: 检查单元是否只能有一个
-    // if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
-    //   DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + nodeData.baseInfo.name + ' 了，此单元只能有一个', () => {});
-    //   return;
-    // }
+    const currentGraph = context.getCurrentGraph();
+
+    //检查单元是否只能有一个
+    if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
+      //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + nodeData.baseInfo.name + ' 了，此单元只能有一个', () => {});
+      return;
+    }
     //自定义检查回调
-    // if(typeof nodeData.callbacks.onAddCheck == 'function') {
-    //   let err = nodeData.callbacks.onAddCheck(nodeData, this.currentGraph);
-    //   if(err != null) {
-    //     DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
-    //     return;
-    //   }
-    // }
+    if(typeof define.events?.onAddCheck == 'function') {
+      let err = define.events.onAddCheck(define, currentGraph);
+      if(err != null) {
+        //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
+        return;
+      }
+    }
 
     let newNode = new NodeEditor(define);
     if(addNodeInPos) { //在指定位置添加单元
@@ -236,7 +260,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         //重新定位单元位置至连接线末端位置
         let port = context.endConnectToNew(newNode);
         let pos = new Vector2();
-        pos.set((port as NodePortEditor).getPortPositionViewport());
+        pos.set(port!.getPortPositionViewport());
         pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
         pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
         newNode.position.set(pos);
@@ -252,12 +276,20 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * 移动视口至节点中心位置
    * @param baseNode 
    */
-  function moveViewportToNode(baseNode : Node) {
-    
+  function moveViewportToNode(node : Node) {
+    const size = (node as NodeEditor).getRealSize();
+    const viewPort = context.getViewPort();
+    const offset = new Vector2(
+      size.x / 2 - viewPort.size.x / 2, 
+      size.y / 2 - viewPort.size.y / 2, 
+    );
+    viewPort.scaleScreenSizeToViewportSize(offset);
+    viewPort.position = new Vector2(node.position).add(offset);
   }
 
   context.userAddNode = userAddNode;
   context.userDeleteNode = userDeleteNode;
+  context.userDeletePort = userDeletePort;
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

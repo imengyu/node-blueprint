@@ -25,7 +25,7 @@ export interface NodeParamTypeDefine {
   /**
    * object 继承类型
    */
-  inheritType: NodeParamType|null;
+  inheritType?: NodeParamType|null|undefined;
   /**
    * 默认值
    */
@@ -34,6 +34,10 @@ export interface NodeParamTypeDefine {
    * 当此类型是 enum 时，是否自动创建转换器 
    */
   autoCreateEnumConverter?: boolean;
+  /**
+   * 当此类型是 enum 时，给出用户可选的选项
+   */
+  options?: unknown[]; 
   /**
    * [Editor only] Type color
    */
@@ -49,7 +53,7 @@ export interface NodeParamTypeDefine {
   /**
    * [Editor only] Title of this type
    */
-  typeGenericNameMerger: (genericNames: string[]) => string;
+  typeGenericNameMerger?: (genericNames: string[]) => string;
   /**
    * 编辑器：编辑器
    */
@@ -72,6 +76,14 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
   constructor() {
     super('NodeParamType');
     this.serializableProperties = [];
+  }
+
+  /**
+   * 从名称获取类型实例
+   * @param typeString 
+   */
+  public static FromString(typeString: string) {
+    return NodeParamTypeRegistry.getInstance().getTypeByString(typeString) as NodeParamType;
   }
 
   /**

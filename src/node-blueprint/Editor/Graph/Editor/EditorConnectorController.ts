@@ -33,10 +33,10 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   getConnectingInfo: () => IConnectingInfo;
-  updateCurrentHoverPort: (port : NodePort, active : boolean) => void,
+  updateCurrentHoverPort: (port : NodePortEditor, active : boolean) => void,
   updateConnectEnd: (pos : Vector2) => void;
-  startConnect: (port : NodePort) => void;
-  endConnect: (port : NodePort) => void;
+  startConnect: (port : NodePortEditor) => void;
+  endConnect: (port : NodePortEditor) => void;
   getCanConnect: () => boolean;
   /**
    * 使用连接线连接两个节点。此函数无检查，直接创建连接
@@ -44,26 +44,26 @@ export interface NodeGraphEditorConnectorContext {
    * @param end 结束节点
    * @returns 
    */
-  connectConnector: (start : NodePort, end : NodePort) => NodeConnector|null;
-  endConnectToNew: (node?: Node) => NodePort|null;
+  connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
+  endConnectToNew: (node?: NodeEditor) => NodePortEditor|null;
   /**
    * 断开连接线
    * @param conn 
    * @returns 
    */
-  unConnectConnector: (conn : NodeConnector) => void;
+  unConnectConnector: (conn : NodeConnectorEditor) => void;
   /**
    * 取消当前端口上的所有连接线
    * @param port 
    * @returns 
    */
-  unConnectPortConnectors: (port: NodePort) => void;
+  unConnectPortConnectors: (port: NodePortEditor) => void;
   /**
    * 取消当前节点上的所有连接线
    * @param node 
    * @returns 
    */
-  unConnectNodeConnectors: (node: Node) => void;
+  unConnectNodeConnectors: (node: NodeEditor) => void;
 }
 
 
@@ -75,8 +75,8 @@ export interface IConnectingInfo {
   isConnectingToNew: boolean,
   isFail: boolean,
   isSamePort: boolean,
-  startPort: null|NodePort,
-  currentHoverPort: null|NodePort,
+  startPort: null|NodePortEditor,
+  currentHoverPort: null|NodePortEditor,
   endPos: Vector2,
   canConnect: boolean,
   shouldAddConverter: boolean,
@@ -198,7 +198,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }) as IConnectingInfo;
 
   //更新当前鼠标激活的端口
-  function updateCurrentHoverPort(port : NodePort, active : boolean) {
+  function updateCurrentHoverPort(port : NodePortEditor, active : boolean) {
     if(active) {
       connectingInfo.currentHoverPort = port;
       connectingInfo.shouldAddConverter = false;
@@ -370,14 +370,14 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     return connectingInfo.canConnect; 
   }
   //结束连接（连接至新的单元）
-  function endConnectToNew(node?: Node) : NodePort|null {
-    let port : NodePort|null = null;
+  function endConnectToNew(node?: Node) : NodePortEditor|null {
+    let port : NodePortEditor|null = null;
 
     //如果已选单元，则连接至这个单元
     if(typeof node != 'undefined' && connectingInfo.otherSideRequireType) {
-      port = node.getPortByTypeAndDirection(connectingInfo.otherSideRequireType, connectingInfo.otherSideRequireDirection, true);
-      if(port != null)
-        context.connectConnector(connectingInfo.startPort as NodePort, port);
+      port = node.getPortByTypeAndDirection(connectingInfo.otherSideRequireType, connectingInfo.otherSideRequireDirection, true) as NodePortEditor;
+      if(port != null && connectingInfo.startPort != null)
+        context.connectConnector(connectingInfo.startPort, port);
 
       connectingInfo.otherSideRequireType = null;
     }
@@ -435,7 +435,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       //如果已经链接上了，取消链接
       const connData = endPort.isConnectByPort(startPort);
       if (connData != null) {
-        unConnectConnector(connData);
+        unConnectConnector(connData as NodeConnectorEditor);
         connectingInfo.isConnecting = false;
         return null;
       }
@@ -447,13 +447,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         startPort.define.paramType.isExecute &&
         startPort.connectedToPort.length >= 0
       )
-        startPort.connectedToPort.forEach((d) => unConnectConnector(d));
+        startPort.connectedToPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
       //如果是参数端口，只能输入一条线路。取消连接之前的线路
       if (
         !startPort.define.paramType.isExecute &&
         endPort.connectedFromPort.length >= 0
       )
-        endPort.connectedFromPort.forEach((d) => unConnectConnector(d));
+        endPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
 
       startPort.connectedToPort.push(connector);
       startPort.state = "active";
@@ -468,7 +468,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       //如果已经链接上了，取消链接
       const connData = startPort.isConnectByPort(endPort);
       if (connData != null) {
-        unConnectConnector(connData);
+        unConnectConnector(connData as NodeConnectorEditor);
         connectingInfo.isConnecting = false;
         return null;
       }
@@ -477,13 +477,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       //如果是行为端口，只能输出一条线路。
       if (endPort.define.paramType.isExecute && endPort.connectedToPort.length > 0)
-        endPort.connectedToPort.forEach((d) => unConnectConnector(d));
+        endPort.connectedToPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
       //如果是参数端口，只能输入一条线路。
       if (
         !startPort.define.paramType.isExecute &&
         startPort.connectedFromPort.length > 0
       )
-        startPort.connectedFromPort.forEach((d) => unConnectConnector(d));
+        startPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
 
       endPort.connectedToPort.push(connector);
       endPort.state = "active";
@@ -507,13 +507,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
    * 取消连接单元
    * @param conn 对应连接
    */
-  function unConnectConnector(connector: NodeConnector) {
+  function unConnectConnector(connector: NodeConnectorEditor) {
     const
       start = connector.startPort as NodePortEditor,
       end = connector.endPort as NodePortEditor;
 
     context.unSelectConnector(connector);
-    context.removeConnector(connector as NodeConnectorEditor);
+    context.removeConnector(connector );
 
     if (start != null && end != null) {
 
@@ -527,15 +527,15 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
   }
   //删除端口连接
-  function unConnectPortConnectors(port: NodePort) {
+  function unConnectPortConnectors(port: NodePortEditor) {
     for (let i = port.connectedFromPort.length - 1; i >= 0; i--) 
-      unConnectConnector(port.connectedFromPort[i]);
+      unConnectConnector(port.connectedFromPort[i] as NodeConnectorEditor);
     for (let i = port.connectedToPort.length - 1; i >= 0; i--) 
-      unConnectConnector(port.connectedToPort[i]);
+      unConnectConnector(port.connectedToPort[i] as NodeConnectorEditor);
   }
   //删除单元连接
-  function unConnectNodeConnectors(block: Node) {
-    block.ports.forEach((p) => unConnectPortConnectors(p));
+  function unConnectNodeConnectors(node: NodeEditor) {
+    node.ports.forEach((p) => unConnectPortConnectors(p as NodePortEditor));
   }
   //获取用户现在是否处于连接至新节点状态中
   function isConnectToNew() {

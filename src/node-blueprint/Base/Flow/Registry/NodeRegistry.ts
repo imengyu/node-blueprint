@@ -53,7 +53,6 @@ export class NodeRegistry extends Singleton {
   /**
    * 注册单元
    * @param nodeDef 单元信息
-   * @param pack 单元包
    * @param updateList 是否刷新列表
    */
   public registerNode(nodeDef: INodeDefine, updateList = true) : void {
@@ -74,6 +73,15 @@ export class NodeRegistry extends Singleton {
       hideInAddPanel: nodeDef.hideInAddPanel ?? false,
       categoryObject: null,
     });
+    if (updateList) this.updateNodesList();
+  }
+  /**
+   * 注册单元
+   * @param nodeDefs 单元信息
+   * @param updateList 是否刷新列表
+   */
+  public registerNodes(nodeDefs: INodeDefine[], updateList = true) : void {
+    nodeDefs.forEach(n => this.registerNode(n), false);
     if (updateList) this.updateNodesList();
   }
   /**

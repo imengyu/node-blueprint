@@ -1,5 +1,6 @@
 import { EventHandler } from "../../Utils/Events/EventHandler";
 import { printWarning } from "../../Utils/Logger/DevLog";
+import RandomUtils from "../../Utils/RandomUtils";
 import { Singleton } from "../../Utils/Singleton/Singleton";
 import { registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
@@ -20,6 +21,7 @@ export class NodeParamTypeRegistry extends Singleton {
   }
 
   private allTypes : Map<string, NodeParamType> = new Map<string, NodeParamType>();
+  private allConverter : Map<string, NodeTypeCoverter> = new Map<string, NodeTypeCoverter>();
 
   /**
    * 从字符串获取类型实例
@@ -42,7 +44,7 @@ export class NodeParamTypeRegistry extends Singleton {
 
     const newType = new NodeParamType();
     newType.baseType = define.baseType;
-    newType.inheritType = define.inheritType;
+    newType.inheritType = define.inheritType || null;
     newType.define = define;
 
     const cotLeft = defString.indexOf('<');
@@ -86,17 +88,54 @@ export class NodeParamTypeRegistry extends Singleton {
   }
 
   /**
-   * TODO: 获取类型转换器
+   * 获取类型转换器
    * @param fromType 源类型
-   * @param endType 目标类型
+   * @param toType 目标类型
    * @returns 
    */
-  public getTypeCoverter(fromType: NodeParamType, endType: NodeParamType) {
-    return null;
+  public getTypeCoverter(fromType: NodeParamType, toType: NodeParamType) : NodeTypeCoverter|null {
+    if(fromType.isExecute || toType.isExecute) 
+      return null;
+    let from = fromType.toString();
+    let to = toType.toString();
+    return this.allConverter.get(from + '-' + to) || null;
+  }
+  /**
+   * 注册类型转换器
+   * @param options 
+   */
+  public registerTypeCoverter(converter: NodeTypeCoverter) {
+    const key = converter.fromType.toString() + '-' + converter.toType.toString();
+    this.allConverter.set(key, converter)
+    return key;
+  }
+  /**
+   * 注册类型转换器
+   * @param key 注册时返回的键
+   */
+  public unRegisterTypeCoverter(key: string) {
+    this.allConverter.delete(key);
   }
 
   /**
    * 当系统类型注册或者移除时触发次事件
    */
   public onTypeChanged = new EventHandler<(act : 'add'|'remove', typeName ?: string, reg ?: NodeParamTypeDefine) => void>();
+}
+
+export interface NodeTypeCoverter {
+  /**
+   * 源类型
+   */
+  fromType : NodeParamType,
+  /**
+   * 目标类型
+   */
+  toType : NodeParamType,
+  /**
+   * 
+   * @param source 转换器函数
+   * @returns 
+   */
+  converter : (source : any) => any;
 }

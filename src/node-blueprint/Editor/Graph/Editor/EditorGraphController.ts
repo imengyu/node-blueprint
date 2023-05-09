@@ -14,11 +14,11 @@ export interface NodeGraphEditorGraphControllerContext {
   /**
    * 获取节点
    */
-  getNodes(): Map<string, Node>;
+  getNodes(): Map<string, NodeEditor>;
   /**
    * 获取连接线
    */
-  getConnectors(): Map<string, NodeConnector>;  
+  getConnectors(): Map<string, NodeConnectorEditor>;  
   /**
     * 添加节点至当前图表中
     * @param nodes 

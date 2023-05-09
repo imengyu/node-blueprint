@@ -5,11 +5,13 @@ import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodeEditor } from "../Flow/NodeEditor";
+import type { NodePortEditor } from "../Flow/NodePortEditor";
+import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 
 export interface NodeEditorContextMenuContext {
   /**
    * 显示连接线右键菜单
-   * @param screenPos 
+   * @param screenPos 屏幕坐标
    */
   showConnectorRightMenu(screenPos : Vector2) : void;
   /**
@@ -17,6 +19,22 @@ export interface NodeEditorContextMenuContext {
    * @param options 右键菜单参数，具体请参考 https://github.com/imengyu/vue3-context-menu
    */
   showContextMenu(options: MenuOptions) : void;
+  /**
+   * 显示节点对应右键菜单
+   * @param node 节点
+   * @param screenPos 屏幕坐标
+   */
+  showNodeRightMenu(node: NodeEditor, screenPos : Vector2) : void;
+  /**
+   * 显示端口对应右键菜单
+   * @param port 端口
+   * @param screenPos 屏幕坐标
+   */
+  showPortRightMenu(port : NodePortEditor, screenPos : Vector2)  : void;
+}
+
+export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
+  onClick?: (this: NodeEditor) => void;
 }
 
 /**
@@ -33,6 +51,9 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     //选中连接线，弹出连接线菜单
     if (context.isAnyConnectorHover())
       showConnectorRightMenu(new Vector2(e.x, e.y));
+    //鼠标未移动，则显示添加界面
+    else if (!context.getMouseInfo().mouseMoved)
+      context.showAddNodePanel(new Vector2(e.x, e.y));
   }
 
   //Connector Menu
@@ -48,10 +69,25 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       x: screenPos.x,
       y: screenPos.y,
       items: [
-        { label: "断开连接", onClick: () => context.deleteSelectedConnectors() },
+        { 
+          label: "断开连接", 
+          onClick: () => context.deleteSelectedConnectors()
+        },
       ].concat(selectedConnectors.length == 1 ? [
-        { label: "按起始端位置拉直", onClick: () => context.straightenConnector(selectedConnectors[0].startPort as NodePort, selectedConnectors[0]) },
-        { label: "按结束端位置拉直", onClick: () => context.straightenConnector(selectedConnectors[0].endPort as NodePort, selectedConnectors[0]) },
+        { 
+          label: "按起始端位置拉直",
+          onClick: () => {
+            if (selectedConnectors[0].startPort)
+              context.straightenConnector(selectedConnectors[0].startPort as NodePortEditor, selectedConnectors[0]) 
+          },
+        },
+        { 
+          label: "按结束端位置拉直", 
+          onClick: () => {
+            if (selectedConnectors[0].endPort)
+              context.straightenConnector(selectedConnectors[0].endPort as NodePortEditor, selectedConnectors[0]) 
+          },
+        },
       ] : []),
       zIndex: 100,
       theme: 'flat dark',
@@ -59,17 +95,17 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   }
 
   //Node Menu
-  function showNodeRightMenu(node: Node, screenPos : Vector2) {
+  function showNodeRightMenu(node: NodeEditor, screenPos : Vector2) {
 
     const selectedCount = context.getSelectNodeCount();
     const selectedNodes = context.getSelectNodes();
 
-    let nodeMenuSettingsMenuItems : MenuItem[]|null = null;
+    let nodeMenuSettingsMenuItems : NodeContextMenuItem[]|null = null;
 
     if(selectedCount == 1) {
-      nodeMenuSettingsMenuItems = selectedNodes[0].define.menu.items;
+      nodeMenuSettingsMenuItems = selectedNodes[0].define.menu?.items || [];
 
-      const loopMenuClick = (items : MenuItem[]) => {
+      const loopMenuClick = (items : NodeContextMenuItem[]) => {
         items.forEach((item) => {
           if(item.children) 
             loopMenuClick(item.children);
@@ -84,8 +120,8 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       loopMenuClick(nodeMenuSettingsMenuItems);
     }
 
-    const menuItems = (selectedCount == 1 ? selectedNodes[0].define.menu.items : []).concat(
-      <MenuItem[]>[
+    const menuItems = (selectedCount == 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
+      [
         { label: "删除", onClick: () => context.deleteSelectedNodes(), divided: true },
         { label: "剪切", onClick: () => {/*TODO:剪贴板 this.clipboardCutSelect()*/} },
         { label: "复制", onClick: () => {/*TODO:剪贴板 (this.clipboardCopySelect()*/} },
@@ -108,7 +144,11 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           { label: "启用", onClick: () => context.setSelectedNodeBreakpointState('enable') },
           { label: "禁用", onClick: () => context.setSelectedNodeBreakpointState('disable') },
         ], divided: true },
-        { label: "为选中项创建注释", disabled: selectedCount < 2,  onClick: () => context.genCommentForSelectedNode() },
+        { 
+          label: "为选中项创建注释", 
+          disabled: selectedCount < 2,
+          onClick: () => {/*TODO: context.genCommentForSelectedNode() */} 
+        },
       ]
     );
 
@@ -117,11 +157,11 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       y: screenPos.y,
       items: menuItems,
       zIndex: 100,
-      customClass: 'menu-context',
+      theme: 'flat dark',
     });
   }
   //Port Menu
-  function showPortRightMenu(port : NodePort, screenPos : Vector2) {
+  function showPortRightMenu(port : NodePortEditor, screenPos : Vector2) {
     const addCoonItem = (connector : NodeConnector, isUp : boolean) => {
       const currentPort = (isUp ? connector.startPort : connector.endPort) as NodePort;
       menuJumpItems.push({ label: (isUp ? '上' : '下') + '级连接 ' + currentPort.parent.define.name, children: [
@@ -134,7 +174,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
               node.twinkle();
             }
           },
-          { label: '断开连接', onClick: () => context.unConnectConnector(connector) },
+          { label: '断开连接', onClick: () => context.unConnectConnector(connector as NodeConnectorEditor) },
           { label: '拉直连接', onClick: () => context.straightenConnector(port, connector) }
         ] 
       });
@@ -148,7 +188,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     let menuItems : Array<MenuItem> = [
       { 
         label: "删除参数", onClick: () => {
-          context.onDeletPort(port);
+          context.userDeletePort(port);
         }, 
         disabled: !port.dyamicAdd, 
         divided: true 
@@ -170,11 +210,12 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       y: screenPos.y,
       items: menuItems,
       zIndex: 100,
-      customClass: 'menu-context',
+      theme: 'flat dark',
     });
   }
 
-
+  context.showNodeRightMenu = showNodeRightMenu;
+  context.showPortRightMenu = showPortRightMenu;
   context.showContextMenu = showContextMenu;
   context.showConnectorRightMenu = showConnectorRightMenu;
 

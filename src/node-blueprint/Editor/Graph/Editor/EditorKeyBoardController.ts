@@ -1,3 +1,4 @@
+import { onBeforeUnmount, onMounted } from "vue";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
@@ -27,7 +28,7 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
   let keyControlDown = false;
   let keyAltDown = false;
 
-  function onKeyDown(e : KeyboardEvent) {
+  function onKeyDown(e : KeyboardEvent) {    
     if(HtmlUtils.isEventInControl(e))
       return;
     switch(e.code) {
@@ -58,14 +59,25 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
         else if(keyControlDown) context.selectAllNodes();
         break;
       case 'Delete': 
-        /* TODO:  if(keyAltDown) editor.deleteSelectedConnectors();
-        else editor.deleteSelectedBlocks(); */
+        if(keyAltDown)
+          context.deleteSelectedConnectors();
+        else 
+          context.deleteSelectedNodes();
         break;
     }
   }
 
   context.isKeyAltDown = () => keyAltDown;
   context.isKeyControlDown = () => keyControlDown;
+
+  onMounted(() => {
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+  });
+  onBeforeUnmount(() => {
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup', onKeyUp);
+  });
 
   return {
     onKeyDown,

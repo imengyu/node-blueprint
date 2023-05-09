@@ -7,6 +7,7 @@ import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
 import type { NodeParamType } from "../Type/NodeParamType";
 import type { NodeGraph } from "../Graph/NodeGraph";
+import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
 
 const TAG = 'Node';
 
@@ -30,6 +31,7 @@ export class Node extends SerializableObject<INodeDefine> {
       ports: 'NodePort',
       style: 'NodeStyleSettings',
       events: 'NodeEventSettings',
+      simulate: 'NodeSimulateSettings',
     };
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
     this.load(define);
@@ -200,6 +202,187 @@ export class Node extends SerializableObject<INodeDefine> {
 
 export type NodeBreakPoint = 'none'|'disable'|'enable';
 
+
+/**
+ * 节点定义
+ */
+export interface INodeDefine {
+  /**
+   * 唯一ID
+   */
+  guid : string,
+  /**
+   * 版本号
+   */
+  version : number,
+  /**
+   * 作者
+   */
+  author ?: string;
+  /**
+   * 名称
+   */
+  name : string,
+  /**
+   * 说明文字
+   */
+  description ?: string,
+  /**
+   * 单元分组路径，使用 / 分隔一级，例如 基础/定时器
+   */
+  category ?: string,
+  /**
+   * 单元的预定义端口
+   */
+  ports ?: Array<INodePortDefine>,
+  /**
+   * [仅编辑器可用] 指定这个单元是不是在用户添加菜单中隐藏。默认为 false
+   */
+  hideInAddPanel ?: boolean;
+  /**
+   * 单元模拟设置
+   */
+  simulate ?: INodeSimulateSettings;
+  /**
+   * [仅编辑器可用] 指定这个单元在每个图表中是否只能出现一次。默认为 false
+   */
+  oneNodeOnly ?: boolean;
+  /**
+   * [仅编辑器可用] 指定这个单元是基础单元，不能被用户移除。默认为 false
+   */
+  canNotDelete ?: boolean;
+  /**
+   * [仅编辑器可用] 指示用户是否可以手动添加入执行端口。默认为 false
+   */
+  userCanAddInputExecute ?: boolean;
+  /**
+   * [仅编辑器可用] 指示用户是否可以手动添加出执行端口。默认为 false
+   */
+  userCanAddOutputExecute ?: boolean;
+  /**
+   * [仅编辑器可用] 指示用户是否可以手动添加入参数端口。默认为 false
+   */
+  userCanAddInputParam ?: boolean;
+  /**
+   * [仅编辑器可用] 指示用户是否可以手动添加出参数端口。默认为 false
+   */
+  userCanAddOutputParam ?: boolean;
+  /**
+   * [仅编辑器可用] 单元的自定义样式设置
+   */
+  style ?: INodekStyleSettings;
+  /**
+   * [仅编辑器可用] 单元的自定义事件控制
+   */
+  events ?: INodeEventSettings;
+  /**
+   * [仅编辑器可用] 单元的右键菜单操作
+   */
+  menu ?: { items: NodeContextMenuItem[] },
+}
+
+export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
+export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
+export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
+
+/**
+ * 单元自定义事件设置
+ */
+export interface INodeEventSettings {
+  /**
+   * 单元初始化时的回调。
+   * 通常在这个回调里面进行单元初始化的一些工作.
+   */
+  onCreate ?: NodeEventCallback,
+  /**
+   * 单元释放时(删除)的回调。
+   */
+  onDestroy ?: NodeEventCallback,
+  /**
+   * 单元加载到编辑器中时的回调。
+   */
+  onAddToEditor ?: NodeEventCallback,
+  /**
+   * 单元从编辑器中卸载时的回调。（不是删除）
+   */
+  onRemoveFormEditor ?: NodeEventCallback,
+  /**
+   * 用户添加了一个端口时的回调。
+   */
+  onPortAdd ?: NodePortEventCallback,
+  /**
+   * 用户删除了一个端口时的回调。
+   */
+  onPortRemove ?: NodePortEventCallback,
+  /**
+   * 自定义检查回调，在用户添加某个单元至图表中时触发。
+   * @param node 当前用户添加的某个单元
+   * @param graph 添加目标图表
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
+   */
+  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
+  /**
+   * 自定义检查回调，在用户删除某个单元至图表中时触发。
+   * @param node 当前用户删除的某个单元
+   * @param graph 删除目标图表
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
+   */
+  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
+  /**
+   * 自定义检查回调，在用户连接单元两个端口时触发。
+   * @param node 当前用户操作的单元
+   * @param startPort 起始端口
+   * @param endPort 结束端口
+   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续连接。
+   */
+  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
+  /**
+   * 弹性端口连接时触发。
+   * @param node 当前用户操作的单元
+   * @param thisPort 当前端口
+   * @param anotherPort 另外一个端口
+   */
+  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  /**
+   * 在用户连接端口时触发。
+   * @param node 当前用户操作的单元
+   * @param port 当前端口
+   */
+  onPortConnect ?: NodePortEventCallback;
+  /**
+   * 在用户断开端口的连接时触发。
+   * @param node 当前用户操作的单元
+   * @param port 当前端口
+   */
+  onPortUnConnect ?: NodePortEventCallback;
+}
+/**
+ * 单元自定义事件设置
+ */
+export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
+  constructor(define?: INodeEventSettings) {
+    super('NodeEventSettings', define);
+    this.serializableProperties = [ 'all' ];
+  }
+
+  onCreate ?: NodeEventCallback;
+  onDestroy ?: NodeEventCallback;
+  onAddToEditor ?: NodeEventCallback;
+  onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
+    direction : NodePortDirection,
+    type : 'execute'|'param',
+  }>;
+  onRemoveFormEditor ?: NodeEventCallback;
+  onPortAdd ?: NodePortEventCallback;
+  onPortRemove ?: NodePortEventCallback;
+  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
+  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
+  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
+  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  onPortConnect ?: NodePortEventCallback;
+  onPortUnConnect ?: NodePortEventCallback;
+}
+
 /**
  * 单元样式设置
  */
@@ -321,166 +504,32 @@ export class NodeStyleSettings extends SerializableObject<INodekStyleSettings> {
 }
 
 /**
- * 节点定义
+ * 单元模拟运行设置
  */
-export interface INodeDefine {
+export interface INodeSimulateSettings {
   /**
-   * 唯一ID
+   * 当图表开始运行
    */
-  guid : string,
+  onStartRun ?: NodeEventCallback,
   /**
-   * 版本号
+   * 单元工作处理函数。入方向的执行端口激活时的回调。
+   * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
    */
-  version : number,
+  onPortExecuteIn ?: NodePortEventCallback,
   /**
-   * 名称
+   * 单元端口更新处理函数。
+   * 下一级单元请求本单元输出参数时发生的回调。
+   * 返回：
+   * 在此回调中直接返回参数。如果本单元存在运行上下文，可直接设置出端口参数。
    */
-  name : string,
-  /**
-   * 说明文字
-   */
-  description ?: string,
-  /**
-   * 单元分组路径，使用 / 分隔一级，例如 基础/定时器
-   */
-  category ?: string,
-  /**
-   * 单元的预定义端口
-   */
-  ports ?: Array<INodePortDefine>,
-  /**
-   * 指定这个单元是不是在用户添加菜单中隐藏。默认为 false
-   */
-  hideInAddPanel ?: boolean;
-  /**
-   * 指定这个单元在每个图表中是否只能出现一次。默认为 false
-   */
-  oneNodeOnly ?: boolean;
-  /**
-   * 指定这个单元是基础单元，不能被用户移除。默认为 false
-   */
-  canNotDelete ?: boolean;
-  /**
-   * 指示用户是否可以手动添加入执行端口。默认为 false
-   */
-  userCanAddInputExecute ?: boolean;
-  /**
-   * 指示用户是否可以手动添加出执行端口。默认为 false
-   */
-  userCanAddOutputExecute ?: boolean;
-  /**
-   * 指示用户是否可以手动添加入参数端口。默认为 false
-   */
-  userCanAddInputParam ?: boolean;
-  /**
-   * 指示用户是否可以手动添加出参数端口。默认为 false
-   */
-  userCanAddOutputParam ?: boolean;
-  /**
-   * 单元的自定义样式设置
-   */
-  style ?: INodekStyleSettings;
-
-
-}
-
-export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
-export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
-
-/**
- * 单元自定义事件设置
- */
-export interface INodeEventSettings {
-  /**
-   * 单元初始化时的回调。
-   * 通常在这个回调里面进行单元初始化的一些工作.
-   */
-  onCreate ?: NodeEventCallback,
-  /**
-   * 单元释放时(删除)的回调。
-   */
-  onDestroy ?: NodeEventCallback,
-  /**
-   * 单元加载到编辑器中时的回调。
-   */
-  onAddToEditor ?: NodeEventCallback,
-  /**
-   * 单元从编辑器中卸载时的回调。（不是删除）
-   */
-  onRemoveFormEditor ?: NodeEventCallback,
-  /**
-   * 用户添加了一个端口时的回调。
-   */
-  onPortAdd ?: NodePortEventCallback,
-  /**
-   * 用户删除了一个端口时的回调。
-   */
-  onPortRemove ?: NodePortEventCallback,
-  /**
-   * 自定义检查回调，在用户添加某个单元至图表中时触发。
-   * @param node 当前用户添加的某个单元
-   * @param graph 添加目标图表
-   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
-   */
-  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
-  /**
-   * 自定义检查回调，在用户删除某个单元至图表中时触发。
-   * @param node 当前用户删除的某个单元
-   * @param graph 删除目标图表
-   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续添加。
-   */
-  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
-  /**
-   * 自定义检查回调，在用户连接单元两个端口时触发。
-   * @param node 当前用户操作的单元
-   * @param startPort 起始端口
-   * @param endPort 结束端口
-   * @return 返回一个字符串信息表示错误信息；返回null表示无错误，用户可以继续连接。
-   */
-  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
-  /**
-   * 弹性端口连接时触发。
-   * @param node 当前用户操作的单元
-   * @param thisPort 当前端口
-   * @param anotherPort 另外一个端口
-   */
-  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
-  /**
-   * 在用户连接端口时触发。
-   * @param node 当前用户操作的单元
-   * @param port 当前端口
-   */
-  onPortConnect ?: NodePortEventCallback;
-  /**
-   * 在用户断开端口的连接时触发。
-   * @param node 当前用户操作的单元
-   * @param port 当前端口
-   */
-  onPortUnConnect ?: NodePortEventCallback;
+  onPortParamRequest ?: NodePortRequestCallback,
 }
 /**
  * 单元自定义事件设置
  */
-export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
-  constructor(define?: INodeEventSettings) {
-    super('NodeEventSettings', define);
+export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
+  constructor(define?: INodeSimulateSettings) {
+    super('NodeSimulate', define);
     this.serializableProperties = [ 'all' ];
   }
-
-  onCreate ?: NodeEventCallback;
-  onDestroy ?: NodeEventCallback;
-  onAddToEditor ?: NodeEventCallback;
-  onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
-    direction : NodePortDirection,
-    type : 'execute'|'param',
-  }>;
-  onRemoveFormEditor ?: NodeEventCallback;
-  onPortAdd ?: NodePortEventCallback;
-  onPortRemove ?: NodePortEventCallback;
-  onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
-  onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
-  onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
-  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
-  onPortConnect ?: NodePortEventCallback;
-  onPortUnConnect ?: NodePortEventCallback;
 }

@@ -18,7 +18,7 @@ export interface NodeGraphEditorSelectionContext {
    * 获取所有选中的节点
    * @returns 
    */
-  getSelectNodes: () => Node[];
+  getSelectNodes: () => NodeEditor[];
   /**
    * 获取选中的节点数量
    * @returns 
@@ -28,7 +28,7 @@ export interface NodeGraphEditorSelectionContext {
    * 获取选中的连接线
    * @returns 
    */
-  getSelectConnectors: () => NodeConnector[];
+  getSelectConnectors: () => NodeConnectorEditor[];
 
   /**
    * 选中当前编辑器中所有的节点
@@ -55,28 +55,28 @@ export interface NodeGraphEditorSelectionContext {
    * @param nodes 
    * @param append 是否是追加选择，否则将会清空之前的选择
    */
-  selectSomeNodes(nodes: Node[], append?: boolean): void;
+  selectSomeNodes(nodes: NodeEditor[], append?: boolean): void;
   /**
    * 取消选中某个连接线
    * @param connector 
    */
-  unSelectConnector(connector: NodeConnector): void;
+  unSelectConnector(connector: NodeConnectorEditor): void;
   /**
    * 取消选中某个节点
    */
-  unSelectNode(node: Node): void;
+  unSelectNode(node: NodeEditor): void;
   /**
    * 选中某个节点
    * @param node 节点
    * @param append 是否是追加选择，否则将会清空之前的选择
    */
-  selectNode(node: Node, append?: boolean): void;
+  selectNode(node: NodeEditor, append?: boolean): void;
   /**
    * 选中某个连接线
    * @param connector 连接线
    * @param append 是否是追加选择，否则将会清空之前的选择
    */
-  selectConnector(connector: NodeConnector, append?: boolean): void;
+  selectConnector(connector: NodeConnectorEditor, append?: boolean): void;
 
   /**
    * 获取当前用户是否正在多选操作
@@ -185,8 +185,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   /**
    * 取消选中某个单元
    */
-  function unSelectNode(n: Node) {
-    const node = n as NodeEditor;
+  function unSelectNode(node: NodeEditor) {
     ArrayUtils.remove(selectNodes.value, node);
     node.selected = false;
     notifySelectNodeChanged();
@@ -195,21 +194,27 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 选中某个单元
    * @param append 是否是追加选择，否则将会清空之前的选择
    */
-  function selectNode(n: Node, append = false) {
-    const node = n as NodeEditor;
-    if (append)
-      ArrayUtils.addOnce(selectNodes.value, node);
+  function selectNode(node: NodeEditor, append = false) {
+    if (append) {
+      if (selectNodes.value.includes(node)) {
+        ArrayUtils.remove(selectNodes.value, node);
+        node.selected = false;
+      }
+      else {
+        selectNodes.value.push(node);
+        node.selected = true;
+      }
+    }
     else {
       unSelectAllNodes();
       unSelectAllConnectors();
       selectNodes.value.push(node);
+      node.selected = true;
     }
-    node.selected = true;
     notifySelectNodeChanged();
   }
   //选择指定的单元
-  function selectSomeNodes(ns: Node[], append = false) {
-    const nodes = ns as NodeEditor[];
+  function selectSomeNodes(nodes: NodeEditor[], append = false) {
     if (append) {
       nodes.forEach(node => {
         ArrayUtils.addOnce(selectNodes.value, node);
@@ -313,8 +318,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   /**
    * 取消选中某个连接线
    */
-  function unSelectConnector(c: NodeConnector) {  
-    const connector = c as NodeConnectorEditor;
+  function unSelectConnector(connector: NodeConnectorEditor) {  
     ArrayUtils.remove(selectConnectors.value, connector);
     connector.selected = false;
 
@@ -324,8 +328,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 选中某个连接线
    * @param append 是否是追加选择，否则将会清空之前的选择
    */
-  function selectConnector(c: NodeConnector, append = false) { 
-    const connector = c as NodeConnectorEditor;
+  function selectConnector(connector: NodeConnectorEditor, append = false) { 
     if (append)
       ArrayUtils.addOnce(selectConnectors.value, connector);
     else {
@@ -338,7 +341,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   }
 
   function notifySelectConnectorChanged() {
-    
+    //TODO
   }
   function notifySelectNodeChanged() {
 
@@ -353,9 +356,9 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   context.selectAllNodes = selectAllNodes;
   context.selectAllConnectors = selectAllConnectors;
   context.selectConnector = selectConnector;
-  context.getSelectNodes = () => selectNodes.value as unknown as Node[];
+  context.getSelectNodes = () => selectNodes.value as unknown as NodeEditor[];
   context.getSelectNodeCount = () => selectNodes.value.length;
-  context.getSelectConnectors = () => selectConnectors.value as NodeConnector[];
+  context.getSelectConnectors = () => selectConnectors.value as NodeConnectorEditor[];
   context.isMulitSelect = () => isMulitSelect.value;
 
   return {

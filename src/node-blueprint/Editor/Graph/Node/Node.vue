@@ -106,7 +106,7 @@
       >
         <Icon 
           :icon="(instance.breakpoint==='enable'?'icon-breakpoint-active':
-            (instance.breakpoint==='disable'?' icon-breakpoint':''))"
+            (instance.breakpoint==='disable'?'icon-breakpoint':''))"
         />
       </div>
       <div 
@@ -488,7 +488,7 @@ const dragMouseHandler = createMouseDragHandler({
 
         if(!instance.value.selected) {
           //如果当前块没有选中，在这里切换选中状态
-          context.selectNode(instance.value as Node, false);
+          context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
         }
         else {
           //选中后，如果有选择其他块，则同时移动其他块
@@ -523,9 +523,7 @@ const dragMouseHandler = createMouseDragHandler({
       updateNodeForMoveEnd();
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
-      if(!instance.value.selected) {
-        context.selectNode(instance.value as Node, false);
-      }
+      context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
     }
   },
 })
@@ -567,7 +565,7 @@ function onMouseLeave(e : MouseEvent) {
 
 function onContextmenu(e : MouseEvent) {
   e.preventDefault();
-  //TODO
+  context.showNodeRightMenu(instance.value, new Vector2(e.x, e.y));
   return false;
 }
 

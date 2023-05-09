@@ -105,7 +105,7 @@ const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext')
 
 //图标
 const portIcon = computed(() => {
-  const type = instance.value.define.paramType;
+  const type = instance.value.paramType;
   if (!type)
     return 'icon-help-filling';
   const editorState = instance.value;
@@ -117,7 +117,7 @@ const portIcon = computed(() => {
 });
 //图标颜色
 const portColor = computed(() => {
-  return instance.value.define.paramType?.define?.typeColor || 'rgb(250, 250, 250)';
+  return instance.value.paramType?.define?.typeColor || 'rgb(250, 250, 250)';
 });
 
 const portDot = ref<HTMLElement>();
@@ -183,7 +183,9 @@ function onPortMouseDown(e : MouseEvent) {
   connectDragHandler(e);
 }
 function onContextMenu(e : MouseEvent) {
-
+  e.preventDefault();
+  e.stopPropagation();
+  context?.showPortRightMenu(instance.value, new Vector2(e.x, e.y));
 }
 
 //#endregion

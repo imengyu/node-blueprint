@@ -162,7 +162,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
   public checkTypeAllow(targetPort : NodePort) : boolean {
 
     const targetType = targetPort.define.paramType;
-    const thisType = this.define.paramType;
+    const thisType = this.paramType;
 
     //判断是否是执行
     if(thisType.isExecute)
@@ -195,6 +195,10 @@ export interface INodePortDefine {
    * 端口参数类型
    */
   paramType: NodeParamType;
+  /**
+   * 端口参数默认值
+   */
+  paramDefaultValue?: unknown,
   /**
    * 节点 的唯一ID (不能为空，数字或字符串，可以随便写，在16个字符之内)，只要保证一个单元内不能重复即可
    */

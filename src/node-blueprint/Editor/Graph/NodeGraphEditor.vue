@@ -90,6 +90,8 @@ import { initEditorBase } from './Flow';
 import BasePanels from './Panel/BasePanels.vue';
 import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
 import { useEditorUserController } from './Editor/EditorUserController';
+import type { NodePortEditor } from './Flow/NodePortEditor';
+import { initLib } from '@/node-blueprint/Nodes';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -151,6 +153,7 @@ const {
 
 initBase();
 initEditorBase();
+initLib();
 
 onMounted(() => {
   initRenderer();
@@ -344,8 +347,8 @@ onMounted(() => {
     node3,
   );
 
-  context.connectConnector(node3.outputPorts.get('OUT')!, node.inputPorts.get('IN')!);
-  context.connectConnector(node1.outputPorts.get('OUT')!, node.inputPorts.get('IN-NUMBER')!);
+  context.connectConnector(node3.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN') as NodePortEditor);
+  context.connectConnector(node1.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN-NUMBER') as NodePortEditor);
 
   setTimeout(() => {
     viewPort.value.position.set(-viewPort.value.size.x / 2, -viewPort.value.size.y / 2);
