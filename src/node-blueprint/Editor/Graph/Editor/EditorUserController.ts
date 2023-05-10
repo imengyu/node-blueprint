@@ -14,7 +14,7 @@ export interface NodeEditorUserControllerContext {
    * @param define 单元定义
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
    */
-  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) : void;
+  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) : Node|null;
   /**
    * 用户删除单元
    * @param node 
@@ -229,14 +229,14 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     //检查单元是否只能有一个
     if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
       //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + nodeData.baseInfo.name + ' 了，此单元只能有一个', () => {});
-      return;
+      return null;
     }
     //自定义检查回调
     if(typeof define.events?.onAddCheck == 'function') {
       let err = define.events.onAddCheck(define, currentGraph);
       if(err != null) {
         //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
-        return;
+        return null;
       }
     }
 
@@ -266,6 +266,8 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         newNode.position.set(pos);
       }, 100);
     } 
+
+    return newNode;
   }
 
   //单元位置或大小更改，刷新单元

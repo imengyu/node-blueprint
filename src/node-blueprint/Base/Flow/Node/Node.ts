@@ -40,6 +40,7 @@ export class Node extends SerializableObject<INodeDefine> {
     };
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
     this.load(define);
+    this.events.onCreate?.(this);
   }
 
   //基础数据

@@ -700,11 +700,14 @@ function registerCommentNode() {
     category: '',
     ports: [],
     events: {
+      onEditorCreate: (node) => {
+        node.addClass('node-block-comment-block');
+      },
       onCreateCustomEditor: (parentEle, node, context) => {
         if (!parentEle) 
           return undefined;
+        
         let blockEle = parentEle.parentNode as HTMLDivElement;
-        blockEle.classList.add('node-block-comment-block');
         blockEle.style.minWidth = '250px';
         blockEle.style.minHeight = '150px';
     
@@ -784,6 +787,7 @@ function registerCommentNode() {
         } else if(event === 'up') {
           if(node.data.mouseDown)
             node.data.mouseDown = false;
+          node.updateRegion();
         }
         return false;
       }

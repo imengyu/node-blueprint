@@ -33,14 +33,13 @@
     </NodeContainer>
     <ConnectorRender
       ref="foregroundRenderer"
-      style="z-index: 2"
+      style="z-index: 2; pointer-events: none;"
       :viewPort="(viewPort as NodeGraphEditorViewport)"
       :chunkedPanel="(chunkedPanel as ChunkedPanel)"
       :isMulitSelect="isMulitSelect"
       :multiSelectRect="(multiSelectRect as Rect)"
       :connectors="allConnectors"
       :connectingInfo="connectingInfo"
-      @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
       style="z-index: 3" 
@@ -339,7 +338,7 @@ onMounted(() => {
 
   //node.position.set(-600, -100);
   node1.position.set(-200, -100);
-  node2.position.set(-200, 100);
+  node2.position.set(-486, -200);
   node3.position.set(-460, 100);
 
 
@@ -350,10 +349,13 @@ onMounted(() => {
     node3,
   );
 
-  context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("8A94A788-ED4E-E521-5BC2-4D69B59BAB80")!, new Vector2(-300, -200));
+  const coonNode = context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("8A94A788-ED4E-E521-5BC2-4D69B59BAB80")!, new Vector2(-300, -200));
+  context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("24AA3DF0-49D9-84D9-8138-534505C33327")!, new Vector2(-400, -100));
 
   context.connectConnector(node3.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN') as NodePortEditor);
+  context.connectConnector(node2.outputPorts.get('OUT') as NodePortEditor, coonNode!.inputPorts.get('INPUT') as NodePortEditor);
   context.connectConnector(node1.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN-NUMBER') as NodePortEditor);
+  context.connectConnector(coonNode!.outputPorts.get('OUTPUT') as NodePortEditor, node1.inputPorts.get('IN') as NodePortEditor);
 
   setTimeout(() => {
     viewPort.value.position.set(-viewPort.value.size.x / 2, -viewPort.value.size.y / 2);
