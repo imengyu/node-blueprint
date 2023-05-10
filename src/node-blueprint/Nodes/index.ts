@@ -1,6 +1,6 @@
 import { NodeRegistry } from "../Base/Flow/Registry/NodeRegistry";
-import BaseBlocks from "./Lib/BaseBlocks";
+import BaseNodes from "./Lib/BaseNodes";
 
 export function initLib() {
-  NodeRegistry.getInstance().registerNodePack(BaseBlocks);
+  NodeRegistry.getInstance().registerNodePack(BaseNodes);
 }

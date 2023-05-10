@@ -331,7 +331,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     multiSelectRect.value.set(0, 0, 0, 0);
     selectNodes.value.forEach((node) => {
       //保存单元位置，以供后续多选移动使用
-      node.saveLastBlockPos();
+      node.saveLastNodePos();
     });
   }
 

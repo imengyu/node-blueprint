@@ -295,7 +295,7 @@ export interface INodeDefine {
   /**
    * [仅编辑器可用] 单元的自定义样式设置
    */
-  style ?: INodekStyleSettings;
+  style ?: INodeStyleSettings;
   /**
    * [仅编辑器可用] 单元的自定义事件控制
    */
@@ -411,8 +411,10 @@ export interface INodeEventSettings {
  */
 export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   constructor(define?: INodeEventSettings) {
-    super('NodeEventSettings', define);
+    super('NodeEventSettings', define, false);
     this.serializableProperties = [ 'all' ];
+    if (define)
+      this.load(define);
   }
 
   onCreate ?: NodeEventCallback;
@@ -440,7 +442,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
 /**
  * 单元样式设置
  */
-export interface INodekStyleSettings {
+export interface INodeStyleSettings {
   /**
    * 单元主图标 16x16
    */
@@ -530,10 +532,12 @@ export interface INodekStyleSettings {
 /**
  * 节点样式结构
  */
-export class NodeStyleSettings extends SerializableObject<INodekStyleSettings> {
-  constructor(define?: INodekStyleSettings) {
-    super('NodeStyleSettings', define);
+export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
+  constructor(define?: INodeStyleSettings) {
+    super('NodeStyleSettings', define, false);
     this.serializableProperties = [ 'all' ];
+    if (define)
+      this.load(define);
   }
 
   public logo = '';
@@ -583,8 +587,10 @@ export interface INodeSimulateSettings {
  */
 export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
   constructor(define?: INodeSimulateSettings) {
-    super('NodeSimulate', define);
+    super('NodeSimulate', define, false);
     this.serializableProperties = [ 'all' ];
+    if (define)
+      this.load(define);
   }
 }
 

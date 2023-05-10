@@ -262,7 +262,7 @@
   }
 }
 
-//扩展横线
+//扩展延长线单元样式
 .node-block-extended-line {
   background: transparent;
   border-color: transparent;
@@ -276,6 +276,9 @@
     .left {
       margin: 0;
 
+      .connect-dot {
+        transform: translateX(60%);
+      }
       .node-port {
         width: 7px;
         overflow: hidden;
@@ -284,13 +287,12 @@
     .right {
       margin: 0;
 
+      .connect-dot {
+        transform: translateX(-60%);
+      }
       .node-port {
         width: 12px;
         overflow: hidden;
-
-        .port {
-          transform: translateX(-60%);
-        }
       }
     }
   }

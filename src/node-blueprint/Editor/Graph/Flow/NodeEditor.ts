@@ -36,6 +36,7 @@ export class NodeEditor extends Node {
     callbackGetRealSize: null as null|(() => Vector2),
     callbackGetCurrentSizeType: null as null|(() => number),
     callbackTwinkle: null as null|((time: number) => void),
+    callbackAddClass: null as null|((className: string) => void),
   };
 
   public mouseConnectingPort = false;
@@ -49,12 +50,18 @@ export class NodeEditor extends Node {
   /**
    * 保存块当前位置，以供移动使用
    */
-  public saveLastBlockPos() {
+  public saveLastNodePos() {
     this.lastBlockPos.set(this.position);
+  }
+  public updateRegion() {
+    this.editorHooks.callbackUpdateRegion?.();
   }
 
   //通用函数
-  
+
+  public addClass(className: string) {
+    this.editorHooks.callbackAddClass?.(className);
+  }
   /**
    * 触发闪烁
    * @param time 闪烁时长，毫秒

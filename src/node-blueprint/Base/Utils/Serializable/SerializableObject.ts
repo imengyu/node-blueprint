@@ -108,6 +108,7 @@ export class SerializableObject<T> {
       || typeof element === 'number'
       || typeof element === 'boolean'
       || typeof element === 'string'
+      || typeof element === 'function'
     )
       return element;
     else if(element && typeof element === 'object') {

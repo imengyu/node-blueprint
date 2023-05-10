@@ -4,15 +4,15 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 
 export default { 
   register,
-  getScriptBaseBlockIn() { return blockIn; },
-  getScriptBaseBlockOut() { return blockOut;  },
+  getScriptBaseNodeIn() { return blockIn; },
+  getScriptBaseNodeOut() { return blockOut;  },
   getScriptBaseGraphIn() { return graphIn; },
   getScriptBaseGraphOut() { return graphOut;  },
   getScriptBaseGraphCall() { return graphCall;  },
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
-  getScriptBaseCommentBlock() { return commentBlock;  },
-  getScriptBaseConvertBlock() { return convertBlock;  },
+  getScriptBaseCommentNode() { return commentNode;  },
+  getScriptBaseConvertNode() { return convertNode;  },
   packageName: 'Base',
   version: 1,
 }
@@ -28,9 +28,9 @@ function register() {
     registerDebugBase(),
     registerTypeBase(),
     registerLoadLib(),
-    registerCommentBlock(),
-    registerConvertBlock(),
-    registerConnBlock(),
+    registerCommentNode(),
+    registerConvertNode(),
+    registerConnNode(),
   );
 }
 
@@ -72,22 +72,22 @@ let graphOut : INodeDefine;
 let graphCall : INodeDefine;
 let variableGet : INodeDefine;
 let variableSet : INodeDefine;
-let commentBlock : INodeDefine;
-let convertBlock : INodeDefine;
+let commentNode : INodeDefine;
+let convertNode : INodeDefine;
 
-import BlockIconSwith from '../BlockIcon/switch.svg';
-import BlockIconClock from '../BlockIcon/clock.svg';
-import BlockIconClock2 from '../BlockIcon/clock2.svg';
-import BlockIconEntryGo from '../BlockIcon/entry_go.svg';
-import BlockIconEntryExit from '../BlockIcon/entry_exit.svg';
-import BlockIconEntryWarning from '../BlockIcon/warning.svg';
-import BlockIconEntryTrace from '../BlockIcon/trace.svg';
-import BlockIconEntryNumber from '../BlockIcon/number.svg';
-import BlockIconEntryString from '../BlockIcon/string.svg';
-import BlockIconEntryBoolean from '../BlockIcon/boolean.svg';
-import BlockIconInfo from '../BlockIcon/info.svg';
-import BlockIconInfo2 from '../BlockIcon/info2.svg';
-import BlockIconConvert from '../BlockIcon/convert.svg';
+import NodeIconSwith from '../NodeIcon/switch.svg';
+import NodeIconClock from '../NodeIcon/clock.svg';
+import NodeIconClock2 from '../NodeIcon/clock2.svg';
+import NodeIconEntryGo from '../NodeIcon/entry_go.svg';
+import NodeIconEntryExit from '../NodeIcon/entry_exit.svg';
+import NodeIconEntryWarning from '../NodeIcon/warning.svg';
+import NodeIconEntryTrace from '../NodeIcon/trace.svg';
+import NodeIconEntryNumber from '../NodeIcon/number.svg';
+import NodeIconEntryString from '../NodeIcon/string.svg';
+import NodeIconEntryBoolean from '../NodeIcon/boolean.svg';
+import NodeIconInfo from '../NodeIcon/info.svg';
+import NodeIconInfo2 from '../NodeIcon/info2.svg';
+import NodeIconConvert from '../NodeIcon/convert.svg';
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
@@ -118,7 +118,7 @@ function registerScriptBase()  {
     ],
     oneNodeOnly: true,
     style: {
-      logo: BlockIconEntryGo,
+      logo: NodeIconEntryGo,
       titleBakgroundColor: "rgba(25,25,112,0.6)",
     },
     events: {
@@ -149,7 +149,7 @@ function registerScriptBase()  {
     ],
     oneNodeOnly: true,
     style: {
-      logo: BlockIconEntryExit,
+      logo: NodeIconEntryExit,
       titleBakgroundColor: "rgba(112,30,133,0.6)",
     },
     events: {
@@ -189,7 +189,7 @@ function registerScriptBase()  {
     ],
     style: {
       logoBackground: 'title:运行库平台',
-      logo: BlockIconSwith,
+      logo: NodeIconSwith,
       minWidth: 140,
       titleBakgroundColor: "rgba(255,20,147,0.6)",
       titleState: 'hide',
@@ -238,8 +238,8 @@ function registerScriptBase()  {
       },
     ],
     style: {
-      logo: BlockIconClock,
-      logoRight: BlockIconClock,
+      logo: NodeIconClock,
+      logoRight: NodeIconClock,
     },
     simulate: {
       onPortExecuteIn: (node, port) => {
@@ -325,8 +325,8 @@ function registerScriptBase()  {
       }
     },
     style: {
-      logo: BlockIconClock2,
-      logoRight: BlockIconClock2,
+      logo: NodeIconClock2,
+      logoRight: NodeIconClock2,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     }
   };
@@ -364,7 +364,7 @@ function registerDebugBase() {
     version: 1,
     category: '基础/调试',
     style: {
-      logo: BlockIconEntryWarning,
+      logo: NodeIconEntryWarning,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
     ports: [
@@ -445,7 +445,7 @@ function registerDebugBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryTrace,
+      logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
     simulate: {
@@ -507,7 +507,7 @@ function registerDebugBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryTrace,
+      logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
     simulate: {
@@ -530,7 +530,7 @@ function registerDebugBase() {
     ports: [
     ],
     style: {
-      logo: BlockIconEntryTrace,
+      logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
     simulate: {
@@ -563,7 +563,7 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryString,
+      logo: NodeIconEntryString,
       titleState: 'hide',
       titleBakgroundColor: "rgba(255,20,147,0.6)",
       inputPortMinWidth: '0',
@@ -595,7 +595,7 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryNumber,
+      logo: NodeIconEntryNumber,
       titleState: 'hide',
       titleBakgroundColor: "rgba(158,258,68,0.6)",
       inputPortMinWidth: '0',
@@ -627,7 +627,7 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryBoolean,
+      logo: NodeIconEntryBoolean,
       titleState: 'hide',
       titleBakgroundColor: "rgba(180,0,0,0.6)",
       inputPortMinWidth: '0',
@@ -645,9 +645,9 @@ function registerLoadLib() {
   //TODO: LoadLib
   return [];
 }
-function registerCommentBlock() {
+function registerCommentNode() {
 
-  const documentCommentBlock : INodeDefine = {
+  const documentCommentNode : INodeDefine = {
     guid: '088C2A25-192D-42E7-D31B-B5E9FB7C68DD',
     name: '文档注释',
     description: '在这个单元里面添加你的代码注释，拖动右下角可以调整大小',
@@ -686,13 +686,13 @@ function registerCommentBlock() {
       }
     },
     style: {
-      logo: BlockIconInfo,
+      logo: NodeIconInfo,
       minHeight: 100,
       noComment: true,
     },
   };
 
-  commentBlock = {
+  commentNode = {
     guid: '24AA3DF0-49D9-84D9-8138-534505C33327',
     name: '注释块',
     author: 'imengyu',
@@ -763,7 +763,7 @@ function registerCommentBlock() {
           ArrayUtils.clear(list);
           context.getNodesInRect(rect).forEach((v) => {
             if(v != node) {
-              v.saveLastBlockPos();
+              v.saveLastNodePos();
               list.push(v);
             }
           });
@@ -789,7 +789,7 @@ function registerCommentBlock() {
       }
     },
     style: {
-      logo: BlockIconInfo2,
+      logo: NodeIconInfo2,
       minHeight: 100,
       noTooltip: true,
       noComment: true,
@@ -799,10 +799,10 @@ function registerCommentBlock() {
     },
   };
 
-  return [ documentCommentBlock, commentBlock ];
+  return [ documentCommentNode, commentNode ];
 }
-function registerConvertBlock() {
-  convertBlock = {
+function registerConvertNode() {
+  convertNode = {
     guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C279',
     name: '转换器',
     author: 'imengyu',
@@ -849,7 +849,7 @@ function registerConvertBlock() {
       },
     },
     style: {
-      logo: BlockIconEntryString,
+      logo: NodeIconEntryString,
       minWidth: 0,
       titleState: 'hide',
       titleBakgroundColor: "rgba(250,250,250,0.6)",
@@ -857,7 +857,7 @@ function registerConvertBlock() {
     simulate: {
       onPortExecuteIn: (node, port) => {
         /**
-         * let coverter = <BlockParameterTypeConverterData>node.data['coverter'];
+         * let coverter = <NodeParameterTypeConverterData>node.data['coverter'];
     if(coverter) {
       let input = node.getInputParamValue('INPUT', context);
       return coverter.converter(input);
@@ -870,10 +870,10 @@ function registerConvertBlock() {
     },
   }; 
 
-  return [ convertBlock ];
+  return [ convertNode ];
 }
-function registerConnBlock() {
-  const connBlock : INodeDefine = {
+function registerConnNode() {
+  const connNode : INodeDefine = {
     guid: '8A94A788-ED4E-E521-5BC2-4D69B59BAB80',
     name: '数据延长线',
     author: 'imengyu',
@@ -895,8 +895,10 @@ function registerConnBlock() {
       },
     ],
     style: {
-      logo: BlockIconConvert,
+      logo: NodeIconConvert,
       titleState: 'hide',
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
       noComment: true,
       minWidth: 0,
     },
@@ -910,7 +912,7 @@ function registerConnBlock() {
         }
       },
       onEditorCreate: (node, el) => {
-        el?.classList.add('flow-block-extended-line');
+        node.addClass('node-block-extended-line');
       },
     },
     simulate: {
@@ -920,5 +922,5 @@ function registerConnBlock() {
     },
   };
 
-  return [ connBlock ];
+  return [ connNode ];
 }

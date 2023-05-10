@@ -92,6 +92,8 @@ import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardCo
 import { useEditorUserController } from './Editor/EditorUserController';
 import type { NodePortEditor } from './Flow/NodePortEditor';
 import { initLib } from '@/node-blueprint/Nodes';
+import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -340,12 +342,15 @@ onMounted(() => {
   node2.position.set(-200, 100);
   node3.position.set(-460, 100);
 
+
   pushNodes(
     node,
     node1,
     node2,
     node3,
   );
+
+  context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("8A94A788-ED4E-E521-5BC2-4D69B59BAB80")!, new Vector2(-300, -200));
 
   context.connectConnector(node3.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN') as NodePortEditor);
   context.connectConnector(node1.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN-NUMBER') as NodePortEditor);

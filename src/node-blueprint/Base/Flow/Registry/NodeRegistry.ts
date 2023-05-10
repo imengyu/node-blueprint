@@ -1,3 +1,4 @@
+import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import ArrayUtils from "../../Utils/ArrayUtils";
 import { printInfo, printWarning } from "../../Utils/Logger/DevLog";
 import { Singleton } from "../../Utils/Singleton/Singleton";
@@ -238,18 +239,25 @@ export class NodeRegistry extends Singleton {
     });
   }
   /**
-   * TODO: 获取基础单元定义
+   * 通过注册时的GUID获取单元定义
+   * @param name 
+   */
+  public getNodeByGUID(guid : string) : INodeDefine|null {
+    return this.allNodes.get(guid)?.define || null;
+  }
+  /**
+   * 获取基础单元定义
    * @param name 
    */
   public getBaseNode(name : string) : INodeDefine|null {
-    /*
     switch(name) {
-      case 'BaseIn': return this.allNodes.get(BaseNode.getScriptBaseInNodeGUID())?.define || null;
-      case 'Comment': return this.allNodes.get(BaseNode.getScriptBaseCommentNodeGUID())?.define || null;
-      case 'Convert': return this.allNodes.get(BaseNode.getScriptBaseConvertNodeGUID())?.define || null;
-      case 'VariableGet': return this.allNodes.get(BaseNode.getScriptBaseVariableGetNodeGUID())?.define || null;
-      case 'VariableSet': return this.allNodes.get(BaseNode.getScriptBaseVariableSetNodeGUID())?.define || null;
-    }*/
+      case 'BaseIn': return BaseNodes.getScriptBaseNodeIn();
+      case 'BaseOut': return BaseNodes.getScriptBaseNodeOut();
+      case 'Comment': return BaseNodes.getScriptBaseCommentNode();
+      case 'Convert': return BaseNodes.getScriptBaseConvertNode();
+      case 'VariableGet': return BaseNodes.getScriptBaseVariableGet();
+      case 'VariableSet': return BaseNodes.getScriptBaseVariableSet();
+    }
     return null;
   }
 }

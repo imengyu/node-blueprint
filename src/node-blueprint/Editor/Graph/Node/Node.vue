@@ -14,6 +14,7 @@
         (instance.selected ? 'selected ' : ''),
         (instance.style.customClassNames),
         (twinkleActive ? 'actived' : ''),
+        ...appendClass
       ]"
       :style="{
         left: `${instance.position.x}px`,
@@ -200,6 +201,7 @@ const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalConte
 
 const TAG = 'Node';
 const cursor = ref('');
+const appendClass = ref<string[]>([]);
 const nodeRef = ref<HTMLDivElement>();
 
 //初始化
@@ -217,6 +219,9 @@ onMounted(() => {
   instance.value.editorHooks.callbackUpdateRegion = updateRegion;
   instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
     chunkedPanel.value.removeInstance(instance.value.chunkInfo);
+  };
+  instance.value.editorHooks.callbackAddClass = (cls) => {
+    appendClass.value.push(cls);
   };
   nextTick(() => {
     instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
@@ -267,7 +272,7 @@ function updateNodeForMoveEnd() {
   for (const n of selectedNodes) {
     const node = n as NodeEditor;
     if (node !== instance.value) {
-      node.saveLastBlockPos();
+      node.saveLastNodePos();
       node.editorHooks.callbackUpdateRegion?.();
     }
   }
@@ -539,7 +544,7 @@ const dragMouseHandler = createMouseDragHandler({
 
 function onMouseDown(e : MouseEvent) {
   lastMovedBlock = false;
-  instance.value.saveLastBlockPos();
+  instance.value.saveLastNodePos();
   instance.value.lastBlockSize.set(getRealSize());
 
   if (isMouseEventInNoDragControl(e))
