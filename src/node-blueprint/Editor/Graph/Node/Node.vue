@@ -30,19 +30,20 @@
       @mouseenter="onMouseEnter($event)"
       @mouseleave="onMouseLeave($event)"
       @mousemove="onMouseMove($event)"
+      @mouseuo="onMouseUp($event)"
       @mousewheel="onMouseWhell($event)"
       @contextmenu="onContextmenu($event)"
     >
       <!--注释区域-->
       <div
-        class="node-block-comment node-block-no-move" 
+        class="node-block-comment node-editor-no-move" 
         v-show="instance.markOpen && !instance.style.noComment"
         :style="{ top: commentTop }"
       >
         <span class="node-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
         <div 
           ref="commentInput"
-          class="node-block-comment-text node-block-no-move" 
+          class="node-block-comment-text node-editor-no-move" 
           contenteditable="true"
           @input="onCommentInputInput"
           @blur="onCommentInputBlur">
@@ -73,7 +74,7 @@
           <p>{{ instance.define.description }}</p>
         </template>
         <div 
-          :class="'flow-header state-'+(instance.style.titleState)"
+          :class="'node-block-header state-'+(instance.style.titleState)"
           :style="{
             color: instance.style.titleColor,
             backgroundColor: instance.style.titleBakgroundColor,
@@ -129,7 +130,11 @@
           {{ instance.style.logoBackground.substring(6) }}
         </span>
       </NodeIconImageRender>
-      <!--TODO: 自定义编辑器区域-->
+      <!--自定义编辑器区域-->
+      <NodeCustomEditorWrapper
+        :node="instance"
+        :create-editor-function="instance.events.onCreateCustomEditor"
+      />
       <!--主区域-->
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='node-block-base'>
         <div class='node-block-ports'>
@@ -150,7 +155,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType, inject } from 'vue';
+import { onMounted, ref, toRefs, type PropType, inject, nextTick } from 'vue';
 import Tooltip from '../../Base/Tooltip/Tooltip.vue';
 import Icon from '../../Base/Icon.vue';
 import NodePort from './NodePort.vue';
@@ -158,6 +163,7 @@ import SmallButton from '../../Base/Button/SmallButton.vue';
 import NodeIconImageRender from './NodeIconImageRender.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
+import NodeCustomEditorWrapper from './NodeCustomEditorWrapper.vue';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
@@ -212,6 +218,9 @@ onMounted(() => {
   instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
     chunkedPanel.value.removeInstance(instance.value.chunkInfo);
   };
+  nextTick(() => {
+    instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
+  })
 });
 
 //#region 区块大小与区块功能
@@ -535,7 +544,11 @@ function onMouseDown(e : MouseEvent) {
 
   if (isMouseEventInNoDragControl(e))
     return;
-  if(instance.value.style.userResize && resizeMouseHandler(e))
+  if (instance.value.events.onEditorMoseEvent?.(instance.value, context, 'down', e)) {
+
+    return;
+  }
+  if (instance.value.style.userResize && resizeMouseHandler(e))
     return;
   if (dragMouseHandler(e))
     return;
@@ -547,12 +560,17 @@ function onMouseWhell(e : WheelEvent) {
   if(isMouseEventInNoDragControl(e)) 
     e.stopPropagation();
 }
-function onMouseMove(e : MouseEvent) {
-  if(!mouseDown) {
+function onMouseMove(e : MouseEvent) { 
+  if (instance.value.events.onEditorMoseEvent?.(instance.value, context, 'move', e))
+    return;
+  if (!mouseDown) {
     if(instance.value.style.userResize) 
       testInResize(e);
     return;
   }
+}
+function onMouseUp(e : MouseEvent) { 
+  instance.value.events.onEditorMoseEvent?.(instance.value, context, 'up', e);
 }
 function onMouseEnter(e : MouseEvent) {
 }

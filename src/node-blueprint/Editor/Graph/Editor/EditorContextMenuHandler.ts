@@ -7,6 +7,7 @@ import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnecto
 import type { NodeEditor } from "../Flow/NodeEditor";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 
 export interface NodeEditorContextMenuContext {
   /**
@@ -31,6 +32,12 @@ export interface NodeEditorContextMenuContext {
    * @param screenPos 屏幕坐标
    */
   showPortRightMenu(port : NodePortEditor, screenPos : Vector2)  : void;
+  /**
+   * 显示输入框的右键菜单
+   * @param screenPos 
+   * @param input 
+   */
+  showInputRightMenu(screenPos : Vector2, input: HTMLInputElement) : void;
 }
 
 export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
@@ -48,12 +55,20 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   function onCanvasContextMenu(e: MouseEvent) {
     e.preventDefault();
 
+    const info = context.getMouseInfo();
+
     //选中连接线，弹出连接线菜单
     if (context.isAnyConnectorHover())
       showConnectorRightMenu(new Vector2(e.x, e.y));
     //鼠标未移动，则显示添加界面
-    else if (!context.getMouseInfo().mouseMoved)
-      context.showAddNodePanel(new Vector2(e.x, e.y));
+    else if (!info.mouseMoved)
+      context.showAddNodePanel(
+        new Vector2(e.x, e.y),
+        undefined,
+        undefined,
+        info.mouseCurrentPosViewPort.clone(),
+        false
+      );
   }
 
   //Connector Menu
@@ -90,7 +105,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         },
       ] : []),
       zIndex: 100,
-      theme: 'flat dark',
+      theme: 'flat',
     });
   }
 
@@ -157,7 +172,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       y: screenPos.y,
       items: menuItems,
       zIndex: 100,
-      theme: 'flat dark',
+      theme: 'flat',
     });
   }
   //Port Menu
@@ -210,10 +225,65 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       y: screenPos.y,
       items: menuItems,
       zIndex: 100,
-      theme: 'flat dark',
+      theme: 'flat',
     });
   }
 
+  //显示输入框的右键菜单
+  function showInputRightMenu(screenPos : Vector2, input: HTMLInputElement) {
+    let selection = document.getSelection()?.toString();
+    let menuItems : MenuItem[] = [
+      {
+        label: "剪切",
+        onClick: () => {
+          input.focus();
+          document.execCommand("cut");
+        },
+        disabled: StringUtils.isNullOrEmpty(selection),
+      },
+      {
+        label: "复制",
+        onClick: () => {
+          input.focus();
+          document.execCommand("copy");
+        },
+        disabled: StringUtils.isNullOrEmpty(selection),
+      },
+      {
+        label: "粘贴",
+        onClick: () => {
+          input.focus();
+          document.execCommand("paste");
+        },
+        divided: true,
+      },
+      {
+        label: "全选",
+        onClick: () => {
+          input.focus();
+          document.execCommand("seletcAll");
+        },
+      },
+      {
+        label: "删除",
+        onClick: () => {
+          input.focus();
+          document.execCommand("delete");
+        },
+        disabled: StringUtils.isNullOrEmpty(selection),
+      },
+    ];
+
+    showContextMenu({
+      x: screenPos.x,
+      y: screenPos.y,
+      items: menuItems,
+      zIndex: 100,
+      theme: 'flat',
+    });
+  }
+
+  context.showInputRightMenu = showInputRightMenu;
   context.showNodeRightMenu = showNodeRightMenu;
   context.showPortRightMenu = showPortRightMenu;
   context.showContextMenu = showContextMenu;

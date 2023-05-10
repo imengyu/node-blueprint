@@ -3,7 +3,7 @@
     <!--端口-->
     <div 
       v-if="instance" 
-      :class="'flow-port '+instance.state"
+      :class="'node-port '+instance.state"
       @contextmenu="onContextMenu($event)"
       @mouseenter="onPortMouseEnter"
       @mouseleave="onPortMouseLeave"
@@ -21,7 +21,7 @@
         <!--标题-->
         <span 
           v-if="instance.direction === 'output'"
-          :style="{ minWidth:instance.parent.style.outputPortMinWidth }"
+          :style="{ minWidth: instance.parent.style.outputPortMinWidth }"
         >
           {{ instance.define.name }}
         </span>
@@ -45,7 +45,6 @@
           v-if="instance.direction === 'input'" 
           :style="{ minWidth: instance.parent.style.inputPortMinWidth }"
         >
-
           {{ instance.define.name }}
         </span>
       </div>
@@ -56,7 +55,7 @@
     </div>
     <!--工具提示-->
     <template #content>
-      <h5>{{ (instance.define.name === '') ? (instance.define.direction == 'input' ? '入口' : '出口') : instance.define.name }}</h5>
+      <h5>{{ !instance.define.name ? (instance.define.direction == 'input' ? '入口' : '出口') : instance.define.name }}</h5>
       <span class="text-secondary">
         <small v-html="instance.define.description"></small>
       </span>

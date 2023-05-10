@@ -1,5 +1,5 @@
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
-import type { EditorMousHandlerExtendHandlers, NodeGraphEditorMouseInfo } from './Editor/EditorMouseHandler';
+import type { EditorMousHandlerExtendHandlers, NodeEditorMouseControllerContext, NodeGraphEditorMouseInfo } from './Editor/EditorMouseHandler';
 import type { NodeGraphEditorViewport } from './Editor/Viewport';
 import type { NodeGraphEditorSelectionContext } from './Editor/EditorSelectionContoller';
 import type { NodeGraphEditorConnectorContext } from './Editor/EditorConnectorController';
@@ -20,7 +20,8 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
   NodeGraphEditorBasePanelsContext,
   NodeEditorKeyBoardControllerContext,
   NodeEditorUserControllerContext,
-  NodeEditorContextMenuContext 
+  NodeEditorContextMenuContext,
+  NodeEditorMouseControllerContext
 {
 }
 
@@ -42,10 +43,6 @@ export interface NodeGraphEditorBaseContext {
  */
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
   mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
-  setCursor: (cursor: string) => void;
-  resetCursor: () => void;
-  getMouseInfo: () => NodeGraphEditorMouseInfo,
-  getMouseHandler: () => EditorMousHandlerExtendHandlers,
 }
 
 export enum MouseEventUpdateMouseInfoType {

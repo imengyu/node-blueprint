@@ -8,6 +8,10 @@ import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
 import type { NodeParamType } from "../Type/NodeParamType";
 import type { NodeGraph } from "../Graph/NodeGraph";
 import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
+import type { VNode } from "vue";
+import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
+import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 
 const TAG = 'Node';
 
@@ -26,6 +30,7 @@ export class Node extends SerializableObject<INodeDefine> {
       'inputPorts',
       'outputPorts',
       'guid',
+      'data',
     );
     this.forceSerializableClassProperties = {
       ports: 'NodePort',
@@ -53,12 +58,18 @@ export class Node extends SerializableObject<INodeDefine> {
   public outputPorts = new Map<string, NodePort>();
   public get inputPortCount() { return this.inputPorts.size; }
   public get outputPortCount() { return this.outputPorts.size; }
-
+  /**
+   * 自定义单元数据供代码使用（全局）（不会保存至文件中）
+   */
+  public data = {} as Record<string, any>;
+  /**
+   * 自定义单元属性供代码使用（全局）（会保存至文件中）
+   */
+  public options = {} as CustomStorageObject;
 
   //编辑器运行数据
   //=====================
 
-  public options = {} as IKeyValueObject;
   public markContent = '';
   public markOpen = false;
   public position = new Vector2();
@@ -197,6 +208,20 @@ export class Node extends SerializableObject<INodeDefine> {
       return this.ports.find(p => type.acceptable(p.paramType), includeAny) || null;
     }
   }
+  /**
+   * 更改参数端口的数据类型
+   * @param port 参数端口
+   * @param newType 新的数据类型
+   */
+  public changePortParamType(port: NodePort, newType: NodeParamType) {
+    if(!port)
+      printError(this.getName(), 'changePortParamType: Must provide port');
+    else if(port.parent == this) {
+      port.paramType = newType;
+      port.define.paramType = newType;
+      //TODO: 弹性端口
+    }
+  }
 
 }
 
@@ -282,8 +307,11 @@ export interface INodeDefine {
 }
 
 export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
+export type NodeEditorEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, data?: T) => R;
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
+export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
+export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up", e: MouseEvent) => boolean;
 
 /**
  * 单元自定义事件设置
@@ -299,6 +327,24 @@ export interface INodeEventSettings {
    */
   onDestroy ?: NodeEventCallback,
   /**
+   * 单元保存自定义数据时的回调。
+   */
+  onSave ?: NodeEventCallback,
+  /**
+   * 单元创建自定义编辑器区域时的回调。
+   * 
+   * (parentEle: HTMLElement|undefined, node: Node) => VNode|VNode[]|undefined
+   * 
+   * 注意：
+   * * 在parentEle为空时，此时是vue的渲染函数调用的，可以使用vue的渲染函数相关，并返回vnode。
+   * * 在parentEle不为空时，此时此函数为原生dom创建回调，此时返回vnode无效。
+   */
+  onCreateCustomEditor ?: NodeCreateEditorFunction,
+  /**
+   * 单元鼠标事件回调。
+   */
+  onEditorMoseEvent ?: NodeEditorMoseEventFunction,
+  /**
    * 单元加载到编辑器中时的回调。
    */
   onAddToEditor ?: NodeEventCallback,
@@ -306,6 +352,10 @@ export interface INodeEventSettings {
    * 单元从编辑器中卸载时的回调。（不是删除）
    */
   onRemoveFormEditor ?: NodeEventCallback,
+  /**
+   * 编辑器创建回调
+   */
+  onEditorCreate ?: NodeEditorEventCallback<void, HTMLDivElement>,
   /**
    * 用户添加了一个端口时的回调。
    */
@@ -367,12 +417,16 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
 
   onCreate ?: NodeEventCallback;
   onDestroy ?: NodeEventCallback;
+  onSave ?: NodeEventCallback;
   onAddToEditor ?: NodeEventCallback;
+  onCreateCustomEditor ?: NodeCreateEditorFunction;
+  onEditorMoseEvent ?: NodeEditorMoseEventFunction;
   onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
     direction : NodePortDirection,
     type : 'execute'|'param',
   }>;
   onRemoveFormEditor ?: NodeEventCallback;
+  onEditorCreate ?: NodeEditorEventCallback<void, HTMLDivElement>;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;
   onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
@@ -532,4 +586,8 @@ export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettin
     super('NodeSimulate', define);
     this.serializableProperties = [ 'all' ];
   }
+}
+
+export class CustomStorageObject implements IKeyValueObject {
+  [index: string]: ISaveableTypes | null | undefined;
 }

@@ -83,6 +83,12 @@ export interface NodeGraphEditorSelectionContext {
    * @returns 
    */
   isMulitSelect: () => boolean;
+
+  /**
+   * 获取最低矩形内的单元
+   * @param rect 视口坐标
+   */
+  getNodesInRect(rect: Rect) : NodeEditor[];
 }
 
 /**
@@ -231,6 +237,20 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     }
     notifySelectNodeChanged();
   }
+  /**
+   * 获取最低矩形内的单元
+   * @param rect 视口坐标
+   */
+  function getNodesInRect(rect: Rect) : NodeEditor[] {
+    const castNodes = context.getBaseChunkedPanel().testRectCastTag(rect as Rect, "node");
+    const thisTimeSelectedNode = new Array<NodeEditor>();
+    castNodes.forEach((i) => {
+      const block = context.getNodes().get(i.data as string);
+      if (block) 
+        ArrayUtils.addOnce(thisTimeSelectedNode, block);
+    });
+    return thisTimeSelectedNode;
+  }
 
   //多选选择
   function doSelectNodes() {
@@ -347,6 +367,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
 
   }
 
+  context.getNodesInRect = getNodesInRect;
   context.unSelectAllNodes = unSelectAllNodes;
   context.unSelectAllConnectors = unSelectAllConnectors;
   context.unSelectConnector = unSelectConnector;

@@ -30,16 +30,19 @@ defineProps({
 <style lang="scss">
 .collapse-item {
   display: block;
-  padding: 1px 1px 1px 7px;
+  padding: 3px 2px 3px 7px;
 
   &.open {
-    .collapse-arrow {
+    > .collapse-title .collapse-arrow {
       transform: rotate(90deg);
     }
   }
 
   .collapse-title {
-    display: block;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
     user-select: none;
     cursor: pointer;
 
@@ -56,9 +59,9 @@ defineProps({
     }
   }
   .collapse-arrow {
-    color: #000;
+    fill: #fff;
     margin-right: 3px;
-    transition: transform ease-in-out 0.3s;
+    transition: transform ease-in-out 0.1s;
   }
 }
 </style>

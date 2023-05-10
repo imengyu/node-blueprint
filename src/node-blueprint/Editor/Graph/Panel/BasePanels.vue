@@ -1,6 +1,6 @@
 <template>
   <!--单元连接弹出提示-->
-  <div class="node-tooltip"
+  <div class="node-tooltip node-editor-no-move"
     v-if="connectingInfo"
     v-show="connectingInfo.isConnecting && !connectingInfo.isConnectingToNew"
     :style="{
@@ -23,7 +23,7 @@
   </div>
   <!--小信息提示-->
   <div 
-    class="node-editor-centertip"
+    class="node-editor-centertip node-editor-no-move"
     v-show="isShowSmallTip"
     v-html="smallTipText">
   </div>
@@ -31,6 +31,7 @@
   <AddNodePanel 
     ref="addNodePanel"
     v-model:show="isShowAddNodePanel"
+    class="node-editor-no-move"
     :isAddDirectly="isAddDirectly"
     :allNodesGrouped="(allNodesGrouped as CategoryData[])"
     :filterByPortDirection="filterByPortDirection"
@@ -135,7 +136,13 @@ onMounted(() => {
   //鼠标未拖拽未选择情况下，弹出添加单元菜单
   context.getMouseHandler().pushMouseUpHandlers((info) => {
     if (!info.mouseMoved && !context.isAnyConnectorHover()) {
-      showAddNodePanel(info.mouseCurrentPosScreen);
+      showAddNodePanel(
+        info.mouseCurrentPosScreen, 
+        undefined,
+        undefined,
+        info.mouseCurrentPosViewPort.clone(),
+        false
+      );
       return true;
     }
     return false;

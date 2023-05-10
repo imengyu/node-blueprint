@@ -3,11 +3,22 @@ import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry } from "./MouseHandler"
 
+/**
+ * 鼠标事件控制器上下文函数
+ */
+export interface NodeEditorMouseControllerContext {
+  setCursor: (cursor: string) => void;
+  resetCursor: () => void;
+  getMouseInfo: () => NodeGraphEditorMouseInfo,
+  getMouseHandler: () => EditorMousHandlerExtendHandlers,
+}
+
 //鼠标事件目标元素是否不可拖动
 export function isMouseEventInNoDragControl(e: MouseEvent) {
   return (
     HtmlUtils.isEventInControl(e) 
-    || (e.target as HTMLElement).classList.contains('node-block-no-move')
+    || (e.target as HTMLElement).classList.contains('node-editor-no-move')
+    
   );
 }
 
@@ -105,6 +116,8 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   }
   //滚轮
   function onMouseWhell(e: WheelEvent) {
+    if (isMouseEventInNoDragControl(e))
+      return;
     updateMousePos(e);
     e.preventDefault();
 

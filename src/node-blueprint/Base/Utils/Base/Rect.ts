@@ -81,28 +81,30 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * @param pointOrX 点x轴坐标或一个点对象，使用对象时可不填写y [Point X-axis coordinate or a point object. If the object is used, the parameter Y will be ignored]
    * @param y 点y轴坐标 [Point Y-axis coordinate]
    */
-  public setPos(pointOrX : Vector2 | number, y?:number) : void {
+  public setPos(pointOrX : Vector2 | number, y?:number) {
     if(typeof pointOrX == "number"){
       this.x = pointOrX;
       this.y = y || this.y;
-    }else {
+    } else {
       this.x = pointOrX.x;
       this.y = pointOrX.y;
     }
+    return this;
   }
   /**
    * 设置当前矩形的大小 [Sets the size of the current rectangle]
    * @param sizeOrW 宽度或一个点对象，使用对象时可不填写h [Width value or a point object. If the object is used, the parameter h will be ignored]
    * @param h 
    */
-  public setSize(sizeOrW : Vector2 | number, h?:number) : void {
+  public setSize(sizeOrW : Vector2 | number, h?:number) {
     if(typeof sizeOrW == "number"){
       this.w = sizeOrW;
       this.h = h || this.h;
-    }else {
+    } else {
       this.w = sizeOrW.x;
       this.h = sizeOrW.y;
     }
+    return this;
   }
 
   /**

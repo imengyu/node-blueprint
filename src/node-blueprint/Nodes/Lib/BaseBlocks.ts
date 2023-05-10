@@ -1,5 +1,5 @@
 import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
+import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 
 export default { 
@@ -27,10 +27,10 @@ function register() {
     registerScriptVariableBase(),
     registerDebugBase(),
     registerTypeBase(),
-    /* registerLoadLib(),
+    registerLoadLib(),
     registerCommentBlock(),
     registerConvertBlock(),
-    registerConnBlock(), */
+    registerConnBlock(),
   );
 }
 
@@ -85,8 +85,15 @@ import BlockIconEntryTrace from '../BlockIcon/trace.svg';
 import BlockIconEntryNumber from '../BlockIcon/number.svg';
 import BlockIconEntryString from '../BlockIcon/string.svg';
 import BlockIconEntryBoolean from '../BlockIcon/boolean.svg';
+import BlockIconInfo from '../BlockIcon/info.svg';
+import BlockIconInfo2 from '../BlockIcon/info2.svg';
+import BlockIconConvert from '../BlockIcon/convert.svg';
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
+import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
+import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 
 function registerScriptBase()  {
   const NodeParamTypeRegistryInstance = NodeParamTypeRegistry.getInstance();
@@ -185,7 +192,7 @@ function registerScriptBase()  {
       logo: BlockIconSwith,
       minWidth: 140,
       titleBakgroundColor: "rgba(255,20,147,0.6)",
-      titleState: 'small',
+      titleState: 'hide',
     },
     simulate: {
       onPortParamRequest: () => {
@@ -237,10 +244,10 @@ function registerScriptBase()  {
     simulate: {
       onPortExecuteIn: (node, port) => {
         /* let v = node.getInputParamValue('TIME');
-        let context = block.currentRunningContext;
+        let context = node.currentRunningContext;
         context.markContexInUse();
         setTimeout(() => {
-          block.activeOutputPortInNewContext('OUT');
+          node.activeOutputPortInNewContext('OUT');
           context.unsetContexInUse();
         }, v ? v : 1000); */
       }
@@ -294,14 +301,14 @@ function registerScriptBase()  {
     ],
     simulate: {
       onPortExecuteIn: (node, port) => {
-        /* let context = block.currentRunningContext;
-        let variables = block.variables();
+        /* let context = node.currentRunningContext;
+        let variables = node.variables();
         switch(port.guid) {
           case 'START': {
-            let v = block.getInputParamValue('TIME');
+            let v = node.getInputParamValue('TIME');
             context.markContexInUse();
             variables['intervalId'] = setInterval(() => {
-              block.activeOutputPortInNewContext('OUT');
+              node.activeOutputPortInNewContext('OUT');
             }, v ? v : 1000);
             break;
           }
@@ -398,16 +405,16 @@ function registerDebugBase() {
     ],
     simulate: {
       onPortExecuteIn: (block, port) => {
-        /* let con = block.getInputParamValue('CONDITION');
-        let throwError = block.getInputParamValue('THROWERR');
+        /* let con = node.getInputParamValue('CONDITION');
+        let throwError = node.getInputParamValue('THROWERR');
         if(con)
-          block.activeOutputPort('SUCCESS');
+          node.activeOutputPort('SUCCESS');
         else {
           if(throwError)
-            block.throwError('条件断言失败！', port, 'error', true);
+            node.throwError('条件断言失败！', port, 'error', true);
           else {
-            block.throwError('条件断言失败！', port, 'warning', false);
-            block.activeOutputPort('FAILED');
+            node.throwError('条件断言失败！', port, 'warning', false);
+            node.activeOutputPort('FAILED');
           }
         } */
       }
@@ -444,8 +451,8 @@ function registerDebugBase() {
     simulate: {
       onPortExecuteIn: (block, port) => {
         //打印调用堆栈
-        //logger.log(block.getName(), block.currentRunningContext.runner.mainContext.printCallStack(true));
-        //block.activeOutputPort('OUT');
+        //logger.log(node.getName(), node.currentRunningContext.runner.mainContext.printCallStack(true));
+        //node.activeOutputPort('OUT');
       }
     },
   };
@@ -559,6 +566,8 @@ function registerTypeBase() {
       logo: BlockIconEntryString,
       titleState: 'hide',
       titleBakgroundColor: "rgba(255,20,147,0.6)",
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
     },
     simulate: {
       onPortExecuteIn: (block, port) => {
@@ -589,6 +598,8 @@ function registerTypeBase() {
       logo: BlockIconEntryNumber,
       titleState: 'hide',
       titleBakgroundColor: "rgba(158,258,68,0.6)",
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
     },
     simulate: {
       onPortExecuteIn: (block, port) => {
@@ -616,9 +627,11 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: BlockIconEntryString,
+      logo: BlockIconEntryBoolean,
       titleState: 'hide',
       titleBakgroundColor: "rgba(180,0,0,0.6)",
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
     },
     simulate: {
       onPortExecuteIn: (block, port) => {
@@ -628,333 +641,284 @@ function registerTypeBase() {
 
   return [ blockString, blockNumber, blockBoolean ];
 }
-/* function registerLoadLib() {
+function registerLoadLib() {
+  //TODO: LoadLib
   return [];
 }
 function registerCommentBlock() {
 
-  let block = new INodeDefine("088C2A25-192D-42E7-D31B-B5E9FB7C68DD", "文档注释", "", 'imengyu', '');
-  block.baseInfo.logo = require('../../assets/images/BlockIcon/info.svg');
-  block.baseInfo.description = '在这个单元里面添加你的代码注释，拖动右下角可以调整大小';
-  block.ports = [];
-  block.blockStyle.minHeight = '100px';
-  block.callbacks.onCreateCustomEditor = (parentEle, block) => {
-
-    var input = document.createElement('textarea');
-    input.value = block.options['content'] ? block.options['content'] : '';
-    input.classList.add('custom-editor');
-    input.classList.add('comment-editor');
-    input.style.width = (typeof block.options['width'] === 'number' ? block.options['width'] : 210) + 'px';
-    input.style.height = (typeof block.options['height'] === 'number' ? block.options['height'] : 122) + 'px';
-    input.onchange = () => { 
-      block.options['content'] = input.value; 
-      block.editor.markFileChanged();
-    };
-    input.oncontextmenu = (e) => {
-      block.editor.showInputRightMenu(new Vector2(e.x, e.y), <HTMLInputElement>e.target);      
-      e.stopPropagation();
-      e.preventDefault();
-    };
-    block.data['input-control'] = input;
-    parentEle.appendChild(input);
-  };
-  block.blockStyle.noComment = true;
-  block.callbacks.onSave = (block) => {
-    var input = <HTMLInputElement>block.data['input-control'];
-    block.options['width'] = input.offsetWidth;
-    block.options['height'] = input.offsetHeight;
-    block.options['content'] = input.value;
-  };
-
-  commentBlock = new INodeDefine("24AA3DF0-49D9-84D9-8138-534505C33327", "注释块", "", 'imengyu', '');
-  commentBlock.baseInfo.logo = require('../../assets/images/BlockIcon/info2.svg');
-  commentBlock.baseInfo.description = '';
-  commentBlock.ports = [];
-  commentBlock.blockStyle.minHeight = '100px';
-  commentBlock.blockStyle.userCanResize = true;
-  commentBlock.blockStyle.noTooltip = true;
-  commentBlock.blockStyle.noComment = true;
-  commentBlock.blockStyle.hideLogo = true;
-  commentBlock.blockStyle.noTitle = true;
-  commentBlock.blockStyle.layer = 'background';
-  commentBlock.callbacks.onCreateCustomEditor = (parentEle, block) => {
-    let blockEle = <HTMLDivElement>parentEle.parentNode;
-    blockEle.classList.add('flow-block-comment-block');
-    blockEle.style.minWidth = '250px';
-    blockEle.style.minHeight = '150px';
-
-    let ele = document.createElement('div');
-    let input = document.createElement('input');
-    let span = document.createElement('span');
-    input.value = block.options['comment'] ? block.options['comment'] : '注释';
-    input.onchange = () => {
-      block.options['comment'] = input.value;
-      span.innerText = input.value;
-    };
-    input.style.display = 'none';
-    input.onkeypress = (e) => {
-      if(e.key == 'Enter')
-        input.onblur(undefined);
-    };
-    input.onblur = () => {
-      input.style.display = 'none';
-      span.style.display = 'block';
-    };
-    span.onclick = () => {
-      if(block.selected && !block.isLastMovedBlock()) {
-        span.style.display = 'none';
-        input.style.display = 'block';
-        input.focus();
-      }
-    };
-    span.innerText = input.value;
-    ele.classList.add('comment-block-title');
-    ele.appendChild(input);
-    ele.appendChild(span);
-    parentEle.appendChild(ele);
-  };
-  commentBlock.callbacks.onCreate = (block) => {
-    block.data['list'] = [];
-    block.data['rect'] = new Rect();
-    block.data['mouseDownPos'] = { x: 0, y: 0 };
-    block.data['mouseDown'] = false;
-  };
-  commentBlock.callbacks.onDestroy = (block) => {
-    block.data['list'] = undefined;
-  };
-  commentBlock.callbacks.onBlockMouseEvent = (block: BlockEditor, event: "move" | "down" | "up", e: MouseEvent) => {
-    let list = block.data['list'] as Array<BlockEditor>;
-    let rect = block.data['rect'] as Rect;
-    let mouseDownPos = block.data['mouseDownPos'] as { x: number, y: number};
-    if(event === 'down') {
-
-      block.data['mouseDown'] = true;
-
-      mouseDownPos.x = e.x;
-      mouseDownPos.y = e.y;
-
-      //保存鼠标按下时区域内的所有单元
-      rect.Set(block.getRect());
-      list.empty();
-      block.editor.getBlocksInRect(rect).forEach((v) => {
-        if(v != block) {
-          v.updateLastPos();
-          list.push(v);
+  const documentCommentBlock : INodeDefine = {
+    guid: '088C2A25-192D-42E7-D31B-B5E9FB7C68DD',
+    name: '文档注释',
+    description: '在这个单元里面添加你的代码注释，拖动右下角可以调整大小',
+    author: 'imengyu',
+    version: 1,
+    category: '',
+    ports: [],
+    events: {
+      onCreateCustomEditor: (parentEle, node, context) => {
+        if (parentEle) {
+          var input = document.createElement('textarea');
+          input.value = node.options['content'] ? node.options['content'] as string : '';
+          input.classList.add('custom-editor');
+          input.classList.add('comment-editor');
+          input.style.width = (typeof node.options['width'] === 'number' ? node.options['width'] : 210) + 'px';
+          input.style.height = (typeof node.options['height'] === 'number' ? node.options['height'] : 122) + 'px';
+          input.onchange = () => { 
+            node.options['content'] = input.value; 
+            context.markGraphChanged();
+          };
+          input.oncontextmenu = (e) => {
+            context.showInputRightMenu(new Vector2(e.x, e.y), e.target as HTMLInputElement);      
+            e.stopPropagation();
+            e.preventDefault();
+          };
+          node.data['input-control'] = input;
+          parentEle.appendChild(input);
         }
-      });
-      
-    } else if(event === 'move') {
-     
-      if(block.data['mouseDown'] && block.getCurrentSizeType() == 0) {
-
-        //移动包括在注释内的单元
-        let zoom = 1 / block.editor.getViewZoom();
-        let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
-        list.forEach((v) => {
-          v.position.x = v.getLastPos().x + (offX * zoom);
-          v.position.y = v.getLastPos().y + (offY * zoom);
-          v.setPos();
-        })
+        return undefined;
+      },
+      onSave: (node) => {
+        var input = node.data['input-control'] as HTMLInputElement;
+        node.options['width'] = input.offsetWidth;
+        node.options['height'] = input.offsetHeight;
+        node.options['content'] = input.value;
       }
-
-    } else if(event === 'up') {
-      if(block.data['mouseDown'])
-        block.data['mouseDown'] = false;
-    }
-    return false;
+    },
+    style: {
+      logo: BlockIconInfo,
+      minHeight: 100,
+      noComment: true,
+    },
   };
 
-  return [ block, commentBlock ];
+  commentBlock = {
+    guid: '24AA3DF0-49D9-84D9-8138-534505C33327',
+    name: '注释块',
+    author: 'imengyu',
+    version: 1,
+    category: '',
+    ports: [],
+    events: {
+      onCreateCustomEditor: (parentEle, node, context) => {
+        if (!parentEle) 
+          return undefined;
+        let blockEle = parentEle.parentNode as HTMLDivElement;
+        blockEle.classList.add('node-block-comment-block');
+        blockEle.style.minWidth = '250px';
+        blockEle.style.minHeight = '150px';
+    
+        let ele = document.createElement('div');
+        let input = document.createElement('input');
+        let span = document.createElement('span');
+        input.value = node.options['comment'] ? node.options['comment'] as string : '注释';
+        input.onchange = () => {
+          node.options['comment'] = input.value;
+          span.innerText = input.value;
+        };
+        input.style.display = 'none';
+        input.onkeypress = (e) => {
+          if(e.key == 'Enter')
+            input.blur();
+        };
+        input.onblur = () => {
+          input.style.display = 'none';
+          span.style.display = 'block';
+        };
+        span.onclick = () => {
+          if(node.selected && !context.getMouseInfo().mouseMoved) {
+            span.style.display = 'none';
+            input.style.display = 'block';
+            input.focus();
+          }
+        };
+        span.innerText = input.value;
+        ele.classList.add('comment-block-title');
+        ele.appendChild(input);
+        ele.appendChild(span);
+        parentEle.appendChild(ele);
+      },
+      onCreate: (node) => {
+        node.data['list'] = [];
+        node.data['rect'] = new Rect();
+        node.data['mouseDownPos'] = { x: 0, y: 0 };
+        node.data['mouseDown'] = false;
+      },
+      onDestroy: (node) => {
+        node.data['list'] = undefined;
+      },
+      onEditorMoseEvent: (node, context, event, e) => {
+        let list = node.data['list'] as NodeEditor[];
+        let rect = node.data['rect'] as Rect;
+        let mouseDownPos = node.data['mouseDownPos'] as { x: number, y: number};
+        if(event === 'down') {
+    
+          node.data.mouseDown = true;
+    
+          mouseDownPos.x = e.x;
+          mouseDownPos.y = e.y;
+    
+          //保存鼠标按下时区域内的所有单元
+          rect.set(node.getRect());
+          ArrayUtils.clear(list);
+          context.getNodesInRect(rect).forEach((v) => {
+            if(v != node) {
+              v.saveLastBlockPos();
+              list.push(v);
+            }
+          });
+          
+        } else if(event === 'move') {
+         
+          if(node.data.mouseDown && node.getCurrentSizeType() == 0) {
+    
+            //移动包括在注释内的单元
+            let viewPort = context.getViewPort();
+            let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
+            list.forEach((v) => {
+              v.position.x = v.getLastPos().x + (viewPort.scaleScreenSizeToViewportSize(offX));
+              v.position.y = v.getLastPos().y + (viewPort.scaleScreenSizeToViewportSize(offY));
+            })
+          }
+    
+        } else if(event === 'up') {
+          if(node.data.mouseDown)
+            node.data.mouseDown = false;
+        }
+        return false;
+      }
+    },
+    style: {
+      logo: BlockIconInfo2,
+      minHeight: 100,
+      noTooltip: true,
+      noComment: true,
+      titleState: 'hide',
+      layer: 'background',
+      userResize: 'all',
+    },
+  };
+
+  return [ documentCommentBlock, commentBlock ];
 }
 function registerConvertBlock() {
+  convertBlock = {
+    guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C279',
+    name: '转换器',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/转换',
+    hideInAddPanel: true,
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+        direction: 'input',
+        defaultConnectPort: true,
+      },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Any,
+        direction: 'output'
+      },
+    ],
+    events: {
+      onCreate: (node) => {
+        const ParamTypeServiceInstance = NodeParamTypeRegistry.getInstance();
 
-  let block = new INodeDefine("8C7DA763-05C1-61AF-DCD2-174CB6C2C279", "转换器", "", 'imengyu', '基础/转换');
-  block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
-  block.baseInfo.description = '';
-  block.ports = [
-    {
-      guid: 'INPUT',
-      paramType: 'any',
-      direction: 'input',
-      defaultConnectPort: true,
+        if (
+          !StringUtils.isNullOrEmpty(node.options.coverterFrom as string) && 
+          !StringUtils.isNullOrEmpty(node.options.coverterTo as string)
+        )
+          node.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(
+            NodeParamType.FromString(node.options.coverterFrom as string), 
+            NodeParamType.FromString(node.options.coverterTo as string)
+          );
+    
+        let coverter = node.data['coverter'] as NodeTypeCoverter;
+        if(coverter) {
+    
+          let fromPort = node.getPortByGUID('INPUT') as NodePort;
+          let toPort = node.getPortByGUID('OUTPUT') as NodePort;
+    
+          node.changePortParamType(fromPort, coverter.fromType);
+          node.changePortParamType(toPort, coverter.toType);
+          node.define.description = '转换 ' + coverter.fromType.toUserFriendlyName() + 
+            ' 至 ' + coverter.toType.toUserFriendlyName();
+        }
+      },
     },
-    {
-      guid: 'OUTPUT',
-      paramType: 'any',
-      direction: 'output'
+    style: {
+      logo: BlockIconEntryString,
+      minWidth: 0,
+      titleState: 'hide',
+      titleBakgroundColor: "rgba(250,250,250,0.6)",
     },
-  ];
-  block.type = 'base';
-  block.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
-  block.blockStyle.noTitle = true;
-  block.blockStyle.minWidth = '0px';
-  block.settings.hideInAddPanel = true;
-  block.callbacks.onCreate = (block : Block) => {
-    if(!StringUtils.isNullOrEmpty(block.options['coverterFrom']) && !StringUtils.isNullOrEmpty(block.options['coverterTo']))
-      block.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(
-        createParameterTypeFromString(block.options['coverterFrom']), 
-        createParameterTypeFromString(block.options['coverterTo']));
-
-    let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
+    simulate: {
+      onPortExecuteIn: (node, port) => {
+        /**
+         * let coverter = <BlockParameterTypeConverterData>node.data['coverter'];
     if(coverter) {
-
-      let fromPort = block.getPortByGUID('INPUT');
-      let toPort = block.getPortByGUID('OUTPUT');
-
-      block.changePortParamType(fromPort, coverter.fromType, coverter.allowSetType);
-      block.changePortParamType(toPort, coverter.toType, coverter.allowSetType);
-      block.regData.baseInfo.description = '转换 ' + ParamTypeServiceInstance.getTypeNameForUserMapping(coverter.fromType) + 
-        ' 至 ' + ParamTypeServiceInstance.getTypeNameForUserMapping(coverter.toType);
-    }
-  };
-  block.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    let coverter = <BlockParameterTypeConverterData>block.data['coverter'];
-    if(coverter) {
-      let input = block.getInputParamValue('INPUT', context);
+      let input = node.getInputParamValue('INPUT', context);
       return coverter.converter(input);
     } else {
-      block.throwError('转换器没有设置转换方法，请删除之后重新添加', port, 'error');
+      node.throwError('转换器没有设置转换方法，请删除之后重新添加', port, 'error');
       return undefined;
     }
-  };
-  
-  convertBlock = block;
-
-  let parseFloatBlock = new INodeDefine("6A644C89-F7FA-E615-6342-D7E747710DD6", "parseFloat", '转换为浮点数', 'imengyu', '基础/转换');
-  parseFloatBlock.baseInfo.logo = require('../../assets/images/BlockIcon/convert-number.svg');
-  parseFloatBlock.ports = [
-    {
-      guid: 'INPUT',
-      paramType: 'any',
-      direction: 'input',
-      description: '要转换的变量',
-      defaultConnectPort: true,
+         */
+      }
     },
-    {
-      guid: 'OUTPUT',
-      paramType: 'number',
-      description: '转为的浮点数',
-      direction: 'output'
-    },
-  ];
-  parseFloatBlock.type = 'base';
-  parseFloatBlock.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
-  parseFloatBlock.blockStyle.noTitle = true;
-  parseFloatBlock.blockStyle.logoBackground = 'title:parseInt';
-  parseFloatBlock.blockStyle.minWidth = '130px';
-  parseFloatBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    let input = block.getInputParamValue('INPUT', context);
-    return parseFloat(input);
-  };
+  }; 
 
-  let parseIntBlock = new INodeDefine("824AB4F0-7C8F-A12F-6CA6-87266464BD6E", "parseInt", '转换为整数', 'imengyu', '基础/转换');
-  parseIntBlock.baseInfo.logo = require('../../assets/images/BlockIcon/convert-number-2.svg');
-  parseIntBlock.ports = [
-    {
-      guid: 'INPUT',
-      paramType: 'any',
-      direction: 'input',
-      description: '要转换的变量',
-      defaultConnectPort: true,
-    },
-    {
-      guid: 'OUTPUT',
-      paramType: 'number',
-      description: '转为的整数',
-      direction: 'output'
-    },
-  ];
-  parseIntBlock.type = 'base';
-  parseIntBlock.blockStyle.logoBackground = 'title:parseInt';
-  parseIntBlock.blockStyle.titleBakgroundColor = "rgba(250,250,250,0.6)";
-  parseIntBlock.blockStyle.noTitle = true;
-  parseIntBlock.blockStyle.minWidth = '130px';
-
-  parseIntBlock.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    let input = block.getInputParamValue('INPUT', context);
-    return parseInt(input);
-  };
-
-  return [ block, parseFloatBlock, parseIntBlock ];
+  return [ convertBlock ];
 }
 function registerConnBlock() {
-  let block = new INodeDefine("8A94A788-ED4E-E521-5BC2-4D69B59BAB80", "数据延长线", "", 'imengyu', '');
-
-  block.baseInfo.logo = require('../../assets/images/BlockIcon/convert.svg');
-  block.baseInfo.description = '';
-  block.ports = [
-    {
-      guid: 'INPUT',
-      paramType: 'any',
-      paramRefPassing: true,
-      direction: 'input',
-      portAnyFlexable: { flexable: true },
-      defaultConnectPort: true,
+  const connBlock : INodeDefine = {
+    guid: '8A94A788-ED4E-E521-5BC2-4D69B59BAB80',
+    name: '数据延长线',
+    author: 'imengyu',
+    version: 1,
+    category: '',
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+        isRefPassing: true,
+        direction: 'input',
+        defaultConnectPort: true,
+      },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Any,
+        isRefPassing: true,
+        direction: 'output'
+      },
+    ],
+    style: {
+      logo: BlockIconConvert,
+      titleState: 'hide',
+      noComment: true,
+      minWidth: 0,
     },
-    {
-      guid: 'OUTPUT',
-      paramType: 'any',
-      paramRefPassing: true,
-      portAnyFlexable: { flexable: true },
-      direction: 'output'
+    events: {
+      onCreate: (node) => {
+        let type = node.options['type'] as string;
+        if(!StringUtils.isNullOrEmpty(type)) {
+          const paramType = NodeParamType.FromString(type);
+          node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 
+          node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 
+        }
+      },
+      onEditorCreate: (node, el) => {
+        el?.classList.add('flow-block-extended-line');
+      },
     },
-  ];
-  block.portAnyFlexables = {
-    flexable: {}
-  };
-  block.blockStyle.noTitle = true;
-  block.blockStyle.noComment = true;
-  block.blockStyle.minWidth = '0px';
-  block.callbacks.onPortParamRequest = (block: Block, port: BlockPort, context: BlockRunContextData) => {
-    return block.getInputParamValue('INPUT', context);
-  };
-  block.callbacks.onCreate = (block : Block) => {
-    let type = block.options['type'];
-    if(!StringUtils.isNullOrEmpty(type)) {
-      block.changePortParamType(block.getPortByGUID('INPUT'), undefined, type); 
-      block.changePortParamType(block.getPortByGUID('OUTPUT'), undefined, type); 
-    }
-  };
-  block.blockMenu.items.push({
-    label: '集合类型',
-    children: [
-      {
-        label: '变量',
-        onClick: function() { 
-          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'variable'); 
-          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'variable'); 
-          this.options['type'] = 'variable';
-        }
-      },
-      {
-        label: '数组',
-        onClick: function() { 
-          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'array'); 
-          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'array'); 
-          this.options['type'] = 'array';
-        }
-      },
-      {
-        label: '集合',
-        onClick: function() {
-          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'set'); 
-          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'set'); 
-          this.options['type'] = 'set';
-        }
-      },
-      {
-        label: '映射',
-        onClick: function() { 
-          this.changePortParamType(this.getPortByGUID('INPUT'), undefined, 'dictionary'); 
-          this.changePortParamType(this.getPortByGUID('OUTPUT'), undefined, 'dictionary'); 
-          this.options['type'] = 'dictionary';
-        }
-      },
-    ]
-  })
-  block.callbacks.onEditorCreate = (block) => {
-    block.el.classList.add('flow-block-extended-line');
-  }
+    simulate: {
+      onPortParamRequest() {
 
-  return [ block ];
-} */
+      },
+    },
+  };
+
+  return [ connBlock ];
+}

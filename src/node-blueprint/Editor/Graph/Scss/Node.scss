@@ -92,7 +92,7 @@
 }
 
 //标题
-.flow-header {
+.node-block-header {
   position: relative;
   text-align: center;
   border-top-left-radius: 5px;
@@ -262,6 +262,7 @@
   }
 }
 
+//扩展横线
 .node-block-extended-line {
   background: transparent;
   border-color: transparent;
@@ -275,7 +276,7 @@
     .left {
       margin: 0;
 
-      .flow-port {
+      .node-port {
         width: 7px;
         overflow: hidden;
       }
@@ -283,7 +284,7 @@
     .right {
       margin: 0;
 
-      .flow-port {
+      .node-port {
         width: 12px;
         overflow: hidden;
 
@@ -318,7 +319,7 @@
     align-items: flex-start;
     margin-right: 5px;
 
-    .flow-port {
+    .node-port {
       padding-right: 4px;
     }
     .connect-dot {
@@ -332,7 +333,7 @@
     align-items: flex-end;
     margin-left: 5px;
 
-    .flow-port {
+    .node-port {
       padding-left: 4px;
     }
     .connect-dot {
@@ -342,7 +343,7 @@
 }
 
 //端口
-.flow-port {
+.node-port {
   display: inline-flex;
   flex: 1;
   flex-direction: row;
@@ -411,4 +412,41 @@
     cursor: initial;
   }
   
+}
+
+//背景注释块
+.node-block-comment-block {
+  background-color: rgba(255, 255, 255, 0.623);
+  z-index: -1;
+
+  .comment-block-title {
+    display: block;
+    background-color: rgba(255, 255, 255, 0.5);
+    font-size: 15px;
+    white-space: nowrap;
+    color: #000;
+    padding: 1px 2px;
+
+    span {
+      display: block;
+      width: 100%;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      padding: 1px 7px;
+    }
+    input {
+      background-color: #fff;
+      padding: 1px 7px;
+      display: block;
+      width: 100%;
+      color: #000;
+      border: none;
+      outline: none;
+      border-radius: 6px;
+
+      &:focus {
+        outline: none;
+      }
+    }
+  }
 }

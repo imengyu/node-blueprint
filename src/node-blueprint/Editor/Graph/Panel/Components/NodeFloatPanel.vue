@@ -8,6 +8,7 @@
       width: `${size.x}px`,
       height: `${size.y}px`
     }"
+    @wheel="$event.stopPropagation()"
   >
     <div v-if="title" class="title">
       <span>{{ title }}</span>

@@ -77,7 +77,7 @@ function onDrag(item: CategoryDataItem, e: DragEvent) {
   }
 }
 function onClick(item: CategoryDataItem) {
-  if (props.isAddDirectly)
+  if (!props.isAddDirectly)
     addNode(item.define);
 }
 function onAddClick(item: CategoryDataItem) {
@@ -94,7 +94,7 @@ function onAddClick(item: CategoryDataItem) {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 0px 13px;
+    padding: 2px 13px;
     margin-left: -8px;
     margin-top: 1px;
     cursor: default;
@@ -112,6 +112,10 @@ function onAddClick(item: CategoryDataItem) {
       font-size: 1rem;
     }
     span {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
       font-size: 0.8rem;
       color: #888;
     }

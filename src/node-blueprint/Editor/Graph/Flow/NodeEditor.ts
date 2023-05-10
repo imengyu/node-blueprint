@@ -2,6 +2,7 @@ import { Node, type INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { ChunkInstance } from "../Cast/ChunkedPanel";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
@@ -44,6 +45,7 @@ export class NodeEditor extends Node {
   public connectors = [] as NodeConnectorEditor[];
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
+  
   /**
    * 保存块当前位置，以供移动使用
    */
@@ -61,6 +63,19 @@ export class NodeEditor extends Node {
     this.editorHooks.callbackTwinkle?.(time);
   }
   /**
+   * 获取当前单元移动之前的位置
+   * @returns 
+   */
+  public getLastPos() {
+    return this.lastBlockPos;
+  }
+  /**
+   * 获取节点矩形（视口坐标）
+   */
+  public getRect() {
+    return new Rect().setPos(this.position).setSize(this.getRealSize());
+  }
+  /**
    * 获取节点真实大小
    */
   public getRealSize() {
@@ -70,7 +85,7 @@ export class NodeEditor extends Node {
    * 获取单元当前调整大小类型
    * @returns 
    */
-  public getGetCurrentSizeTypee() : number  {
+  public getCurrentSizeType() : number  {
     return this.editorHooks.callbackGetCurrentSizeType?.() || 0;
   }
 }

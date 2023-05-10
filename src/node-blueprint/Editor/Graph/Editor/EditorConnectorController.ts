@@ -10,7 +10,7 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import { reactive } from "vue";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
-import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
+import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import type { NodeEditor } from "../Flow/NodeEditor";
 
@@ -80,8 +80,7 @@ export interface IConnectingInfo {
   endPos: Vector2,
   canConnect: boolean,
   shouldAddConverter: boolean,
-  //TODO: nextAddConverter: null|BluePrintParamTypeConverterDefine,
-  nextAddConverter: null,
+  nextAddConverter: null|NodeTypeCoverter,
   failedText: string,
   successText: string,
   otherSideRequireDirection: NodePortDirection,
@@ -334,7 +333,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       context.showAddNodePanel(
         viewPort.fixScreenPosWithEditorAbsolutePos(panelPos), 
         connectingInfo.otherSideRequireType, 
-        connectingInfo.otherSideRequireDirection
+        connectingInfo.otherSideRequireDirection,
+        connectingInfo.endPos
       );
       
       connectingInfo.isConnectingToNew = true;
