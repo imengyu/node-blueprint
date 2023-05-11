@@ -23,7 +23,7 @@
       :isAddDirectly="isAddDirectly"
     />
 
-    <div v-if="currentShowCount===0" class="node-add-panel-empty">
+    <div v-if="searchValue != '' && currentShowCount===0" class="node-add-panel-empty">
       暂无筛选结果。请更改筛选条件后再试
     </div>
   </NodeFloatPanel>

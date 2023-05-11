@@ -1,46 +1,42 @@
 <template>
-  <div>
+  <CollapseItem 
+    v-for="(item, index) in categoryData.childCategories" 
+    :key="index" 
+    v-show="item.show && item.filterShow"
+    v-model:open="item.open" 
+    :title="item.category"
+  >
+    <NodeCategory v-show="item.open" :categoryData="item" />
+  </CollapseItem>
 
-    <CollapseItem 
-      v-for="(item, index) in categoryData.childCategories" 
-      :key="index" 
-      v-show="item.show && item.filterShow"
-      v-model:open="item.open" 
-      :title="item.category"
+  <div class="nodes-select-list">
+    <Tooltip
+      v-for="(item, index) in categoryData.nodes"
+      :key="index"
+      :content="item.define.description"
     >
-      <NodeCategory v-show="item.open" :categoryData="item" />
-    </CollapseItem>
-
-    <div class="nodes-select-list">
-      <Tooltip
-        v-for="(item, index) in categoryData.nodes"
-        :key="index"
-        :content="item.define.description"
-      >
-        <div class="item" 
-          v-show="item.show && item.filterShow && !item.define.hideInAddPanel"
-        
-          :draggable="isAddDirectly ? 'false' : 'true'" 
-          @click="onClick(item)"
-          @dragstart="onDrag(item, $event)"
-        >
-          <span>
-            <img :src="item.define.style?.logo || DefaultLogo" />
-            {{ item.define.name }}
-          </span>
-          <SmallButton 
-            v-if="isAddDirectly"
-            icon="icon-add-bold"
-            title="添加到鼠标位置"
-            class="add-button"
-            @click="onAddClick(item)" 
-          />
-          <span v-else></span>
-        </div>
-      </Tooltip>
+      <div class="item" 
+        v-show="item.show && item.filterShow && !item.define.hideInAddPanel"
       
-    </div>
-
+        :draggable="isAddDirectly ? 'false' : 'true'" 
+        @click="onClick(item)"
+        @dragstart="onDrag(item, $event)"
+      >
+        <span>
+          <img :src="item.define.style?.logo || DefaultLogo" />
+          {{ item.define.name }}
+        </span>
+        <SmallButton 
+          v-if="isAddDirectly"
+          icon="icon-add-bold"
+          title="添加到鼠标位置"
+          class="add-button"
+          @click="onAddClick(item)" 
+        />
+        <span v-else></span>
+      </div>
+    </Tooltip>
+    
   </div>
 </template>
 
