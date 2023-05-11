@@ -661,11 +661,15 @@ function registerCommentNode() {
           var input = document.createElement('textarea');
           input.value = node.options['content'] ? node.options['content'] as string : '';
           input.classList.add('custom-editor');
-          input.classList.add('comment-editor');
+          input.classList.add('node-comment-editor');
           input.style.width = (typeof node.options['width'] === 'number' ? node.options['width'] : 210) + 'px';
           input.style.height = (typeof node.options['height'] === 'number' ? node.options['height'] : 122) + 'px';
           input.onchange = () => { 
             node.options['content'] = input.value; 
+            context.markGraphChanged();
+          };
+          input.onmouseup = () => { 
+            node.updateRegion();
             context.markGraphChanged();
           };
           input.oncontextmenu = (e) => {
@@ -683,7 +687,15 @@ function registerCommentNode() {
         node.options['width'] = input.offsetWidth;
         node.options['height'] = input.offsetHeight;
         node.options['content'] = input.value;
-      }
+      },
+      onEditorEvent: (node, context, event) => {
+        switch(event) {
+          case 'unselect': {
+            node.updateRegion();
+            break;
+          }
+        }
+      },
     },
     style: {
       logo: NodeIconInfo,
@@ -806,9 +818,6 @@ function registerCommentNode() {
               node.data.mouseDown = false;
             node.updateRegion();
             break;  
-          case 'leave':
-            
-            break;
         }
         return false;
       }

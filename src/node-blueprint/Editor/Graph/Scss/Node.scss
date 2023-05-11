@@ -467,3 +467,17 @@
     }
   }
 }
+
+.node-comment-editor {
+  display: inline-block;
+  resize: both;
+  color: #000;
+  background-color: rgba(255, 255, 255, 0.788);
+  min-height: 80px;
+  min-width: 100px;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
+}

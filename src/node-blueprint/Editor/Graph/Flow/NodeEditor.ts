@@ -53,6 +53,9 @@ export class NodeEditor extends Node {
   public saveLastNodePos() {
     this.lastBlockPos.set(this.position);
   }
+  /**
+   * 在单元的大小或者位置变化后，更新区块信息，保证用户多选可以选择
+   */
   public updateRegion() {
     this.editorHooks.callbackUpdateRegion?.();
   }
