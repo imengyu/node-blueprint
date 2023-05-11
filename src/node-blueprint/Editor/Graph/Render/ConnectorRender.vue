@@ -15,6 +15,8 @@ import type { NodeConnectorEditor } from '../Flow/NodeConnectorEditor';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 import { ConnectorDrawer } from './ConnectorDrawer';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
+import { FPSCalculator } from './FPSCalculator';
+import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -45,6 +47,10 @@ const props = defineProps({
     type: Object as PropType<Map<string, NodeConnectorEditor>>,
     default: null,
   },
+  drawDebugInfo: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 onMounted(() => {
@@ -61,6 +67,44 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(renderAnimId);
 });
 
+
+//#region DebugText
+
+let drawTick = 0;
+let drawDebugInfoItems = new Map<number, () => string>();
+let drawFpsShow = "";
+
+function addDebugInfoItem(v : () => string) {
+  const id = RandomUtils.genNonDuplicateNumber()
+  drawDebugInfoItems.set(id, v);
+  return id;
+}
+function removeDebugInfoItem(id : number) {
+  drawDebugInfoItems.delete(id);
+}
+
+const fpsCalculator = new FPSCalculator();
+
+function renderDebugText() {
+  if(ctx == null) return;
+
+  //Debug text
+  if(props.drawDebugInfo){
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#fff";
+    
+    let h = 20;
+    ctx.fillText(drawFpsShow, 20, h);
+    drawDebugInfoItems.forEach((k) => {
+      if(ctx == null) return;
+      h += 10;
+      ctx.fillText(k(), 20, h);
+    });
+  }
+}
+
+//#endregion
+
 const retPos = new Vector2();
 const retSize = new Vector2();
 const drawerConnectingConnector = new ConnectorDrawer();
@@ -68,9 +112,21 @@ const tempPoint1 = new Vector2();
 const tempPoint2 = new Vector2();
 
 function render() {
-  if(!ctx) return;
+  if (!ctx) return;
+  if (drawTick < Number.MAX_SAFE_INTEGER) drawTick++;
+  else drawTick = 0;
+
+  fpsCalculator.calculateFps();
+  if(drawTick % 10 == 0) 
+    drawFpsShow = "fps : " + fpsCalculator.fps.toFixed(2);
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  //绘制调试信息
+  if(props.drawDebugInfo) {
+    props.chunkedPanel.renderDebugInfo(props.viewPort, ctx);
+    renderDebugText();
+  }
   
   //绘制多选框
   if (props.isMulitSelect) {
@@ -132,6 +188,8 @@ function render() {
 defineEmits([ 'contextmenu' ]);
 
 defineExpose({
+  addDebugInfoItem,
+  removeDebugInfoItem,
   onWindowSizeChanged(x: number, y: number) {
     if(canvas.value) {
       canvas.value.width = x;

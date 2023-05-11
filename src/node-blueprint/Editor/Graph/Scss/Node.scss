@@ -44,7 +44,6 @@
     bottom: 0;
     background-position: center;
     background-repeat: no-repeat;
-    z-index: -1;  
     display: flex;
     justify-content: center;
     align-items: center;
@@ -53,6 +52,7 @@
     .big-title {
       font-size: 18px;
       font-weight: bold;
+      color: #fff;
     }
   }
   .breakpoint-status {
@@ -416,18 +416,31 @@
   
 }
 
+//右下角拖拽
+.node-size-dragger {
+  display: inline-block;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 16px;
+  width: 16px;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-image: url('../Images/drag.svg');
+  cursor: se-resize;
+}
+
 //背景注释块
 .node-block-comment-block {
-  background-color: rgba(255, 255, 255, 0.623);
-  z-index: -1;
+  background-color: rgba(255, 255, 255, 0.5);
 
   .comment-block-title {
     display: block;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.6);
     font-size: 15px;
     white-space: nowrap;
     color: #000;
-    padding: 1px 2px;
+    padding: 6px 4px;
 
     span {
       display: block;
@@ -435,12 +448,14 @@
       text-overflow: ellipsis;
       overflow: hidden;
       padding: 1px 7px;
+      font-size: 15px;
     }
     input {
       background-color: #fff;
+      font-size: 15px;
       padding: 1px 7px;
       display: block;
-      width: 100%;
+      width: calc(100% - 14px);
       color: #000;
       border: none;
       outline: none;

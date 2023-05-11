@@ -169,9 +169,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 取消选中所有单元
    */
   function unSelectAllNodes() {
-    selectNodes.value.forEach((b) => {
-      b.selected = false;
-    });
+    selectNodes.value.forEach((b) => doSelectNode(b as NodeEditor, false));
     ArrayUtils.clear(selectNodes.value);
     notifySelectNodeChanged();
   }
@@ -184,7 +182,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     context.getNodes().forEach((b) => {
       const node = b as NodeEditor;
       _selectNodes.push(node);
-      node.selected = true;
+      doSelectNode(node, true);
     });
     notifySelectNodeChanged();
   }
@@ -193,7 +191,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    */
   function unSelectNode(node: NodeEditor) {
     ArrayUtils.remove(selectNodes.value, node);
-    node.selected = false;
+    doSelectNode(node, false);
     notifySelectNodeChanged();
   }
   /**
@@ -204,18 +202,18 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     if (append) {
       if (selectNodes.value.includes(node)) {
         ArrayUtils.remove(selectNodes.value, node);
-        node.selected = false;
+        doSelectNode(node, false);
       }
       else {
         selectNodes.value.push(node);
-        node.selected = true;
+        doSelectNode(node, true);
       }
     }
     else {
       unSelectAllNodes();
       unSelectAllConnectors();
       selectNodes.value.push(node);
-      node.selected = true;
+      doSelectNode(node,  true);
     }
     notifySelectNodeChanged();
   }
@@ -224,7 +222,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     if (append) {
       nodes.forEach(node => {
         ArrayUtils.addOnce(selectNodes.value, node);
-        node.selected = true;
+        doSelectNode(node, true);
       });
     }
     else {
@@ -232,7 +230,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       unSelectAllConnectors();
       nodes.forEach(node => {
         selectNodes.value.push(node);
-        node.selected = true;
+        doSelectNode(node, true);
       });
     }
     notifySelectNodeChanged();
@@ -250,6 +248,11 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
         ArrayUtils.addOnce(thisTimeSelectedNode, block);
     });
     return thisTimeSelectedNode;
+  }
+
+  function doSelectNode(node: NodeEditor, select: boolean) {
+    node.selected = select;
+    node.events.onEditorEvent?.(node, context, select ? 'select' : 'unselect');
   }
 
   //多选选择
@@ -291,13 +294,13 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       for (let i = _selectNodes.length - 1; i >= 0; i--) {
         const b = _selectNodes[i] as NodeEditor;
         if (!ArrayUtils.contains(thisTimeSelectedNode, b)) {
-          b.selected = false;
+          doSelectNode(b, false);
           ArrayUtils.remove(_selectNodes, b);
         } else
           ArrayUtils.remove(thisTimeSelectedNode, b);
       }
       thisTimeSelectedNode.forEach((b) => {
-        b.selected = true;
+        doSelectNode(b, true);
         ArrayUtils.addOnce(_selectNodes, b);
       });
 

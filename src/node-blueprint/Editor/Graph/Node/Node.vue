@@ -31,7 +31,7 @@
       @mouseenter="onMouseEnter($event)"
       @mouseleave="onMouseLeave($event)"
       @mousemove="onMouseMove($event)"
-      @mouseuo="onMouseUp($event)"
+      @mouseup="onMouseUp($event)"
       @mousewheel="onMouseWhell($event)"
       @contextmenu="onContextmenu($event)"
     >
@@ -136,7 +136,7 @@
         :node="instance"
         :create-editor-function="instance.events.onCreateCustomEditor"
       />
-      <!--主区域-->
+      <!--主端口区域-->
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='node-block-base'>
         <div class='node-block-ports'>
           <div class='left'>
@@ -151,6 +151,8 @@
           </div>
         </div>
       </div>
+      <!--右下角拖拽-->
+      <div v-if="instance.style.userResize" class="node-size-dragger" />
     </div>
   </Tooltip>
 </template>
@@ -457,6 +459,7 @@ function onMouseResize(e : MouseEvent) {
 const resizeMouseHandler = createMouseDragHandler({
   onDown(e) {
     lastResized = false;
+    mouseDown = true;
     if(e.buttons == 1)
       return testInResize(e);
     return false;
@@ -466,6 +469,7 @@ const resizeMouseHandler = createMouseDragHandler({
     onMouseResize(e);
   },
   onUp() {
+    mouseDown = false;
     //大小更改后更新区块
     if(lastResized || !getRealSize().equal(instance.value.lastBlockSize)) {
       updateRegion();
@@ -549,11 +553,9 @@ function onMouseDown(e : MouseEvent) {
 
   if (isMouseEventInNoDragControl(e))
     return;
-  if (instance.value.events.onEditorMoseEvent?.(instance.value, context, 'down', e)) {
-
-    return;
-  }
   if (instance.value.style.userResize && resizeMouseHandler(e))
+    return;
+  if (instance.value.events.onEditorMoseEvent?.(instance.value, context, 'down', e))
     return;
   if (dragMouseHandler(e))
     return;
@@ -578,8 +580,10 @@ function onMouseUp(e : MouseEvent) {
   instance.value.events.onEditorMoseEvent?.(instance.value, context, 'up', e);
 }
 function onMouseEnter(e : MouseEvent) {
+  instance.value.events.onEditorMoseEvent?.(instance.value, context, 'enter', e);
 }
 function onMouseLeave(e : MouseEvent) {
+  instance.value.events.onEditorMoseEvent?.(instance.value, context, 'leave', e);
 }
 
 //#endregion

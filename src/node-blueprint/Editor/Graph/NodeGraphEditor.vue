@@ -4,7 +4,6 @@
     class="node-graph-editor"
     :style="{ cursor }"
     @mousedown="onMouseDown"
-    @mousemove="onMouseMove"
     @wheel="onMouseWhell"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
@@ -14,8 +13,8 @@
       ref="backgroundRenderer"
       style="z-index: 0" 
       :viewPort="(viewPort as NodeGraphEditorViewport)"
-      :drawDebugInfo="true"
       :chunkedPanel="(chunkedPanel as ChunkedPanel)"
+      :drawDebugInfo="true"
       @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
@@ -40,6 +39,7 @@
       :multiSelectRect="(multiSelectRect as Rect)"
       :connectors="allConnectors"
       :connectingInfo="connectingInfo"
+      :drawDebugInfo="true"
     />
     <NodeContainer 
       style="z-index: 3" 
@@ -72,27 +72,27 @@ import ConnectorRender from './Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
 import NodeContainer from './Node/NodeContainer.vue';
 import ZoomTool from './SubComponents/ZoomTool.vue';
+import BasePanels from './Panel/BasePanels.vue';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { NodeGraphEditorViewport } from './NodeGraphEditor';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
-import { initBase } from '../../Base';
-import { ChunkedPanel } from './Cast/ChunkedPanel';
-import { NodeEditor } from './Flow/NodeEditor';
-import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
-import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
 import { useEditorConnectorController } from './Editor/EditorConnectorController';
-import { initEditorBase } from './Flow';
-import BasePanels from './Panel/BasePanels.vue';
 import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
 import { useEditorUserController } from './Editor/EditorUserController';
-import type { NodePortEditor } from './Flow/NodePortEditor';
-import { initLib } from '@/node-blueprint/Nodes';
-import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import { initBase } from '../../Base';
+import { initEditorBase } from './Flow';
+import { initLib } from '@/node-blueprint/Nodes';
+import { ChunkedPanel } from './Cast/ChunkedPanel';
+import { NodeEditor } from './Flow/NodeEditor';
+import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
+import type { NodePortEditor } from './Flow/NodePortEditor';
+import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
+import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -336,7 +336,7 @@ onMounted(() => {
     },
   });
 
-  //node.position.set(-600, -100);
+  node.position.set(100, 0);
   node1.position.set(-200, -100);
   node2.position.set(-486, -200);
   node3.position.set(-460, 100);
@@ -350,7 +350,8 @@ onMounted(() => {
   );
 
   const coonNode = context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("8A94A788-ED4E-E521-5BC2-4D69B59BAB80")!, new Vector2(-300, -200));
-  context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("24AA3DF0-49D9-84D9-8138-534505C33327")!, new Vector2(-400, -100));
+  const commentNode = context.userAddNode(NodeRegistry.getInstance().getNodeByGUID("24AA3DF0-49D9-84D9-8138-534505C33327")!, new Vector2(-503, -243));
+  commentNode!.customSize = new Vector2(500, 255);
 
   context.connectConnector(node3.outputPorts.get('OUT') as NodePortEditor, node.inputPorts.get('IN') as NodePortEditor);
   context.connectConnector(node2.outputPorts.get('OUT') as NodePortEditor, coonNode!.inputPorts.get('INPUT') as NodePortEditor);
@@ -364,7 +365,7 @@ onMounted(() => {
 function initRenderer() {
   onWindowSizeChanged();
   //Add debug text
-  const render = backgroundRenderer.value;
+  const render = foregroundRenderer.value;
   const _viewPort = viewPort.value;
   if(render) {
     render.addDebugInfoItem(() => `position: ${_viewPort.position} size: ${_viewPort.size} scale: ${_viewPort.scale}`);

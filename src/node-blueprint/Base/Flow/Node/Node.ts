@@ -312,7 +312,8 @@ export type NodeEditorEventCallback<R = void, T = undefined> = (srcNode : NodeEd
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
 export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
-export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up", e: MouseEvent) => boolean;
+export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up" | "leave" | "enter", e: MouseEvent) => boolean;
+export type NodeEditorEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "select" | "unselect") => void;
 
 /**
  * 单元自定义事件设置
@@ -345,6 +346,10 @@ export interface INodeEventSettings {
    * 单元鼠标事件回调。
    */
   onEditorMoseEvent ?: NodeEditorMoseEventFunction,
+  /**
+   * 单元编辑器事件回调。
+   */
+  onEditorEvent ?: NodeEditorEventFunction,
   /**
    * 单元加载到编辑器中时的回调。
    */
@@ -424,6 +429,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onAddToEditor ?: NodeEventCallback;
   onCreateCustomEditor ?: NodeCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
+  onEditorEvent?: NodeEditorEventFunction;
   onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
     direction : NodePortDirection,
     type : 'execute'|'param',

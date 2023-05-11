@@ -67,60 +67,13 @@ onBeforeMount(() => {
 
 function render() {
   if(!ctx) return;
-  if(drawTick < Number.MAX_SAFE_INTEGER) drawTick++;
-  else drawTick = 0;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  fpsCalculator.calculateFps();
-  if(drawTick % 10 == 0) 
-    drawFpsShow = "fps : " + fpsCalculator.fps.toFixed(2);
-  
   if(props.gridVisible)
     renderGrid();
-  if(props.drawDebugInfo) {
-    props.chunkedPanel.renderDebugInfo(props.viewPort, ctx);
-    renderDebugText();
-  }
   renderAnimId = requestAnimationFrame(render);
 }
-
-//#region DebugText
-
-let drawTick = 0;
-let drawDebugInfoItems = new Map<number, () => string>();
-let drawFpsShow = "";
-
-function addDebugInfoItem(v : () => string) {
-  const id = RandomUtils.genNonDuplicateNumber()
-  drawDebugInfoItems.set(id, v);
-  return id;
-}
-function removeDebugInfoItem(id : number) {
-  drawDebugInfoItems.delete(id);
-}
-
-const fpsCalculator = new FPSCalculator();
-
-function renderDebugText() {
-  if(ctx == null) return;
-
-  //Debug text
-  if(props.drawDebugInfo){
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#fff";
-    
-    let h = 20;
-    ctx.fillText(drawFpsShow, 20, h);
-    drawDebugInfoItems.forEach((k) => {
-      if(ctx == null) return;
-      h += 10;
-      ctx.fillText(k(), 20, h);
-    });
-  }
-}
-
-//#endregion
 
 //#region Grid
 
@@ -212,7 +165,5 @@ defineExpose({
       canvas.value.height = y;
     }
   },
-  addDebugInfoItem,
-  removeDebugInfoItem,
 });
 </script>

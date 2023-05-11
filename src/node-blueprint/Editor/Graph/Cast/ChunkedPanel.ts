@@ -3,6 +3,7 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { ISaveableTypes } from "@/node-blueprint/Base/Utils/BaseTypes";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
+import RandomUtils from "@/node-blueprint/Base/Utils/RandomUtils";
 
 /**
  * 区块式平面碰撞检测器。
@@ -25,6 +26,7 @@ export class ChunkedPanel {
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#00f';
+    ctx.fillStyle = '#fff';
 
     this.postSizeTemp.set(viewPort.position);
     viewPort.scaleViewportSizeToScreenSize(this.postSizeTemp);
@@ -72,11 +74,11 @@ export class ChunkedPanel {
         ctx.fillText(`Chunk:${x},${y}`, xc, yc);
 
         ctx.strokeStyle = '#f00';
-        chunk.childs.forEach((c) => {
+        chunk.childs.forEach((c, i) => {
           const pos = new Vector2(c.rect.x, c.rect.y);
           viewPort.viewportPointToScreenPoint(pos, pos);
           ctx.strokeRect(pos.x, pos.y, c.rect.w * scale, c.rect.h * scale);
-          ctx.fillText(c.rect.toString(), pos.x, pos.y);
+          ctx.fillText(c.rect.toString(), pos.x + 10, pos.y - 10);
         });
 
       }

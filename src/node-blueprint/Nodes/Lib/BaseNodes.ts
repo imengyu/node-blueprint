@@ -714,7 +714,7 @@ function registerCommentNode() {
         let ele = document.createElement('div');
         let input = document.createElement('input');
         let span = document.createElement('span');
-        input.value = node.options['comment'] ? node.options['comment'] as string : '注释';
+        input.value = node.options.comment ? node.options.comment as string : '注释';
         input.onchange = () => {
           node.options['comment'] = input.value;
           span.innerText = input.value;
@@ -740,6 +740,7 @@ function registerCommentNode() {
         ele.appendChild(input);
         ele.appendChild(span);
         parentEle.appendChild(ele);
+        node.data.input = input;
       },
       onCreate: (node) => {
         node.data['list'] = [];
@@ -750,44 +751,64 @@ function registerCommentNode() {
       onDestroy: (node) => {
         node.data['list'] = undefined;
       },
-      onEditorMoseEvent: (node, context, event, e) => {
-        let list = node.data['list'] as NodeEditor[];
-        let rect = node.data['rect'] as Rect;
-        let mouseDownPos = node.data['mouseDownPos'] as { x: number, y: number};
-        if(event === 'down') {
-    
-          node.data.mouseDown = true;
-    
-          mouseDownPos.x = e.x;
-          mouseDownPos.y = e.y;
-    
-          //保存鼠标按下时区域内的所有单元
-          rect.set(node.getRect());
-          ArrayUtils.clear(list);
-          context.getNodesInRect(rect).forEach((v) => {
-            if(v != node) {
-              v.saveLastNodePos();
-              list.push(v);
-            }
-          });
-          
-        } else if(event === 'move') {
-         
-          if(node.data.mouseDown && node.getCurrentSizeType() == 0) {
-    
-            //移动包括在注释内的单元
-            let viewPort = context.getViewPort();
-            let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
-            list.forEach((v) => {
-              v.position.x = v.getLastPos().x + (viewPort.scaleScreenSizeToViewportSize(offX));
-              v.position.y = v.getLastPos().y + (viewPort.scaleScreenSizeToViewportSize(offY));
-            })
+      onEditorEvent: (node, context, event) => {
+        switch(event) {
+          case 'unselect': {
+            const list = node.data['list'] as NodeEditor[];
+            const input = node.data.input as HTMLInputElement;
+            input.blur();
+            ArrayUtils.clear(list);
+            break;
           }
+        }
+      },
+      onEditorMoseEvent: (node, context, event, e) => {
+        const list = node.data['list'] as NodeEditor[];
+        const rect = node.data['rect'] as Rect;
+        const mouseDownPos = node.data['mouseDownPos'] as { x: number, y: number};
+
+        switch(event) {
+          case 'down':
+            if (node.getCurrentSizeType() == 0) {
+              node.data.mouseDown = true;
+      
+              mouseDownPos.x = e.x;
+              mouseDownPos.y = e.y;
+        
+              //保存鼠标按下时区域内的所有单元
+              rect.set(node.getRect());
+              ArrayUtils.clear(list);
+              context.getNodesInRect(rect).forEach((v) => {
+                if(v !== node) {
+                  v.saveLastNodePos();
+                  list.push(v);
+                }
+              });
+            }
+            break;
+          case 'move':
+            if(node.data.mouseDown && node.getCurrentSizeType() == 0) {
     
-        } else if(event === 'up') {
-          if(node.data.mouseDown)
-            node.data.mouseDown = false;
-          node.updateRegion();
+              //移动包括在注释内的单元
+              let viewPort = context.getViewPort();
+              let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
+              list.forEach((v) => {
+                if (v !== node) {
+                  v.position.x = v.getLastPos().x + (viewPort.scaleScreenSizeToViewportSize(offX));
+                  v.position.y = v.getLastPos().y + (viewPort.scaleScreenSizeToViewportSize(offY));
+                  v.updateRegion();
+                }
+              })
+            }
+            break;
+          case 'up':
+            if(node.data.mouseDown)
+              node.data.mouseDown = false;
+            node.updateRegion();
+            break;  
+          case 'leave':
+            
+            break;
         }
         return false;
       }
