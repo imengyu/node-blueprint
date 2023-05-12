@@ -8,6 +8,7 @@ import type { NodeGraphEditorBasePanelsContext } from './Panel/BasePanels';
 import type { NodeEditorKeyBoardControllerContext } from './Editor/EditorKeyBoardController';
 import type { NodeEditorUserControllerContext } from './Editor/EditorUserController';
 import type { NodeEditorContextMenuContext } from './Editor/EditorContextMenuHandler';
+import type { NodeEditorClipBoardControllerContext } from './Editor/EditorClipBoardController';
 export * from './Editor/Viewport';
 
 /**
@@ -21,7 +22,8 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
   NodeEditorKeyBoardControllerContext,
   NodeEditorUserControllerContext,
   NodeEditorContextMenuContext,
-  NodeEditorMouseControllerContext
+  NodeEditorMouseControllerContext,
+  NodeEditorClipBoardControllerContext
 {
 }
 

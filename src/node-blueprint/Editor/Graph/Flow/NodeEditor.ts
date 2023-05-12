@@ -35,6 +35,7 @@ export class NodeEditor extends Node {
     callbackOnRemoveFromEditor: null as null|(() => void),
     callbackGetRealSize: null as null|(() => Vector2),
     callbackGetCurrentSizeType: null as null|(() => number),
+    callbackGetLastMovedBlock: null as null|(() => boolean),
     callbackTwinkle: null as null|((time: number) => void),
     callbackAddClass: null as null|((className: string) => void),
   };
@@ -58,6 +59,12 @@ export class NodeEditor extends Node {
    */
   public updateRegion() {
     this.editorHooks.callbackUpdateRegion?.();
+  }
+  /**
+   * 获取自上次鼠标按下后，用户是否移动了单元
+   */
+  public getLastMovedBlock() {
+    return this.editorHooks.callbackGetLastMovedBlock?.() || false;
   }
 
   //通用函数

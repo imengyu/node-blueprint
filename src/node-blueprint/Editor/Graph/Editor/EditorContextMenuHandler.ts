@@ -37,7 +37,7 @@ export interface NodeEditorContextMenuContext {
    * @param screenPos 
    * @param input 
    */
-  showInputRightMenu(screenPos : Vector2, input: HTMLInputElement) : void;
+  showInputRightMenu(screenPos : Vector2, input: HTMLInputElement|undefined) : void;
 }
 
 export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
@@ -53,7 +53,9 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   
 
   function onCanvasContextMenu(e: MouseEvent) {
+
     e.preventDefault();
+    e.stopPropagation();
 
     const info = context.getMouseInfo();
 
@@ -138,11 +140,11 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     const menuItems = (selectedCount == 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
       [
         { label: "删除", onClick: () => context.deleteSelectedNodes(), divided: true },
-        { label: "剪切", onClick: () => {/*TODO:剪贴板 this.clipboardCutSelect()*/} },
-        { label: "复制", onClick: () => {/*TODO:剪贴板 (this.clipboardCopySelect()*/} },
+        { label: "剪切", onClick: () => context.cutSelectionNodes() },
+        { label: "复制", onClick: () => context.copySelectionNodes() },
         { label: "粘贴", 
-          //disabled: !this.editoClipboard.getNodesClipboardState(), 
-          onClick: () => { /*TODO:剪贴板 this.clipboardPaste(context.getMouseCurrentPosInViewPort())*/ },
+          disabled: !context.isPasteable(), 
+          onClick: () => context.pasteNodes(),
           divided: true 
         },
         { label: "断开连接", onClick: () => context.unConnectSelectedNodeConnectors(), divided: true },
@@ -230,13 +232,13 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   }
 
   //显示输入框的右键菜单
-  function showInputRightMenu(screenPos : Vector2, input: HTMLInputElement) {
+  function showInputRightMenu(screenPos : Vector2, input: HTMLInputElement|undefined) {
     let selection = document.getSelection()?.toString();
     let menuItems : MenuItem[] = [
       {
         label: "剪切",
         onClick: () => {
-          input.focus();
+          input?.focus();
           document.execCommand("cut");
         },
         disabled: StringUtils.isNullOrEmpty(selection),
@@ -244,7 +246,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       {
         label: "复制",
         onClick: () => {
-          input.focus();
+          input?.focus();
           document.execCommand("copy");
         },
         disabled: StringUtils.isNullOrEmpty(selection),
@@ -252,7 +254,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       {
         label: "粘贴",
         onClick: () => {
-          input.focus();
+          input?.focus();
           document.execCommand("paste");
         },
         divided: true,
@@ -260,14 +262,14 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       {
         label: "全选",
         onClick: () => {
-          input.focus();
+          input?.focus();
           document.execCommand("seletcAll");
         },
       },
       {
         label: "删除",
         onClick: () => {
-          input.focus();
+          input?.focus();
           document.execCommand("delete");
         },
         disabled: StringUtils.isNullOrEmpty(selection),

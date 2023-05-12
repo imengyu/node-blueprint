@@ -213,6 +213,7 @@ onMounted(() => {
   instance.value.editorHooks.callbackTwinkle = twinkle;
   instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
   instance.value.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
+  instance.value.editorHooks.callbackGetLastMovedBlock = () => lastMovedBlock;
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
@@ -592,6 +593,7 @@ function onMouseLeave(e : MouseEvent) {
 
 function onContextmenu(e : MouseEvent) {
   e.preventDefault();
+  e.stopPropagation();
   context.showNodeRightMenu(instance.value, new Vector2(e.x, e.y));
   return false;
 }

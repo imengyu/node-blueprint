@@ -93,6 +93,7 @@ import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
 import type { NodePortEditor } from './Flow/NodePortEditor';
 import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
+import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
@@ -148,6 +149,10 @@ const {
 const {
   
 } = useEditorUserController(context);
+
+const {
+  
+} = useEditorClipBoardControllerController(context);
 
 //init
 //=========================
