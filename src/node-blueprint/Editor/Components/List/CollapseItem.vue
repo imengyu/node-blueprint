@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import Icon from '../Icon.vue';
+import Icon from '../../Nana/Icon.vue';
 
 defineEmits([ 'update:open' ])
 defineProps({

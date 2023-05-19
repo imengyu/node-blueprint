@@ -19,7 +19,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
-import Icon from "../../Base/Icon.vue";
+import Icon from "../../Nana/Icon.vue";
 
 export default defineComponent({
   name: "ZoomTool",

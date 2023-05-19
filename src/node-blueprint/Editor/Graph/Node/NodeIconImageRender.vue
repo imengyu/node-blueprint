@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts" setup>
-import Icon from '../../Base/Icon.vue';
+import Icon from '../../Nana/Icon.vue';
 
 defineProps({
   imageUrlOrIcon: {

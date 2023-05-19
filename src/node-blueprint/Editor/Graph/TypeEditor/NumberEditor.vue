@@ -15,8 +15,8 @@ import { defineComponent, type PropType } from 'vue'
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
-import Icon from '../../Base/Icon.vue';
-import Tooltip from '../../Base/Tooltip/Tooltip.vue';
+import Icon from '../../Nana/Icon.vue';
+import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 
 export default defineComponent({
   name: "NumberEditor",

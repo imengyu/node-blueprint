@@ -6,7 +6,7 @@
     v-model:open="item.open" 
     :title="item.category"
   >
-    <NodeCategory v-show="item.open" :categoryData="item" />
+    <NodeCategory v-if="item.open" :categoryData="item" />
   </CollapseItem>
 
   <div class="nodes-select-list">
@@ -45,10 +45,10 @@ import { inject, type PropType } from 'vue'
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import CollapseItem from '../../../Base/List/CollapseItem.vue';
+import CollapseItem from '../../../Components/List/CollapseItem.vue';
 import DefaultLogo from '../../../Images/BlockIcon/function_static.svg';
-import SmallButton from '../../../Base/Button/SmallButton.vue';
-import Tooltip from '@/node-blueprint/Editor/Base/Tooltip/Tooltip.vue';
+import SmallButton from '../../../Components//SmallButton.vue';
+import Tooltip from '@/node-blueprint/Editor/Nana/Tooltip/Tooltip.vue';
 
 const props = defineProps({
   categoryData: {

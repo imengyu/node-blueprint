@@ -96,7 +96,7 @@ export default defineComponent({
 
       return (
         <div
-          class="node-layout-row"
+          class="nana-layout-row"
           style={{
             flex: flex.value,
             flexWrap: wrap.value !== false ? 'wrap' : 'nowrap',

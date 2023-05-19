@@ -18,7 +18,7 @@
     color: #fff;
   }
 
-  .node-icon {
+  .nana-icon {
     margin-right: 3px;
     fill: #fff;
   }
@@ -54,5 +54,31 @@
   &:hover, &:active, &:focus {
     background-color: #ffffff;
     color: #000;
+  }
+}
+.nana-tooltip {
+  h6 {
+    margin: 0 0 2px 0;
+  }
+  h5,
+  h4 {
+    margin: 0 0 3px 0;
+  }
+  h3,
+  h2,
+  h1 {
+    margin: 0 0 5px 0;
+  }
+
+  p {
+    font-size: 0.6rem;
+    margin-bottom: 2px;
+  }
+
+  .center {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
   }
 }

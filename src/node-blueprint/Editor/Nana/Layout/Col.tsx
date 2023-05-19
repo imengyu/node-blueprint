@@ -69,7 +69,7 @@ export default defineComponent({
 
     return () => (
       <div 
-        class="node-layout-col"
+        class="nana-layout-col"
         style={{
           justifyContent: justify.value,
           alignItems: align.value,

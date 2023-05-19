@@ -2,6 +2,7 @@
 import type { Node, NodeCreateEditorFunction } from '@/node-blueprint/Base/Flow/Node/Node';
 import { ref, h, type PropType, type VNode, type VNodeRef, onMounted, nextTick, defineComponent, inject } from 'vue'
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
+import type { NodeEditor } from '../Flow/NodeEditor';
 
 export default defineComponent({
   props: {
@@ -20,7 +21,7 @@ export default defineComponent({
     onMounted(() => {
       nextTick(() => {
         if(typeof props.createEditorFunction === 'function')
-          props.createEditorFunction(hostRef.value, props.node, context);
+          props.createEditorFunction(hostRef.value, props.node as NodeEditor, context);
       });
     });
 
@@ -28,7 +29,7 @@ export default defineComponent({
       const childs = new Array<VNode>();
 
       if(typeof props.createEditorFunction === 'function') {
-        const ret = props.createEditorFunction(undefined, props.node, context);
+        const ret = props.createEditorFunction(undefined, props.node as NodeEditor, context);
 
         if (ret) {
           if (ret instanceof Array)

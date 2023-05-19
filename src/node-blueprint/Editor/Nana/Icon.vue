@@ -1,6 +1,6 @@
 <template>
   <svg
-    :class="['node-icon', spin ? 'spin' : '' ]"
+    :class="['nana-icon', spin ? 'spin' : '' ]"
     :style="{
       transform: rotate !== 0 ? `rotate(${rotate}deg)` : '',
       fill: fill ? fill : undefined,
@@ -38,13 +38,13 @@ defineProps({
 </script>
 
 <style lang="scss">
-.node-icon {
+.nana-icon {
   &.spin {
-    animation: node-loading-circle 1s infinite cubic-bezier(0,0,1,1);
+    animation: nana-loading-circle 1s infinite cubic-bezier(0,0,1,1);
   }
 }
 
-@keyframes node-loading-circle {
+@keyframes nana-loading-circle {
   0% {
     transform: rotate(0)
   }

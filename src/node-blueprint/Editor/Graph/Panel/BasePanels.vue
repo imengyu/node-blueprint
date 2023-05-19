@@ -48,7 +48,7 @@ import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { IConnectingInfo } from '../Editor/EditorConnectorController';
-import Icon from '../../Base/Icon.vue';
+import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
 import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';

@@ -1,5 +1,5 @@
 <template>
-  <Tooltip trigger="hover" mutex="NodeToolTip">
+  <Tooltip>
     <!--端口-->
     <div 
       v-if="instance" 
@@ -15,7 +15,7 @@
       </div>
       <div class="default-content">
         <!--删除端口按扭-->
-        <Tooltip v-if="instance.dyamicAdd" content="删除参数" mutex="NodeToolTip">
+        <Tooltip v-if="instance.dyamicAdd" content="删除参数">
           <Icon class="delete" icon="icon-close" @click="onDeleteParam" />
         </Tooltip>
         <!--标题-->
@@ -78,9 +78,9 @@
 
 <script lang="ts" setup>
 import { computed, toRefs, type PropType, inject, ref } from 'vue';
-import Tooltip from '../../Base/Tooltip/Tooltip.vue';
-import Icon from '../../Base/Icon.vue';
-import VNodeRenderer from '../../Base/VNodeRenderer.vue';
+import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
+import Icon from '../../Nana/Icon.vue';
+import VNodeRenderer from '../../Nana/VNodeRenderer.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
@@ -89,6 +89,7 @@ import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeEditor } from '../Flow/NodeEditor';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
+import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
 
 const props = defineProps({
   instance: {
@@ -99,6 +100,8 @@ const props = defineProps({
 const {
   instance,
 } = toRefs(props);
+
+const emit = defineEmits([ 'deletePort' ]);
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
 
@@ -139,7 +142,7 @@ instance.value.getPortPositionRelative = function() {
 //#endregion
 
 function onDeleteParam() {
-
+  emit('deletePort', instance.value);
 }
 
 //#region 鼠标事件

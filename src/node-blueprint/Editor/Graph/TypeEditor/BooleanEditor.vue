@@ -10,7 +10,7 @@
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import { defineComponent, type PropType } from 'vue'
-import Icon from '../../Base/Icon.vue';
+import Icon from '../../Nana/Icon.vue';
 
 export default defineComponent({
   name: "BooleanEditor",

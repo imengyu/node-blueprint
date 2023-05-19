@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import Icon from '@/node-blueprint/Editor/Base/Icon.vue';
+import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
 import type { PropType } from 'vue';
 
 defineEmits([ 'update:show' ]);

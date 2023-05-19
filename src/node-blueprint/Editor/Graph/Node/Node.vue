@@ -1,7 +1,6 @@
 <template>
   <Tooltip 
     v-if="instance" 
-    mutex="NodeToolTip"
     :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
     <template #content>
@@ -49,13 +48,13 @@
           @input="onCommentInputInput"
           @blur="onCommentInputBlur">
         </div>
-        <Tooltip content="隐藏注释气泡" class="close">
-          <a @click="closeComment">
+        <Tooltip content="隐藏注释气泡">
+          <a @click="closeComment" class="close">
             <Icon icon="icon-close-bold" />
           </a>
         </Tooltip>
       </div>
-      <Tooltip content="打开注释气泡" mutex="NodeToolTip">
+      <Tooltip content="打开注释气泡">
         <a 
           v-show="!instance.markOpen && !instance.style.noComment"
           class="node-block-comment-open" 
@@ -67,7 +66,6 @@
       <!--标题和图标-->
       <Tooltip 
         v-if="instance" 
-        mutex="NodeToolTip"
         :enable="!instance.style.noTooltip"
       >
         <template #content>
@@ -140,12 +138,12 @@
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='node-block-base'>
         <div class='node-block-ports'>
           <div class='left'>
-            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
           </div>
           <div class='right'>
-            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="(port as NodePortEditor)" @on-delete-port="(p) => $emit('on-delete-port', p)" />
+            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
           </div>
@@ -159,10 +157,10 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, toRefs, type PropType, inject, nextTick } from 'vue';
-import Tooltip from '../../Base/Tooltip/Tooltip.vue';
-import Icon from '../../Base/Icon.vue';
+import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
+import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';
-import SmallButton from '../../Base/Button/SmallButton.vue';
+import SmallButton from '../../Components/SmallButton.vue';
 import NodeIconImageRender from './NodeIconImageRender.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'

@@ -33,10 +33,10 @@
 import { computed, ref, type PropType, onMounted, watch, provide } from 'vue';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
-import Row from '../../../Base/Layout/Row';
+import Row from '../../../Nana/Layout/Row';
 import NodeList from './NodeList.vue';
 import NodeCategory from './NodeCategory.vue';
-import SmallButton from '@/node-blueprint/Editor/Base/Button/SmallButton.vue';
+import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
 import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
