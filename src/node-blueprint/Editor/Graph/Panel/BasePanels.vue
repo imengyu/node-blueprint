@@ -1,6 +1,6 @@
 <template>
   <!--单元连接弹出提示-->
-  <div class="node-tooltip node-editor-no-move"
+  <div class="nana-tooltip node-editor-no-move"
     v-if="connectingInfo"
     v-show="connectingInfo.isConnecting && !connectingInfo.isConnectingToNew"
     :style="{
