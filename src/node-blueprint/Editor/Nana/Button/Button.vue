@@ -10,34 +10,49 @@
     ]"
     @click="disabled ? {} : $emit('click')"
   >
-    <SimpleLoading v-if="loading" />
+    <Spin v-if="loading" />
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import SimpleLoading from './SimpleLoading.vue';
+import Spin from '../Common/Spin.vue';
 
 defineEmits([ 'click' ]);
 
 defineProps({
+  /**
+   * 按钮是否有圆角
+   */
   round: {
     type: Boolean,
     default: false,
   },
+  /**
+   * 按钮
+   */
   disabled: {
     type: Boolean,
     default: false,
   },
+  /**
+   * 是否是加载中模式
+   */
   loading: {
     type: Boolean,
     default: false,
   },
+  /**
+   * 按钮状态颜色，可选 primary，error，warning，info，success
+   */
   status: {
     type: String as PropType<'primary'|'error'|'warning'|'info'|'success'>,
     default: '',
   },
+  /**
+   * 按钮大小，可选 mini，small，normal，large
+   */
   size: {
     type: String,
     default: 'normal',
@@ -80,7 +95,7 @@ defineProps({
   box-sizing: border-box;
   overflow: hidden;
   
-  --nana-simple-loading-color:  var(--nana-button-dark-text-color);
+  --nana-spin-color: var(--nana-button-dark-text-color);
 
   &.disabled {
     opacity: 0.8;
@@ -90,7 +105,7 @@ defineProps({
     cursor: default;
   }
 
-  .simple-loading {
+  .nana-spin {
     margin-right: 8px;
   }
 
