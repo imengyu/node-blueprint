@@ -1,12 +1,11 @@
 <template>
   <div class="full-container">
-    <NodeGraphEditor />
+    <NodeIde />
   </div>
 </template>
 
 <script setup lang="ts">
-import NodeGraphEditor from '@/node-blueprint/Editor/Graph/NodeGraphEditor.vue';
-
+import NodeIde from '@/node-blueprint/Editor/Docunment/NodeIde.vue';
 
 </script>
 

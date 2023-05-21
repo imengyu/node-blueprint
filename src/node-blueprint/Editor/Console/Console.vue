@@ -2,13 +2,13 @@
   <div class="console-base">
     <div class="toolbar">
       <button @click="clearLogs">
-        <IconFont type="close1" class="icon" />清空输出
+        <Icon icon="close1" class="icon" />清空输出
       </button>
       <button @click="filterWarning=!filterWarning" :class="filterWarning?'active':''">
-        <IconFont type="warning-filling" class="icon text-warning" />{{ waringCount }}
+        <Icon icon="warning-filling" class="icon text-warning" />{{ waringCount }}
       </button>
       <button @click="filterError=!filterError" :class="filterError?'active':''">
-        <IconFont type="delete-filling" class="icon text-danger" />{{ errorCount }}
+        <Icon icon="delete-filling" class="icon text-danger" />{{ errorCount }}
       </button>
       <button @click="filterError=false;filterWarning=false">
         全部: {{ outputs.length }}
@@ -19,11 +19,11 @@
     </div>
     <div class="list" ref="list">
       <div v-for="(i, k) in outputs" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')" v-show="showItem(i)">
-        <IconFont v-if="i.hasWarp" type="arrow-right-filling" :class="'switch iconfont icon-zuo' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
+        <Icon v-if="i.hasWarp" icon="arrow-right-filling" :class="'switch iconfont icon-zuo' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
 
-        <IconFont v-if="i.level==='error'" type="delete-filling" class="icon iconfont text-danger" />
-        <IconFont v-else-if="i.level==='warning'" type="warning-filling" class="icon text-warning" />
-        <IconFont v-else-if="i.level==='info'" type="prompt-filling" class="icon text-info" />
+        <Icon v-if="i.level==='error'" icon="delete-filling" class="icon iconfont text-danger" />
+        <Icon v-else-if="i.level==='warning'" icon="warning-filling" class="icon text-warning" />
+        <Icon v-else-if="i.level==='info'" icon="prompt-filling" class="icon text-info" />
 
         <span class="tag mr-2">{{ i.tag }}</span>
         
@@ -37,17 +37,17 @@
 </template>
 
 <script lang="ts">
-import logger, { LogExtendData, LogLevel } from "../Common/Logger/Logger";
-import { SaveableTypes } from "../Common/BaseTypes";
 import { defineComponent } from 'vue'
 import ConsoleRefShower from "./ConsoleRefShower.vue";
 import ConsoleObjectShower from "./ConsoleObjectShower.vue";
-import CommonUtils from "../Common/Utils/CommonUtils";
-import IconFont from "../Common/Components/IconFont.vue";
+import Icon from "../Nana/Icon.vue";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import type { LogLevel } from '@/node-blueprint/Base/Utils/Logger/Logger';
+import logger from '@/node-blueprint/Base/Utils/Logger/Logger';
 
 interface LogItem {
   tag: string,
-  content: SaveableTypes,
+  content: any,
   level: LogLevel,
   hasWarp: boolean,
   warpOpen: boolean,
@@ -64,7 +64,7 @@ export default defineComponent({
   components: {
     ConsoleRefShower,
     ConsoleObjectShower,
-    IconFont
+    Icon,
   },
   data() {
     return {
@@ -89,14 +89,14 @@ export default defineComponent({
     logger.removeListener(this.logListener);
   },
   methods: {
-    logListener(tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: LogExtendData) {
+    logListener(tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: unknown) {
       let hasWarp = false;
       let speicalType : LogSpeicalType = 'none';
       
       if(content === null)
         speicalType = 'null';
       else if(typeof content === 'string') 
-        hasWarp = content.contains('\n');
+        hasWarp = content.includes('\n');
       else if(typeof content === 'undefined')
         speicalType = 'undefined';
       else if(typeof content === 'object')
@@ -110,32 +110,11 @@ export default defineComponent({
       let srcBlock = '';
       let srcPort = '';
       let srcDoc = '';
-      if(extendObj) {
-        if(extendObj.srcDoc) {
-          srcText += extendObj.srcDoc.name;
-          //srcDoc = extendObj.srcDoc.uid + ':' + extendObj.srcBlock.currentGraph.uid;
-        }
-        if(extendObj.srcBlock) {
-          if(!CommonUtils.isDefinedAndNotNull(extendObj.srcDoc)) {
-            extendObj.srcDoc = extendObj.srcBlock.graph?.docunment || undefined;
-            if(extendObj.srcDoc) {
-              srcText += extendObj.srcDoc.name;
-              srcDoc = extendObj.srcDoc.uid + ':' + extendObj.srcBlock.graph?.uid;
-            }
-          }
-          srcText += '.' + extendObj.srcBlock.define.name;
-          srcBlock = extendObj.srcBlock.uid;
-        }
-        if(extendObj.srcPort) {
-          srcText += '.' + extendObj.srcPort.define.name;
-          srcPort = extendObj.srcPort.guid;
-        }
-      }
 
       this.outputs.push({
         tag: tag,
         hasWarp: hasWarp,
-        content: content as SaveableTypes,
+        content: content as any,
         level: level,
         speicalType: speicalType,
         warpOpen: false,
@@ -155,7 +134,7 @@ export default defineComponent({
     clearLogs() {
       this.waringCount = 0;
       this.errorCount = 0;
-      this.outputs.clear();
+      ArrayUtils.clear(this.outputs);
     },
     showItem(item : LogItem) {
       if(this.filterWarning)

@@ -10,3 +10,11 @@
   flex-grow: 0;
   flex-shrink: 0;
 }
+.nana-flex-row {
+  display: flex;
+  flex-direction: row;
+}
+.nana-flex-col {
+  display: flex;
+  flex-direction: column;
+}

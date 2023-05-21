@@ -53,6 +53,14 @@ export interface NodeGraphEditorGraphControllerContext {
    * 标记当前图表已经被用户修改
    */
   markGraphChanged() : void;
+  /**
+   * 关闭图表
+   */
+  closeGraph() : void;
+  /**
+   * 清空编辑器内所有内容
+   */
+  clearAll() : void;
 }
 
 const TAG = 'EditorGraphController';
@@ -104,7 +112,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    */
   function addConnector(connector: NodeConnectorEditor) {
     allConnectors.set(connector.uid, connector);
-    //TODO: currentGraph.value?.connectors.push(connector);
+    currentGraph.value?.connectors.push(connector);
     ArrayUtils.addOnce((connector.startPort?.parent as NodeEditor).connectors, connector);
     ArrayUtils.addOnce((connector.endPort?.parent as NodeEditor).connectors, connector);
 
@@ -135,8 +143,9 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       ArrayUtils.remove((start.parent as NodeEditor).connectors, connector);
     if (end != null) 
     ArrayUtils.remove((end.parent as NodeEditor).connectors, connector);
+    if (currentGraph.value)
+      ArrayUtils.remove(currentGraph.value.connectors, connector);
     allConnectors.delete(connector.uid);
-    //TODO: currentGraph.value?.connectors.remove(connector);
   }
   /**
    * 移除节点
@@ -179,6 +188,44 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     
   }
 
+  /**
+   * 加载图表
+   * @param graph 
+   */
+  function loadGraph(graph: NodeGraph) {
+    closeGraph();
+    graph.nodes.forEach((node) => {
+      pushNodes(node as NodeEditor);
+    });
+    graph.connectors.forEach((connector) => {
+      allConnectors.set(connector.uid, connector as NodeConnectorEditor);
+    });
+    graph.activeEditor = context;
+    currentGraph.value = graph;
+  }
+  /**
+   * 关闭图表
+   * @param graph 
+   */
+  function closeGraph() {
+    if (currentGraph.value) {
+      clearAll();
+      currentGraph.value.activeEditor = null;
+      currentGraph.value = null;
+    }
+  }
+  /**
+   * 清空编辑器内所有内容
+   */
+  function clearAll() {
+    ArrayUtils.clear(foregroundNodes.value);
+    ArrayUtils.clear(backgroundNodes.value);
+    allNodes.clear();
+    allConnectors.clear();
+  }
+
+  context.closeGraph = () => closeGraph;
+  context.clearAll = () => clearAll;
   context.getConnectors = () => allConnectors;
   context.getNodes = () => allNodes;
   context.removeConnector = removeConnector;
@@ -190,6 +237,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   context.markGraphChanged = markGraphChanged;
 
   return {
+    loadGraph,
     pushNodes,
     allNodes,
     allConnectors,

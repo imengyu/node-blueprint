@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, h, VNode } from 'vue'
+import { defineComponent, h, type VNode } from 'vue'
 
 export default defineComponent({
   name: 'ConsoleRefShower',

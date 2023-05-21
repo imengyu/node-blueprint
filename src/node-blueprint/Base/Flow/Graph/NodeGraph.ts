@@ -13,7 +13,7 @@ import type { NodeDocunment } from "./NodeDocunment";
 export type NodeGraphType = 'none' | 'static' | 'constructor' | 'function' | 'macro';
 
 /**
- * 节点端口
+ * 图表数据
  */
 export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   type = 'none' as NodeGraphType;
