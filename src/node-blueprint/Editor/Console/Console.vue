@@ -4,10 +4,10 @@
       <button @click="clearLogs">
         <Icon icon="close1" class="icon" />清空输出
       </button>
-      <button @click="filterWarning=!filterWarning" :class="filterWarning?'active':''">
+      <button @click="filterWarning=!filterWarning" v-tooltip="'筛选警告条目'" :class="filterWarning?'active':''">
         <Icon icon="warning-filling" class="icon text-warning" />{{ waringCount }}
       </button>
-      <button @click="filterError=!filterError" :class="filterError?'active':''">
+      <button @click="filterError=!filterError" v-tooltip="'筛选错误条目'" :class="filterError?'active':''">
         <Icon icon="delete-filling" class="icon text-danger" />{{ errorCount }}
       </button>
       <button @click="filterError=false;filterWarning=false">

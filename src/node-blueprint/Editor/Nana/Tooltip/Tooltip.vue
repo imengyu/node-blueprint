@@ -2,12 +2,16 @@
 import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode } from 'vue';
 import { registerContextMenuMutex } from './TooltipMutex';
 import TooltipContent from './TooltipContent.vue';
+import { getContainer } from './TooltipUtils';
 
 /**
  * 工具提示弹出组件
  */
 export default defineComponent({
   name: 'Tooltip',
+  components: {
+    TooltipContent
+  },
   props: {
     content: {
       type: String,
@@ -30,9 +34,6 @@ export default defineComponent({
       default: () => ({ x: 5, y: 10 }),
     },
   },
-  components: {
-    TooltipContent
-  },
   emits: [
     'update:show'
   ],
@@ -44,16 +45,6 @@ export default defineComponent({
       offset,
     } = toRefs(props);
 
-    function getContainer() {
-      let container = document.querySelector('.nana-tooltip-container') as HTMLDivElement;
-      if (!container) {
-        container = document.createElement('div');
-        container.classList.add('nana-tooltip-container');
-        document.documentElement.appendChild(container);
-      }
-      return container;
-    }
-        
     const event = registerContextMenuMutex(300, hideDelay.value, hideTooltip, showTooltip);
 
     function showTooltip(e: MouseEvent) {
@@ -99,12 +90,12 @@ export default defineComponent({
         const oldonMouseenter = vnode.props.onMouseenter;
         const oldonMouseleave = vnode.props.onMouseleave;
         vnode.props.onMouseenter = (e: MouseEvent) => {
-          if (enable)
+          if (enable.value)
             event.onMouseEnter(e);
           oldonMouseenter?.(e);
         };
         vnode.props.onMouseleave = (e: MouseEvent) => {
-          if (enable)
+          if (enable.value)
             event.onMouseLeave();
           oldonMouseleave?.(e);
         };
