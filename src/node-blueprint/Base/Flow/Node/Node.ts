@@ -1,6 +1,6 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
-import { SerializableObject, type SerializableConfig } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Utils/Serializable/SerializableObject";
 import { printError, printWarning } from "../../Utils/Logger/DevLog";
 import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
@@ -21,11 +21,9 @@ const TAG = 'Node';
 export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
-    super('Node', define, {
+    super('Node', define, mergeSerializableConfig({
       serializeAll: true,
-      serializableProperties: [
-        ...(config?.serializableProperties || []),
-      ],
+      serializableProperties: [],
       noSerializableProperties: [
         'define',
         'editorState',
@@ -34,14 +32,12 @@ export class Node extends SerializableObject<INodeDefine> {
         'outputPorts',
         'guid',
         'data',
-        ...(config?.noSerializableProperties || []),
       ],
       forceSerializableClassProperties: {
         ports: 'NodePort',
         style: 'NodeStyleSettings',
         events: 'NodeEventSettings',
         simulate: 'NodeSimulateSettings',
-        ...(config?.forceSerializableClassProperties || {}),
       },
       afterLoad: () => {
         if (!this.uid)
@@ -68,8 +64,33 @@ export class Node extends SerializableObject<INodeDefine> {
         });
     
         return ret;
-      }
-    });
+      },
+      serializeSchemes: {
+        graph: {
+          serializableProperties: [
+            'uid',
+            'guid',
+            'ports',
+            'options',
+            'markContent',
+            'markOpen',
+            'position',
+            'customSize',
+          ],
+          saveProp(key, parentKey, source) {
+            if (key === 'ports') {
+              const ports = source as NodePort[];
+              const portSaveArr : INodePortDefine[] = [];
+              ports.forEach((port) => {
+                if (port.dyamicAdd)
+                  portSaveArr.push(port.save<INodePortDefine>());
+              });
+              return portSaveArr;
+            }
+          },
+        }
+      },
+    }, config));
     this.define = define;
   }
 

@@ -1,6 +1,6 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
-import { Node, type INodeDefine } from "../Node/Node";
+import type { Node, INodeDefine } from "../Node/Node";
 import type { NodeConnector } from "../Node/NodeConnector";
 import type { NodeVariable } from "./NodeVariable";
 import type { INodePortDefine } from "../Node/NodePort";
@@ -14,7 +14,7 @@ import { CreateObjectFactory } from "../../Utils/Serializable/SerializableObject
 /**
  * 流图类型
  */
-export type NodeGraphType = 'none' | 'static' | 'constructor' | 'function' | 'macro';
+export type NodeGraphType = 'main' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
 
 /**
  * 图表数据
@@ -45,12 +45,13 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
         'fileChanged',
         'activeEditor',
       ],
+      //加载与保存
       afterLoad: () => {
         if (!this.uid)
           this.uid = RandomUtils.genNonDuplicateIDHEX(32);
       },
-      loadProp: (key, source) => {
-        switch (key) {
+      loadProp: (key, parentKey, source) => {
+        switch (parentKey) {
           case 'nodes': {
             const { uid, guid, node } = source as INodeSaveData;
             const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
@@ -58,41 +59,87 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
               printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
               return undefined;
             }
-
-            
-
+            const finalNodeDefine = {
+              ...nodeDefine,
+              ...node
+            };
+          
             const nodeInstance = (isEditor ? 
-              CreateObjectFactory.createSerializableObject('NodeEditor', this, nodeDefine) :
-              CreateObjectFactory.createSerializableObject('Node', this, nodeDefine)) as Node;
+              CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
+              CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;
 
-            
-            
-
-            break;
+            return nodeInstance;
           }
           case 'connectors': {
-            const saveData = source as INodeConnectorSaveData;
+            const { uid, startPort, endPort } = source as INodeConnectorSaveData;
+            const startNode = this.nodes.get(startPort.nodeUid);
+            const endNode = this.nodes.get(endPort.nodeUid);
+            if (!startNode) {
+              printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
+              return undefined;
+            }
+            if (!endNode) {
+              printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
+              return undefined;
+            }
             
-            break;
+            const startPortInstance = startNode.getPortByGUID(startPort.portUid);
+            const endPortInstance = startNode.getPortByGUID(endPort.portUid);
+            if (!startNode) {
+              printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
+              return undefined;
+            }
+            if (!endNode) {
+              printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
+              return undefined;
+            }
+
+            const connector = (isEditor ? 
+              CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
+              CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
+            
+            connector.startPort = startPortInstance;
+            connector.endPort = endPortInstance;
+
+            return connector;
           }
         }
         return undefined;
       },
-      saveProp: (key, source) => {
-        switch (key) {
+      saveProp: (key, parentKey, source) => {
+        switch (parentKey) {
           case 'nodes': {
-            
-            break;
+            const node = source as Node;
+            return {
+              guid: node.guid,
+              uid: node.uid,
+              node: node.save<INodeDefine>('graph'),
+            } as INodeSaveData;
           }
           case 'connectors':
-            
-            break;
+            const connector = source as NodeConnector;
+            return {
+              uid: connector.uid,
+              startPort: {
+                nodeUid: connector.startPort?.parent.uid,
+                portUid: connector.startPort?.guid,
+              },
+              endPort: {
+                nodeUid: connector.endPort?.parent.uid,
+                portUid: connector.endPort?.guid,
+              },
+            } as INodeConnectorSaveData;
         }
         return undefined;
       },
     });
     this.isEditor = isEditor;
   }
+
+  /**
+   * 子流图
+   */
+  children: NodeGraph[] = [];
 
   /**
    * 单元
@@ -184,8 +231,6 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
     return baseName;
   }
 
-  //加载与保存
-  //==========================
 }
 
 /**
@@ -193,17 +238,17 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
  */
 export interface INodeGraphDefine {
   type : NodeGraphType;
-  name : string;
-  uid: string;
-  version : string;
-  description : string;
-  author : string;
-  outputPorts : INodePortDefine[];
-  inputPorts : INodePortDefine[];
-  static : boolean;
-  connectors : INodeConnectorSaveData[];
-  nodes : INodeSaveData[];
-  variables : NodeVariable[];
+  name ?: string;
+  uid ?: string;
+  version ?: string;
+  description ?: string;
+  author ?: string;
+  outputPorts ?: INodePortDefine[];
+  inputPorts ?: INodePortDefine[];
+  static ?: boolean;
+  connectors ?: INodeConnectorSaveData[];
+  nodes ?: INodeSaveData[];
+  variables ?: NodeVariable[];
 }
 
 /**

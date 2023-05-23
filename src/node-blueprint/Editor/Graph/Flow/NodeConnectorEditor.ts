@@ -1,4 +1,4 @@
-import { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
+import { NodeConnector, type INodeConnectorDefine } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { ConnectorDrawer } from "../Render/ConnectorDrawer";
@@ -12,8 +12,8 @@ import { threeOrderBezier } from "../../Utils/BezierUtils";
  */
 export class NodeConnectorEditor extends NodeConnector {
 
-  constructor() {
-    super();
+  constructor(define?: INodeConnectorDefine) {
+    super(define);
     this.updatePortValue();
   }
 

@@ -195,7 +195,6 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   function loadGraph(graph: NodeGraph) {
     closeGraph();
     graph.nodes.forEach((node) => {
-      
       pushNodes(node as NodeEditor);
     });
     graph.connectors.forEach((connector) => {

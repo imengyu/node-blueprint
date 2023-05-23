@@ -15,7 +15,10 @@
     >
       <template #panelRender="{ panel }">
         <template v-if="panel.key.startsWith('NodeEditor')">
-          <NodeDocunmentEditor />
+          <NodeDocunmentEditorComponent 
+            v-if="getDocunmentByUid(panel.key.substr(10))"
+            :docunment="getDocunmentByUid(panel.key.substr(10))!"
+          />
         </template>
         <template v-else-if="panel.key==='Props'">
           <h1>Tab Content</h1>
@@ -31,12 +34,13 @@
 
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue';
+import '@imengyu/vue-dock-layout/lib/vue-dock-layout.css';
+import ColumnView from '../Nana/Layout/ColumnView.vue';
+import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
+import Console from '../Console/Console.vue';
 import { DockLayout, type DockLayoutInterface } from '@imengyu/vue-dock-layout';
 import { MenuBar, type MenuBarOptions } from '@imengyu/vue3-context-menu';
-import ColumnView from '../Nana/Layout/ColumnView.vue';
-import NodeDocunmentEditor from './NodeDocunmentEditor.vue';
-import Console from '../Console/Console.vue';
-import '@imengyu/vue-dock-layout/lib/vue-dock-layout.css';
+import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 
 const dockLayout = ref<DockLayoutInterface>();
 const menuData = reactive<MenuBarOptions>({
@@ -48,6 +52,9 @@ const menuData = reactive<MenuBarOptions>({
         {
           label: '新建',
           shortcut: 'Ctrl+N',
+          onClick() {
+            newDocunment();
+          },
         },
         {
           label: '打开',
@@ -184,8 +191,40 @@ const menuData = reactive<MenuBarOptions>({
     },
   ],
 });
+const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
 
+function getDocunmentByUid(uid: string) {
+  return opendDocunment.value.get(uid)
+}
 
+function newDocunment() {
+  const doc = new NodeDocunmentEditor({
+    name: '新文档',
+  });
+  doc.initNew();
+  openDocunment(doc);
+}
+function closeDocunment(uid: string) {
+  const doc = opendDocunment.value.get(uid)
+  if (!doc)
+    return;
+  opendDocunment.value.delete(uid);
+  dockLayout.value?.removePanel(`NodeEditor${uid}`);
+}
+function openDocunment(doc: NodeDocunmentEditor) {
+  if (opendDocunment.value.has(doc.uid))
+    return;
+  opendDocunment.value.set(doc.uid, doc);
+  dockLayout.value?.addPanel({
+    key: `NodeEditor${doc.uid}`,
+    title: doc.name,
+    closeable: true,
+    onClose() {
+      closeDocunment(doc.uid);
+      return true;
+    },
+  }, 'centerArea');
+}
 
 onMounted(() => {
   nextTick(() => {
@@ -219,10 +258,6 @@ onMounted(() => {
       ],
     });
     dockLayout.value?.addPanel({
-      key: 'NodeEditor0001',
-      title: '测试图表1',
-    }, 'centerArea');
-    dockLayout.value?.addPanel({
       key: 'Console',
       title: '控制台',
     }, 'centerConsole');
@@ -231,6 +266,9 @@ onMounted(() => {
       title: '属性窗口',
     }, 'right');
   })
+  setTimeout(() => {
+    newDocunment();
+  }, 500);
 });
 </script>
 
