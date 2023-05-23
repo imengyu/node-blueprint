@@ -21,26 +21,52 @@ const TAG = 'Node';
 export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine) {
-    super('Node', define, false);
+    super('Node', define, {
+      serializeAll: true,
+      serializableProperties: [],
+      noSerializableProperties: [
+        'define',
+        'editorState',
+        'editorHooks',
+        'inputPorts',
+        'outputPorts',
+        'guid',
+        'data',
+      ],
+      forceSerializableClassProperties: {
+        ports: 'NodePort',
+        style: 'NodeStyleSettings',
+        events: 'NodeEventSettings',
+        simulate: 'NodeSimulateSettings',
+      },
+      afterLoad: () => {
+        if (!this.uid)
+          this.uid = RandomUtils.genNonDuplicateIDHEX(32);
+      },
+      loadOverride: (data : INodeDefine) => {
+        const ret = super.load(data);
+    
+        this.inputPorts.clear();
+        this.outputPorts.clear();
+        this.mapPorts.clear();
+    
+        //加载端口
+        this.ports.forEach((port) => {
+          if (port.direction === 'input') {
+            this.inputPorts.set(port.guid, port);
+            this.mapPorts.set(port.guid, port);
+          } else if (port.direction === 'output') {
+            this.outputPorts.set(port.guid, port);
+            this.mapPorts.set(port.guid, port);
+          } else {
+            printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
+          }
+        });
+    
+        return ret;
+      }
+    });
     this.define = define;
-    this.serializableProperties = [ 'all' ];
-    this.noSerializableProperties.push(
-      'editorState',
-      'editorHooks',
-      'inputPorts',
-      'outputPorts',
-      'guid',
-      'data',
-    );
-    this.forceSerializableClassProperties = {
-      ports: 'NodePort',
-      style: 'NodeStyleSettings',
-      events: 'NodeEventSettings',
-      simulate: 'NodeSimulateSettings',
-    };
-    this.uid = RandomUtils.genNonDuplicateIDHEX(32);
-    this.load(define);
-    this.events.onCreate?.(this);
   }
 
   //基础数据
@@ -80,32 +106,6 @@ export class Node extends SerializableObject<INodeDefine> {
 
   public style = new NodeStyleSettings();
   public events = new NodeEventSettings();
-
-  //加载函数
-  //=====================
-
-  public load(data : INodeDefine) {
-    const ret = super.load(data);
-
-    this.inputPorts.clear();
-    this.outputPorts.clear();
-    this.mapPorts.clear();
-
-    //加载端口
-    this.ports.forEach((port) => {
-      if (port.direction === 'input') {
-        this.inputPorts.set(port.guid, port);
-        this.mapPorts.set(port.guid, port);
-      } else if (port.direction === 'output') {
-        this.outputPorts.set(port.guid, port);
-        this.mapPorts.set(port.guid, port);
-      } else {
-        printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
-      }
-    });
-
-    return ret;
-  }
 
   //通用函数
   //=====================
@@ -417,10 +417,9 @@ export interface INodeEventSettings {
  */
 export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   constructor(define?: INodeEventSettings) {
-    super('NodeEventSettings', define, false);
-    this.serializableProperties = [ 'all' ];
-    if (define)
-      this.load(define);
+    super('NodeEventSettings', define, {
+      serializeAll: true,
+    });
   }
 
   onCreate ?: NodeEventCallback;
@@ -541,10 +540,9 @@ export interface INodeStyleSettings {
  */
 export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
   constructor(define?: INodeStyleSettings) {
-    super('NodeStyleSettings', define, false);
-    this.serializableProperties = [ 'all' ];
-    if (define)
-      this.load(define);
+    super('NodeStyleSettings', define, {
+      serializeAll: true
+    });
   }
 
   public logo = '';
@@ -594,10 +592,9 @@ export interface INodeSimulateSettings {
  */
 export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
   constructor(define?: INodeSimulateSettings) {
-    super('NodeSimulate', define, false);
-    this.serializableProperties = [ 'all' ];
-    if (define)
-      this.load(define);
+    super('NodeSimulate', define, {
+      serializeAll: true
+    });
   }
 }
 

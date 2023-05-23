@@ -1,11 +1,12 @@
 import type { NodeGraphEditorBaseContext, NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
-import type { Node } from "../Node/Node";
+import type { INodeDefine, Node } from "../Node/Node";
 import type { NodeConnector } from "../Node/NodeConnector";
 import type { NodeVariable } from "./NodeVariable";
 import type { INodePortDefine } from "../Node/NodePort";
 import type { NodeDocunment } from "./NodeDocunment";
+import type { IKeyValueObject } from "../../Utils/BaseTypes";
 
 /**
  * 流图类型
@@ -18,17 +19,41 @@ export type NodeGraphType = 'none' | 'static' | 'constructor' | 'function' | 'ma
 export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   type = 'none' as NodeGraphType;
   name = '';
-  uid: string;
+  uid = '';
   version = '';
   description = '';
   author = '';
-  loadStatus: 'notload' | 'loaded' | 'error' | 'loading' = 'notload';
 
   constructor(define: INodeGraphDefine) {
-    super('NodeGraph', define, false);
-    this.serializableProperties = [ 'all' ];
-    this.load(define);
-    this.uid = RandomUtils.genNonDuplicateIDHEX(32);
+    super('NodeGraph', define, {
+      serializeAll: true,
+      serializableProperties: [],
+      noSerializableProperties: [
+        'docunment',
+        'fileChanged',
+        'activeEditor',
+      ],
+      afterLoad: () => {
+        if (!this.uid)
+          this.uid = RandomUtils.genNonDuplicateIDHEX(32);
+      },
+      loadProp(key, source) {
+        switch (key) {
+          case 'value':
+            
+            break;
+        }
+        return undefined;
+      },
+      saveProp(key, source) {
+        switch (key) {
+          case 'value':
+            
+            break;
+        }
+        return undefined;
+      },
+    });
   }
 
   /**
@@ -121,11 +146,47 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
     }
     return baseName;
   }
+
+  //加载与保存
+  //==========================
 }
 
 /**
  * 端口定义
  */
 export interface INodeGraphDefine {
-  //
+  type : NodeGraphType;
+  name : string;
+  uid: string;
+  version : string;
+  description : string;
+  author : string;
+  outputPorts : INodePortDefine[];
+  inputPorts : INodePortDefine[];
+  static : boolean;
+  connectors : INodeConnectorSaveData[];
+  nodes : INodeSaveData[];
+  variables : NodeVariable[];
+}
+
+/**
+ * 节点保存定义
+ */
+export interface INodeSaveData {
+  uid: string;
+  guid: string;
+}
+/**
+ * 连接线保存定义
+ */
+export interface INodeConnectorSaveData {
+  uid: string;
+  startPort: {
+    nodeUid: string,
+    portUid: string,
+  };
+  endPort: {
+    nodeUid: string,
+    portUid: string,
+  };
 }

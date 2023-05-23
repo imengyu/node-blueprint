@@ -11,17 +11,17 @@ import type { ISaveableTypes } from "../../Utils/BaseTypes";
 export class NodePort extends SerializableObject<INodePortDefine> {
 
   constructor(define: INodePortDefine, parent: Node) {
-    super('NodePort', define, false);
+    super('NodePort', define, {
+      serializeAll: true,
+      noSerializableProperties: [
+        'guid',
+        'editorState',
+        'connectedFromPort',
+        'connectedToPort',
+      ]
+    });
     this.parent = parent as Node;
     this.define = define;
-    this.serializableProperties = [ 'all' ];
-    this.noSerializableProperties.push(
-      'guid',
-      'editorState',
-      'connectedFromPort',
-      'connectedToPort',
-    );
-    this.load(define);
   }
 
   /**
