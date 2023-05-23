@@ -10,19 +10,21 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 export class NodeEditor extends Node {
 
   constructor(define: INodeDefine) {
-    super(define);
-    this.forceSerializableClassProperties.ports = 'NodePortEditor';
-    this.noSerializableProperties.push(
-      'mouseConnectingPort',
-      'selected',
-      'breakpointTriggered',
-      'chunkInfo',
-      'connectors',
-      'lastBlockPos',
-      'lastBlockSize',
-      'editorHooks',
-    );
-    this.load(define);
+    super(define, {
+      forceSerializableClassProperties: {
+        ports: 'NodePortEditor',
+      },
+      noSerializableProperties: [
+        'mouseConnectingPort',
+        'selected',
+        'breakpointTriggered',
+        'chunkInfo',
+        'connectors',
+        'lastBlockPos',
+        'lastBlockSize',
+        'editorHooks',
+      ],
+    });
   }
 
   /**

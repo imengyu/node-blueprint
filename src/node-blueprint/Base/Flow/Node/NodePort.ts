@@ -1,5 +1,5 @@
 import ArrayUtils from "../../Utils/ArrayUtils";
-import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject, type SerializableConfig } from "../../Utils/Serializable/SerializableObject";
 import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";
@@ -18,6 +18,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
         'editorState',
         'connectedFromPort',
         'connectedToPort',
+        'state',
+        'pos',
       ]
     });
     this.parent = parent as Node;

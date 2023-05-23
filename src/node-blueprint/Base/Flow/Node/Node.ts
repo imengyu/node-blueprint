@@ -1,6 +1,6 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
-import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject, type SerializableConfig } from "../../Utils/Serializable/SerializableObject";
 import { printError, printWarning } from "../../Utils/Logger/DevLog";
 import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
@@ -20,10 +20,12 @@ const TAG = 'Node';
  */
 export class Node extends SerializableObject<INodeDefine> {
 
-  constructor(define: INodeDefine) {
+  constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
     super('Node', define, {
       serializeAll: true,
-      serializableProperties: [],
+      serializableProperties: [
+        ...(config?.serializableProperties || []),
+      ],
       noSerializableProperties: [
         'define',
         'editorState',
@@ -32,12 +34,14 @@ export class Node extends SerializableObject<INodeDefine> {
         'outputPorts',
         'guid',
         'data',
+        ...(config?.noSerializableProperties || []),
       ],
       forceSerializableClassProperties: {
         ports: 'NodePort',
         style: 'NodeStyleSettings',
         events: 'NodeEventSettings',
         simulate: 'NodeSimulateSettings',
+        ...(config?.forceSerializableClassProperties || {}),
       },
       afterLoad: () => {
         if (!this.uid)
