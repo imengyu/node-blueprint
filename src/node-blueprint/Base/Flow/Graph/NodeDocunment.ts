@@ -1,6 +1,7 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
+import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
 
 /**
  * 蓝图文档定义
@@ -12,6 +13,9 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
         'uid',
         'name',
         'comment',
+        'version',
+        'description',
+        'author',
         'mainGraph',
       ],
       afterLoad: () => {
@@ -62,6 +66,10 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
    * 提示文件是否在编辑器更改过但没有保存
    */
   fileChanged = false;
+  /**
+   * 当前激活的编辑器实例
+   */
+  activeEditor: NodeDocunmentEditorContext | null = null;
 
   /**
    * 新建文档初始化

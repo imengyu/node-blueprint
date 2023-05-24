@@ -83,6 +83,10 @@ export interface SerializaeObjectSave<T> {
   className: string,
   obj: T,
 }
+export interface SerializePropCustomRet {
+  parsed: boolean,
+  return: unknown,
+}
 export interface SerializableSchemeConfig {
   /**
    * 是否是序列化所有属性
@@ -111,14 +115,14 @@ export interface SerializableSchemeConfig {
    * @param source 源值
    * @returns 
    */
-  loadProp?: (key: string, parentKey: string, source: unknown) => unknown|undefined,
+  loadProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
   /**
    * 自定义保存属性回调
    * @param key 键值
    * @param source 源值
    * @returns 
    */
-  saveProp?: (key: string, parentKey: string, source: unknown) => unknown|undefined,
+  saveProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
 }
 export interface SerializableConfig<T> extends SerializableSchemeConfig {
   /**
@@ -193,8 +197,11 @@ export class SerializableObject<T> {
       || typeof element === 'boolean' 
       || typeof element === 'string'
     ) {
-      if (this.serializeConfig.saveProp)
-        element = this.serializeConfig.saveProp(key, parentKey, element);
+      if (this.serializeConfig.saveProp) {
+        const ret = this.serializeConfig.saveProp(key, parentKey, element);
+        if (ret?.parsed)
+          element = ret.return;
+      }
       return element as ISaveableTypes;
     }
     else if(element && typeof element === 'object') {
@@ -234,8 +241,8 @@ export class SerializableObject<T> {
       else if (element instanceof SerializableObject) {
         if (this.serializeConfig.saveProp) {
           const ret = this.serializeConfig.saveProp(key, '', element);
-          if (ret !== undefined)
-            return ret;
+          if (ret?.parsed)
+            return ret.return;
         }
         //This is a SerializableObject
         const serializableObject = element as unknown as SerializableObject<T>;
@@ -261,8 +268,11 @@ export class SerializableObject<T> {
       || typeof element === 'string'
       || typeof element === 'function'
     ) {
-      if (this.serializeConfig.loadProp)
-        element = this.serializeConfig.loadProp(key, parentKey, element) as IKeyValueObject;
+      if (this.serializeConfig.loadProp) {
+        const ret = this.serializeConfig.loadProp(key, parentKey, element);
+        if (ret?.parsed)
+          return ret.return as IKeyValueObject;
+      }
       return element;
     }
     else if(element && typeof element === 'object') {

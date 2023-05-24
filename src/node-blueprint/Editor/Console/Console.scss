@@ -5,16 +5,22 @@
   height: 100%;
 
   .toolbar {
+    display: flex;
+    flex-direction: row;
+    position: relative;
     background-color: #282c34;
     border-bottom: 1px solid #313131;
     min-height: 33px;
 
     button {
+      display: inline-flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
       background: transparent;
       outline: none;
       border: none;
       height: 33px;
-      line-height: 33px;
       cursor: pointer;
       padding: 0px 6px;
       color: #fff;
@@ -43,6 +49,9 @@
     @include pc-fix-scrollbar();
 
     .item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
       position: relative;
       border-bottom: 1px solid #414141;
       color: #d3d3d3;  

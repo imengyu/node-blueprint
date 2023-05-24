@@ -214,6 +214,8 @@ function closeDocunment(uid: string) {
 function openDocunment(doc: NodeDocunmentEditor) {
   if (opendDocunment.value.has(doc.uid))
     return;
+  
+  //添加文档至界面
   opendDocunment.value.set(doc.uid, doc);
   dockLayout.value?.addPanel({
     key: `NodeEditor${doc.uid}`,
@@ -224,6 +226,14 @@ function openDocunment(doc: NodeDocunmentEditor) {
       return true;
     },
   }, 'centerArea');
+
+  //打开主图表
+  setTimeout(() => {
+    if (doc.activeEditor) {
+      if (doc.mainGraph)
+        doc.activeEditor.openGraph(doc.mainGraph);
+    }
+  }, 300);
 }
 
 onMounted(() => {

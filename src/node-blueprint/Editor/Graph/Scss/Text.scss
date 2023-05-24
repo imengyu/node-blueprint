@@ -11,8 +11,20 @@
 .text-success {
   color:#05aa37;
 }
+.text-white {
+  color: #fff;
+}
+.text-info {
+  color: #006faf;
+}
 
 svg {
+  &.text-info {
+    fill: #006faf;
+  }
+  &.text-white {
+    fill: #fff;
+  }
   &.text-success {
     fill: #0eac3e;
   }

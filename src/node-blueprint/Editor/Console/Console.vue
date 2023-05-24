@@ -2,13 +2,13 @@
   <div class="console-base">
     <div class="toolbar">
       <button @click="clearLogs">
-        <Icon icon="close1" class="icon" />清空输出
+        <Icon icon="icon-close-bold" class="icon text-white" />清空输出
       </button>
       <button @click="filterWarning=!filterWarning" v-tooltip="'筛选警告条目'" :class="filterWarning?'active':''">
-        <Icon icon="warning-filling" class="icon text-warning" />{{ waringCount }}
+        <Icon icon="icon-warning-filling" class="icon text-warning" />{{ waringCount }}
       </button>
       <button @click="filterError=!filterError" v-tooltip="'筛选错误条目'" :class="filterError?'active':''">
-        <Icon icon="delete-filling" class="icon text-danger" />{{ errorCount }}
+        <Icon icon="icon-delete-filling" class="icon text-danger" />{{ errorCount }}
       </button>
       <button @click="filterError=false;filterWarning=false">
         全部: {{ outputs.length }}
@@ -19,11 +19,11 @@
     </div>
     <div class="list" ref="list">
       <div v-for="(i, k) in outputs" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')" v-show="showItem(i)">
-        <Icon v-if="i.hasWarp" icon="arrow-right-filling" :class="'switch iconfont icon-zuo' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
+        <Icon v-if="i.hasWarp" icon="icon-arrow-right-filling" :class="'switch iconfont' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
 
-        <Icon v-if="i.level==='error'" icon="delete-filling" class="icon iconfont text-danger" />
-        <Icon v-else-if="i.level==='warning'" icon="warning-filling" class="icon text-warning" />
-        <Icon v-else-if="i.level==='info'" icon="prompt-filling" class="icon text-info" />
+        <Icon v-if="i.level==='error'" icon="icon-delete-filling" class="icon iconfont text-danger" />
+        <Icon v-else-if="i.level==='warning'" icon="icon-warning-filling" class="icon text-warning" />
+        <Icon v-else-if="i.level==='info'" icon="icon-prompt-filling" class="icon text-info" />
 
         <span class="tag mr-2">{{ i.tag }}</span>
         
