@@ -1,20 +1,23 @@
 <template>
   <div
+    ref="eleRef"
     class="nana-tooltip"
     role="tooltip"
     :style="{
-      left: `${x}px`,
-      top: `${y}px`,
+      left: `${currentPos.x}px`,
+      top: `${currentPos.y}px`,
     }"
   >
     <slot name="content">
-      <span v-html="content"></span>
+      <span v-html="content" />
     </slot>
   </div>
 </template>
 
 <script lang="ts" setup>
-defineProps({
+import { ref, onMounted, nextTick, reactive, watch } from 'vue';
+
+const props = defineProps({
   x: {
     type: Number,
     default: 0
@@ -28,21 +31,68 @@ defineProps({
     default: '',
   },
 })
+
+const eleRef = ref<HTMLElement>();
+const currentPos = reactive({ x: 0, y: 0});
+
+function testAndAdjustPosition() {
+  nextTick(() => {
+    if (eleRef.value) {
+    const xOverflow = document.documentElement.clientWidth - (currentPos.x + eleRef.value.offsetWidth);
+    const yOverflow = document.documentElement.clientHeight - (currentPos.y + eleRef.value.offsetHeight);
+      if (xOverflow < 0) currentPos.x += xOverflow;
+      if (yOverflow < 0) currentPos.y += yOverflow;
+    }
+  });
+}
+
+watch(() => props.x, (v) => {
+  currentPos.x = v;
+  testAndAdjustPosition();
+})
+watch(() => props.y, (v) => {
+  currentPos.x = v;
+  testAndAdjustPosition();
+})
+
+onMounted(() => {
+  currentPos.x = props.x;
+  currentPos.y = props.y;
+  testAndAdjustPosition();
+})
 </script>
 
 <style lang="scss">
+.nana-tooltip-container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+}
 .nana-tooltip {
+  display: inline-block;
   position: absolute;
-  padding: 2px 5px;
-  background-color: var(--nana-component-color-white);
-  border: 1px solid var(--nana-component-color-light-border);
-  border-radius: 0 3px 3px 3px;
-  box-shadow: 0 0 20px var(--nana-component-color-light-shadow);
+  padding: 5px 10px;
+  background-color: #fff;
+  border: 1px solid #e9e9e9;
+  border-radius: 5px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
   z-index: 200;
-  white-space: pre;
-  font-size: 0.8rem;
-  color: var(--nana-text-color-content);
+  font-size: 14px;
+  color: #333;
   user-select: text;
   pointer-events: all;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  span {
+    white-space: pre;
+    word-break: break-all;
+    text-overflow: ellipsis;
+  }
 }
 </style>

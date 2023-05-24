@@ -3,7 +3,7 @@ export function getContainer() {
   if (!container) {
     container = document.createElement('div');
     container.classList.add('nana-tooltip-container');
-    document.documentElement.appendChild(container);
+    document.body.appendChild(container);
   }
   return container;
 }

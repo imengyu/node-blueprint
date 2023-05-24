@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode } from 'vue';
+import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref } from 'vue';
 import { registerContextMenuMutex } from './TooltipMutex';
 import TooltipContent from './TooltipContent.vue';
 import { getContainer } from './TooltipUtils';
@@ -45,14 +45,18 @@ export default defineComponent({
       offset,
     } = toRefs(props);
 
-    const event = registerContextMenuMutex(300, hideDelay.value, hideTooltip, showTooltip);
+    const event = registerContextMenuMutex(800, hideDelay.value, hideTooltip, showTooltip);
+    const isDown = ref(false);
+    const currentMousePos = ref({ x: 0, y: 0 });
 
-    function showTooltip(e: MouseEvent) {
+    function showTooltip() {
+      if (isDown.value)
+        return;
       render(h(
         TooltipContent,
         { 
-          x: e.x + offset.value.x,
-          y: e.y + offset.value.y,
+          x: currentMousePos.value.x + offset.value.x,
+          y: currentMousePos.value.y + offset.value.y,
           content: props.content,
           onMouseenter: () => {
             event.onTooltipMouseEnter();
@@ -69,7 +73,6 @@ export default defineComponent({
     }
     function hideTooltip() {
       render(null, getContainer());
-
       if (show.value !== false)
         ctx.emit('update:show', false);
     }
@@ -89,9 +92,29 @@ export default defineComponent({
           vnode.props = {};
         const oldonMouseenter = vnode.props.onMouseenter;
         const oldonMouseleave = vnode.props.onMouseleave;
+        const oldonMousedown = vnode.props.onMousedown;
+        const oldonMouseup = vnode.props.onMouseup;
+        const oldonMousemove = vnode.props.onMousemove;
+        vnode.props.onMousemove = (e: MouseEvent) => {
+          currentMousePos.value.x = e.x;
+          currentMousePos.value.y = e.y;
+          oldonMousemove?.(e);
+        };
+        vnode.props.onMouseup = (e: MouseEvent) => {
+          isDown.value = false;
+          oldonMouseup?.(e);
+        };
+        vnode.props.onMousedown = (e: MouseEvent) => {
+          isDown.value = true;
+          if (show.value)
+            hideTooltip();
+          oldonMousedown?.(e);
+        };
         vnode.props.onMouseenter = (e: MouseEvent) => {
+          currentMousePos.value.x = e.x;
+          currentMousePos.value.y = e.y;
           if (enable.value)
-            event.onMouseEnter(e);
+            event.onMouseEnter();
           oldonMouseenter?.(e);
         };
         vnode.props.onMouseleave = (e: MouseEvent) => {
@@ -106,15 +129,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style lang="scss">
-.nana-tooltip-container {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 100;
-}
-</style>

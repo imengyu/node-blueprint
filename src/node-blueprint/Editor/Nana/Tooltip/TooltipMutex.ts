@@ -1,7 +1,7 @@
 interface TooltipMutexItem {
   uid: string;
   closeCallback: () => void;
-  realShowCallback: (e: MouseEvent) => void,
+  realShowCallback: () => void,
 }
 
 let lastShowTooltip : TooltipMutexItem|null = null
@@ -19,11 +19,11 @@ export function registerContextMenuMutex(
   showDelayTime: number, 
   hideDelayTime: number, 
   closeCallback: () => void,
-  realShowCallback: (e: MouseEvent) => void,
+  realShowCallback: () => void,
 ) {
   const uid = (++uidTemp).toString();
   return {
-    onMouseEnter(e: MouseEvent) {
+    onMouseEnter() {
       if (lastShowDelay)
         clearTimeout(lastShowDelay);
       if (lastHideDelay) {
@@ -42,8 +42,8 @@ export function registerContextMenuMutex(
           realShowCallback,
         };
     
-        lastShowTooltip.realShowCallback(e);
-      }, showDelayTime);
+        lastShowTooltip.realShowCallback();
+      }, showDelayTime) as unknown as number;
     },
     onMouseLeave() {
       if (lastShowDelay) {
@@ -57,7 +57,7 @@ export function registerContextMenuMutex(
           lastShowTooltip.closeCallback();
           lastShowTooltip = null;
         } 
-      }, hideDelayTime);
+      }, hideDelayTime) as unknown as number;
     },
     onTooltipMouseEnter() {
       setTimeout(() => {

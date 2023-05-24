@@ -6,13 +6,18 @@ import TooltipContent from "./TooltipContent.vue";
 const tooltipDirective : ObjectDirective = {
   mounted(el, binding) {
     const event = registerContextMenuMutex(300, 200, hideTooltip, showTooltip);
+    let isMouseDown = false;
+    let isShow = false;
+    const currentMousePos = { x: 0, y: 0 };
 
-    function showTooltip(e: MouseEvent) {
+    function showTooltip() {
+      if (isMouseDown)
+        return;
       render(h(
         TooltipContent,
         { 
-          x: e.x + 20,
-          y: e.y + 10,
+          x: currentMousePos.x + 20,
+          y: currentMousePos.y + 10,
           content: binding.value,
           onMouseenter: () => {
             event.onTooltipMouseEnter();
@@ -22,13 +27,31 @@ const tooltipDirective : ObjectDirective = {
           },
         },
       ), getContainer());
+      isShow = true;
     }
     function hideTooltip() {
       render(null, getContainer());
+      isShow = false;
     }
 
     const ele = el as HTMLElement;
-    ele.addEventListener('mouseenter', event.onMouseEnter);
+    ele.addEventListener('mousemove', (e) => {
+      currentMousePos.x = e.x;
+      currentMousePos.y = e.y;
+    });
+    ele.addEventListener('mousedown', () => {
+      isMouseDown = true;
+      if (isShow)
+        hideTooltip();
+    });
+    ele.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+    ele.addEventListener('mouseenter', (e) => {
+      currentMousePos.x = e.x;
+      currentMousePos.y = e.y;
+      event.onMouseEnter();
+    });
     ele.addEventListener('mouseleave', event.onMouseLeave);
   },
 };
