@@ -88,9 +88,6 @@ import { useEditorConnectorController } from './Editor/EditorConnectorController
 import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
-import { initBase } from '../../Base';
-import { initEditorBase } from './Flow';
-import { initLib } from '@/node-blueprint/Nodes';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
@@ -175,10 +172,6 @@ useEditorClipBoardControllerController(context);
 //init
 //=========================
 
-initBase();
-initEditorBase();
-initLib();
-
 onMounted(() => {
   initRenderer();
   loadGraph(props.graph);
@@ -191,7 +184,7 @@ function initRenderer() {
   const _viewPort = viewPort.value;
   if(render) {
     render.addDebugInfoItem(() => `position: ${_viewPort.position} size: ${_viewPort.size} scale: ${_viewPort.scale}`);
-    render.addDebugInfoItem(() => `mouseCurrentPos: ${mouseInfo.mouseCurrentPosScreen} -> ${mouseInfo.mouseCurrentPosViewPort}`);
+    render.addDebugInfoItem(() => `mouseCurrentPos: screen: ${mouseInfo.mouseCurrentPosScreen} -> viewport: ${mouseInfo.mouseCurrentPosViewPort}`);
     render.addDebugInfoItem(() => `mouseDownPos: ${mouseInfo.mouseDownPosScreen} -> ${mouseInfo.mouseDownPosViewPort}`);
     render.addDebugInfoItem(() => `isMulitSelect: ${isMulitSelect.value} rect: ${multiSelectRect.value.toString()}`);
   }

@@ -8,7 +8,7 @@
       >
         {{ graph.text }}
       </a>
-      <Icon icon="icon-arrow-right-bold" />
+      <Icon icon="icon-arrow-right-bold" :size="12" />
     </div>
     <div v-if="!graphBreadcrumb || graphBreadcrumb.length == 0">
       {{ currentDocunment.name }}
@@ -21,7 +21,7 @@ import { toRefs, watch, type PropType, ref, onMounted, nextTick } from 'vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
+import Icon from '../../Nana/Icon.vue';
 
 defineEmits([ 'goGraph' ]);
 
@@ -81,8 +81,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-$left-toolbar-width: 0;
-$top-breadcrumb-height: 30px;
+@import '../NodeIdeDefine.scss';
 
 .node-graph-breadcrumb {
   position: absolute;
@@ -90,20 +89,25 @@ $top-breadcrumb-height: 30px;
   left: $left-toolbar-width;
   right: 0;
   height: $top-breadcrumb-height;
-  padding: 3px 26px;
-  display: inline-flex;
+  padding: 3px 6px;
+  display: flex;
   justify-content: flex-start;
   align-items: center;
   user-select: none;
   cursor: pointer;
   color: #c0c0c0;
 
-  .button-controls {
-    display: inline-block;
+  > div {
+    display: inline-flex;
+    align-items: center;
     margin-left: 7px;
+    font-size: 12px;
 
+    svg {
+      margin: 0 3px;
+      fill: #fff;
+    }
     a {
-      -webkit-app-region: no-drag;
       color: #fff;
 
       &:hover, &:active {

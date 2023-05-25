@@ -56,7 +56,7 @@ function registerBaseConverters() {
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.String,
     toType: NodeParamType.Boolean,
-    converter: (v : string) => !StringUtils.isNullOrEmpty(v) && (v.toLowerCase() == 'true')
+    converter: (v : string) => !StringUtils.isNullOrEmpty(v) && (v.toLowerCase() === 'true')
   });
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.Any,
@@ -658,7 +658,7 @@ function registerCommentNode() {
     events: {
       onCreateCustomEditor: (parentEle, node, context) => {
         if (parentEle) {
-          var input = document.createElement('textarea');
+          const input = document.createElement('textarea');
           input.value = node.options['content'] ? node.options['content'] as string : '';
           input.classList.add('custom-editor');
           input.classList.add('node-comment-editor');
@@ -683,7 +683,7 @@ function registerCommentNode() {
         return undefined;
       },
       onSave: (node) => {
-        var input = node.data['input-control'] as HTMLInputElement;
+        const input = node.data['input-control'] as HTMLInputElement;
         node.options['width'] = input.offsetWidth;
         node.options['height'] = input.offsetHeight;
         node.options['content'] = input.value;
@@ -719,13 +719,13 @@ function registerCommentNode() {
         if (!parentEle) 
           return undefined;
         
-        let blockEle = parentEle.parentNode as HTMLDivElement;
+        const blockEle = parentEle.parentNode as HTMLDivElement;
         blockEle.style.minWidth = '250px';
         blockEle.style.minHeight = '150px';
     
-        let ele = document.createElement('div');
-        let input = document.createElement('input');
-        let span = document.createElement('span');
+        const ele = document.createElement('div');
+        const input = document.createElement('input');
+        const span = document.createElement('span');
         input.value = node.options.comment ? node.options.comment as string : '注释';
         input.onchange = () => {
           node.options['comment'] = input.value;
@@ -733,7 +733,7 @@ function registerCommentNode() {
         };
         input.style.display = 'none';
         input.onkeypress = (e) => {
-          if(e.key == 'Enter')
+          if(e.key === 'Enter')
             input.blur();
         };
         input.onblur = () => {
@@ -788,7 +788,7 @@ function registerCommentNode() {
 
           switch(event) {
             case 'down':
-              if (node.getCurrentSizeType() == 0) {
+              if (node.getCurrentSizeType() === 0) {
                 node.data.mouseDown = true;
         
                 mouseDownPos.x = e.x;
@@ -806,11 +806,11 @@ function registerCommentNode() {
               }
               break;
             case 'move':
-              if(node.data.mouseDown && node.getCurrentSizeType() == 0) {
+              if(node.data.mouseDown && node.getCurrentSizeType() === 0) {
       
                 //移动包括在注释内的单元
-                let viewPort = context.getViewPort();
-                let offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
+                const viewPort = context.getViewPort();
+                const offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
                 list.forEach((v) => {
                   if (v !== node) {
                     v.position.x = v.getLastPos().x + (viewPort.scaleScreenSizeToViewportSize(offX));
@@ -877,11 +877,11 @@ function registerConvertNode() {
             NodeParamType.FromString(node.options.coverterTo as string)
           );
     
-        let coverter = node.data['coverter'] as NodeTypeCoverter;
+          const coverter = node.data['coverter'] as NodeTypeCoverter;
         if(coverter) {
     
-          let fromPort = node.getPortByGUID('INPUT') as NodePort;
-          let toPort = node.getPortByGUID('OUTPUT') as NodePort;
+          const fromPort = node.getPortByGUID('INPUT') as NodePort;
+          const toPort = node.getPortByGUID('OUTPUT') as NodePort;
     
           node.changePortParamType(fromPort, coverter.fromType);
           node.changePortParamType(toPort, coverter.toType);
@@ -946,7 +946,7 @@ function registerConnNode() {
     },
     events: {
       onCreate: (node) => {
-        let type = node.options['type'] as string;
+        const type = node.options['type'] as string;
         if(!StringUtils.isNullOrEmpty(type)) {
           const paramType = NodeParamType.FromString(type);
           node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 

@@ -106,7 +106,7 @@ export interface SerializableSchemeConfig {
    */
   noSerializableProperties?: string[],
   /**
-   * Properties that need force load whith class, key is the Propertiy name, value is class name.
+   * Properties that need force load whith class, key is the Property name, value is class name.
    */
   forceSerializableClassProperties?: { [index: string]: string },
   /**
@@ -266,7 +266,7 @@ export class SerializableObject<T> {
       }
       return element;
     }
-    else if(element && typeof element === 'object') {
+    else if (element && typeof element === 'object' && typeof element.className === 'string') {
       const { obj, className } = element as unknown as SerializaeObjectSave<unknown>;
       switch (className) {
         case 'Array':
@@ -288,17 +288,34 @@ export class SerializableObject<T> {
           });
           return map;
         }
-        default:
+        default: {
           if (this.serializeConfig.loadProp) {
             const ret = this.serializeConfig.loadProp(key, '', element);
             if (ret !== undefined)
               return ret;
           }
-          if (this.serializeConfig.forceSerializableClassProperties?.[key]) 
-            return CreateObjectFactory.createSerializableObject(this.serializeConfig.forceSerializableClassProperties[key], this, element as any);
+          const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
+          if (forceSerializableClass) 
+            return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
           if (typeof className === 'string' && typeof obj === 'object') 
             return CreateObjectFactory.createSerializableObject(className, this, obj as any);//This is a SerializableObject
           break;
+        }
+      }
+    }
+    else if (element && typeof element === 'object') {
+      if (element instanceof Array) {
+        return (element as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
+      } else {
+        if (this.serializeConfig.loadProp) {
+          const ret = this.serializeConfig.loadProp(key, '', element);
+          if (ret !== undefined)
+            return ret;
+        }
+        const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
+        if (forceSerializableClass) 
+          return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
+        return element;
       }
     }
 
@@ -319,12 +336,18 @@ export class SerializableObject<T> {
     }
     return keys;
   }
-  private isPropertiySerializable(key: string, config: SerializableSchemeConfig) {
+  private isPropertySerializable(key: string, config: SerializableSchemeConfig) {
     return (
       (
         (config.serializableProperties && config.serializableProperties.includes(key) || config.serializeAll === true)
         && (!config.noSerializableProperties || !config.noSerializableProperties.includes(key))
       )
+    );
+  }
+  private isForceSerializableClassProperty(key: string, pkey: string) {
+    return (
+      this.serializeConfig.forceSerializableClassProperties?.[key] ||
+      this.serializeConfig.forceSerializableClassProperties?.[pkey]
     );
   }
 
@@ -347,7 +370,7 @@ export class SerializableObject<T> {
 
     const o : IKeyValueObject = {}
     for (const key of this.getSortedKeys(this, false)) {
-      if (!this.isPropertiySerializable(key, config))
+      if (!this.isPropertySerializable(key, config))
         continue;
       o[key] = this.saveProp(config, key, '', (this as unknown as Record<string, IKeyValueObject>)[key]) as ISaveableTypes;
     }
@@ -378,7 +401,7 @@ export class SerializableObject<T> {
     this.define = data;
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
     for (const key of this.getSortedKeys(data as object, true)) {
-      if (!this.isPropertiySerializable(key, config))
+      if (!this.isPropertySerializable(key, config))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }

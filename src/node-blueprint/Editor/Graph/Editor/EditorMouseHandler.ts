@@ -132,10 +132,10 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   }
 
   function updateMousePos(e: MouseEvent) {
-    mouseInfo.mouseCurrentPosScreen.x = e.clientX;
-    mouseInfo.mouseCurrentPosScreen.y = e.clientY;
+    mouseInfo.mouseCurrentPosScreen.set(e.clientX, e.clientY);
+    mouseInfo.mouseCurrentPosEditor.set(e.clientX, e.clientY);
 
-    viewPort.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseCurrentPosScreen);
+    viewPort.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseCurrentPosEditor);
     viewPort.screenPointToViewportPoint(
       mouseInfo.mouseCurrentPosScreen,
       mouseInfo.mouseCurrentPosViewPort
@@ -143,11 +143,14 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   }
 
   function mouseEventUpdateMouseInfo(e: MouseEvent, type: MouseEventUpdateMouseInfoType) {
+    updateMousePos(e);
     switch(type) {
       case MouseEventUpdateMouseInfoType.Down:
         //坐标更新
+        mouseInfo.mouseDownPosScreen.set(e.clientX, e.clientY);
+        mouseInfo.mouseDownPosEditor.set(e.clientX, e.clientY);
+        viewPort.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseDownPosEditor);
         viewPort.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
-        mouseInfo.mouseDownPosScreen.set(e.x, e.y);
         mouseInfo.mouseMoved = false;
         break;
       case MouseEventUpdateMouseInfoType.Move:
@@ -157,7 +160,6 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
         mouseInfo.mouseDowned = false;
         break;
     }
-    updateMousePos(e);
   }
 
 
@@ -178,10 +180,36 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
  * 编辑器鼠标状态
  */
 export class NodeGraphEditorMouseInfo {
+  /**
+   * 
+   */
   mouseDowned = false;
+  /**
+   * 获取鼠标当前的坐标（屏幕坐标）
+   */
   mouseCurrentPosScreen = new Vector2();
+  /**
+   * 获取鼠标当前的坐标（编辑器坐标）
+   */
+  mouseCurrentPosEditor = new Vector2();
+  /**
+   * 获取鼠标当前的坐标（视口坐标）
+   */
   mouseCurrentPosViewPort = new Vector2();
+  /**
+   * 获取鼠标按下时的坐标（屏幕坐标）
+   */
   mouseDownPosScreen = new Vector2();
+  /**
+   * 获取鼠标按下时的坐标（编辑器坐标）
+   */
+  mouseDownPosEditor = new Vector2();
+  /**
+   * 获取鼠标按下时的坐标（视口坐标）
+   */
   mouseDownPosViewPort = new Vector2();
+  /**
+   * 获取当前鼠标是否按下
+   */
   mouseMoved = false;
 }

@@ -1,8 +1,8 @@
 <template>
   <CollapseItem 
     v-for="(item, index) in categoryData.childCategories" 
-    :key="index" 
-    v-show="item.show && item.filterShow"
+    v-show="item.show && item.filterShow" 
+    :key="index"
     v-model:open="item.open" 
     :title="item.category"
   >
@@ -15,15 +15,15 @@
       :key="index"
       :content="item.define.description"
     >
-      <div class="item" 
-        v-show="item.show && item.filterShow && !item.define.hideInAddPanel"
-      
-        :draggable="isAddDirectly ? 'false' : 'true'" 
+      <div
+        v-show="item.show && item.filterShow && !item.define.hideInAddPanel" 
+        class="item"
+        draggable="true" 
         @click="onClick(item)"
         @dragstart="onDrag(item, $event)"
       >
         <span>
-          <img :src="item.define.style?.logo || DefaultLogo" />
+          <img :src="item.define.style?.logo || DefaultLogo">
           {{ item.define.name }}
         </span>
         <SmallButton 
@@ -33,10 +33,9 @@
           class="add-button"
           @click="onAddClick(item)" 
         />
-        <span v-else></span>
+        <span v-else />
       </div>
     </Tooltip>
-    
   </div>
 </template>
 
@@ -95,6 +94,7 @@ function onAddClick(item: CategoryDataItem) {
     margin-top: 1px;
     cursor: default;
     border-radius: 4px;
+    user-select: none;
 
     img, .logo {
       display: inline-block; 

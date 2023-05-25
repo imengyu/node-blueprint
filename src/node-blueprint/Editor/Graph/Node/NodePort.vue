@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <Tooltip>
     <!--端口-->
@@ -9,7 +10,7 @@
       @mouseleave="onPortMouseLeave"
       @mousedown="onPortMouseDown($event)"
     >
-      <div class="editor node-custom-editor" v-if="instance.direction === 'output' && instance.define.forceEditorControlOutput" >
+      <div v-if="instance.direction === 'output' && instance.define.forceEditorControlOutput" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
@@ -48,7 +49,7 @@
           {{ instance.define.name }}
         </span>
       </div>
-      <div class="editor node-custom-editor" v-if="instance.direction === 'input'" >
+      <div v-if="instance.direction === 'input'" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
@@ -57,14 +58,14 @@
     <template #content>
       <h5>{{ !instance.define.name ? (instance.define.direction == 'input' ? '入口' : '出口') : instance.define.name }}</h5>
       <span class="text-secondary">
-        <small v-html="instance.define.description"></small>
+        <small v-html="instance.define.description" />
       </span>
       <span>
         <br>类型：
-        <span v-if="instance.define.paramType" v-html="
-          instance.define.paramType.toUserFriendlyName() + '<br/>(' +
-          instance.define.paramType.toString() + ')'
-        "></span>
+        <span
+          v-if="instance.define.paramType" 
+          v-html="instance.define.paramType.toUserFriendlyName() + '<br/>(' + instance.define.paramType.toString() + ')'"
+        />
         <span v-else class="text-danger">未知</span>
       </span>
       <span v-if="instance.define.isAsync">
@@ -82,14 +83,13 @@ import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import VNodeRenderer from '../../Nana/VNodeRenderer.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
+import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeEditor } from '../Flow/NodeEditor';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
-import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 const props = defineProps({
   instance: {
@@ -153,7 +153,7 @@ const connectDragHandler = createMouseDragHandler({
       const parent = instance.value.parent as NodeEditor;
       parent.mouseConnectingPort = true;
 
-      if(e.button == 0) {
+      if(e.button === 0) {
         context?.setCursor('crosshair')
         context?.startConnect(instance.value);
         context?.updateConnectEnd(new Vector2(e.x, e.y));
@@ -163,7 +163,7 @@ const connectDragHandler = createMouseDragHandler({
     return false;
   },
   onMove(downPos, movedPos, e) {
-    if(e.button == 0) {
+    if(e.button === 0) {
       const parent = instance.value.parent as NodeEditor;
       parent.mouseConnectingPort = true;
       context?.updateConnectEnd(new Vector2(e.x, e.y));

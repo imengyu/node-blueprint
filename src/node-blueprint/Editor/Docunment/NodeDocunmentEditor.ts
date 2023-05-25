@@ -1,4 +1,5 @@
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
 
 export interface NodeDocunmentEditorContext {
   /**
@@ -16,6 +17,15 @@ export interface NodeDocunmentEditorContext {
     * @param graph 
     */
   switchActiveGraph(graph: NodeGraph) : void;
+  /**
+    * 获取当前激活的图表
+    * @param graph 
+    */
+  getActiveGraph() : NodeGraph|undefined;
+  /**
+   * 获取当前激活的图表上下文
+   */
+  getActiveGraphEditor(): NodeGraphEditorContext | undefined;
   /**
   * 关播所有打开的图表
   */

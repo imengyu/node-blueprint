@@ -1,4 +1,4 @@
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
@@ -60,11 +60,13 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
     //选中连接线，弹出连接线菜单
     if (context.isAnyConnectorHover())
-      showConnectorRightMenu(new Vector2(e.x, e.y));
+      showConnectorRightMenu(
+        info.mouseDownPosScreen
+      );
     //鼠标未移动，则显示添加界面
     else if (!info.mouseMoved)
       context.showAddNodePanel(
-        new Vector2(e.x, e.y),
+        info.mouseDownPosScreen,
         undefined,
         undefined,
         info.mouseCurrentPosViewPort.clone(),

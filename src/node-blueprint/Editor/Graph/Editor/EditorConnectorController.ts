@@ -33,7 +33,7 @@ export interface NodeGraphEditorConnectorContext {
    */
   getConnectingInfo: () => IConnectingInfo;
   updateCurrentHoverPort: (port : NodePortEditor, active : boolean) => void,
-  updateConnectEnd: (pos : Vector2) => void;
+  updateConnectEnd: (screenPos : Vector2) => void;
   startConnect: (port : NodePortEditor) => void;
   endConnect: (port : NodePortEditor) => void;
   getCanConnect: () => boolean;
@@ -303,9 +303,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connectingInfo.isFail = false;
     }
   }
-  function updateConnectEnd(pos : Vector2) {
+  function updateConnectEnd(screenPos : Vector2) {
     if(!connectingInfo.isConnectingToNew) {
-      context.getViewPort().screenPointToViewportPoint(pos, connectingInfo.endPos);
+      context.getViewPort().screenPointToViewportPoint(screenPos, connectingInfo.endPos);
     }
   }
   function startConnect(P : NodePort) {
@@ -327,7 +327,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       const viewPort = context.getViewPort();
       const panelPos = new Vector2();
-      viewPort.viewportPointToScreenPoint(connectingInfo.endPos, panelPos);
+      viewPort.viewportPointToEditorPoint(connectingInfo.endPos, panelPos);
 
       context.showAddNodePanel(
         viewPort.fixScreenPosWithEditorAbsolutePos(panelPos), 

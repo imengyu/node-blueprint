@@ -1,11 +1,13 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <!--单元连接弹出提示-->
-  <div class="nana-tooltip node-editor-no-move"
+  <div
     v-if="connectingInfo"
     v-show="connectingInfo.isConnecting && !connectingInfo.isConnectingToNew"
+    class="nana-tooltip node-editor-no-move"
     :style="{
       left: (connectingTooltipPos.x + 10) + 'px', 
-      top:  (connectingTooltipPos.y - 40) + 'px' 
+      top: (connectingTooltipPos.y - 40) + 'px' 
     }"
   >
     <span v-if="connectingInfo.currentHoverPort==null" class="center">
@@ -14,31 +16,33 @@
     </span>
     <span v-else-if="connectingInfo.canConnect" class="center">
       <Icon icon="icon-select-bold" class="text-success mr-1" />
-      <span v-html="connectingInfo.successText"></span>
+      <span v-html="connectingInfo.successText" />
     </span>
     <span v-else class="center">
       <Icon icon="icon-close" class="text-danger mr-1" />
-      <span v-html="connectingInfo.failedText"></span>
+      <span v-html="connectingInfo.failedText" />
     </span>
   </div>
   <!--小信息提示-->
   <div 
-    class="node-editor-centertip node-editor-no-move"
     v-show="isShowSmallTip"
-    v-html="smallTipText">
-  </div>
-  <!--添加节点菜单-->
-  <AddNodePanel 
-    ref="addNodePanel"
-    v-model:show="isShowAddNodePanel"
-    class="node-editor-no-move"
-    :isAddDirectly="isAddDirectly"
-    :allNodesGrouped="(allNodesGrouped as CategoryData[])"
-    :filterByPortDirection="filterByPortDirection"
-    :filterByPortType="filterByPortType"
-    :position="(addNodePanelPosition as Vector2)"
-    @addNode="onAddNode"
+    class="node-editor-centertip node-editor-no-move"
+    v-html="smallTipText"
   />
+  <!--添加节点菜单-->
+  <Teleport to="#app">
+    <AddNodePanel 
+      ref="addNodePanel"
+      v-model:show="isShowAddNodePanel"
+      class="node-editor-no-move"
+      :isAddDirectly="isAddDirectly"
+      :allNodesGrouped="(allNodesGrouped as CategoryData[])"
+      :filterByPortDirection="filterByPortDirection"
+      :filterByPortType="filterByPortType"
+      :position="(addNodePanelPosition as Vector2)"
+      @addNode="onAddNode"
+    />
+  </Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -72,7 +76,7 @@ const { viewPort, connectingInfo } = toRefs(props);
 //#region 连接中提示
 
 const connectingTooltipPos = computed(() => {
-  return viewPort.value.viewportPointToScreenPoint(connectingInfo.value.endPos);
+  return viewPort.value.viewportPointToEditorPoint(connectingInfo.value.endPos);
 })
 
 //#endregion

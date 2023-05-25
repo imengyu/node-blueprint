@@ -2,8 +2,8 @@
   <CollapseItem
     v-for="(item, index) in allNodesGrouped" 
     v-show="item.show && item.filterShow && item.category!=''"
-    v-model:open="item.open"
     :key="index"
+    v-model:open="item.open"
     :title="item.category"
   >
     <NodeCategory

@@ -1,0 +1,58 @@
+@import './NodeIdeDefine.scss';
+
+:root {
+  --mx-editor-backgroud: #161727;
+  --mx-editor-border-color: #3e4053;
+  --mx-editor-border-color-dark: #111216;
+  --mx-editor-background-second-color: #4f5768;
+
+  --mx-editor-text-color: #fff;
+  --mx-editor-light-text-color:#d6d6d6;
+  --mx-editor-active-text-color:#ffffff;
+  --mx-editor-drak-text-color: #505050;
+  --mx-editor-yellow-text-color: #ffa600;
+  --mx-editor-yellow-light-text-color: #eccc72;
+  --mx-editor-red-text-color: #ff5200;
+  --mx-editor-red-light-text-color: #fd7536;
+  --mx-editor-green-text-color: #39c300;
+  --mx-editor-green-light-text-color: #7ce64f;
+  --mx-editor-blue-text-color: #307bdd;
+  --mx-editor-blue-light-text-color: #74a4e4;
+}
+
+.node-menu-logo {
+  width: 155px;
+  height: 25px;
+}
+.node-fill-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.node-main-menu {
+  --mx-menu-backgroud: #161727!important;
+
+  padding: 4px 6px!important;
+  font-size: 13px;
+  background-color: var(--mx-menu-backgroud);
+
+  .mx-menu-bar-item {
+    color: #fff!important;
+
+    &:hover {
+      background-color: #757575!important;
+      color: #e9e9e9!important;
+    }
+    &.active {
+      background-color: #fff!important;
+      color: #000!important;
+    }
+  }
+}
+.node-main-area {
+  flex: 1;
+  width: 100%;
+  top: 32px;
+  height: calc(100% - 32px);
+}

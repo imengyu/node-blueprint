@@ -17,6 +17,10 @@ export default defineComponent({
       type: String,
       default: '',
     },
+    showDelay: {
+      type: Number,
+      default: 500,
+    },
     hideDelay: {
       type: Number,
       default: 500,
@@ -43,9 +47,10 @@ export default defineComponent({
       show,
       enable,
       offset,
+      showDelay,
     } = toRefs(props);
 
-    const event = registerContextMenuMutex(800, hideDelay.value, hideTooltip, showTooltip);
+    const event = registerContextMenuMutex(showDelay.value, hideDelay.value, hideTooltip, showTooltip);
     const isDown = ref(false);
     const currentMousePos = ref({ x: 0, y: 0 });
 

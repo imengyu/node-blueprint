@@ -4,22 +4,22 @@
     :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
     <template #content>
-      <h4>{{instance.define.name}}</h4>
+      <h4>{{ instance.define.name }}</h4>
       <p>{{ instance.define.description }}</p>
     </template>
     <div 
       ref="nodeRef"
       :class="['node-block',
-        (instance.selected ? 'selected ' : ''),
-        (instance.style.customClassNames),
-        (twinkleActive ? 'actived' : ''),
-        ...appendClass
+               (instance.selected ? 'selected ' : ''),
+               (instance.style.customClassNames),
+               (twinkleActive ? 'actived' : ''),
+               ...appendClass
       ]"
       :style="{
         left: `${instance.position.x}px`,
         top: `${instance.position.y}px`,
-        width: (instance.style.userResize == 'width' || instance.style.userResize == 'all') ? (`${instance.customSize.x}px`) : 'auto',
-        height: (instance.style.userResize == 'height' || instance.style.userResize == 'all') ? (`${instance.customSize.y}px`) : 'auto',
+        width: (instance.style.userResize === 'width' || instance.style.userResize === 'all') ? (`${instance.customSize.x}px`) : 'auto',
+        height: (instance.style.userResize === 'height' || instance.style.userResize === 'all') ? (`${instance.customSize.y}px`) : 'auto',
         minWidth: instance.style.minWidth > 0 ? `${instance.style.minWidth}px` : '',
         minHeight: instance.style.minHeight > 0 ? `${instance.style.minHeight}px` : '',
         maxWidth: instance.style.maxWidth > 0 ? `${instance.style.maxWidth}px` : '',
@@ -36,20 +36,20 @@
     >
       <!--注释区域-->
       <div
-        class="node-block-comment node-editor-no-move" 
-        v-show="instance.markOpen && !instance.style.noComment"
+        v-show="instance.markOpen && !instance.style.noComment" 
+        class="node-block-comment node-editor-no-move"
         :style="{ top: commentTop }"
       >
-        <span class="node-block-comment-place-holder" ref="commentInputPlaceHolder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
+        <span ref="commentInputPlaceHolder" class="node-block-comment-place-holder" @click="onCommentInputPlaceHolderClick">点击添加注释</span>
         <div 
           ref="commentInput"
           class="node-block-comment-text node-editor-no-move" 
           contenteditable="true"
           @input="onCommentInputInput"
-          @blur="onCommentInputBlur">
-        </div>
+          @blur="onCommentInputBlur"
+        />
         <Tooltip content="隐藏注释气泡">
-          <a @click="closeComment" class="close">
+          <a class="close" @click="closeComment">
             <Icon icon="icon-close-bold" />
           </a>
         </Tooltip>
@@ -69,7 +69,7 @@
         :enable="!instance.style.noTooltip"
       >
         <template #content>
-          <h4>{{instance.define.name}}</h4>
+          <h4>{{ instance.define.name }}</h4>
           <p>{{ instance.define.description }}</p>
         </template>
         <div 
@@ -111,7 +111,8 @@
       </div>
       <div 
         v-show="instance.breakpointTriggered"
-        class="breakpoint-arrow">
+        class="breakpoint-arrow"
+      >
         <Icon icon="icon-arrow-down-filling" />
       </div>
       <!--背景-->
@@ -135,14 +136,14 @@
         :create-editor-function="instance.events.onCreateCustomEditor"
       />
       <!--主端口区域-->
-      <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class='node-block-base'>
-        <div class='node-block-ports'>
-          <div class='left'>
+      <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class="node-block-base">
+        <div class="node-block-ports">
+          <div class="left">
             <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
           </div>
-          <div class='right'>
+          <div class="right">
             <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
@@ -166,7 +167,6 @@ import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import NodeCustomEditorWrapper from './NodeCustomEditorWrapper.vue';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
-import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
@@ -197,6 +197,8 @@ const {
   chunkedPanel,
 } = toRefs(props);
 
+defineEmits([ 'deletePort' ]);
+
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
 const TAG = 'Node';
@@ -226,6 +228,7 @@ onMounted(() => {
   };
   nextTick(() => {
     instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
+    updateComment();
   })
 });
 
@@ -347,18 +350,18 @@ let currentSizeType = 0;
 function updateCursor() {
   if(currentSizeType > 0) {
     if(
-      (((currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((currentSizeType & SIZE_TOP) == SIZE_TOP))
-      || (((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) && ((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+      (((currentSizeType & SIZE_LEFT) === SIZE_LEFT) && ((currentSizeType & SIZE_TOP) === SIZE_TOP))
+      || (((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM) && ((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT))
     )
       cursor.value = 'nwse-resize';
     else if(
-      (((currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM))
-      || (((currentSizeType & SIZE_TOP) == SIZE_TOP) && ((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+      (((currentSizeType & SIZE_LEFT) === SIZE_LEFT) && ((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM))
+      || (((currentSizeType & SIZE_TOP) === SIZE_TOP) && ((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT))
     )
       cursor.value = 'nesw-resize';
-    else if(((currentSizeType & SIZE_TOP) == SIZE_TOP) || ((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM))
+    else if(((currentSizeType & SIZE_TOP) === SIZE_TOP) || ((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM))
       cursor.value = 'ns-resize';
-    else if(((currentSizeType & SIZE_LEFT) == SIZE_LEFT) || ((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT))
+    else if(((currentSizeType & SIZE_LEFT) === SIZE_LEFT) || ((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT))
       cursor.value = 'ew-resize';
     else 
       cursor.value = 'default';
@@ -403,44 +406,44 @@ function onMouseResize(e : MouseEvent) {
     const mousePos = new Vector2();
     viewPort.value.screenPointToViewportPoint(new Vector2(e.x, e.y), mousePos);
 
-    if (((currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((currentSizeType & SIZE_TOP) == SIZE_TOP)) {
+    if (((currentSizeType & SIZE_LEFT) === SIZE_LEFT) && ((currentSizeType & SIZE_TOP) === SIZE_TOP)) {
       //左上
       size.x = (lastBlockPos.x + lastBlockSize.x - mousePos.x);
       size.y = (lastBlockPos.y + lastBlockSize.y - mousePos.y);
       _instance.position = mousePos;
     }
-    else if(((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) && ((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
+    else if(((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM) && ((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT)) {
       //右下
       size.x = (mousePos.x - lastBlockPos.x);
       size.y = (mousePos.y - lastBlockPos.y);
     }
-    else if (((currentSizeType & SIZE_LEFT) == SIZE_LEFT) && ((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM)) {
+    else if (((currentSizeType & SIZE_LEFT) === SIZE_LEFT) && ((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM)) {
       //左下
       size.x = (lastBlockSize.x + lastBlockSize.x - mousePos.x);
       size.y = (mousePos.y - lastBlockPos.y);
       _instance.position = new Vector2(mousePos.x, _instance.position.y);
     }
-    else if (((currentSizeType & SIZE_TOP) == SIZE_TOP) && ((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT)) {
+    else if (((currentSizeType & SIZE_TOP) === SIZE_TOP) && ((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT)) {
       //右上
       size.x = (mousePos.x - lastBlockPos.x);
       size.y = (lastBlockPos.y + lastBlockSize.y - mousePos.y);
       _instance.position = new Vector2(_instance.position.x, mousePos.y);
     }
-    else if((currentSizeType & SIZE_TOP) == SIZE_TOP)  {
+    else if((currentSizeType & SIZE_TOP) === SIZE_TOP)  {
       //上
       size.y = (lastBlockPos.y + lastBlockSize.y - mousePos.y);
       _instance.position = new Vector2(_instance.position.x, mousePos.y);
     }
-    else if((currentSizeType & SIZE_BOTTOM) == SIZE_BOTTOM) {
+    else if((currentSizeType & SIZE_BOTTOM) === SIZE_BOTTOM) {
       //下
       size.y = (mousePos.y - lastBlockPos.y);
     }
-    else if((currentSizeType & SIZE_LEFT) == SIZE_LEFT) {
+    else if((currentSizeType & SIZE_LEFT) === SIZE_LEFT) {
       //左
       size.x = (lastBlockPos.x + lastBlockSize.x - mousePos.x);
       _instance.position = new Vector2(mousePos.x, _instance.position.y);
     }
-    else if((currentSizeType & SIZE_RIGHT) == SIZE_RIGHT) {
+    else if((currentSizeType & SIZE_RIGHT) === SIZE_RIGHT) {
       //右
       size.x = (mousePos.x - lastBlockPos.x);
     }            
@@ -459,7 +462,7 @@ const resizeMouseHandler = createMouseDragHandler({
   onDown(e) {
     lastResized = false;
     mouseDown = true;
-    if(e.buttons == 1)
+    if(e.buttons === 1)
       return testInResize(e);
     return false;
   },
@@ -493,7 +496,7 @@ const dragMouseHandler = createMouseDragHandler({
     if(!mouseDown)
       return;
     
-    if(e.buttons == 1) {
+    if(e.buttons === 1) {
       const movedScaledDistance = new Vector2(
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.x)),
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.y))
@@ -501,7 +504,7 @@ const dragMouseHandler = createMouseDragHandler({
       const pos = new Vector2(instance.value.lastBlockPos);
       pos.add(movedScaledDistance);
 
-      if(pos.x != instance.value.position.x || pos.y != instance.value.position.y) {
+      if(pos.x !== instance.value.position.x || pos.y !== instance.value.position.y) {
 
         if(!instance.value.selected) {
           //如果当前块没有选中，在这里切换选中状态

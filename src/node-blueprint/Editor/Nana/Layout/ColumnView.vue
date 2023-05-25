@@ -1,22 +1,21 @@
 <template>
   <div 
     class="nana-flex-col"
-    :style="({
-      flexWrap: wrap,
-      flex: flex,
-      flexGrow: flexGrow,
+    :style="{
+      flexWrap: wrap ? 'wrap' : 'nowrap',
+      flexGrow: fill ? 1 : flexGrow,
       flexShrink: flexShrink,
       alignItems: align,
       alignSelf: alignSelf,
       justifyContent: justify,
-    } as any)"
+    }"
   >
     <slot />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, h, renderSlot, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
 /**
  * 一个flex column布局的View，方便布局
@@ -54,11 +53,12 @@ export default defineComponent({
       default: false
     },
     /**
-     * flex参数
+     * 弹性布局是否填充
+     * @default false
      */
-    flex: {
-      type: Number,
-      default: undefined
+    fill: {
+      type: Boolean,
+      default: false
     },
     /**
      * flexGrow参数

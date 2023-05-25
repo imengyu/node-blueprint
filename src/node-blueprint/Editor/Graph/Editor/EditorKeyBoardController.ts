@@ -59,10 +59,7 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
         else if(keyControlDown) context.selectAllNodes();
         break;
       case 'Delete': 
-        if(keyAltDown)
-          context.deleteSelectedConnectors();
-        else 
-          context.deleteSelectedNodes();
+        context.userDelete();
         break;
     }
   }

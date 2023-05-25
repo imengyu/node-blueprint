@@ -74,7 +74,7 @@ export class NodeConnectorEditor extends NodeConnector {
     if(this.startPort && this.endPort) {
       this.startColor = (this.startPort as NodePortEditor).getTypeColor();
       this.endColor = (this.endPort as NodePortEditor).getTypeColor();
-      if(this.startColor == this.endColor) {
+      if(this.startColor === this.endColor) {
         this.colorGradient = null;
         this.colorGradientNeedCreate = false;
       }
@@ -92,8 +92,8 @@ export class NodeConnectorEditor extends NodeConnector {
 
   public render(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
 
-    viewPort.viewportPointToScreenPoint(this.startPos, this.tempPoint1);
-    viewPort.viewportPointToScreenPoint(this.endPos, this.tempPoint2);
+    viewPort.viewportPointToEditorPoint(this.startPos, this.tempPoint1);
+    viewPort.viewportPointToEditorPoint(this.endPos, this.tempPoint2);
 
     //鼠标悬浮时线加粗
     if(this.hover) ctx.lineWidth = 3;
@@ -115,7 +115,7 @@ export class NodeConnectorEditor extends NodeConnector {
       this.dotPos = -1;
 
       //设置绘制颜色
-      if(this.startPort != null) {
+      if(this.startPort !== null) {
 
         //渐变的创建
         if(this.colorGradientNeedCreate) {

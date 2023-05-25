@@ -2,7 +2,7 @@
   <canvas 
     ref="canvas" 
     @contextmenu="$emit('contextmenu', $event)"
-  ></canvas>
+  />
 </template>
 
 <script lang="ts" setup>
@@ -86,7 +86,7 @@ function removeDebugInfoItem(id : number) {
 const fpsCalculator = new FPSCalculator();
 
 function renderDebugText() {
-  if(ctx == null) return;
+  if(ctx === null) return;
 
   //Debug text
   if(props.drawDebugInfo){
@@ -96,7 +96,7 @@ function renderDebugText() {
     let h = 20;
     ctx.fillText(drawFpsShow, 20, h);
     drawDebugInfoItems.forEach((k) => {
-      if(ctx == null) return;
+      if(ctx === null) return;
       h += 10;
       ctx.fillText(k(), 20, h);
     });
@@ -117,7 +117,7 @@ function render() {
   else drawTick = 0;
 
   fpsCalculator.calculateFps();
-  if(drawTick % 10 == 0) 
+  if(drawTick % 10 === 0) 
     drawFpsShow = "fps : " + fpsCalculator.fps.toFixed(2);
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -130,7 +130,7 @@ function render() {
   
   //绘制多选框
   if (props.isMulitSelect) {
-    props.viewPort.viewportPointToScreenPoint(props.multiSelectRect.getPoint(), retPos);
+    props.viewPort.viewportPointToEditorPoint(props.multiSelectRect.getPoint(), retPos);
     retSize.set(props.multiSelectRect.w, props.multiSelectRect.h);
     props.viewPort.scaleViewportSizeToScreenSize(retSize);
 
@@ -159,8 +159,8 @@ function render() {
       const startPos = _startPort.direction === 'output' ? _startPort.getPortPositionViewport() : _connectingInfo.endPos;
       const endPos = _startPort.direction === 'output' ? _connectingInfo.endPos : _startPort.getPortPositionViewport();
 
-      _viewPort.viewportPointToScreenPoint(startPos, tempPoint1);
-      _viewPort.viewportPointToScreenPoint(endPos, tempPoint2);
+      _viewPort.viewportPointToEditorPoint(startPos, tempPoint1);
+      _viewPort.viewportPointToEditorPoint(endPos, tempPoint2);
 
       ctx.lineWidth = 2.5;
       ctx.strokeStyle = '#efefef';

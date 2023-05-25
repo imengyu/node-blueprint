@@ -11,7 +11,6 @@ import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/E
 import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
-import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 
 const TAG = 'Node';
 
@@ -147,7 +146,7 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null = null, forceChangeDirection ?: NodePortDirection) : NodePort {
     const oldData = this.getPort(data.guid, data.direction);
-    if(oldData != null && oldData != undefined) {
+    if(oldData !== null && oldData !== undefined) {
       printWarning(this.getName() + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
         srcNode: this
       });
@@ -159,9 +158,9 @@ export class Node extends SerializableObject<INodeDefine> {
     newPort.dyamicAdd = isDyamicAdd;
     newPort.initialValue = initialValue;
 
-    if(newPort.direction == 'input')
+    if(newPort.direction === 'input')
       this.inputPorts.set(newPort.guid, newPort);
-    else if(newPort.direction == 'output')
+    else if(newPort.direction === 'output')
       this.outputPorts.set(newPort.guid, newPort);
 
     if (data.defaultConnectPort)
@@ -179,8 +178,8 @@ export class Node extends SerializableObject<INodeDefine> {
    * @param direction 端口方向
    */
   public deletePort(guid : string|NodePort, direction ?: NodePortDirection) : void {
-    const oldData = typeof guid == 'string' ? this.getPort(guid, direction) : guid;
-    if(oldData == null || oldData == undefined) {
+    const oldData = typeof guid === 'string' ? this.getPort(guid, direction) : guid;
+    if(oldData === null || oldData === undefined) {
       printWarning(this.getName() + ".deletePort", guid + " port not exist !", {
         srcNode: this,
       });
@@ -190,10 +189,10 @@ export class Node extends SerializableObject<INodeDefine> {
     this.mapPorts.delete(oldData.guid);
     this.events.onPortRemove?.(this, oldData);
 
-    if(direction == 'input')
-      this.inputPorts.delete(typeof guid == 'string' ? guid : guid.guid);
-    else if(direction == 'output')
-      this.outputPorts.delete(typeof guid == 'string' ? guid : guid.guid);
+    if(direction === 'input')
+      this.inputPorts.delete(typeof guid === 'string' ? guid : guid.guid);
+    else if(direction === 'output')
+      this.outputPorts.delete(typeof guid === 'string' ? guid : guid.guid);
   }
   /**
    * 根据方向获取某个端口
@@ -201,9 +200,9 @@ export class Node extends SerializableObject<INodeDefine> {
    * @param direction 端口方向
    */
   public getPort(guid : string, direction ?: NodePortDirection) : NodePort|null {
-    if(direction == 'input')
+    if(direction === 'input')
       return this.inputPorts.get(guid) || null;
-    else if(direction == 'output')
+    else if(direction === 'output')
       return this.outputPorts.get(guid) || null;
     else
       return this.getPortByGUID(guid);
@@ -226,7 +225,7 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public getPortByTypeAndDirection(type: NodeParamType, direction: NodePortDirection, includeAny = true) : NodePort|null  {
     if(type.isExecute) {
-      return this.ports.find(p => p.direction == direction && p.define.paramType.isExecute) || null;
+      return this.ports.find(p => p.direction === direction && p.define.paramType.isExecute) || null;
     } else {
       return this.ports.find(p => type.acceptable(p.paramType), includeAny) || null;
     }
@@ -239,7 +238,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public changePortParamType(port: NodePort, newType: NodeParamType) {
     if(!port)
       printError(this.getName(), 'changePortParamType: Must provide port');
-    else if(port.parent == this) {
+    else if(port.parent === this) {
       port.paramType = newType;
       port.define.paramType = newType;
       //TODO: 弹性端口
@@ -327,6 +326,12 @@ export interface INodeDefine {
    * [仅编辑器可用] 单元的右键菜单操作
    */
   menu ?: { items: NodeContextMenuItem[] },
+
+  options?: CustomStorageObject;
+  markContent?: string;
+  markOpen?: boolean;
+  position?: Vector2;
+  customSize?: Vector2;
 }
 
 export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;

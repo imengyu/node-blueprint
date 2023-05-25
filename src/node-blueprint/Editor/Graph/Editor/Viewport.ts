@@ -6,6 +6,10 @@ import { SerializableObject } from "@/node-blueprint/Base/Utils/Serializable/Ser
 
 /**
  * 编辑器视图信息结构体
+ * 
+ * 注：
+ * screenPos: 以容器坐标为准，0，0是容器左上角。
+ * viewPortPos: 以编辑器视口为准的坐标，视口移动后坐标也会变化。
  */
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
 
@@ -58,7 +62,7 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
 
   /**
    * 按照指定坐标缩放视图
-   * @param newScale 新的缩放大小
+   * @param newScale 新的缩放大小 [0.5-2]
    * @param center 居中坐标，如果不填写，则默认按照矩形的中心进行缩放
    */
   scaleAndCenter(newScale: number, center?: Vector2) {
@@ -96,7 +100,20 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
     rect.setSize(this.viewportSize);
     return rect;
   }
-
+  /**
+   * 编辑器坐标转屏幕坐标
+   * @param point 编辑器坐标
+   * @param dest 编辑器坐标，结果被赋值到这里
+   */
+  viewportPointToEditorPoint(point: Vector2, dest?: Vector2): Vector2 {
+    if (!dest)
+      dest = new Vector2();
+    dest.set(
+      (point.x - this.position.x) * this.scale,
+      (point.y - this.position.y) * this.scale,
+    );
+    return dest;
+  }
   /**
    * 编辑器坐标转屏幕坐标
    * @param point 编辑器坐标

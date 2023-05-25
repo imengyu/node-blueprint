@@ -44,7 +44,7 @@ module.exports = {
     'no-shadow': 'error',
     'no-var': 'error',
     'no-dupe-class-members': 'error',
-    'new-cap': 'error',
+    'new-cap': 'off',
   },
   globals: {
   },

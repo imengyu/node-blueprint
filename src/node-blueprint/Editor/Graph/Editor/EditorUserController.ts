@@ -21,6 +21,10 @@ export interface NodeEditorUserControllerContext {
    * @returns 
    */
   userDeleteNode(node: NodeEditor) : void;
+  /**
+   * 用户删除操作
+   */
+  userDelete() : void;
 
   /**
    * 删除选中连接线
@@ -269,6 +273,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
     return newNode;
   }
+  /**
+   * 用户操作
+   */
+  function userDelete() {
+    if(context.isKeyAltDown())
+      context.deleteSelectedConnectors();
+    else 
+      context.deleteSelectedNodes();
+  }
 
   //单元位置或大小更改，刷新单元
   function updateNodeForMoveEnd(node: Node) {
@@ -292,6 +305,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userAddNode = userAddNode;
   context.userDeleteNode = userDeleteNode;
   context.userDeletePort = userDeletePort;
+  context.userDelete = userDelete;
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

@@ -8,7 +8,7 @@
     @click="onClick($event)"
   >    
     <Row align="center">
-      <input class="node-small-input fill" type="text" v-model="searchValue" placeholder="搜索单元..." />
+      <input v-model="searchValue" class="node-small-input fill" type="text" placeholder="搜索单元...">
       <SmallButton v-if="searchValue != ''" icon="icon-close-bold" text="清空筛选" @click="searchValue=''" />
     </Row>
 
@@ -108,7 +108,7 @@ const currentFilterCount = ref(0);
 //加载最外层单元
 function loadMostOutNodes() {
   for (let index = 0; index < props.allNodesGrouped.length; index++) {
-    if(props.allNodesGrouped[index].category == '') {
+    if(props.allNodesGrouped[index].category === '') {
       nodesGroupedMostOut.value = props.allNodesGrouped[index];
       break;
     }        
@@ -131,9 +131,9 @@ function doFilterLoop(cn : (b : INodeDefine) => boolean) {
   props.allNodesGrouped.forEach((cd) => currentFilterCount.value += loop(cd));
 }
 function doFilter() {
-  if(props.filterByPortType != null) {
+  if(props.filterByPortType !== null) {
     doFilterLoop((b) => hasOnePortByDirectionAndType(b, props.filterByPortDirection, props.filterByPortType, true));
-    filterText.value = (props.filterByPortDirection == 'input' ? '获取 ' : '输出 ') + props.filterByPortType.toUserFriendlyName() + ' 的单元';
+    filterText.value = (props.filterByPortDirection === 'input' ? '获取 ' : '输出 ') + props.filterByPortType.toUserFriendlyName() + ' 的单元';
   }
   else clearFilter();
 }
@@ -188,7 +188,7 @@ function hasOnePortByDirectionAndType(node : INodeDefine, direction : NodePortDi
     return false;
   for(let i = 0, c = ports.length; i < c;i++) {
     const port = ports[i];
-    if (port.direction == direction && port.paramType.acceptable(type, includeAny))
+    if (port.direction === direction && port.paramType.acceptable(type, includeAny))
       return true;
   }
   return false;
@@ -222,7 +222,7 @@ watch(() => props.show, (newV) => {
     document.removeEventListener('click', onDocClick);
 });
 watch(searchValue, (newV) => {
-  if(newV == '') clearSearch();
+  if(newV === '') clearSearch();
   else doSearch();
 });
 

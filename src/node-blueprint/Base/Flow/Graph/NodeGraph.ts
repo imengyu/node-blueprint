@@ -9,6 +9,8 @@ import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeG
 import { NodeRegistry } from "../Registry/NodeRegistry";
 import { printWarning } from "../../Utils/Logger/DevLog";
 import { CreateObjectFactory } from "../../Utils/Serializable/SerializableObject";
+import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import { Vector2 } from "../../Utils/Base/Vector2";
 
 /**
  * 流图类型
@@ -59,9 +61,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
               ...node
             };
           
-            const nodeInstance = (isEditor ? 
-              CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
-              CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;
+            const nodeInstance = this.createNode(finalNodeDefine);
 
             return {
               parsed: true,
@@ -145,6 +145,12 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
     this.isEditor = isEditor;
   }
 
+  private createNode(finalNodeDefine: INodeDefine) {
+    return (this.isEditor ? 
+      CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
+      CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;
+  }
+
   /**
    * 子流图
    */
@@ -179,7 +185,23 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
    * 新图表初始化
    */
   public initNew(): void {
-    //TODO: 新图表初始化
+    if (this.type === 'main') {
+      const startNode = this.createNode({
+        ...BaseNodes.getScriptBaseNodeIn(),
+        position: new Vector2(250, 100),
+        markOpen: true,
+        markContent: '这是入口节点，程序从这里开始运行',
+      });
+      const endNode = this.createNode({
+        ...BaseNodes.getScriptBaseNodeOut(),
+        position: new Vector2(650, 100),
+        markOpen: true,
+        markContent: '这是程序结束节点，运行到这里后程序结束',
+      });
+      this.nodes.set(startNode.uid, startNode);
+      this.nodes.set(endNode.uid, endNode);
+    }
+    //TODO: 其他类型初始化
   }
 
   parent: NodeDocunment|NodeGraph;

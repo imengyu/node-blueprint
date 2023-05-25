@@ -1,30 +1,48 @@
 <template>
-  <ColumnView :flex="1" class="node-fill-container">
-    <GraphBreadcrumb 
-      :current-docunment="docunment"
-      :current-graph="currentGraph"
-    />
-    <NodeGraphEditor 
-      v-for="graph in openedGraphs"
-      v-show="graph.graph.uid === currentGraph?.uid"
-      :key="graph.graph.uid"
-      :context="graph.context"
-      :graph="(graph.graph as NodeGraph)"
-      :settings="editorSettings"
-    />
-  </ColumnView>
+  <RowView class="node-fill-container">
+    <GraphSideTool>
+      <GraphSideToolItem />
+      <GraphSideToolItem />
+      <GraphSideToolSeparator />
+      <GraphSideToolItem ref="refAddButton" icon="icon-add-bold" @click="onAdd" />
+      <GraphSideToolItem icon="icon-trash" @click="onDelete" />
+      <GraphSideToolSeparator />
+      <GraphSideToolItem icon="icon-Play" color="green" />
+      <GraphSideToolItem icon="icon-Next" color="blue" />
+    </GraphSideTool>
+    <ColumnView :fill="true">
+      <GraphBreadcrumb 
+        :current-docunment="docunment"
+        :current-graph="currentGraph"
+        @goGraph="context.openGraph"
+      />
+      <NodeGraphEditor 
+        v-for="graph in openedGraphs"
+        v-show="graph.graph.uid === currentGraph?.uid"
+        :key="graph.graph.uid"
+        :context="graph.context"
+        :graph="(graph.graph as NodeGraph)"
+        :settings="editorSettings"
+      />
+    </ColumnView>
+  </RowView>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, type PropType, onBeforeUnmount } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
+import RowView from '../Nana/Layout/RowView.vue';
 import NodeGraphEditor, { type INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
-import GraphBreadcrumb from './Common/Graph/GraphBreadcrumb.vue';
+import GraphBreadcrumb from './Graph/GraphBreadcrumb.vue';
+import GraphSideTool from './Graph/GraphSideTool.vue';
+import GraphSideToolItem from './Graph/GraphSideToolItem.vue';
+import GraphSideToolSeparator from './Graph/GraphSideToolSeparator.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import type { NodeGraphEditorInternalContext } from '../Graph/NodeGraphEditor';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
+import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 const props = defineProps({
   docunment: {
@@ -37,6 +55,8 @@ const props = defineProps({
   },
 });
 
+const refAddButton = ref();
+
 const openedGraphs = ref<{
   graph: NodeGraph,
   context: NodeGraphEditorInternalContext,
@@ -45,17 +65,15 @@ const openedGraphs = ref<{
 const currentGraph = ref<NodeGraph>();
 
 const context = {
-  /**
-   * 切换图表至当前激活的图表
-   * @param graph 
-   */
+  getActiveGraph() {
+    return currentGraph.value;
+  },
+  getActiveGraphEditor() {
+    return currentGraph.value?.activeEditor || undefined;
+  },
   switchActiveGraph(graph) {
     currentGraph.value = graph;
   },
-  /**
-   * 打开图表
-   * @param graph 
-   */
   openGraph(graph) {
     if (openedGraphs.value.find((g) => g.graph === graph))
       return;
@@ -65,10 +83,6 @@ const context = {
     });
     currentGraph.value = graph;
   },
-  /**
-   * 关播指定的图表
-   * @param graph 
-   */
   closeGraph(graph) {
     const index = openedGraphs.value.findIndex((g) => g.graph === graph);
     if (index >= 0) {
@@ -83,14 +97,19 @@ const context = {
       }
     }
   },
-  /**
-   * 关播所有打开的图表
-   */
   closeAllGraph() {
     ArrayUtils.clear(openedGraphs.value);
     currentGraph.value = undefined;
   },
 } as NodeDocunmentEditorContext;
+
+function onAdd() {
+  const buttonPos = refAddButton.value.getButtonPosition() as Vector2;
+  context.getActiveGraphEditor()?.showAddNodePanel(buttonPos, undefined, undefined, undefined, true);
+}
+function onDelete() {
+  context.getActiveGraphEditor()?.userDelete();
+}
 
 onMounted(() => {
   const doc = props.docunment;

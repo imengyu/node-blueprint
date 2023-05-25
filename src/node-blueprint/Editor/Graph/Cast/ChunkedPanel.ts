@@ -3,7 +3,6 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { ISaveableTypes } from "@/node-blueprint/Base/Utils/BaseTypes";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
-import RandomUtils from "@/node-blueprint/Base/Utils/RandomUtils";
 
 /**
  * 区块式平面碰撞检测器。
@@ -74,9 +73,9 @@ export class ChunkedPanel {
         ctx.fillText(`Chunk:${x},${y}`, xc, yc);
 
         ctx.strokeStyle = '#f00';
-        chunk.childs.forEach((c, i) => {
+        chunk.childs.forEach((c) => {
           const pos = new Vector2(c.rect.x, c.rect.y);
-          viewPort.viewportPointToScreenPoint(pos, pos);
+          viewPort.viewportPointToEditorPoint(pos, pos);
           ctx.strokeRect(pos.x, pos.y, c.rect.w * scale, c.rect.h * scale);
           ctx.fillText(c.rect.toString(), pos.x + 10, pos.y - 10);
         });
@@ -235,7 +234,7 @@ export class ChunkedPanel {
       const chunk = chunks[j];
       for (let i = chunk.childs.length - 1; i >= 0; i--) {
         const c = chunk.childs[i];
-        if(c.rect.testRectCross(rect) && (typeof tag === 'undefined' || c.tag == tag))
+        if(c.rect.testRectCross(rect) && (typeof tag === 'undefined' || c.tag === tag))
           castObjects.push(c);
       }    
     }
@@ -253,7 +252,7 @@ export class ChunkedPanel {
     if(chunk) {
       for (let i = chunk.childs.length - 1; i >= 0; i--) {
         const c = chunk.childs[i];
-        if(c.rect.testInRect(point) && (typeof tag === 'undefined' || c.tag == tag))
+        if(c.rect.testInRect(point) && (typeof tag === 'undefined' || c.tag === tag))
           castObjects.push(c);
       }
     }

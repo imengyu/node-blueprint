@@ -5,7 +5,7 @@
     </div>
     <select
       v-model="zoomSelectValue"
-      @change="zoomUpdate(zoomSelectValue / 100)"
+      @change="zoomSet(zoomSelectValue)"
     >
       <option v-for="(v, i) in zoomValues" :key="i" :value="v">{{ v }}%</option>
     </select>
@@ -16,51 +16,50 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, type PropType } from "vue";
-import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
+<script setup lang="ts">
+import { ref, type PropType, inject } from "vue";
 import Icon from "../../Nana/Icon.vue";
+import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from "../NodeGraphEditor";
 
-export default defineComponent({
-  name: "ZoomTool",
-  emits: ["zoom-update"],
-  data() {
-    return {
-      zoomValues: [30, 50, 60, 80, 100, 110, 120, 130, 150, 170, 190, 200],
-      zoomSelectValue: 4,
-    };
+const emit = defineEmits([ 'zoomUpdate' ]);
+const props = defineProps({
+  viewPort: {
+    type: Object as PropType<NodeGraphEditorViewport>,
+    default: null,
   },
-  props: {
-    viewPort: {
-      type: Object as PropType<NodeGraphEditorViewport>,
-      default: null,
-    },
-  },
-  methods: {
-    /**
-     * 放大视图
-     */
-    zoomOut() {
-      const viewScale = this.viewPort.scale;
-      if (viewScale > 0.4) this.zoomUpdate((viewScale * 10 - 1) / 10);
-      else this.zoomUpdate(0.3);
-    },
-    /**
-     * 缩小视图
-     */
-    zoomIn() {
-      const viewScale = this.viewPort.scale;
-      if (viewScale <= 1.9) this.zoomUpdate((viewScale * 10 + 1) / 10);
-      else this.zoomUpdate(2);
-    },
-    /**
-     * 更新视图缩放
-     */
-    zoomUpdate(scale: number) {
-      this.viewPort.scaleAndCenter(scale);
-      this.$emit("zoom-update", scale);
-    },
-  },
-  components: { Icon },
 });
+
+const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
+
+const zoomValues = [30, 50, 60, 80, 100, 110, 120, 130, 150, 170, 190, 200];
+const zoomSelectValue = ref(4);
+
+/**
+ * 放大视图
+ */
+function zoomOut() {
+  const viewScale = props.viewPort.scale * 100;
+  if (viewScale > 40) zoomSet(viewScale * 100 - 10);
+  else zoomSet(30);
+}
+/**
+ * 缩小视图
+ */
+function zoomIn() {
+  const viewScale = props.viewPort.scale * 100;
+  if (viewScale <= 190) zoomSet(viewScale * 100 + 10);
+  else zoomSet(200);
+}
+/**
+ * 更新视图缩放
+ */
+function zoomSet(scale: number) {
+  props.viewPort.scaleAndCenter(scale);
+  emit("zoomUpdate", scale);
+}
+
+context.zoomIn = zoomIn;
+context.zoomOut = zoomOut;
+context.zoomSet = zoomSet;
+
 </script>

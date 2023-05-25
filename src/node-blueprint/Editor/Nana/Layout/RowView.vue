@@ -3,7 +3,7 @@
     class="nana-flex-row"
     :style="({
       flexWrap: wrap,
-      flex: flex,
+      flex: fill ? 1 : undefined,
       flexGrow: flexGrow,
       flexShrink: flexShrink,
       alignItems: align,
@@ -17,7 +17,7 @@
 
 
 <script lang="ts">
-import { defineComponent, h, renderSlot, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
 /**
  * 一个flex row布局的View，方便布局
@@ -55,11 +55,12 @@ export default defineComponent({
       default: false
     },
     /**
-     * flex参数
+     * 弹性布局是否填充
+     * @default false
      */
-    flex: {
-      type: Number,
-      default: undefined
+    fill: {
+      type: Boolean,
+      default: false
     },
     /**
      * flexGrow参数

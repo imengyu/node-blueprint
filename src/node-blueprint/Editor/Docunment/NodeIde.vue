@@ -17,7 +17,7 @@
       <template #panelRender="{ panel }">
         <template v-if="panel.key.startsWith('NodeEditor')">
           <NodeDocunmentEditorComponent 
-            v-if="getDocunmentByUid(panel.key.substr(10))"
+            v-if="opendDocunment.has(panel.key.substr(10))"
             :docunment="getDocunmentByUid(panel.key.substr(10))!"
             :editorSettings="editorSettings"
           />
@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import Console from '../Console/Console.vue';
@@ -45,6 +45,7 @@ import { MenuBar, type MenuBarOptions } from '@imengyu/vue3-context-menu';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
+import type { NodeIdeControlContext } from './NodeIde';
 
 const dockLayout = ref<DockLayoutInterface>();
 
@@ -56,9 +57,12 @@ const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSetti
   drawGrid: true,
 }));
 
-onBeforeUnmount(() => {
+function saveSettings() {
   SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
-})
+}
+
+onBeforeUnmount(saveSettings)
+window.addEventListener('beforeunload', saveSettings);
 
 //#endregion
 
@@ -100,29 +104,41 @@ const menuData = reactive<MenuBarOptions>({
       label: '编辑',
       children: [
         {
-          label: '新建',
+          label: '撤销',
           shortcut: 'Ctrl+Z',
         },
         {
-          label: '新建',
+          label: '恢复',
           shortcut: 'Ctrl+Y',
           divided: true,
         },
         {
           label: '剪贴',
           shortcut: 'Ctrl+X',
+          onClick() {
+            getCurrentActiveGraphEditor()?.cutSelectionNodes();
+          },
         },
         {
           label: '复制',
           shortcut: 'Ctrl+C',
+          onClick() {
+            getCurrentActiveGraphEditor()?.copySelectionNodes();
+          },
         },
         {
           label: '粘贴',
           shortcut: 'Ctrl+V',
+          onClick() {
+            getCurrentActiveGraphEditor()?.pasteNodes();
+          },
         },
         {
           label: '删除',
           shortcut: 'Delete',
+          onClick() {
+            getCurrentActiveGraphEditor()?.userDelete();
+          },
         },
       ],
     },
@@ -136,25 +152,26 @@ const menuData = reactive<MenuBarOptions>({
           onClick() {
             editorSettings.drawGrid = !editorSettings.drawGrid;
             this.checked = editorSettings.drawGrid;
-            console.log('this', this);
-            
           },
         },
         {
           label: '放大',
           onClick() {
-            
+            getCurrentActiveGraphEditor()?.zoomIn();
           },
         },
         {
           label: '缩小',
           onClick() {
-            
+            getCurrentActiveGraphEditor()?.zoomOut();
           },
         },
         {
           label: '100%',
           divided: true,
+          onClick() {
+            getCurrentActiveGraphEditor()?.zoomSet(100);
+          },
         },
         {
           label: '绘制调试信息',
@@ -226,6 +243,9 @@ const menuData = reactive<MenuBarOptions>({
 const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
 const currentActiveDocunment = ref<NodeDocunment|null>(null);
 
+function getCurrentActiveGraphEditor() {
+  return currentActiveDocunment.value?.activeEditor?.getActiveGraph()?.activeEditor || null;
+}
 function getDocunmentByUid(uid: string) {
   return opendDocunment.value.get(uid)
 }
@@ -240,6 +260,7 @@ function newDocunment() {
   doc.load();
   doc.initNew();
   openDocunment(doc);
+  return doc;
 }
 function closeDocunment(uid: string) {
   const doc = opendDocunment.value.get(uid)
@@ -302,6 +323,7 @@ onMounted(() => {
               size: 70,
               name: 'centerArea',
               alwaysVisible: true,
+              tabStyle: { marginLeft: '40px' },
             },
             {
               size: 30,
@@ -328,43 +350,22 @@ onMounted(() => {
     newDocunment();
   }, 500);
 });
+
+const context = reactive({
+  newDocunment,
+  closeDocunment,
+  openDocunment,
+  getCurrentActiveGraphEditor,
+  getDocunmentByUid,
+} as NodeIdeControlContext);
+
+provide('NodeIdeControlContext', context);
+
+defineExpose({
+  getContext() { return context },
+})
 </script>
 
 <style lang="scss">
-.node-menu-logo {
-  width: 155px;
-  height: 25px;
-}
-.node-fill-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-.node-main-menu {
-  --mx-menu-backgroud: #161727!important;
-
-  padding: 4px 6px!important;
-  font-size: 13px;
-  background-color: var(--mx-menu-backgroud);
-
-  .mx-menu-bar-item {
-    color: #fff!important;
-
-    &:hover {
-      background-color: #757575!important;
-      color: #e9e9e9!important;
-    }
-    &.active {
-      background-color: #fff!important;
-      color: #000!important;
-    }
-  }
-}
-.node-main-area {
-  flex: 1;
-  width: 100%;
-  top: 32px;
-  height: calc(100% - 32px);
-}
+@import './NodeIde.scss';
 </style>

@@ -1,5 +1,5 @@
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
-import type { EditorMousHandlerExtendHandlers, NodeEditorMouseControllerContext, NodeGraphEditorMouseInfo } from './Editor/EditorMouseHandler';
+import type { NodeEditorMouseControllerContext } from './Editor/EditorMouseHandler';
 import type { NodeGraphEditorViewport } from './Editor/Viewport';
 import type { NodeGraphEditorSelectionContext } from './Editor/EditorSelectionContoller';
 import type { NodeGraphEditorConnectorContext } from './Editor/EditorConnectorController';
@@ -9,6 +9,7 @@ import type { NodeEditorKeyBoardControllerContext } from './Editor/EditorKeyBoar
 import type { NodeEditorUserControllerContext } from './Editor/EditorUserController';
 import type { NodeEditorContextMenuContext } from './Editor/EditorContextMenuHandler';
 import type { NodeEditorClipBoardControllerContext } from './Editor/EditorClipBoardController';
+import type { NodeGraphEditorZoomToolContext } from './SubComponents/ZoomTool';
 export * from './Editor/Viewport';
 
 /**
@@ -23,7 +24,8 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
   NodeEditorUserControllerContext,
   NodeEditorContextMenuContext,
   NodeEditorMouseControllerContext,
-  NodeEditorClipBoardControllerContext
+  NodeEditorClipBoardControllerContext,
+  NodeGraphEditorZoomToolContext
 {
 }
 
@@ -47,6 +49,7 @@ export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
   mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
 }
 
+// eslint-disable-next-line no-shadow
 export enum MouseEventUpdateMouseInfoType {
   Down,
   Move,
