@@ -1,13 +1,12 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
 
 export interface NodeEditorContextMenuContext {
   /**
@@ -90,7 +89,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           label: "断开连接", 
           onClick: () => context.deleteSelectedConnectors()
         },
-      ].concat(selectedConnectors.length == 1 ? [
+      ].concat(selectedConnectors.length === 1 ? [
         { 
           label: "按起始端位置拉直",
           onClick: () => {
@@ -119,7 +118,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
     let nodeMenuSettingsMenuItems : NodeContextMenuItem[]|null = null;
 
-    if(selectedCount == 1) {
+    if(selectedCount === 1) {
       nodeMenuSettingsMenuItems = selectedNodes[0].define.menu?.items || [];
 
       const loopMenuClick = (items : NodeContextMenuItem[]) => {
@@ -137,7 +136,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       loopMenuClick(nodeMenuSettingsMenuItems);
     }
 
-    const menuItems = (selectedCount == 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
+    const menuItems = (selectedCount === 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
       [
         { label: "删除", onClick: () => context.deleteSelectedNodes(), divided: true },
         { label: "剪切", onClick: () => context.cutSelectionNodes() },
@@ -233,8 +232,8 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
   //显示输入框的右键菜单
   function showInputRightMenu(screenPos : Vector2, input: HTMLInputElement|undefined) {
-    let selection = document.getSelection()?.toString();
-    let menuItems : MenuItem[] = [
+    const selection = document.getSelection()?.toString();
+    const menuItems : MenuItem[] = [
       {
         label: "剪切",
         onClick: () => {

@@ -2,7 +2,11 @@
   <div
     ref="editorHost"
     class="node-graph-editor"
-    :style="{ cursor }"
+    :style="{
+      cursor,
+      top: settings?.topMargin ? `${settings.topMargin}px` : undefined,
+      height: settings?.topMargin ? `calc(100% - ${settings.topMargin}px)` : undefined,
+    }"
     @mousedown="onMouseDown"
     @wheel="onMouseWhell"
     @keydown="onKeyDown"
@@ -14,7 +18,8 @@
       style="z-index: 0" 
       :viewPort="(viewPort as NodeGraphEditorViewport)"
       :chunkedPanel="(chunkedPanel as ChunkedPanel)"
-      :drawDebugInfo="true"
+      :drawDebugInfo="settings?.drawDebugInfo"
+      :gridVisible="settings?.drawGrid"
       @contextmenu="onCanvasContextMenu"
     />
     <NodeContainer 
@@ -24,10 +29,10 @@
     >
       <NodeComponent
         v-for="(node, key) in backgroundNodes" 
-        :instance="(node as NodeEditor)" 
-        :viewPort="(viewPort as NodeGraphEditorViewport)"
-        :chunkedPanel="chunkedPanel"
         :key="key" 
+        :instance="(node as NodeEditor)"
+        :viewPort="(viewPort as NodeGraphEditorViewport)"
+        :chunkedPanel="chunkedPanel" 
       />
     </NodeContainer>
     <ConnectorRender
@@ -39,7 +44,7 @@
       :multiSelectRect="(multiSelectRect as Rect)"
       :connectors="allConnectors"
       :connectingInfo="connectingInfo"
-      :drawDebugInfo="true"
+      :drawDebugInfo="settings?.drawDebugInfo"
     />
     <NodeContainer 
       style="z-index: 3" 
@@ -48,10 +53,10 @@
     >
       <NodeComponent
         v-for="(node, key) in foregroundNodes" 
-        :instance="(node as NodeEditor)" 
-        :viewPort="(viewPort as NodeGraphEditorViewport)"
-        :chunkedPanel="chunkedPanel"
         :key="key" 
+        :instance="(node as NodeEditor)"
+        :viewPort="(viewPort as NodeGraphEditorViewport)"
+        :chunkedPanel="chunkedPanel" 
       />
     </NodeContainer>
     <ZoomTool
@@ -92,6 +97,12 @@ import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 
+export interface INodeGraphEditorSettings {
+  topMargin?: number;
+  drawDebugInfo?: boolean;
+  drawGrid?: boolean;
+}
+
 const props = defineProps({
   context: {
     type: Object as PropType<NodeGraphEditorInternalContext>,
@@ -101,12 +112,17 @@ const props = defineProps({
     type: Object as PropType<NodeGraph>,
     required: true,
   },
+  settings: {
+    type: Object as PropType<INodeGraphEditorSettings>,
+    default: null,
+  },
 });
 
 const editorHost = ref<HTMLElement>();
 const chunkedPanel = new ChunkedPanel()
 const cursor = ref('default');
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
+// eslint-disable-next-line vue/no-setup-props-destructure
 const context = props.context;
 
 context.getBaseChunkedPanel = () => chunkedPanel;
@@ -124,7 +140,6 @@ const {
 
 const {
   onMouseDown,
-  onMouseMove,
   onMouseWhell,
   mouseInfo,
 } = useEditorMousHandler(context);
@@ -137,7 +152,6 @@ const {
   backgroundNodes,
   foregroundNodes,
   allConnectors,
-  pushNodes,
   loadGraph,
 } = useEditorGraphController(context);
 
@@ -155,13 +169,8 @@ const {
   onKeyUp,
 } = useEditorKeyBoardControllerController(context);
 
-const {
-  
-} = useEditorUserController(context);
-
-const {
-  
-} = useEditorClipBoardControllerController(context);
+useEditorUserController(context);
+useEditorClipBoardControllerController(context);
 
 //init
 //=========================

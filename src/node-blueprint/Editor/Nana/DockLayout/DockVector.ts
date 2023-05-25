@@ -1,13 +1,7 @@
-import type{ IKeyValueObject } from "../BaseTypes";
-import { CreateObjectFactory, SerializableObject } from "../Serializable/SerializableObject";
-import { Vector2 } from "./Vector2";
-
-CreateObjectFactory.addObjectFactory('Rect', () => new Rect());
-
 /**
  * 矩形类 [Rectangle base class]
  */
-export class Rect extends SerializableObject<IKeyValueObject> {
+export class Rect {
   public x = 0;
   public y = 0;
   public w = 0;
@@ -21,9 +15,6 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * @param y 高度 [Height]
    */
   public constructor(x?: number | Rect, y? : number, w? : number, h? : number) {
-    super('Rect', undefined, {
-      serializableProperties: [ 'x', 'y', 'w', 'h' ],
-    });
     this.set(x || 0,y,w,h);
   }
 
@@ -82,30 +73,28 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * @param pointOrX 点x轴坐标或一个点对象，使用对象时可不填写y [Point X-axis coordinate or a point object. If the object is used, the parameter Y will be ignored]
    * @param y 点y轴坐标 [Point Y-axis coordinate]
    */
-  public setPos(pointOrX : Vector2 | number, y?:number) {
+  public setPos(pointOrX : Vector2 | number, y?:number) : void {
     if(typeof pointOrX === "number"){
       this.x = pointOrX;
       this.y = y || this.y;
-    } else {
+    }else {
       this.x = pointOrX.x;
       this.y = pointOrX.y;
     }
-    return this;
   }
   /**
    * 设置当前矩形的大小 [Sets the size of the current rectangle]
    * @param sizeOrW 宽度或一个点对象，使用对象时可不填写h [Width value or a point object. If the object is used, the parameter h will be ignored]
    * @param h 
    */
-  public setSize(sizeOrW : Vector2 | number, h?:number) {
+  public setSize(sizeOrW : Vector2 | number, h?:number) : void {
     if(typeof sizeOrW === "number"){
       this.w = sizeOrW;
       this.h = h || this.h;
-    } else {
+    }else {
       this.w = sizeOrW.x;
       this.h = sizeOrW.y;
     }
-    return this;
   }
 
   /**
@@ -202,6 +191,119 @@ export class Rect extends SerializableObject<IKeyValueObject> {
 
     rect.set(x1, y1, x2 - x1, y2 - y1);
     return rect;
+  }
+}
+
+/**
+ * 2D Vector
+ */
+export class Vector2 {
+
+  /**
+   * X axis
+   */
+  public x = 0;
+  /**
+   * Y axis
+   */
+  public y = 0;
+
+  public constructor(x: number|Vector2 = 0, y = 0) {
+    if (typeof x === 'object') {
+      this.y = x.y;
+      this.x = x.x;
+    } else {
+      this.y = y;
+      this.x = x;
+    }
+  }
+
+  /**
+   * Set new vector values
+   * @param x X axis or other Vector
+   * @param y Y axis or none
+   */
+  public set(x : number|Vector2, y = 0) : Vector2 {
+    if(typeof x === "number") {
+      this.y = y;
+      this.x = x;
+    }else {
+      this.y = x.y;
+      this.x = x.x;
+    }
+    return this;
+  }
+  /**
+   * Clone a new item
+   * @returns 
+   */
+  public clone() : Vector2 {
+    return new Vector2(this.x, this.y);
+  }
+  /**
+   * 将当前二维向量加指定数字 【Adds the specified number to the current 2D vector】
+   * @param v 
+   * @returns 
+   */
+  public add(v : number|Vector2) : Vector2 {
+    if(typeof v === "number") {
+      this.x += v;
+      this.y += v;
+    }
+    else if(typeof v === "object") {
+      this.x += v.x;
+      this.y += v.y;
+    }
+    return this;
+  }
+  /**
+   * 将当前二维向量减以指定数字【Subtract the current 2D vector to specify a number】
+   * @param v 
+   * @returns 
+   */
+  public substract(v : number|Vector2) : Vector2 {
+    if(typeof v === "number") {
+      this.x -= v;
+      this.y -= v;
+    }
+    else if(typeof v === "object") {
+      this.x -= v.x;
+      this.y -= v.y;
+    }
+    return this;
+  }
+  /**
+   * 将当前二维向量乘以指定数字 【Multiplies the current 2D vector by the specified number】
+   * @param v 
+   * @returns 
+   */
+  public multiply(v : number) : Vector2 {
+    this.x *= v;
+    this.y *= v;
+    return this;
+  }
+  /**
+   * 将当前二维向量除以指定数字 【Divides the current 2D vector by the specified number】
+   * @param v 
+   * @returns 
+   */
+  public divide(v : number) : Vector2 {
+    this.x /= v;
+    this.y /= v;
+    return this;
+  }
+  /**
+   * Test two vector2's value is equal
+   */
+  public equal(another : Vector2) : boolean {
+    return this.x === another.x && this.y === another.y;
+  }
+  /**
+   * 转为字符串
+   * @returns 
+   */
+  public toString() : string {
+    return `{x=${this.x},y=${this.y}}`;
   }
 }
 

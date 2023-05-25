@@ -18,8 +18,9 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
   public y = 0;
 
   public constructor(x: number|Vector2 = 0, y = 0) {
-    super('Vector2');
-    this.serializableProperties = [ 'x', 'y' ];
+    super('Vector2', undefined, {
+      serializableProperties: [ 'x', 'y' ],
+    });
     if (typeof x === 'object') {
       this.y = x.y;
       this.x = x.x;
@@ -61,7 +62,7 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
       this.x += v;
       this.y += v;
     }
-    else if(typeof v == "object") {
+    else if(typeof v === "object") {
       this.x += v.x;
       this.y += v.y;
     }
@@ -77,7 +78,7 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
       this.x -= v;
       this.y -= v;
     }
-    else if(typeof v == "object") {
+    else if(typeof v === "object") {
       this.x -= v.x;
       this.y -= v.y;
     }
@@ -107,7 +108,7 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
    * Test two vector2's value is equal
    */
   public equal(another : Vector2) : boolean {
-    return this.x == another.x && this.y == another.y;
+    return this.x === another.x && this.y === another.y;
   }
   /**
    * 转为字符串

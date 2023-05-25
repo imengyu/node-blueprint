@@ -12,12 +12,14 @@
       ref="dockLayout"
       theme="dark"
       class="node-main-area"
+      @activeTabChange="onActiveTabChange"
     >
       <template #panelRender="{ panel }">
         <template v-if="panel.key.startsWith('NodeEditor')">
           <NodeDocunmentEditorComponent 
             v-if="getDocunmentByUid(panel.key.substr(10))"
             :docunment="getDocunmentByUid(panel.key.substr(10))!"
+            :editorSettings="editorSettings"
           />
         </template>
         <template v-else-if="panel.key==='Props'">
@@ -33,16 +35,35 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue';
-import '@imengyu/vue-dock-layout/lib/vue-dock-layout.css';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import Console from '../Console/Console.vue';
-import { DockLayout, type DockLayoutInterface } from '@imengyu/vue-dock-layout';
+import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
+import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';
 import { MenuBar, type MenuBarOptions } from '@imengyu/vue3-context-menu';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
+import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
+import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 
 const dockLayout = ref<DockLayoutInterface>();
+
+//#region 设置
+
+const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSettings('NodeIdeEditorSettings', {
+  topMargin: 30,
+  drawDebugInfo: false,
+  drawGrid: true,
+}));
+
+onBeforeUnmount(() => {
+  SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
+})
+
+//#endregion
+
+//#region 菜单管理
+
 const menuData = reactive<MenuBarOptions>({
   theme: 'flat',
   items: [
@@ -111,7 +132,11 @@ const menuData = reactive<MenuBarOptions>({
         {
           label: '显示网格',
           divided: true,
+          checked: editorSettings.drawGrid,
           onClick() {
+            editorSettings.drawGrid = !editorSettings.drawGrid;
+            this.checked = editorSettings.drawGrid;
+            console.log('this', this);
             
           },
         },
@@ -133,8 +158,10 @@ const menuData = reactive<MenuBarOptions>({
         },
         {
           label: '绘制调试信息',
+          checked: editorSettings.drawDebugInfo,
           onClick() {
-            
+            editorSettings.drawDebugInfo = !editorSettings.drawDebugInfo;
+            this.checked = editorSettings.drawDebugInfo;
           },
         },
         {
@@ -191,7 +218,13 @@ const menuData = reactive<MenuBarOptions>({
     },
   ],
 });
+
+//#endregion
+
+//#region 文档管理
+
 const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
+const currentActiveDocunment = ref<NodeDocunment|null>(null);
 
 function getDocunmentByUid(uid: string) {
   return opendDocunment.value.get(uid)
@@ -200,7 +233,11 @@ function getDocunmentByUid(uid: string) {
 function newDocunment() {
   const doc = new NodeDocunmentEditor({
     name: '新文档',
+    version: '1.0',
+    description: '新文档',
+    author: '',
   });
+  doc.load();
   doc.initNew();
   openDocunment(doc);
 }
@@ -217,6 +254,7 @@ function openDocunment(doc: NodeDocunmentEditor) {
   
   //添加文档至界面
   opendDocunment.value.set(doc.uid, doc);
+  currentActiveDocunment.value = doc;
   dockLayout.value?.addPanel({
     key: `NodeEditor${doc.uid}`,
     title: doc.name,
@@ -234,6 +272,16 @@ function openDocunment(doc: NodeDocunmentEditor) {
         doc.activeEditor.openGraph(doc.mainGraph);
     }
   }, 300);
+}
+
+//#endregion
+
+function onActiveTabChange(currentActive: DockPanel) {
+  if (currentActive.key.startsWith('NodeEditor')) {
+    const doc = getDocunmentByUid(currentActive.key.substring(10));
+    if (doc)
+      currentActiveDocunment.value = doc;
+  }
 }
 
 onMounted(() => {
@@ -286,6 +334,12 @@ onMounted(() => {
 .node-menu-logo {
   width: 155px;
   height: 25px;
+}
+.node-fill-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 .node-main-menu {
   --mx-menu-backgroud: #161727!important;

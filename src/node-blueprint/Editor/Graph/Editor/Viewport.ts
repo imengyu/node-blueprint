@@ -10,8 +10,14 @@ import { SerializableObject } from "@/node-blueprint/Base/Utils/Serializable/Ser
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
 
   constructor() {
-    super('NodeGraphEditorViewport');
-    this.serializableProperties = [ 'position', 'scale', 'scaledPosition', '_scaledPosition' ]
+    super('NodeGraphEditorViewport', undefined, {
+      serializableProperties: [
+        'position', 
+        'scale', 
+        'scaledPosition', 
+        '_scaledPosition',
+      ],
+    });
   }
 
   /**

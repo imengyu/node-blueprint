@@ -85,7 +85,7 @@ export interface SerializaeObjectSave<T> {
 }
 export interface SerializePropCustomRet {
   parsed: boolean,
-  return: unknown,
+  return?: unknown|undefined,
 }
 export interface SerializableSchemeConfig {
   /**
@@ -130,10 +130,6 @@ export interface SerializableConfig<T> extends SerializableSchemeConfig {
    */
   serializeSchemes?: Record<string, SerializableSchemeConfig>,
   /**
-   * 加载之后回调
-   */
-  afterLoad?: () => void;
-  /**
    * 覆盖默认保存函数
    * @returns 
    */
@@ -155,19 +151,14 @@ export class SerializableObject<T> {
    * @param saveClassName Class name, same as object name when register in `addObjectFactory`.
    * @param define Inittal source data
    */
-  constructor(className: string, define?: T, config?: SerializableConfig<T>, loadAtStart = true) {
+  constructor(className: string, define?: T, config?: SerializableConfig<T>) {
     this.serializeClassName = className;
+    this.define = define || null;
     if (config) {
       if (!config.serializableProperties) 
         config.serializableProperties = [];
       config.noSerializableProperties = config.noSerializableProperties?.concat(this.serializeConfig.noSerializableProperties!);
       this.serializeConfig = config;
-    }
-    if (define) {
-      this.define = define;
-      if (loadAtStart) {
-        this.load(define);
-      }
     }
   }
 
@@ -364,10 +355,15 @@ export class SerializableObject<T> {
   }
   /**
    * Load this object from the key value object.
-   * @param data 
+   * @param data If empty, use define data provided in constructor
    * @returns Return this 
    */
-  load(data : T, scheme?: string) : SerializableObject<T> {
+  load(data ?: T, scheme?: string) : SerializableObject<T> {
+    if (!data) 
+      data = this.define as T;
+    if (!data)
+      throw new Error("Please provide data");
+
     const loadOverride = this.serializeConfig.loadOverride;
     if (loadOverride) {
       this.serializeConfig.loadOverride = undefined;
@@ -378,19 +374,14 @@ export class SerializableObject<T> {
     const config: SerializableSchemeConfig|undefined = scheme ? this.serializeConfig.serializeSchemes?.[scheme] : this.serializeConfig;
     if (!config)
       throw new Error("Not found scheme: " + scheme ? scheme : 'default');
-    if (!data) 
-      throw new Error("data is empty");
 
     this.define = data;
-    const isAll = config.serializeAll === true;
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
-    for (const key of this.getSortedKeys(data, true)) {
+    for (const key of this.getSortedKeys(data as object, true)) {
       if (!this.isPropertiySerializable(key, config))
         continue;
-      const value = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
-      o[key] = value !== undefined ? value : o[key];
+      o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }
-    setTimeout(() => this.serializeConfig.afterLoad?.(), 0);
     return this;
   }
 }

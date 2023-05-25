@@ -1,18 +1,17 @@
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
+import { reactive } from "vue";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodePort, NodePortDirection } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
+import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import type { NodePortEditor } from "../Flow/NodePortEditor";
+import type { NodeEditor } from "../Flow/NodeEditor";
+import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import { createMouseDownAndUpHandler } from "./MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import { reactive } from "vue";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
-import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
-import type { NodeEditor } from "../Flow/NodeEditor";
 
 /**
  * 节点连接上下文函数
@@ -204,33 +203,33 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connectingInfo.nextAddConverter = null;
       connectingInfo.successText = '';
 
-      if(connectingInfo.startPort == null){
+      if(connectingInfo.startPort === null){
         connectingInfo.isFail = false;
         return;
       }
 
-      connectingInfo.isSamePort = connectingInfo.startPort == port;
+      connectingInfo.isSamePort = connectingInfo.startPort === port;
 
       //类型检查
-      if(connectingInfo.currentHoverPort.parent == connectingInfo.startPort.parent){
+      if(connectingInfo.currentHoverPort.parent === connectingInfo.startPort.parent){
         connectingInfo.canConnect = false;
         connectingInfo.failedText = '不能连接同一个单元的节点';
       }
       else{
         //方向必须不同才能链接
-        connectingInfo.canConnect = connectingInfo.currentHoverPort.direction != connectingInfo.startPort.direction;
+        connectingInfo.canConnect = connectingInfo.currentHoverPort.direction !== connectingInfo.startPort.direction;
         if(!connectingInfo.canConnect) 
           connectingInfo.failedText ='不能连接相同方向的节点';
         //参数类型检查
         else {
 
-          if(connectingInfo.currentHoverPort.direction == 'input') {
+          if(connectingInfo.currentHoverPort.direction === 'input') {
             connectingInfo.canConnect = connectingInfo.currentHoverPort.checkTypeAllow(connectingInfo.startPort as NodePort); 
 
             if(connectingInfo.currentHoverPort.connectedFromPort.length > 0) 
               connectingInfo.successText = '将会替换已有连接';
           }
-          else if(connectingInfo.startPort.direction == 'input') {
+          else if(connectingInfo.startPort.direction === 'input') {
             connectingInfo.canConnect = connectingInfo.startPort.checkTypeAllow(connectingInfo.currentHoverPort as NodePort);
 
             if(connectingInfo.startPort.connectedFromPort.length > 0) 
@@ -260,7 +259,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
           else {
             //调用单元自己的检查函数检查是否可用连接
             let err : string|null = null;
-             if(connectingInfo.currentHoverPort.direction == 'input') {
+             if(connectingInfo.currentHoverPort.direction === 'input') {
               if(typeof connectingInfo.currentHoverPort.parent.events.onPortConnectCheck === 'function') {
                 err = connectingInfo.currentHoverPort.parent.events.onPortConnectCheck(
                   connectingInfo.currentHoverPort.parent as NodeEditor, 
@@ -269,7 +268,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
                 ); 
                 connectingInfo.canConnect = !StringUtils.isNullOrEmpty(err);
               }
-            } else if(connectingInfo.startPort.direction == 'input') {
+            } else if(connectingInfo.startPort.direction === 'input') {
               if(typeof connectingInfo.startPort.parent.events.onPortConnectCheck === 'function') {
                 err = connectingInfo.startPort.parent.events.onPortConnectCheck(
                   connectingInfo.startPort.parent as NodeEditor, 
@@ -321,7 +320,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       port.state = 'normal';
 
     //连接到新的节点
-    if(connectingInfo.currentHoverPort == null && connectingInfo.startPort != null) {
+    if(connectingInfo.currentHoverPort === null && connectingInfo.startPort !== null) {
 
       connectingInfo.otherSideRequireType = connectingInfo.startPort.define.paramType;
       connectingInfo.otherSideRequireDirection = connectingInfo.startPort.direction === 'input' ? 'output' : 'input';
@@ -342,7 +341,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
     
     //检查
-    if(connectingInfo.canConnect && connectingInfo.currentHoverPort != null && connectingInfo.startPort != null) {
+    if(connectingInfo.canConnect && connectingInfo.currentHoverPort !== null && connectingInfo.startPort !== null) {
 
       //连接是否需要添加一个转换器
       if(connectingInfo.shouldAddConverter)
@@ -355,7 +354,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
     connectingInfo.isConnecting = false;
     
-    if(connectingInfo.startPort != null) {
+    if(connectingInfo.startPort !== null) {
       (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected() ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
@@ -374,9 +373,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     let port : NodePortEditor|null = null;
 
     //如果已选单元，则连接至这个单元
-    if(typeof node != 'undefined' && connectingInfo.otherSideRequireType) {
+    if(typeof node !== 'undefined' && connectingInfo.otherSideRequireType) {
       port = node.getPortByTypeAndDirection(connectingInfo.otherSideRequireType, connectingInfo.otherSideRequireDirection, true) as NodePortEditor;
-      if(port != null && connectingInfo.startPort != null)
+      if(port !== null && connectingInfo.startPort !== null)
         context.connectConnector(connectingInfo.startPort, port);
 
       connectingInfo.otherSideRequireType = null;
@@ -386,7 +385,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.isConnectingToNew = false;
     connectingInfo.isConnecting = false;
     
-    if(connectingInfo.startPort != null) {
+    if(connectingInfo.startPort !== null) {
       (connectingInfo.startPort as NodePortEditor).state =  connectingInfo.startPort.isConnected() ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
@@ -431,10 +430,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     let connector: NodeConnectorEditor | null = null;
 
     //根据方向链接节点
-    if (startPort.direction == "output") {
+    if (startPort.direction === "output") {
       //如果已经链接上了，取消链接
       const connData = endPort.isConnectByPort(startPort);
-      if (connData != null) {
+      if (connData !== null) {
         unConnectConnector(connData as NodeConnectorEditor);
         connectingInfo.isConnecting = false;
         return null;
@@ -464,10 +463,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       connector.startPort = startPort;
       connector.endPort = endPort;
-    } else if (endPort.direction == "output") {
+    } else if (endPort.direction === "output") {
       //如果已经链接上了，取消链接
       const connData = startPort.isConnectByPort(endPort);
-      if (connData != null) {
+      if (connData !== null) {
         unConnectConnector(connData as NodeConnectorEditor);
         connectingInfo.isConnecting = false;
         return null;
@@ -497,7 +496,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
 
     //添加线段
-    if (connector != null) {
+    if (connector !== null) {
       context.addConnector(connector);
       connector.updatePortValue();
     }
@@ -515,7 +514,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     context.unSelectConnector(connector);
     context.removeConnector(connector );
 
-    if (start != null && end != null) {
+    if (start !== null && end !== null) {
 
       start.removeConnectToPort(end);
       start.state = start.isConnected() ? 'active' : 'normal';

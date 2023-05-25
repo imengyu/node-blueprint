@@ -18,10 +18,6 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
         'author',
         'mainGraph',
       ],
-      afterLoad: () => {
-        if (!this.uid)
-          this.uid = RandomUtils.genNonDuplicateIDHEX(16);
-      },
     });
     this.isEditor = isEditor === true;
   }
@@ -29,7 +25,7 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
   /**
    * 名称
    */
-  uid = '';
+  uid =  RandomUtils.genNonDuplicateIDHEX(16);
   /**
    * 名称
    */
@@ -81,7 +77,8 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
       version : '1.0',
       description : '主图表是整个程序的入口',
       author : this.author,
-    }, this.isEditor);
+    }, this, this.isEditor);
+    this.mainGraph.load();
     this.mainGraph.initNew();
   }
   /**
@@ -92,10 +89,10 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
   public findChildGraph(uid : string) {
     if(!this.mainGraph)
       return null;
-    let loopChild = function(graph : NodeGraph) : NodeGraph|null {
-      let children = graph.children;
+    const loopChild = function(graph : NodeGraph) : NodeGraph|null {
+      const children = graph.children;
       for (let index = 0, c = children.length; index < c; index++) {
-        let item = graph.children[index];
+        const item = graph.children[index];
         if(item.uid === uid)
           return item;
         else if(item.children.length > 0)

@@ -1,9 +1,9 @@
 
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { onBeforeUnmount, onMounted, type Ref, ref } from "vue";
 import type { INodeGraphEditorBackgroundRenderer, INodeGraphEditorRenderer } from "../Render/Render";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
+import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
 /**
  * 当前全局索引编辑器信息
@@ -25,10 +25,7 @@ export function useEditorSizeChecker(editorHost : Ref<HTMLElement|undefined>, vi
         backgroundRenderer.value.onWindowSizeChanged(x, y);
       if(foregroundRenderer.value)
         foregroundRenderer.value.onWindowSizeChanged(x, y);
-      if(editorHost.value) {
-        const ele = editorHost.value;
-        viewPort.value.size.set(ele.offsetWidth, ele.offsetHeight);
-      }
+      viewPort.value.size.set(ele.offsetWidth, ele.offsetHeight);
     }
   }
 
@@ -37,7 +34,7 @@ export function useEditorSizeChecker(editorHost : Ref<HTMLElement|undefined>, vi
     const ele = editorHost.value;
     if(ele) {
       const x = ele.offsetWidth, y = ele.offsetHeight;
-      if(x != lastViewSize.x || y != lastViewSize.y) {
+      if(x !== lastViewSize.x || y !== lastViewSize.y) {
         lastViewSize.set(x, y);
         onWindowSizeChanged();
       }

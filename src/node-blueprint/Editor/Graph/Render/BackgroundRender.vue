@@ -2,16 +2,14 @@
   <canvas 
     ref="canvas" 
     @contextmenu="$emit('contextmenu', $event)"
-  ></canvas>
+  />
 </template>
 
 <script lang="ts" setup>
-import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
-import { FPSCalculator } from './FPSCalculator';
 import { onBeforeMount, onMounted, ref, type PropType } from 'vue';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -102,7 +100,7 @@ function renderGrid() {
   if(postSizeTemp.x < 0) c++;
 
   for(let x = -xStartOffset; x < viewPortSize.x; x += scaledGridSize, c++) {
-    if(c % scaledStepSize == 0) ctx.strokeStyle = gridColorBig;
+    if(c % scaledStepSize === 0) ctx.strokeStyle = gridColorBig;
     else ctx.strokeStyle = gridColorSmall;
 
     ctx.beginPath();
@@ -116,7 +114,7 @@ function renderGrid() {
   if(postSizeTemp.y < 0) c++;
 
   for(let y = -yStartOffset; y < viewPortSize.y; y += scaledGridSize, c++) {
-    if(c % scaledStepSize == 0) ctx.strokeStyle = gridColorBig;
+    if(c % scaledStepSize === 0) ctx.strokeStyle = gridColorBig;
     else ctx.strokeStyle = gridColorSmall;
 
     ctx.beginPath();

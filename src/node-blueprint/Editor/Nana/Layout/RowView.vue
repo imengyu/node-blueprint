@@ -1,3 +1,21 @@
+<template>
+  <div 
+    class="nana-flex-row"
+    :style="({
+      flexWrap: wrap,
+      flex: flex,
+      flexGrow: flexGrow,
+      flexShrink: flexShrink,
+      alignItems: align,
+      alignSelf: alignSelf,
+      justifyContent: justify,
+    } as any)"
+  >
+    <slot />
+  </div>
+</template>
+
+
 <script lang="ts">
 import { defineComponent, h, renderSlot, type PropType } from 'vue';
 
@@ -58,21 +76,5 @@ export default defineComponent({
       default: undefined
     },
   },
-  render() {
-    return [
-      h('div', {
-        class: 'nana-flex-row',
-        style: {
-          flexWrap: this.wrap,
-          flex: this.flex,
-          flexGrow: this.flexGrow,
-          flexShrink: this.flexShrink,
-          alignItems: this.align,
-          alignSelf: this.alignSelf,
-          justifyContent: this.justify,
-        },
-      }, [ renderSlot(this.$slots, 'default') ])
-    ];
-  }
 });
 </script>

@@ -39,10 +39,6 @@ export class Node extends SerializableObject<INodeDefine> {
         events: 'NodeEventSettings',
         simulate: 'NodeSimulateSettings',
       },
-      afterLoad: () => {
-        if (!this.uid)
-          this.uid = RandomUtils.genNonDuplicateIDHEX(32);
-      },
       loadOverride: (data : INodeDefine) => {
         const ret = super.load(data);
     
@@ -85,8 +81,9 @@ export class Node extends SerializableObject<INodeDefine> {
                 if (port.dyamicAdd)
                   portSaveArr.push(port.save<INodePortDefine>());
               });
-              return portSaveArr;
+              return  { parsed: true, return: portSaveArr };
             }
+            return { parsed: false }
           },
         }
       },
@@ -98,7 +95,7 @@ export class Node extends SerializableObject<INodeDefine> {
   //=====================
 
   public define: INodeDefine;
-  public uid = '';
+  public uid = RandomUtils.genNonDuplicateIDHEX(32);
   /**
    * 获取GUID
    */

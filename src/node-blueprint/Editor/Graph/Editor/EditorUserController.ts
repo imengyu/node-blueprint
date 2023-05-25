@@ -110,11 +110,11 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     let node : Node|null = null;
     let oldPos : Vector2|null = null;
 
-    if(connector.startPort == refPort) {
+    if(connector.startPort === refPort) {
       node = connector.endPort.parent;
       oldPos = (connector.endPort as NodePortEditor).getPortPositionViewport();
     }
-    else if(connector.endPort == refPort)  {
+    else if(connector.endPort === refPort)  {
       node = connector.startPort.parent;
       oldPos = (connector.startPort as NodePortEditor).getPortPositionViewport();
     }
@@ -232,15 +232,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       return null;
     }
     //自定义检查回调
-    if(typeof define.events?.onAddCheck == 'function') {
-      let err = define.events.onAddCheck(define, currentGraph);
-      if(err != null) {
+    if(typeof define.events?.onAddCheck === 'function') {
+      const err = define.events.onAddCheck(define, currentGraph);
+      if(err !== null) {
         //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
         return null;
       }
     }
 
-    let newNode = new NodeEditor(define);
+    const newNode = new NodeEditor(define);
     if(addNodeInPos) { //在指定位置添加单元
       newNode.position = addNodeInPos;
       context.addNode(newNode)
@@ -258,8 +258,8 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
       setTimeout(() => {
         //重新定位单元位置至连接线末端位置
-        let port = context.endConnectToNew(newNode);
-        let pos = new Vector2();
+        const port = context.endConnectToNew(newNode);
+        const pos = new Vector2();
         pos.set(port!.getPortPositionViewport());
         pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
         pos.y = connectingEndPos.y - (pos.y - newNode.position.y);

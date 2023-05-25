@@ -1,65 +1,115 @@
 <template>
-  <div class="editor-graph-breadcrumb">
+  <div class="node-graph-breadcrumb">
     <div v-for="(graph, i) in graphBreadcrumb" :key="i" :class="(i==graphBreadcrumb.length-1?'last':'')+(graph.isCurrent?' current':'')">
-      <span v-if="graph.isCurrent">{{graph.text}}</span>
-      <a v-else href="javascript:;" @click="$emit('on-go-graph', graph.graph)">{{graph.text}}</a>
-      <i class="iconfont icon-arrow-right-"></i>
+      <span v-if="graph.isCurrent">{{ graph.text }}</span>
+      <a 
+        v-else href="javascript:;" 
+        @click="$emit('goGraph', graph.graph)"
+      >
+        {{ graph.text }}
+      </a>
+      <Icon icon="icon-arrow-right-bold" />
     </div>
     <div v-if="!graphBreadcrumb || graphBreadcrumb.length == 0">
-      {{currentDocunment.name}}
+      {{ currentDocunment.name }}
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { BlockDocunment, BlockGraphDocunment } from "../model/Define/BlockDocunment";
+<script lang="ts" setup>
+import { toRefs, watch, type PropType, ref, onMounted, nextTick } from 'vue';
+import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
+import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
 
-@Component({
-  name: 'GraphBreadcrumb'
+defineEmits([ 'goGraph' ]);
+
+const props = defineProps({
+  currentDocunment: {
+    type: Object as PropType<NodeDocunment>,
+    default: null,
+  },
+  currentGraph: {
+    type: Object as PropType<NodeGraph>,
+    default: null,
+  },
 })
-export default class GraphBreadcrumb extends Vue {
 
-  @Prop({default: null}) currentDocunment : BlockDocunment;
-  @Prop({default: null}) currentGraph : BlockGraphDocunment;
+const {
+  currentDocunment, currentGraph,
+} = toRefs(props);
 
-  graphBreadcrumb : Array<{
-    text: string,
-    graph: BlockGraphDocunment,
-    isCurrent: boolean,
-  }> = [];
+const graphBreadcrumb = ref<Array<{
+  text: string,
+  graph: NodeGraph,
+  isCurrent: boolean,
+}>>([]);
 
-  @Watch('currentDocunment')
-  public forceUpdate() { 
-    this.loadGraphBreadcrumb(this.currentGraph);
-  }
-  @Watch('currentGraph')
-  loadGraphBreadcrumb(v : BlockGraphDocunment) {
-    if(v == null || this.currentDocunment == null) this.graphBreadcrumb.empty();
-    else {
-      this.graphBreadcrumb.empty();
-      this.graphBreadcrumb.push({
-        text: v.name,
-        graph: v,
-        isCurrent: true
-      });
-      let loop = (graph : BlockGraphDocunment) => {
-        this.graphBreadcrumb.unshift({
-          text: graph.name,
-          graph: graph,
-          isCurrent: false
-        });
-        if(graph.parent != null) loop(graph.parent);
-      };
-      if(v.parent != null) loop(v.parent);
+watch(currentGraph, (v) => {
+  loadGraphBreadcrumb(v);
+});
+
+function loadGraphBreadcrumb(v : NodeGraph) {
+  ArrayUtils.clear(graphBreadcrumb.value);
+  if (v === null || currentDocunment.value === null) 
+    return;
+  
+  graphBreadcrumb.value.push({
+    text: v.name,
+    graph: v,
+    isCurrent: true
+  });
+  let loop = (graph : NodeGraph) => {
+    graphBreadcrumb.value.unshift({
+      text: graph.name,
+      graph: graph,
+      isCurrent: false
+    });
+    if(graph.parent !== null && graph.parent instanceof NodeGraph) 
+      loop(graph.parent);
+  };
+  if(v.parent !== null && v.parent instanceof NodeGraph) 
+    loop(v.parent);
+} 
+
+onMounted(() => {
+  nextTick(() => {
+    loadGraphBreadcrumb(currentGraph.value);
+  });
+});
+</script>
+
+<style lang="scss">
+$left-toolbar-width: 0;
+$top-breadcrumb-height: 30px;
+
+.node-graph-breadcrumb {
+  position: absolute;
+  top: 0;
+  left: $left-toolbar-width;
+  right: 0;
+  height: $top-breadcrumb-height;
+  padding: 3px 26px;
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  user-select: none;
+  cursor: pointer;
+  color: #c0c0c0;
+
+  .button-controls {
+    display: inline-block;
+    margin-left: 7px;
+
+    a {
+      -webkit-app-region: no-drag;
+      color: #fff;
+
+      &:hover, &:active {
+        transform: scale(1.1);
+      }
     }
-  } 
-
-  mounted() {
-    setTimeout(() => {
-      this.loadGraphBreadcrumb(this.currentGraph);
-    }, 500);
   }
 }
-
-</script>
+</style>

@@ -4,7 +4,6 @@ import { ChunkInstance } from "../Cast/ChunkedPanel";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
@@ -117,7 +116,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     ArrayUtils.addOnce((connector.endPort?.parent as NodeEditor).connectors, connector);
 
     //更新
-    if (connector != null) {
+    if (connector !== null) {
       connector.chunkInfo = new ChunkInstance(
         connector.updateRegion(),
         "connector",
@@ -139,9 +138,9 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     const 
       start = connector.startPort,
       end = connector.endPort;
-    if (start != null) 
+    if (start !== null) 
       ArrayUtils.remove((start.parent as NodeEditor).connectors, connector);
-    if (end != null) 
+    if (end !== null) 
     ArrayUtils.remove((end.parent as NodeEditor).connectors, connector);
     if (currentGraph.value)
       ArrayUtils.remove(currentGraph.value.connectors, connector);

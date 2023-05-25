@@ -5,7 +5,6 @@ import type { NodeConnector } from "../Node/NodeConnector";
 import type { NodeVariable } from "./NodeVariable";
 import type { INodePortDefine } from "../Node/NodePort";
 import type { NodeDocunment } from "./NodeDocunment";
-import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import { NodeRegistry } from "../Registry/NodeRegistry";
 import { printWarning } from "../../Utils/Logger/DevLog";
@@ -22,7 +21,7 @@ export type NodeGraphType = 'main' | 'none' | 'static' | 'constructor' | 'functi
 export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   type = 'none' as NodeGraphType;
   name = '';
-  uid = '';
+  uid = RandomUtils.genNonDuplicateIDHEX(32);
   version = '';
   description = '';
   author = '';
@@ -32,7 +31,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
     return 'NodeGraph:' + this.name + ':' + this.uid;
   }
 
-  constructor(define: INodeGraphDefine, isEditor: boolean) {
+  constructor(define: INodeGraphDefine, parent: NodeDocunment|NodeGraph, isEditor: boolean) {
     super('NodeGraph', define, {
       serializeAll: true,
       serializableProperties: [],
@@ -46,10 +45,6 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
         'activeEditor',
       ],
       //加载与保存
-      afterLoad: () => {
-        if (!this.uid)
-          this.uid = RandomUtils.genNonDuplicateIDHEX(32);
-      },
       loadProp: (key, parentKey, source) => {
         switch (parentKey) {
           case 'nodes': {
@@ -68,7 +63,10 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
               CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
               CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;
 
-            return nodeInstance;
+            return {
+              parsed: true,
+              return: nodeInstance
+            };
           }
           case 'connectors': {
             const { uid, startPort, endPort } = source as INodeConnectorSaveData;
@@ -101,38 +99,49 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
             connector.startPort = startPortInstance;
             connector.endPort = endPortInstance;
 
-            return connector;
+            return {
+              parsed: true,
+              return: connector
+            };
           }
         }
-        return undefined;
+        return { parsed: false };
       },
       saveProp: (key, parentKey, source) => {
         switch (parentKey) {
           case 'nodes': {
             const node = source as Node;
             return {
-              guid: node.guid,
-              uid: node.uid,
-              node: node.save<INodeDefine>('graph'),
-            } as INodeSaveData;
+              parsed: true,
+              return: {
+                guid: node.guid,
+                uid: node.uid,
+                node: node.save<INodeDefine>('graph'),
+              } as INodeSaveData,
+            };
           }
-          case 'connectors':
+          case 'connectors': {
             const connector = source as NodeConnector;
             return {
-              uid: connector.uid,
-              startPort: {
-                nodeUid: connector.startPort?.parent.uid,
-                portUid: connector.startPort?.guid,
-              },
-              endPort: {
-                nodeUid: connector.endPort?.parent.uid,
-                portUid: connector.endPort?.guid,
-              },
-            } as INodeConnectorSaveData;
+              parsed: true,
+              return: {
+                uid: connector.uid,
+                startPort: {
+                  nodeUid: connector.startPort?.parent.uid,
+                  portUid: connector.startPort?.guid,
+                },
+                endPort: {
+                  nodeUid: connector.endPort?.parent.uid,
+                  portUid: connector.endPort?.guid,
+                },
+              } as INodeConnectorSaveData
+            };
+          }
         }
-        return undefined;
+        return { parsed: false };
       },
     });
+    this.parent = parent;
     this.isEditor = isEditor;
   }
 
@@ -153,7 +162,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   public getNodesByGUID(guid: string): Node[] {
     const arr: Node[] = [];
     this.nodes.forEach(element => {
-      if (element.guid == guid)
+      if (element.guid === guid)
         arr.push(element);
     });
     return arr;
@@ -172,6 +181,8 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   public initNew(): void {
     //TODO: 新图表初始化
   }
+
+  parent: NodeDocunment|NodeGraph;
 
   /**
    * 连接
@@ -193,7 +204,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
    */
   getVariableByName(name: string): NodeVariable | null {
     for (let i = this.variables.length - 1; i >= 0; i--) {
-      if (this.variables[i].name == name) return this.variables[i];
+      if (this.variables[i].name === name) return this.variables[i];
     }
     return null;
   }
@@ -225,7 +236,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   getUseableVariableName(baseName: string): string {
     for (let i = this.variables.length, c = this.variables.length + 10; i < c; i++) {
       const name = baseName + i;
-      if (this.getVariableByName(name) == null)
+      if (this.getVariableByName(name) === null)
         return name;
     }
     return baseName;

@@ -1,6 +1,3 @@
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { ref } from "vue";
@@ -9,6 +6,7 @@ import { isMouseEventInNoDragControl } from "./EditorMouseHandler";
 import { createMouseDragHandler } from "./MouseHandler";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 
 /**
  * Selection management
