@@ -146,7 +146,11 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           onClick: () => context.deleteSelectedNodes(),
           divided: true 
         },
-        { label: "剪切", onClick: () => context.cutSelectionNodes() },
+        { 
+          label: "剪切",
+          disabled: selectedCount === 1 ? selectedNodes[0].define.canNotDelete : false,
+          onClick: () => context.cutSelectionNodes(),
+        },
         { label: "复制", onClick: () => context.copySelectionNodes() },
         { label: "粘贴", 
           disabled: !context.isPasteable(), 
