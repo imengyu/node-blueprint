@@ -50,7 +50,6 @@ export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
  */
 export function useEditorContextMenuHandler(context: NodeGraphEditorInternalContext) {
   
-
   function onCanvasContextMenu(e: MouseEvent) {
 
     e.preventDefault();

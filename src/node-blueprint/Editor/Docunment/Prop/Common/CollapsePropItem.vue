@@ -1,0 +1,44 @@
+<template>
+  <div>
+    <div class="prop-header">
+      <a href="javascript:;" class="mr-2" @click="show=!show">
+        <Icon :icon="show ? 'icon-arrow-down-bold' : 'icon-arrow-right-bold'" />
+      </a>
+      {{ title }}
+    </div>
+    <div v-show="show">
+      <slot />
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+import Icon from '../../../Nana/Icon.vue';
+
+defineProps({
+  title: {
+    type: String,
+    default: '',
+  }
+})
+
+const show = ref(true);
+</script>
+
+<style lang="scss">
+.prop-header {
+  white-space: nowrap;
+  position: relative;
+  padding: 10px 2px 5px 15px;
+  border-bottom: 1px solid var(--mx-editor-border-color);
+  color: #b1b1b1;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--mx-editor-text-color);
+
+  svg {
+    fill: var(--mx-editor-text-color);
+  }
+}
+</style>

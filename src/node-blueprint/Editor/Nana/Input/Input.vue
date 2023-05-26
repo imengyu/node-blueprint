@@ -1,24 +1,26 @@
 <template>
-  <div :class="[
-    'nana-input',
-    disabled ? 'disabled' : '',
-    size,
-  ]">
+  <div
+    :class="[
+      'nana-input',
+      disabled ? 'disabled' : '',
+      size,
+    ]"
+  >
     <div class="nana-prefix">
-      <slot name="prefix"></slot>
+      <slot name="prefix" />
     </div>
 
     <input 
-      :type="isPassword ? 'password' : 'text'"
+      :type="type"
       :value="modelValue"
       :placeholder="placeholder"
       :readonly="readonly"
       :disabled="disabled"
       @input="onInput"
-    />
+    >
 
     <div class="nana-suffix">
-      <slot name="suffix"></slot>
+      <slot name="suffix" />
     </div>
   </div>
 </template>
@@ -31,19 +33,16 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  type: {
+    type: String,
+    default: 'text',
+  },
   /**
    * 按钮大小，可选 mini，small，normal，large
    */
   size: {
     type: String as PropType<'mini'|'small'|'normal'|'large'>,
     default: 'normal',
-  },
-  /**
-   * 是否是密码
-   */
-  isPassword: {
-    type: Boolean,
-    default: false,
   },
   /**
    * 是否显示密码预览按钮

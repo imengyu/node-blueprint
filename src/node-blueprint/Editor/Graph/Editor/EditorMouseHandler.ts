@@ -69,13 +69,11 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
       e.stopPropagation();
       context.setCursor('grab')
       mouseInfo.mouseDowned = true;
-      mouseInfo.mouseMoved = false;
       viewDragDownPos.set(viewPort.position);
       return true;
     },
     onMove(_, m, e) {
       e.stopPropagation();
-      mouseInfo.mouseMoved = true;
       viewPort.position.set(viewDragDownPos);
       viewPort.scaleScreenSizeToViewportSize(m);
       viewPort.position.substract(m);
@@ -152,10 +150,8 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
         mouseInfo.mouseDownPosEditor.set(e.clientX, e.clientY);
         viewPort.fixScreenPosWithEditorAbsolutePos(mouseInfo.mouseDownPosEditor);
         viewPort.screenPointToViewportPoint(mouseInfo.mouseDownPosScreen, mouseInfo.mouseDownPosViewPort);
-        mouseInfo.mouseMoved = false;
         break;
       case MouseEventUpdateMouseInfoType.Move:
-        mouseInfo.mouseMoved = true;
         break;
       case MouseEventUpdateMouseInfoType.Up:
         mouseInfo.mouseDowned = false;
@@ -182,7 +178,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
  */
 export class NodeGraphEditorMouseInfo {
   /**
-   * 
+   * 获取鼠标是否按下
    */
   mouseDowned = false;
   /**
@@ -212,5 +208,8 @@ export class NodeGraphEditorMouseInfo {
   /**
    * 获取当前鼠标是否按下
    */
-  mouseMoved = false;
+  get mouseMoved() {
+    return Math.abs(this.mouseDownPosScreen.x - this.mouseCurrentPosScreen.x) > 2 || 
+      Math.abs(this.mouseDownPosScreen.y - this.mouseCurrentPosScreen.y) > 2;
+  }
 }

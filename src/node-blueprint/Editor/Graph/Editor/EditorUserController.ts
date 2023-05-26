@@ -3,7 +3,6 @@ import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { INodeDefine, Node, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
@@ -264,30 +263,28 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     const newNode = new NodeEditor(define);
     newNode.load();
     if(addNodeInPos) { //在指定位置添加单元
-      newNode.position = addNodeInPos;
+      newNode.position.set(addNodeInPos);
       context.addNode(newNode)
-    } 
-    else { //在屏幕中央位置添加单元
-      const center = context.getViewPort().rect().calcCenter();
-      newNode.position = center;
-      context.addNode(newNode);
-    }
-
-    if(context.isConnectToNew()) { //添加单元并连接
+    } else if(context.isConnectToNew()) { //添加单元并连接
       const connectingEndPos = context.getConnectingInfo().endPos;
-      newNode.position = connectingEndPos;
+      newNode.position.set(connectingEndPos);
       context.addNode(newNode);
+      const port = context.endConnectToNew(newNode);  
+      const pos = new Vector2();
 
       setTimeout(() => {
         //重新定位单元位置至连接线末端位置
-        const port = context.endConnectToNew(newNode);
-        const pos = new Vector2();
         pos.set(port!.getPortPositionViewport());
         pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
         pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
         newNode.position.set(pos);
+        newNode.updateRegion();
       }, 100);
-    } 
+    } else { //在屏幕中央位置添加单元
+      const center = context.getViewPort().rect().calcCenter();
+      newNode.position.set(center);
+      context.addNode(newNode);
+    }
 
     return newNode;
   }
