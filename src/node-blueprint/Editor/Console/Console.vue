@@ -42,8 +42,8 @@ import ConsoleRefShower from "./ConsoleRefShower.vue";
 import ConsoleObjectShower from "./ConsoleObjectShower.vue";
 import Icon from "../Nana/Icon.vue";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import type { LogLevel } from '@/node-blueprint/Base/Utils/Logger/Logger';
-import logger from '@/node-blueprint/Base/Utils/Logger/Logger';
+import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
+import logger from '@/node-blueprint/Base/Logger/Logger';
 
 interface LogItem {
   tag: string,

@@ -1,7 +1,7 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
-import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Utils/Serializable/SerializableObject";
-import { printError, printWarning } from "../../Utils/Logger/DevLog";
+import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Serializable/SerializableObject";
+import { printError, printWarning } from "../../Logger/DevLog";
 import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
@@ -58,6 +58,7 @@ export class Node extends SerializableObject<INodeDefine> {
           }
         });
     
+        this.events.onCreate?.(this);
         return ret;
       },
       serializeSchemes: {

@@ -12,6 +12,7 @@
     @keydown="onKeyDown"
     @keyup="onKeyUp"
     @contextmenu="onCanvasContextMenu"
+    @drop="onDrop"
   >
     <BackgroundRender
       ref="backgroundRenderer"
@@ -86,6 +87,7 @@ import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
 import { useEditorConnectorController } from './Editor/EditorConnectorController';
 import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
+import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
@@ -165,6 +167,10 @@ const {
   onKeyDown,
   onKeyUp,
 } = useEditorKeyBoardControllerController(context);
+
+const {
+  onDrop
+} = useEditorDragController(context);
 
 useEditorUserController(context);
 useEditorClipBoardControllerController(context);

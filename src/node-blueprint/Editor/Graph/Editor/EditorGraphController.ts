@@ -7,7 +7,7 @@ import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
-import { printError, printWarning } from "@/node-blueprint/Base/Utils/Logger/DevLog";
+import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
@@ -99,8 +99,10 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       }
 
       setTimeout(() => {
-        for (const node of nodes)
+        for (const node of nodes) {
           node.editorHooks.callbackOnAddToEditor?.();
+          node.events.onAddToEditor?.(node);
+        }
         resolve();
       }, 500);
     })

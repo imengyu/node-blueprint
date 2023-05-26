@@ -1,4 +1,4 @@
-import { CreateObjectFactory } from "../Utils/Serializable/SerializableObject";
+import { CreateObjectFactory } from "../Serializable/SerializableObject";
 import type { NodeDocunment } from "./Graph/NodeDocunment";
 import { NodeGraph, type INodeGraphDefine } from "./Graph/NodeGraph";
 import { NodeSimulateSettings, NodeStyleSettings, NodeEventSettings, Node, type INodeDefine, type INodeSimulateSettings, type INodeEventSettings, type INodeStyleSettings } from "./Node/Node";

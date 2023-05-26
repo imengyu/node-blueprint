@@ -1,7 +1,7 @@
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import ArrayUtils from "../../Utils/ArrayUtils";
-import { printInfo, printWarning } from "../../Utils/Logger/DevLog";
-import { Singleton } from "../../Utils/Singleton/Singleton";
+import { printInfo, printWarning } from "../../Logger/DevLog";
+import { Singleton } from "../../Singleton/Singleton";
 import type { INodeDefine } from "../Node/Node";
 import type { CategoryData, CategoryDataItem } from "./NodeCategory";
 import type { NodePackage } from "./NodePackage";

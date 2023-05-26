@@ -1,4 +1,4 @@
-import type { IKeyValueObject, ISaveableTypes } from "../BaseTypes";
+import type { IKeyValueObject, ISaveableTypes } from "../Utils/BaseTypes";
 import { printWarning } from "../Logger/DevLog";
 
 const createObjectFactorys = new Map<string, CreateObjectClassCallback<any>>();

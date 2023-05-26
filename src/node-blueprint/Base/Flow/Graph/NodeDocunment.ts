@@ -1,5 +1,5 @@
 import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
 import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
 

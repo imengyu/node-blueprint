@@ -6,7 +6,11 @@
     v-model:open="item.open" 
     :title="item.category"
   >
-    <NodeCategory v-if="item.open" :categoryData="item" />
+    <NodeCategory 
+      v-if="item.open"
+      :categoryData="item"
+      :isAddDirectly="isAddDirectly"
+    />
   </CollapseItem>
 
   <div class="nodes-select-list">
@@ -68,7 +72,7 @@ function onDrag(item: CategoryDataItem, e: DragEvent) {
     e.stopPropagation();
   }
   else if (e.dataTransfer) {
-    e.dataTransfer.setData("text/plain", "drag:block:" + item.define.guid);
+    e.dataTransfer.setData("text/plain", "drag:node:" + item.define.guid);
   }
 }
 function onClick(item: CategoryDataItem) {

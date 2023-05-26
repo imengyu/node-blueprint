@@ -16,6 +16,7 @@
 
   &.selected {
     border: 3px solid rgb(230, 157, 0);
+    z-index: 10;
   }
   &.actived {
     border: 3px solid rgb(72, 203, 255);

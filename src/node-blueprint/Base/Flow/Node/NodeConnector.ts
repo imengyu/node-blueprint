@@ -1,5 +1,5 @@
 import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "./NodePort";
 
 /**

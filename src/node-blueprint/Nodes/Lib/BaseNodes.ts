@@ -760,22 +760,21 @@ function registerCommentNode() {
         parentEle.appendChild(ele);
         node.data.input = input;
       },
-      onCreate: (node) => {
+      onAddToEditor: (node) => {
         node.data['list'] = [];
         node.data['rect'] = new Rect();
         node.data['mouseDownPos'] = { x: 0, y: 0 };
         node.data['mouseDown'] = false;
-      },
-      onDestroy: (node) => {
-        node.data['list'] = undefined;
       },
       onEditorEvent: (node, context, event) => {
         switch(event) {
           case 'unselect': {
             const list = node.data['list'] as NodeEditor[];
             const input = node.data.input as HTMLInputElement;
-            input.blur();
-            ArrayUtils.clear(list);
+            if (input)
+              input.blur();
+            if (list)
+              ArrayUtils.clear(list);
             break;
           }
         }

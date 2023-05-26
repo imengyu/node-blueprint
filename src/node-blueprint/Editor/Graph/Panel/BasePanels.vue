@@ -30,7 +30,7 @@
     v-html="smallTipText"
   />
   <!--添加节点菜单-->
-  <Teleport to="#app">
+  <Teleport :to="teleport">
     <AddNodePanel 
       ref="addNodePanel"
       v-model:show="isShowAddNodePanel"
@@ -47,16 +47,17 @@
 
 <script lang="ts" setup>
 import { inject, ref, type PropType, toRefs, onMounted, computed, watch } from 'vue';
+import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { IConnectingInfo } from '../Editor/EditorConnectorController';
+import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
+import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
-import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
-import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
-import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
+import Alert from '../../Nana/Modal/Alert';
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
@@ -68,6 +69,10 @@ const props = defineProps({
   viewPort: {
     type: Object as PropType<NodeGraphEditorViewport>,
     default: null
+  },
+  teleport: {
+    type: String,
+    default: '#app',
   }
 })
 
@@ -99,6 +104,14 @@ function closeSmallTip() {
 
 //#endregion
 
+//#region 对话框
+
+context.showModal = (options) => {
+  Alert.alert(options);
+};
+
+//#endregion
+
 //#region 添加节点菜单
 
 const isShowAddNodePanel = ref(false);
@@ -118,7 +131,7 @@ function showAddNodePanel(screenPos: Vector2, _filterByPortType ?: NodeParamType
   isShowAddNodePanel.value = true;
 }
 
-function closeAddBodePanel() {
+function closeAddNodePanel() {
   isShowAddNodePanel.value = false;
 }
 
@@ -153,7 +166,7 @@ onMounted(() => {
   })
 
   context.showAddNodePanel = showAddNodePanel;
-  context.closeAddBodePanel = closeAddBodePanel;
+  context.closeAddNodePanel = closeAddNodePanel;
   context.showSmallTip = showSmallTip;
   context.closeSmallTip = closeSmallTip;
 });

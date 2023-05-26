@@ -10,6 +10,7 @@ export interface NodeEditorMouseControllerContext {
   setCursor: (cursor: string) => void;
   resetCursor: () => void;
   getMouseInfo: () => NodeGraphEditorMouseInfo,
+  updateMousePos(e: MouseEvent): void,
   getMouseHandler: () => EditorMousHandlerExtendHandlers,
 }
 
@@ -162,7 +163,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     }
   }
 
-
+  context.updateMousePos = updateMousePos;
   context.getMouseHandler = () => extendHandlerObject;
   context.getMouseInfo = () => mouseInfo;
   context.mouseEventUpdateMouseInfo = mouseEventUpdateMouseInfo;

@@ -25,6 +25,17 @@ export interface NodeEditorUserControllerContext {
    * 用户删除操作
    */
   userDelete() : void;
+  /**
+   * 用户删除端口
+   * @param nodePort 
+   */
+  userDeletePort(nodePort: NodePortEditor) : void;
+  /**
+   * 用户操作显示弹出框
+   * @param type 类型
+   * @param message 信息
+   */
+  userActionAlert(type: 'error'|'warning'|'help', message: string) : void;
 
   /**
    * 删除选中连接线
@@ -60,11 +71,6 @@ export interface NodeEditorUserControllerContext {
    * @param baseNode 
    */
   moveViewportToNode(baseNode : NodeEditor) : void; 
-  /**
-   * 用户删除端口
-   * @param nodePort 
-   */
-  userDeletePort(nodePort: NodePortEditor) : void;
 }
 
 /**
@@ -196,6 +202,17 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
 
   /**
+   * 用户操作显示弹出框
+   * @param type 类型
+   * @param message 信息
+   */
+  function userActionAlert(type: 'error'|'warning'|'help', message: string) {
+    context.showModal({
+      icon: type,
+      content: message
+    });
+  }
+  /**
    * 用户删除端口
    * @param port 
    */
@@ -231,20 +248,21 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     const currentGraph = context.getCurrentGraph();
 
     //检查单元是否只能有一个
-    if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {      
-      //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', '当前文档中已经有 ' + nodeData.baseInfo.name + ' 了，此单元只能有一个', () => {});
+    if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {     
+      userActionAlert('warning', '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
       return null;
     }
     //自定义检查回调
     if(typeof define.events?.onAddCheck === 'function') {
       const err = define.events.onAddCheck(define, currentGraph);
       if(err !== null) {
-        //TODO: DebugWorkProviderInstance.ModalProvider('warning', '提示', err, () => {});
+        userActionAlert('warning', err);
         return null;
       }
     }
 
     const newNode = new NodeEditor(define);
+    newNode.load();
     if(addNodeInPos) { //在指定位置添加单元
       newNode.position = addNodeInPos;
       context.addNode(newNode)
@@ -314,6 +332,5 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.setSelectedNodeBreakpointState = setSelectedNodeBreakpointState;
   context.moveViewportToNode = moveViewportToNode;
 
-  return {
-  }
+  return {}
 }

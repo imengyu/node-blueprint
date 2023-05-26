@@ -327,10 +327,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       const viewPort = context.getViewPort();
       const panelPos = new Vector2();
-      viewPort.viewportPointToEditorPoint(connectingInfo.endPos, panelPos);
+      viewPort.viewportPointToScreenPoint(connectingInfo.endPos, panelPos);
 
       context.showAddNodePanel(
-        viewPort.fixScreenPosWithEditorAbsolutePos(panelPos), 
+        panelPos, 
         connectingInfo.otherSideRequireType, 
         connectingInfo.otherSideRequireDirection,
         connectingInfo.endPos

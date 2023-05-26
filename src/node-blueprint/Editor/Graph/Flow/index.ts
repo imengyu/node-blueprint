@@ -1,7 +1,7 @@
 import type { Node, INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { INodePortDefine } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { INodeConnectorDefine } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import { CreateObjectFactory } from "@/node-blueprint/Base/Utils/Serializable/SerializableObject";
+import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableObject";
 import { NodeEditor } from "./NodeEditor";
 import { NodePortEditor } from "./NodePortEditor";
 import { NodeConnectorEditor } from "./NodeConnectorEditor";

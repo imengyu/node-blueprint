@@ -3,6 +3,9 @@ import { registerContextMenuMutex } from "./TooltipMutex";
 import { getContainer } from "./TooltipUtils";
 import TooltipContent from "./TooltipContent.vue";
 
+const currentShowTooltips = new Map<number, () => void>();
+let currentShowTooltipId = 0;
+
 const tooltipDirective : ObjectDirective = {
   mounted(el, binding) {
     const event = registerContextMenuMutex(300, 200, hideTooltip, showTooltip);
@@ -35,6 +38,12 @@ const tooltipDirective : ObjectDirective = {
     }
 
     const ele = el as HTMLElement;
+    currentShowTooltipId++;
+
+    currentShowTooltips.set(currentShowTooltipId, hideTooltip);
+
+    ele.setAttribute('data-tooltip-id', currentShowTooltipId.toString());
+
     ele.addEventListener('mousemove', (e) => {
       currentMousePos.x = e.x;
       currentMousePos.y = e.y;
@@ -53,6 +62,12 @@ const tooltipDirective : ObjectDirective = {
       event.onMouseEnter();
     });
     ele.addEventListener('mouseleave', event.onMouseLeave);
+  },
+  beforeUnmount(el) {
+    const ele = el as HTMLElement;
+    const id = parseInt(ele.getAttribute('data-tooltip-id') || '');
+    const close = currentShowTooltips.get(id);
+    if (close) close();
   },
 };
 

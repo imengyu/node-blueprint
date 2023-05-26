@@ -1,5 +1,5 @@
 import ArrayUtils from "../../Utils/ArrayUtils";
-import { SerializableObject, type SerializableConfig } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject, type SerializableConfig } from "../../Serializable/SerializableObject";
 import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";

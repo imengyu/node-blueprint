@@ -1,6 +1,6 @@
 import type { VNode } from "vue";
 import type { IKeyValueObject } from "../../Utils/BaseTypes";
-import { SerializableObject } from "../../Utils/Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "../Node/NodePort";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 
@@ -74,8 +74,18 @@ export type NodeParamCustomPortIconRenderCallback = (port: NodePort, param: Node
 export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
   constructor() {
-    super('NodeParamType');
-    this.serializableProperties = [];
+    super('NodeParamType', undefined, {
+      serializableProperties: [],
+      loadOverride: (data) => {
+        return NodeParamTypeRegistry.getInstance().getTypeByString((data as unknown as IKeyValueObject).name as string)
+          || NodeParamTypeRegistry.getInstance().getTypeByString('any') as NodeParamType;
+      },
+      saveOverride: () => {
+        return {
+          name: this.toString(),
+        };
+      },
+    });
   }
 
   /**
@@ -106,16 +116,6 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * 内置类型 执行
    */
   public static Execute = new NodeParamType();
-
-  override save(): IKeyValueObject {
-    return {
-      name: this.toString(),
-    };
-  }
-  override load(data: NodeParamTypeDefine) {
-    return NodeParamTypeRegistry.getInstance().getTypeByString((data as unknown as IKeyValueObject).name as string)
-      || NodeParamTypeRegistry.getInstance().getTypeByString('any') as NodeParamType;
-  }
 
   /**
    * 类型名称
@@ -240,6 +240,6 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * @param another 
    */
   equal(another: NodeParamType) {
-    return this.toString() == another.toString();
+    return this.toString() === another.toString();
   }
 }

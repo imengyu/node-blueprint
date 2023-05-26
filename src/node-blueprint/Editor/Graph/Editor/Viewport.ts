@@ -2,7 +2,7 @@
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
-import { SerializableObject } from "@/node-blueprint/Base/Utils/Serializable/SerializableObject";
+import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
 
 /**
  * 编辑器视图信息结构体

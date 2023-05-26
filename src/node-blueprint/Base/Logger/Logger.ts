@@ -1,4 +1,4 @@
-import ArrayUtils from '../ArrayUtils';
+import ArrayUtils from '../Utils/ArrayUtils';
 
 export type LogExtendData = {
   [index: string]: any;

@@ -1,5 +1,5 @@
 import type{ IKeyValueObject } from "../BaseTypes";
-import { CreateObjectFactory, SerializableObject } from "../Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableObject } from "../../Serializable/SerializableObject";
 import { Vector2 } from "./Vector2";
 
 CreateObjectFactory.addObjectFactory('Rect', () => new Rect());

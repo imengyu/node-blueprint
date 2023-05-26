@@ -175,7 +175,7 @@ import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
-import { printWarning } from '@/node-blueprint/Base/Utils/Logger/DevLog';
+import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
 
 const props = defineProps({
   instance: {

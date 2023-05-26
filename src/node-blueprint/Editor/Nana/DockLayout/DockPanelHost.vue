@@ -84,7 +84,7 @@ export default defineComponent({
 
     //拖放操作
     function onDrop(ev: DragEvent) {
-      console.log('onDrop', ev);
+      //console.log('onDrop', ev);
 
       ev.preventDefault();
       ev.stopPropagation();
@@ -122,7 +122,7 @@ export default defineComponent({
       
       target.classList.remove('drag-drop-active');//移除高亮
 
-      console.log('onDrop', dropTabMoveTargetIndex, ev.offsetX, target.offsetWidth);
+      //console.log('onDrop', dropTabMoveTargetIndex, ev.offsetX, target.offsetWidth);
 
       const oldParent = currentPanel.parent;
       const currentIndexInPanel = dockData.value.panels.indexOf(currentPanel);

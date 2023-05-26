@@ -1,6 +1,7 @@
 import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
+import type { AlertProps } from '../../Nana/Modal/Alert';
 
 export type ChooseTypePanelCallback = undefined;
 
@@ -29,7 +30,7 @@ export interface NodeGraphEditorBasePanelsContext {
   /**
    * 关闭添加单元菜单
    */
-  closeAddBodePanel: () => void;
+  closeAddNodePanel: () => void;
   /**
    * 显示小信息提示
    * @param text 显示文字 
@@ -40,4 +41,9 @@ export interface NodeGraphEditorBasePanelsContext {
    * 关闭小信息提示
    */
   closeSmallTip: () => void;
+  /**
+   * 显示对话框
+   * @returns 
+   */
+  showModal: (options: AlertProps) => void;
 }

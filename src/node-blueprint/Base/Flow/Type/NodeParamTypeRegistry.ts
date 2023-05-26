@@ -1,7 +1,6 @@
 import { EventHandler } from "../../Utils/Events/EventHandler";
-import { printWarning } from "../../Utils/Logger/DevLog";
-import RandomUtils from "../../Utils/RandomUtils";
-import { Singleton } from "../../Utils/Singleton/Singleton";
+import { printWarning } from "../../Logger/DevLog";
+import { Singleton } from "../../Singleton/Singleton";
 import { registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
 
@@ -37,7 +36,7 @@ export class NodeParamTypeRegistry extends Singleton {
    */
   public registerType(defString : string, define : NodeParamTypeDefine) : NodeParamType {
     const old = this.getTypeByString(defString);
-    if(old != null) {
+    if(old !== null) {
       printWarning(TAG, "Type " + defString + " alreday registered !");
       return old;
     }
@@ -67,7 +66,7 @@ export class NodeParamTypeRegistry extends Singleton {
 
     this.allTypes.set(defString, newType);
 
-    if(newType.baseType == 'enum' && define.autoCreateEnumConverter) {
+    if(newType.baseType === 'enum' && define.autoCreateEnumConverter) {
       //TODO: CreateEnumConverter
     }
 
@@ -96,8 +95,8 @@ export class NodeParamTypeRegistry extends Singleton {
   public getTypeCoverter(fromType: NodeParamType, toType: NodeParamType) : NodeTypeCoverter|null {
     if(fromType.isExecute || toType.isExecute) 
       return null;
-    let from = fromType.toString();
-    let to = toType.toString();
+    const from = fromType.toString();
+    const to = toType.toString();
     return this.allConverter.get(from + '-' + to) || null;
   }
   /**

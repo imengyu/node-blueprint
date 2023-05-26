@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref } from 'vue';
+import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref, onBeforeUnmount } from 'vue';
 import { registerContextMenuMutex } from './TooltipMutex';
 import TooltipContent from './TooltipContent.vue';
 import { getContainer } from './TooltipUtils';
@@ -23,7 +23,7 @@ export default defineComponent({
     },
     hideDelay: {
       type: Number,
-      default: 500,
+      default: 300,
     },
     show: {
       type: Boolean,
@@ -85,6 +85,9 @@ export default defineComponent({
     watch(show, (v) => {
       if (!v)
         hideTooltip();
+    });
+    onBeforeUnmount(() => {
+      hideTooltip();
     });
 
     return () => {
