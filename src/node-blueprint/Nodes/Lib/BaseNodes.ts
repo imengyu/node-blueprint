@@ -117,6 +117,7 @@ function registerScriptBase()  {
       },
     ],
     oneNodeOnly: true,
+    canNotDelete: true,
     style: {
       logo: NodeIconEntryGo,
       titleBakgroundColor: "rgba(25,25,112,0.6)",
@@ -148,6 +149,7 @@ function registerScriptBase()  {
       },
     ],
     oneNodeOnly: true,
+    canNotDelete: true,
     style: {
       logo: NodeIconEntryExit,
       titleBakgroundColor: "rgba(112,30,133,0.6)",

@@ -140,7 +140,12 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
     const menuItems = (selectedCount === 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
       [
-        { label: "删除", onClick: () => context.deleteSelectedNodes(), divided: true },
+        { 
+          label: "删除", 
+          disabled: selectedCount === 1 ? selectedNodes[0].define.canNotDelete : false,
+          onClick: () => context.deleteSelectedNodes(),
+          divided: true 
+        },
         { label: "剪切", onClick: () => context.cutSelectionNodes() },
         { label: "复制", onClick: () => context.copySelectionNodes() },
         { label: "粘贴", 

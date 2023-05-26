@@ -8,11 +8,9 @@
 @import '../NodeIdeDefine.scss';
 
 .node-editor-toolbar {
-  position: absolute;
+  position: relative;
   border-right: none;
-  top: 0;
-  bottom: 0;
-  left: 0;
+  height: 100%;
   padding-top: 20px;
   background: var(--mx-editor-backgroud);
   width: $left-toolbar-width;

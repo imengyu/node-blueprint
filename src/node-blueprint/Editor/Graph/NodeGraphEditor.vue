@@ -8,6 +8,7 @@
       height: settings?.topMargin ? `calc(100% - ${settings.topMargin}px)` : undefined,
     }"
     @mousedown="onMouseDown"
+    @mousemove="onMouseMove"
     @wheel="onMouseWhell"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
@@ -139,6 +140,7 @@ const {
 
 const {
   onMouseDown,
+  onMouseMove,
   onMouseWhell,
   mouseInfo,
 } = useEditorMousHandler(context);

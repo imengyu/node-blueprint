@@ -103,7 +103,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   function connectorCast(mouseInfo: NodeGraphEditorMouseInfo) {
     const _mousePos = mouseInfo.mouseCurrentPosViewPort;
-    const _mousePosScreen = mouseInfo.mouseCurrentPosScreen;
+    const _mousePosScreen = mouseInfo.mouseCurrentPosEditor;
 
     lastHoverConnector.forEach(i => (i.hoverChecked = false));
     context

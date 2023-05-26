@@ -167,8 +167,12 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
         }
       }
 
+      //断开所有连接
+      context.unConnectNodeConnectors(node);
+
       node.editorHooks.callbackOnRemoveFromEditor?.();
 
+      //删除
       allNodes.delete(node.uid);
       switch(node.style.layer) {
         case 'normal':

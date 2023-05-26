@@ -102,7 +102,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         return;
       context.removeNode(node as NodeEditor, true);
     });
-    ArrayUtils.clear(context.getSelectNodes());
+    context.unSelectAllNodes();
   }
 
   /**
