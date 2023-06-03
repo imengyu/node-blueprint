@@ -21,7 +21,7 @@ const tooltipDirective : ObjectDirective = {
         { 
           x: currentMousePos.x + 20,
           y: currentMousePos.y + 10,
-          content: binding.value,
+          content: ele.getAttribute('data-tooltip'),
           onMouseenter: () => {
             event.onTooltipMouseEnter();
           }, 
@@ -38,6 +38,7 @@ const tooltipDirective : ObjectDirective = {
     }
 
     const ele = el as HTMLElement;
+    ele.setAttribute('data-tooltip', binding.value);
     currentShowTooltipId++;
 
     currentShowTooltips.set(currentShowTooltipId, hideTooltip);
@@ -62,6 +63,10 @@ const tooltipDirective : ObjectDirective = {
       event.onMouseEnter();
     });
     ele.addEventListener('mouseleave', event.onMouseLeave);
+  },
+  updated(el, binding) {
+    const ele = el as HTMLElement;
+    ele.setAttribute('data-tooltip', binding.value);
   },
   beforeUnmount(el) {
     const ele = el as HTMLElement;
