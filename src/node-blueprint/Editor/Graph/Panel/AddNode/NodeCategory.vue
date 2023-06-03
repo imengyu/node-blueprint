@@ -35,7 +35,7 @@
           icon="icon-add-bold"
           title="添加到鼠标位置"
           class="add-button"
-          @click="onAddClick(item)" 
+          @click.stop="onAddClick(item)" 
         />
         <span v-else />
       </div>

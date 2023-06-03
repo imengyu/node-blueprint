@@ -135,9 +135,10 @@ function closeAddNodePanel() {
   isShowAddNodePanel.value = false;
 }
 
-function onAddNode(block: INodeDefine) {
+function onAddNode(node: INodeDefine) {
   isShowAddNodePanel.value = false;
-  context?.userAddNode(block, addNodePos.value);
+  context?.userAddNode(node, addNodePos.value);
+  console.trace('onAddNode');
 }
 
 watch(isShowAddNodePanel, (show) => {

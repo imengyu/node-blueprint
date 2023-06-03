@@ -1,5 +1,5 @@
 <template>
-  <div class="node-small-button" @click="$emit('click')">
+  <div class="node-small-button">
     <Icon v-if="icon && iconPlace === 'before'" class="mr-1" :icon="icon" />
     {{ text }}
     <slot />
