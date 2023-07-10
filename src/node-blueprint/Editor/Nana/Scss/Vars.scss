@@ -1,0 +1,23 @@
+$border-radius: (
+  none: 0,
+  small: 2px,
+  medium: 4px,
+  large: 8px,
+  circle: 50%
+);
+$border-size: (
+  none: 0,
+  small: 1px,
+  medium: 2px,
+  large: 3px,
+);
+
+
+:root {
+  @each $key, $value in $border-radius {
+    --nana-border-radius-#{$key}: #{$value};
+  }
+  @each $key, $value in $border-size {
+    --nana-border-#{$key}: #{$value};
+  }
+}

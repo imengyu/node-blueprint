@@ -5,6 +5,7 @@
       :class="[
         'nana-modal-container',
         mask ? 'mask' : '',
+        blur ? 'blur' : '',
         modalCloseAnim ? 'close-anim' : '',
       ]"
       :style="{
@@ -12,11 +13,10 @@
       }"
     >
       <div 
-        class="simple-modal"
+        class="nana-modal"
         :class="[
           !title ? 'float-title' : '',
           full ? 'full' : '',
-          blur ? 'blur' : '',
           contentPadding ? 'padding' : '',
           scroll ? 'scroll' : '',
           round ? 'round' : '',
@@ -26,13 +26,18 @@
           width: width,
           height: height,
           maxHeight: maxHeight,
+          left: `${modalPos.x}px`,
+          top: `${modalPos.y}px`,
         }"
       >
-        <div class="title">
-          <div class="close-placeholder" />
+        <div class="title" @mousedown="mouseDragHandler">
+          <slot name="backButton">
+            <img v-if="showBack" class="button close" :src="ModalBack" @click="$emit('back')">
+            <div v-else class="close-placeholder" />
+          </slot>
           <span>{{ title }}</span>
           <slot name="end-button" :close="() => runCloseAnim()" />
-          <img v-if="showClose" class="close" :src="ModalClose" @click="runCloseAnim">
+          <img v-if="showClose" class="button close" :src="ModalClose" @click="runCloseAnim">
           <div v-else class="close-placeholder" />
         </div>
         <div class="content">
@@ -47,11 +52,14 @@
 </template>
 
 <script lang="ts">
-import { onMounted } from 'vue';
 import { defineComponent, ref, type PropType, watch, provide } from 'vue';
 import { getDefaultModalTeplport, getModalCurrentZIndex } from './ModalTeleport';
+import { onMounted } from 'vue';
 import type { ModalContext } from './Alert';
 import ModalClose from './ModalClose.svg';
+import ModalBack from './ModalBack.svg';
+import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 
 export default defineComponent({
   name: 'Modal',
@@ -75,6 +83,10 @@ export default defineComponent({
     showClose: {
       type: Boolean,
       default: true,
+    },
+    showBack: {
+      type: Boolean,
+      default: false,
     },
     round: {
       type: Boolean,
@@ -127,7 +139,8 @@ export default defineComponent({
   },
   emits: [ 
     'update:show',
-    'close'
+    'close',
+    'back',
   ],
   setup(props, ctx) {
     const modalCloseAnim = ref(false);
@@ -146,6 +159,7 @@ export default defineComponent({
     function showPrepare() {
       zIndex.value = getModalCurrentZIndex(true);
       modalCloseAnim.value = false;
+      modalPos.value.set(0);
     }
 
     watch(() => props.show, (v) => {
@@ -167,11 +181,36 @@ export default defineComponent({
       }
     })
 
+    const modalPos = ref(new Vector2(0));
+
+    let mouseDownPos = new Vector2(0);
+
+    const mouseDragHandler = createMouseDragHandler({
+      onDown(e) {
+        if (e.button === 0 && props.draggable) {
+          mouseDownPos.set(modalPos.value as Vector2);
+          return true;
+        }
+        return false;
+      },
+      onMove(downPos, movedPos) {
+        const pos = new Vector2();
+        pos.set(mouseDownPos);
+        pos.add(movedPos);
+        modalPos.value.set(pos);
+      },
+      onUp() {
+      },
+    });
+
     return {
       ModalClose,
+      ModalBack,
       modalCloseAnim,
       runCloseAnim,
+      modalPos,
       zIndex,
+      mouseDragHandler,
     };
   },
 });
@@ -224,6 +263,9 @@ export default defineComponent({
   align-items: center;
   transition: all ease-in-out 0.2s;
 
+  &.blur {
+    backdrop-filter: blur(5px);
+  }
   &.mask {
     pointer-events: all;
     background-color: rgba(0,0,0,0.2);
@@ -231,19 +273,19 @@ export default defineComponent({
   &.close-anim {
     background-color: transparent;
 
-    .simple-modal {
+    .nana-modal {
       animation: nana-modal-out 0.3s cubic-bezier(0.755, 0.050, 0.855, 0.060) both;
     }
   }
 }
-.simple-modal {
+.nana-modal {
   position: relative;
   display: flex;
   flex-direction: column;
   pointer-events: all;
-  border: 1px solid #b3b3b3;
-  box-shadow: 0 0 15px 0 rgba(#000, 0.1);
-  background-color: #fff;
+  border: 1px solid var(--nana-border-3);
+  box-shadow: var(--nana-shadow-3-center);
+  background-color: var(--nana-fill-5);
   animation: nana-modal-in 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
   overflow: hidden;
   min-width: 230px;
@@ -258,23 +300,13 @@ export default defineComponent({
     height: 100%;
     border-radius: 0;
   }
-  &.blur {
-    border: none;
-    background-color: rgba(#fff, 0.6);
-    box-shadow: 0 0 10px 4px rgba(#fff, 0.1);
-    backdrop-filter: saturate(180%) brightness(120%) blur(20px);
-
-    .nana-button:not(.status) {
-      background-color: transparent;
-    }
-  }
   &.transparent {
     border: none;
     box-shadow: none;
     background-color: transparent;
 
     .close {
-      background-color: #fff;
+      background-color: var(--nana-fill-5);
     }
   }
   &.scroll {
@@ -303,7 +335,7 @@ export default defineComponent({
     justify-content: space-between;
     align-items: center;
     padding: 8px 6px 5px 6px;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--nana-border-4);
     user-select: none;
 
     span {
@@ -314,7 +346,7 @@ export default defineComponent({
     .close-placeholder {
       width: 30px;
     }
-    .close {
+    .button {
       padding: 10px;
       width: 10px;
       height: 10px;
@@ -322,7 +354,7 @@ export default defineComponent({
       border-radius: 4px;
 
       &:hover {
-        background-color: #e6e6e6;
+        background-color: var(--nana-fill-2);
       }
     }
   }
@@ -332,7 +364,7 @@ export default defineComponent({
   }
   .footer {
     padding: 10px 15px;
-    background-color: #f8f8f8;
+    background-color: var(--nana-fill-4);
     display: flex;
     flex-direction: row;
     justify-content: flex-end;

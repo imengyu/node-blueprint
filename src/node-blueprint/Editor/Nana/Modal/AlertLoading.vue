@@ -85,7 +85,7 @@ onMounted(() => {
 
   &.mask {
     pointer-events: all;
-    background-color: rgba(0,0,0,0.2);
+    background-color: var(--nana-shadow-2-center);
   }
   &.show {
     pointer-events: initial;
@@ -94,9 +94,9 @@ onMounted(() => {
   > div {
     width: 200px;
     height: 130px;
-    box-shadow: 0 0 20px 0px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
-    background-color: #fff;
+    box-shadow: var(--nana-shadow-2-center);
+    border: 1px solid var(--nana-border-3);
+    background-color: var(--nana-fill-5);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -106,7 +106,7 @@ onMounted(() => {
 
     span {
       margin-top: 20px;
-      color: #666;
+      color: var(--nana-text-3);
     }
   }
 }

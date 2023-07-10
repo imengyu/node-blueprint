@@ -10,49 +10,34 @@
     ]"
     @click="disabled ? {} : $emit('click')"
   >
-    <Spin v-if="loading" />
+    <SimpleLoading v-if="loading" />
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import Spin from '../Common/Spin.vue';
+import SimpleLoading from './SimpleLoading.vue';
 
 defineEmits([ 'click' ]);
 
 defineProps({
-  /**
-   * 按钮是否有圆角
-   */
   round: {
     type: Boolean,
     default: false,
   },
-  /**
-   * 按钮
-   */
   disabled: {
     type: Boolean,
     default: false,
   },
-  /**
-   * 是否是加载中模式
-   */
   loading: {
     type: Boolean,
     default: false,
   },
-  /**
-   * 按钮状态颜色，可选 primary，error，warning，info，success
-   */
   status: {
     type: String as PropType<'primary'|'error'|'warning'|'info'|'success'>,
     default: '',
   },
-  /**
-   * 按钮大小，可选 mini，small，normal，large
-   */
   size: {
     type: String,
     default: 'normal',
@@ -62,12 +47,12 @@ defineProps({
 
 <style lang="scss">
 :root {
-  --nana-button-dark-text-color: #333;
-  --nana-button-light-text-color: #f0f0f0;
-  --nana-button-default-color: #ffffff;
-  --nana-button-default-hover-color: #ebebeb;
-  --nana-button-normal-border-radius: 10px;
-  --nana-button-round-border-radius: 50px;
+  --nana-button-dark-text-color: var(--nana-text-2);
+  --nana-button-light-text-color: var(--nana-text-5);
+  --nana-button-default-color: var(--nana-fill-5);
+  --nana-button-default-hover-color: var(--nana-fill-3);
+  --nana-button-normal-border-radius: var(--nana-border-radius-large);
+  --nana-button-round-border-radius: var(--nana-border-radius-round);
 }
 
 .nana-button {
@@ -95,7 +80,7 @@ defineProps({
   box-sizing: border-box;
   overflow: hidden;
   
-  --nana-spin-color: var(--nana-button-dark-text-color);
+  --nana-simple-loading-color:  var(--nana-button-dark-text-color);
 
   &.disabled {
     opacity: 0.8;
@@ -105,7 +90,7 @@ defineProps({
     cursor: default;
   }
 
-  .nana-spin {
+  .simple-loading {
     margin-right: 8px;
   }
 
@@ -114,36 +99,36 @@ defineProps({
       --nana-simple-loading-color: var(--nana-button-light-text-color);
 
       color: var(--nana-button-light-text-color);
-      background: linear-gradient(var(--nana-theme-color-primary-2), var(--nana-theme-color-primary));
-      outline-color: var(--nana-theme-color-hover-primary);
+      background: linear-gradient(var(--nana-primary-2), var(--nana-primary-1));
+      outline-color: var(--nana-hover-primary-2);
     }
     &-error {
       --nana-simple-loading-color: var(--nana-button-light-text-color);
 
       color: var(--nana-button-light-text-color);
-      background-color: var(--nana-theme-color-error);
-      outline-color: var(--nana-theme-color-hover-error);
+      background-color: var(--nana-error-1);
+      outline-color: var(--nana-error-2);
     }
     &-warning {
       --nana-simple-loading-color: var(--nana-button-light-text-color);
 
       color: var(--nana-button-light-text-color);
-      background-color: var(--nana-theme-color-warning);
-      outline-color: var(--nana-theme-color-hover-warning);
+      background-color: var(--nana-warning-1);
+      outline-color: var(--nana-warning-2);
     }
     &-info {
       --nana-simple-loading-color: var(--nana-button-light-text-color);
 
       color: var(--nana-button-light-text-color);
-      background-color: var(--nana-theme-color-info);
-      outline-color: var(--nana-theme-color-hover-info);
+      background-color: var(--nana-info-1);
+      outline-color: var(--nana-info-2);
     }
     &-success {
       --nana-simple-loading-color: var(--nana-button-light-text-color);
 
       color: var(--nana-button-light-text-color);
-      background-color: var(--nana-theme-color-success);
-      outline-color: var(--nana-theme-color-hover-success);
+      background-color: var(--nana-success-1);
+      outline-color: var(--nana-success-2);
     }
   }
   &.round {
@@ -198,19 +183,19 @@ defineProps({
         background-color: var(--nana-button-default-hover-color);
 
         &-primary {
-          background-color: var(--nana-theme-color-hover-primary);
+          background-color: var(--nana-primary-2);
         }
         &-error {
-          background-color: var(--nana-theme-color-hover-error);
+          background-color: var(--nana-error-2);
         }
         &-warning {
-          background-color: var(--nana-theme-color-hover-warning);
+          background-color: var(--nana-warning-2);
         }
         &-info {
-          background-color: var(--nana-theme-color-hover-info);
+          background-color: var(--nana-info-2);
         }
         &-success {
-          background-color: var(--nana-theme-color-hover-success);
+          background-color: var(--nana-success-2);
         }
       }
     }

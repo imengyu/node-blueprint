@@ -1,24 +1,85 @@
+/** 
+1. normal 常规
+2. hover 悬浮（hover）
+3. click 点击（click）
+4. speical 特殊场景
+5. disable 一般禁用
+6. disable-light 文字禁用
+7. light 浅色/白底悬浮
+*/
+
+$colors: (
+  primary: (
+    1: #0084ff,
+    2: #2c99ff,
+    3: #0076e4,
+    4: #6aa1ff,
+    5: #94bfff,
+    6: #94bfff,
+    7: #e8f3ff,
+  ),
+  error: (
+    1: #eb2f00,
+    2: #eb5a36,
+    3: #cb272d,
+    4: #f98981,
+    5: #fbaca3,
+    6: #fdcdc5,
+    7: #ffece8,
+  ),
+  warning: (
+    1: #ec8600,
+    2: #e7a043,
+    3: #d25f00,
+    4: #ffb65d,
+    5: #ffcf8b,
+    6: #ffe4ba,
+    7: #f7f8fa,
+  ),
+  info: (
+    1: #165dff,
+    2: #4080ff,
+    3: #0e42d2,
+    4: #6aa1ff,
+    5: #94bfff,
+    6: #bedaff,
+    7: #e8f3ff,
+  ),
+  success: (
+    1: #00bd29,
+    2: #52e071,
+    3: #009a29,
+    4: #009a29,
+    5: #7be188,
+    6: #aff0b5,
+    7: #e8ffea,
+  ),
+  border: (
+    1: #86909c, //重/按钮描边
+    2: #c9cdd4, //深/悬浮
+    3: #e5e6eb, //一般
+    4: #f2f3f5, //浅色
+  ),
+  fill: (
+    1: #c9cdd4, //重/特殊场景
+    2: #e5e6eb, //深/灰底悬浮
+    3: #f2f3f5, //常规/白底悬浮
+    4: #f7f8fa, //浅/禁用
+    5: #ffffff, //空白
+  ),
+  text: (
+    1: #1d2129, //强调/正文标题
+    2: #4e5969, //次强调/正文标题
+    3: #86909c, //次要信息
+    4: #c9cdd4, //置灰信息
+    5: #f0f0f0, //亮色信息
+  ),
+);
+
 :root {
-  --nana-theme-color-primary: #0084ff;
-  --nana-theme-color-primary-2: #2c99ff;
-  --nana-theme-color-error: #eb2f00;
-  --nana-theme-color-warning: #ec8600;
-  --nana-theme-color-info: #006ed4;
-  --nana-theme-color-success: #00bd29;
-
-  --nana-theme-color-hover-primary: #4ea9ff;
-  --nana-theme-color-hover-error: #eb5a36;
-  --nana-theme-color-hover-warning: #e7a043;
-  --nana-theme-color-hover-info: #448dd1;
-  --nana-theme-color-hover-success: #52e071;
-
-  --nana-component-color-white: #fff;
-  --nana-component-color-black: #000;
-  --nana-component-color-light-border: #bdbdbd;
-  --nana-component-color-light-shadow: rgba(0,0,0,0.8);
-
-  
-  --nana-text-color-black: #000;
-  --nana-text-color-content: #333;
-  --nana-text-color-second: #7a7a7a;
+  @each $key, $arr in $colors {
+    @each $key2, $value in $arr {
+      --nana-#{$key}-#{$key2}: #{$value};
+    }
+  }
 }
