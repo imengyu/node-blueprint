@@ -41,7 +41,30 @@ export interface NodeGraphEditorBaseContext {
    * 获取 ChunkedPanel
    */
   getBaseChunkedPanel(): ChunkedPanel;
+
+  /**
+   * 监听指定事件
+   * @param name 事件名称
+   * @param cb 回调
+   */
+  listenEvent(name: string, cb: NodeGraphEditorBaseEventCallback) : NodeGraphEditorBaseEventListener;
+  /**
+   * 发出指定事件
+   * @param name 事件名称
+   * @param args 事件参数
+   */
+  emitEvent(name: string, ...args: unknown[]) : void;
 }
+
+
+export type NodeGraphEditorBaseEventCallback =  (...args: unknown[]) => void;
+export interface NodeGraphEditorBaseEventListener {
+  /**
+   * 取消监听当前事件
+   */
+  unListen: () => void;
+}
+
 /**
  * 内部上下文函数
  */

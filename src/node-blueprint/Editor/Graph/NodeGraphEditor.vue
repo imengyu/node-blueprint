@@ -73,7 +73,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, provide, ref, type PropType, type Ref } from 'vue';
+import { onMounted, provide, ref, type PropType, type Ref, onBeforeMount } from 'vue';
 import BackgroundRender from './Render/BackgroundRender.vue';
 import ConnectorRender from './Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
@@ -92,16 +92,22 @@ import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
 import { ChunkedPanel } from './Cast/ChunkedPanel';
-import type { NodeGraphEditorInternalContext } from './NodeGraphEditor';
+import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
+import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 
 export interface INodeGraphEditorSettings {
   topMargin?: number;
   drawDebugInfo?: boolean;
   drawGrid?: boolean;
 }
+
+const emit = defineEmits([
+  'selectConnectorChanged',
+  'selectNodeChanged',
+])
 
 const props = defineProps({
   context: {
@@ -124,11 +130,30 @@ const cursor = ref('default');
 const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
 // eslint-disable-next-line vue/no-setup-props-destructure
 const context = props.context;
+const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
 
 context.getBaseChunkedPanel = () => chunkedPanel;
 context.getViewPort = () => viewPort.value as NodeGraphEditorViewport;
 context.setCursor = (v: string) => { cursor.value = v };
 context.resetCursor = () => { cursor.value = 'default' };
+context.listenEvent = (n, c) => {
+  let cbs = events.get(n);
+  if (!cbs) {
+    cbs = [];
+    events.set(n, cbs);
+  }
+  cbs.push(c);
+  return {
+    unListen() {
+      ArrayUtils.remove(cbs!, c);
+    },
+  };
+};
+context.emitEvent = (n, ...args) => {
+  const cbs = events.get(n);
+  if (cbs)
+    cbs.forEach(cb => cb(...args));
+};
 
 provide('NodeGraphEditorContext', context);
 
@@ -177,6 +202,13 @@ const {
 useEditorUserController(context);
 useEditorClipBoardControllerController(context);
 
+const eventSelectConnectorChanged = context.listenEvent('selectConnectorChanged', () => {
+  emit('selectConnectorChanged', context.getSelectConnectors());
+});
+const eventSelectNodeChanged = context.listenEvent('selectNodeChanged', () => {
+  emit('selectNodeChanged', context.getSelectNodes());
+});
+
 //init
 //=========================
 
@@ -184,6 +216,10 @@ onMounted(() => {
   initRenderer();
   loadGraph(props.graph);
 });
+onBeforeMount(() => {
+  eventSelectConnectorChanged.unListen();
+  eventSelectNodeChanged.unListen();
+})
 
 function initRenderer() {
   onWindowSizeChanged();

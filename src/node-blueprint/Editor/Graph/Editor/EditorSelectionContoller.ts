@@ -362,10 +362,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   }
 
   function notifySelectConnectorChanged() {
-    //TODO
+    context.emitEvent('selectConnectorChanged');
   }
   function notifySelectNodeChanged() {
-
+    context.emitEvent('selectNodeChanged');
   }
 
   context.getNodesInRect = getNodesInRect;

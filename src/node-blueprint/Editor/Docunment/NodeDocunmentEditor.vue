@@ -23,6 +23,8 @@
         :context="graph.context"
         :graph="(graph.graph as NodeGraph)"
         :settings="editorSettings"
+        @select-connector-changed="(p) => onSelectConnectorChanged(graph.graph.uid, p)"
+        @select-node-changed="(p) =>onSelectNodeChanged(graph.graph.uid, p)"
       />
     </ColumnView>
   </RowView>
@@ -43,6 +45,8 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
+import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 
 const props = defineProps({
   docunment: {
@@ -54,6 +58,11 @@ const props = defineProps({
     default: null,
   },
 });
+
+const emit = defineEmits([ 
+  'activeGraphEditorChange',
+  'activeGraphSelectionChange',
+])
 
 const refAddButton = ref();
 
@@ -73,6 +82,7 @@ const context = {
   },
   switchActiveGraph(graph) {
     currentGraph.value = graph;
+    emit('activeGraphEditorChange', graph);
   },
   openGraph(graph) {
     if (openedGraphs.value.find((g) => g.graph === graph))
@@ -82,6 +92,7 @@ const context = {
       context: {} as NodeGraphEditorInternalContext,
     });
     currentGraph.value = graph;
+    emit('activeGraphEditorChange', graph);
   },
   closeGraph(graph) {
     const index = openedGraphs.value.findIndex((g) => g.graph === graph);
@@ -95,11 +106,13 @@ const context = {
         else
           currentGraph.value = undefined;
       }
+      emit('activeGraphEditorChange', currentGraph.value);
     }
   },
   closeAllGraph() {
     ArrayUtils.clear(openedGraphs.value);
     currentGraph.value = undefined;
+    emit('activeGraphEditorChange', currentGraph.value);
   },
 } as NodeDocunmentEditorContext;
 
@@ -109,6 +122,12 @@ function onAdd() {
 }
 function onDelete() {
   context.getActiveGraphEditor()?.userDelete();
+}
+function onSelectConnectorChanged(graphUid: string, connectors: NodeConnectorEditor[]) {
+  emit('activeGraphSelectionChange', graphUid, [], connectors);
+}
+function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[]) {
+  emit('activeGraphSelectionChange', graphUid, nodes, []);
 }
 
 onMounted(() => {

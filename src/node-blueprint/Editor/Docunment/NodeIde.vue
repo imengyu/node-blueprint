@@ -20,11 +20,12 @@
             v-if="opendDocunment.has(panel.key.substr(10))"
             :docunment="getDocunmentByUid(panel.key.substr(10))!"
             :editorSettings="editorSettings"
+            @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange(panel.key.substr(10), g)"
+            @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange(panel.key.substr(10), p1, p2, p3)"
           />
         </template>
         <template v-else-if="panel.key==='Props'">
-          <h1>Tab Content</h1>
-          <span>This is second tab</span>
+          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
         </template>
         <template v-else-if="panel.key==='Console'">
           <Console />
@@ -46,6 +47,10 @@ import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
+import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import type { NodeEditor } from '../Graph/Flow/NodeEditor';
+import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
+import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 
 const dockLayout = ref<DockLayoutInterface>();
 
@@ -241,18 +246,66 @@ const menuData = reactive<MenuBarOptions>({
 
 //#endregion
 
+//#region 属性栏管理
+
+
+
+//#endregion
+
 //#region 文档管理
 
 const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
 const currentActiveDocunment = ref<NodeDocunment|null>(null);
+const currentActiveGraph = ref<NodeGraph|null>(null);
+const currentActiveNode = ref<NodeEditor|null>(null);
+const currentActiveConnector = ref<NodeConnectorEditor|null>(null);
 
+/**
+ * 获取当前打开的编辑器
+ */
 function getCurrentActiveGraphEditor() {
   return currentActiveDocunment.value?.activeEditor?.getActiveGraph()?.activeEditor || null;
 }
+/**
+ * 通过UID获取文档实例
+ * @param uid 
+ */
 function getDocunmentByUid(uid: string) {
   return opendDocunment.value.get(uid)
 }
+/**
+ * 文档更改事件
+ */
+function onCurrentActiveDocunmentChanged() {
+  currentActiveGraph.value = null;
+  currentActiveNode.value = null;
+  currentActiveConnector.value = null;
+}
+/**
+ * 激活图表更改事件
+ */
+function onActiveGraphEditorChange(docUid: string, graph: NodeGraph) {
+  if (docUid === currentActiveDocunment.value?.uid) {
+    currentActiveGraph.value = graph;
+    currentActiveNode.value = null;
+    currentActiveConnector.value = null;
+  }
+}
+/**
+ * 激活图表选择更改事件
+ */
+function onActiveGraphSelectionChange(docUid: string, graphUid: string, selectedNodes: NodeEditor[], selectedConnectors: NodeConnectorEditor[]) {
+  if (docUid === currentActiveDocunment.value?.uid && graphUid === currentActiveGraph.value?.uid) {
+    currentActiveNode.value = selectedNodes.length > 0 ? selectedNodes[0] : null;
+    currentActiveConnector.value = selectedConnectors.length > 0 ? selectedConnectors[0] : null;
+  }
+}
 
+
+
+/**
+ * 新文档
+ */
 function newDocunment() {
   const doc = new NodeDocunmentEditor({
     name: '新文档',
@@ -265,13 +318,25 @@ function newDocunment() {
   openDocunment(doc);
   return doc;
 }
+/**
+ * 关闭已打开文档
+ * @param uid 
+ */
 function closeDocunment(uid: string) {
   const doc = opendDocunment.value.get(uid)
   if (!doc)
     return;
   opendDocunment.value.delete(uid);
   dockLayout.value?.removePanel(`NodeEditor${uid}`);
+  if (currentActiveDocunment.value === doc) {
+    currentActiveDocunment.value = opendDocunment.value.values().next().value;
+    onCurrentActiveDocunmentChanged();
+  }
 }
+/**
+ * 打开文档
+ * @param doc 
+ */
 function openDocunment(doc: NodeDocunmentEditor) {
   if (opendDocunment.value.has(doc.uid))
     return;
@@ -279,6 +344,7 @@ function openDocunment(doc: NodeDocunmentEditor) {
   //添加文档至界面
   opendDocunment.value.set(doc.uid, doc);
   currentActiveDocunment.value = doc;
+  onCurrentActiveDocunmentChanged();
   dockLayout.value?.addPanel({
     key: `NodeEditor${doc.uid}`,
     title: doc.name,
@@ -303,8 +369,10 @@ function openDocunment(doc: NodeDocunmentEditor) {
 function onActiveTabChange(currentActive: DockPanel) {
   if (currentActive.key.startsWith('NodeEditor')) {
     const doc = getDocunmentByUid(currentActive.key.substring(10));
-    if (doc)
+    if (doc) {
       currentActiveDocunment.value = doc;
+      onCurrentActiveDocunmentChanged();
+    }
   }
 }
 
