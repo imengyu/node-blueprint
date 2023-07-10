@@ -115,17 +115,18 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   }
   //滚轮
   function onMouseWhell(e: WheelEvent) {
+    e.stopPropagation();
+    e.preventDefault();
     if (isMouseEventInNoDragControl(e))
       return;
     updateMousePos(e);
-    e.preventDefault();
 
     //缩放功能
     if (e.deltaY !== 0) {
       if (e.deltaY < 0) {
-        viewPort.scaleAndCenter(Math.min(2, Math.floor(Math.floor(viewPort.scale * 100) + 5) / 100), mouseInfo.mouseCurrentPosScreen);
+        viewPort.scaleAndCenter(Math.min(2, viewPort.scale + 0.05), mouseInfo.mouseCurrentPosScreen);
       } else {
-        viewPort.scaleAndCenter(Math.max(0.5, Math.floor(Math.floor(viewPort.scale * 100) - 5) / 100), mouseInfo.mouseCurrentPosScreen);
+        viewPort.scaleAndCenter(Math.max(0.5, viewPort.scale - 0.05), mouseInfo.mouseCurrentPosScreen);
       }
     }
   }

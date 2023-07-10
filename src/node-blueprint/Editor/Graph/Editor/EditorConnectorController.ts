@@ -12,6 +12,7 @@ import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import { createMouseDownAndUpHandler } from "./MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 
 /**
  * 节点连接上下文函数
@@ -22,6 +23,11 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   isAnyConnectorHover: () => boolean;
+  /**
+   * 选中鼠标悬浮的连接线
+   * @returns 
+   */
+  selectHoverConnectors: () => void;
   /**
    * 获取用户现在是否处于连接至新节点状态中
    * @returns 
@@ -44,7 +50,7 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
-  endConnectToNew: (node?: NodeEditor) => NodePortEditor|null;
+  endConnectToNew: (node?: NodeEditor) => [NodePortEditor|null,NodeConnector|null];
   /**
    * 断开连接线
    * @param conn 
@@ -144,6 +150,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       }
     }
     return null;
+  }
+  function selectHoverConnectors() {
+    lastHoverConnector.forEach(c => context.selectConnector(c, true))
   }
 
   //处理鼠标按下选择连接线
@@ -369,15 +378,15 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     return connectingInfo.canConnect; 
   }
   //结束连接（连接至新的单元）
-  function endConnectToNew(node?: Node) : NodePortEditor|null {
+  function endConnectToNew(node?: Node) : [NodePortEditor|null,NodeConnector|null] {
     let port : NodePortEditor|null = null;
+    let connector : NodeConnector|null = null;
 
     //如果已选单元，则连接至这个单元
     if(typeof node !== 'undefined' && connectingInfo.otherSideRequireType) {
       port = node.getPortByTypeAndDirection(connectingInfo.otherSideRequireType, connectingInfo.otherSideRequireDirection, true) as NodePortEditor;
       if(port !== null && connectingInfo.startPort !== null)
-        context.connectConnector(connectingInfo.startPort, port);
-
+        connector = context.connectConnector(connectingInfo.startPort, port);
       connectingInfo.otherSideRequireType = null;
     }
 
@@ -389,7 +398,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       (connectingInfo.startPort as NodePortEditor).state =  connectingInfo.startPort.isConnected() ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
-    return port;
+    return [port,connector];
   }
   /**
    * 连接单元
@@ -559,6 +568,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.unConnectNodeConnectors = unConnectNodeConnectors;
   context.isAnyConnectorHover = isAnyConnectorHover;
   context.isConnectToNew = isConnectToNew;
+  context.selectHoverConnectors = selectHoverConnectors;
   context.getConnectingInfo = getConnectingInfo;
 
   return {

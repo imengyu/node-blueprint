@@ -47,6 +47,7 @@
           contenteditable="true"
           @input="onCommentInputInput"
           @blur="onCommentInputBlur"
+          @wheel="onCommentWhell"
         />
         <Tooltip content="隐藏注释气泡">
           <a class="close" @click="closeComment">
@@ -330,6 +331,9 @@ function onCommentInputBlur() {
     instance.value.markContent = commentInput.value.innerText;
     updateComment();
   }
+}
+function onCommentWhell(e: WheelEvent) {
+  e.preventDefault();
 }
 function closeComment() {
   instance.value.markOpen = false;

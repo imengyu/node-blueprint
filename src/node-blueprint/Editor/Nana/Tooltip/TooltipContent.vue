@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <div
     ref="eleRef"
@@ -88,6 +89,7 @@ onMounted(() => {
   max-width: 400px;
   overflow: hidden;
   text-overflow: ellipsis;
+  animation: nana-tooltip-in ease-in-out 0.2s;
 
   span {
     white-space: pre;
@@ -95,4 +97,16 @@ onMounted(() => {
     text-overflow: ellipsis;
   }
 }
+
+@keyframes nana-tooltip-in {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 </style>

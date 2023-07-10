@@ -1,12 +1,13 @@
 <template>
-  <div v-if="viewPort" 
+  <div 
+    v-if="viewPort" 
     class="node-graph-continer editor-drag-area" 
     :style="{
       transform: `scale(${viewPort.scale}) translateX(${-(viewPort.position.x)}px) translateY(${-(viewPort.position.y)}px)`,
     }"
     @contextmenu="$emit('contextmenu', $event)"
   >
-    <slot></slot>
+    <slot />
   </div>
 </template>
 

@@ -40,6 +40,9 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
       case 'AltLeft':
         keyAltDown = true;
         break;
+      case 'Digit0':
+        context.zoomSet(100);
+        break;
     }
   }
   function onKeyUp(e : KeyboardEvent) {

@@ -58,10 +58,14 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     const info = context.getMouseInfo();
 
     //选中连接线，弹出连接线菜单
-    if (context.isAnyConnectorHover())
+    if (context.isAnyConnectorHover()) {
+      //设置连接线为旋转状态
+      context.selectHoverConnectors();
+      //显示菜单
       showConnectorRightMenu(
         info.mouseDownPosScreen
       );
+    }
     //鼠标未移动，则显示添加界面
     else if (!info.mouseMoved)
       context.showAddNodePanel(

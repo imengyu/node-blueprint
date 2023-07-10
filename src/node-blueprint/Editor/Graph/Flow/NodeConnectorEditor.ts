@@ -34,6 +34,12 @@ export class NodeConnectorEditor extends NodeConnector {
   private colorGradientNeedCreate = false;
   private dotPos = 0;
 
+  public forceSetPos(_startPos: Vector2|undefined, _endPos: Vector2|undefined) {
+    if (_startPos)
+      this.startPos.set(_startPos);
+    if (_endPos)
+      this.endPos.set(_endPos);
+  }
   /**
    * 检查某个点是否在连接线上
    * @param pos 要检查的点 (视口坐标)

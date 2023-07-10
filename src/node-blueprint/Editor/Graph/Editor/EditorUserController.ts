@@ -5,7 +5,7 @@ import type { INodeDefine, Node, NodeBreakPoint } from "@/node-blueprint/Base/Fl
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 
 export interface NodeEditorUserControllerContext {
   /**
@@ -262,15 +262,16 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
     const newNode = new NodeEditor(define);
     newNode.load();
-    if(addNodeInPos) { //在指定位置添加单元
-      newNode.position.set(addNodeInPos);
-      context.addNode(newNode)
-    } else if(context.isConnectToNew()) { //添加单元并连接
+    if(context.isConnectToNew()) { //添加单元并连接
       const connectingEndPos = context.getConnectingInfo().endPos;
       newNode.position.set(connectingEndPos);
       context.addNode(newNode);
-      const port = context.endConnectToNew(newNode);  
+      const [ port, _connector ] = context.endConnectToNew(newNode);  
       const pos = new Vector2();
+      if (_connector && _connector instanceof NodeConnectorEditor) {
+        const connector = (_connector as NodeConnectorEditor);
+        connector.forceSetPos(undefined, connectingEndPos);
+      }
 
       setTimeout(() => {
         //重新定位单元位置至连接线末端位置
@@ -279,7 +280,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
         newNode.position.set(pos);
         newNode.updateRegion();
-      }, 100);
+      }, 50);
+    } else if(addNodeInPos) { //在指定位置添加单元
+      newNode.position.set(addNodeInPos);
+      context.addNode(newNode)
     } else { //在屏幕中央位置添加单元
       const center = context.getViewPort().rect().calcCenter();
       newNode.position.set(center);

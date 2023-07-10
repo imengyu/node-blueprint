@@ -10,14 +10,14 @@
     ]"
     @click="disabled ? {} : $emit('click')"
   >
-    <SimpleLoading v-if="loading" />
+    <Spin v-if="loading" />
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import SimpleLoading from './SimpleLoading.vue';
+import Spin from '../Common/Spin.vue';
 
 defineEmits([ 'click' ]);
 

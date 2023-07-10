@@ -156,18 +156,21 @@ const menuData = reactive<MenuBarOptions>({
         },
         {
           label: '放大',
+          shortcut: 'Ctrl+鼠标滚轮上',
           onClick() {
             getCurrentActiveGraphEditor()?.zoomIn();
           },
         },
         {
           label: '缩小',
+          shortcut: 'Ctrl+鼠标滚轮下',
           onClick() {
             getCurrentActiveGraphEditor()?.zoomOut();
           },
         },
         {
           label: '100%',
+          shortcut: 'Ctrl+0',
           divided: true,
           onClick() {
             getCurrentActiveGraphEditor()?.zoomSet(100);
