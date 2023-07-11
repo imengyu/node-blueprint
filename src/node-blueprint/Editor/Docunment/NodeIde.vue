@@ -25,7 +25,9 @@
           />
         </template>
         <template v-else-if="panel.key==='Props'">
-          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+          <PropBox class="node-custom-editor">
+            <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+          </PropBox>
         </template>
         <template v-else-if="panel.key==='Console'">
           <Console />
@@ -39,6 +41,8 @@
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
+import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
+import PropBox from './Prop/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';
@@ -50,7 +54,6 @@ import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
-import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 
 const dockLayout = ref<DockLayoutInterface>();
 
