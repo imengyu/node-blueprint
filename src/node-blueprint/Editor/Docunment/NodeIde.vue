@@ -26,6 +26,7 @@
         </template>
         <template v-else-if="panel.key==='Props'">
           <PropBox class="node-custom-editor">
+            <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
             <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
           </PropBox>
         </template>
@@ -54,6 +55,7 @@ import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
+import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
 
 const dockLayout = ref<DockLayoutInterface>();
 
@@ -260,8 +262,8 @@ const menuData = reactive<MenuBarOptions>({
 const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
 const currentActiveDocunment = ref<NodeDocunment|null>(null);
 const currentActiveGraph = ref<NodeGraph|null>(null);
-const currentActiveNode = ref<NodeEditor|null>(null);
-const currentActiveConnector = ref<NodeConnectorEditor|null>(null);
+const currentActiveNodes = ref<NodeEditor[]>([]);
+const currentActiveConnectors = ref<NodeConnectorEditor[]>([]);
 
 /**
  * 获取当前打开的编辑器
@@ -281,8 +283,8 @@ function getDocunmentByUid(uid: string) {
  */
 function onCurrentActiveDocunmentChanged() {
   currentActiveGraph.value = null;
-  currentActiveNode.value = null;
-  currentActiveConnector.value = null;
+  currentActiveNodes.value = [];
+  currentActiveConnectors.value = [];
 }
 /**
  * 激活图表更改事件
@@ -290,8 +292,8 @@ function onCurrentActiveDocunmentChanged() {
 function onActiveGraphEditorChange(docUid: string, graph: NodeGraph) {
   if (docUid === currentActiveDocunment.value?.uid) {
     currentActiveGraph.value = graph;
-    currentActiveNode.value = null;
-    currentActiveConnector.value = null;
+    currentActiveNodes.value = [];
+    currentActiveConnectors.value = [];
   }
 }
 /**
@@ -299,12 +301,10 @@ function onActiveGraphEditorChange(docUid: string, graph: NodeGraph) {
  */
 function onActiveGraphSelectionChange(docUid: string, graphUid: string, selectedNodes: NodeEditor[], selectedConnectors: NodeConnectorEditor[]) {
   if (docUid === currentActiveDocunment.value?.uid && graphUid === currentActiveGraph.value?.uid) {
-    currentActiveNode.value = selectedNodes.length > 0 ? selectedNodes[0] : null;
-    currentActiveConnector.value = selectedConnectors.length > 0 ? selectedConnectors[0] : null;
+    currentActiveNodes.value = selectedNodes;
+    currentActiveConnectors.value = selectedConnectors;
   }
 }
-
-
 
 /**
  * 新文档

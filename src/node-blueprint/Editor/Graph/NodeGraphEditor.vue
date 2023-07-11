@@ -9,6 +9,7 @@
     }"
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
+    @mouseup="onMouseUp"
     @wheel="onMouseWhell"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
@@ -73,7 +74,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, provide, ref, type PropType, type Ref, onBeforeMount } from 'vue';
+import { onMounted, provide, ref, type PropType, type Ref, onBeforeUnmount } from 'vue';
 import BackgroundRender from './Render/BackgroundRender.vue';
 import ConnectorRender from './Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
@@ -81,7 +82,6 @@ import NodeContainer from './Node/NodeContainer.vue';
 import ZoomTool from './SubComponents/ZoomTool.vue';
 import BasePanels from './Panel/BasePanels.vue';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
-import { NodeGraphEditorViewport } from './NodeGraphEditor';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
 import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
@@ -91,12 +91,14 @@ import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardCo
 import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
-import { ChunkedPanel } from './Cast/ChunkedPanel';
+import { useEditorViewPortController } from './Editor/EditorViewPortController';
+import type { NodeGraphEditorViewport } from './NodeGraphEditor';
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import type { ChunkedPanel } from './Cast/ChunkedPanel';
 
 export interface INodeGraphEditorSettings {
   topMargin?: number;
@@ -105,8 +107,7 @@ export interface INodeGraphEditorSettings {
 }
 
 const emit = defineEmits([
-  'selectConnectorChanged',
-  'selectNodeChanged',
+  'selectNodeOrConnectorChanged',
 ])
 
 const props = defineProps({
@@ -125,27 +126,27 @@ const props = defineProps({
 });
 
 const editorHost = ref<HTMLElement>();
-const chunkedPanel = new ChunkedPanel()
-const cursor = ref('default');
-const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
 // eslint-disable-next-line vue/no-setup-props-destructure
 const context = props.context;
 const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
 
-context.getBaseChunkedPanel = () => chunkedPanel;
-context.getViewPort = () => viewPort.value as NodeGraphEditorViewport;
-context.setCursor = (v: string) => { cursor.value = v };
-context.resetCursor = () => { cursor.value = 'default' };
+const {
+  viewPort,
+  cursor,
+  chunkedPanel,
+} = useEditorViewPortController(context);
+
+//Base context functions
 context.listenEvent = (n, c) => {
   let cbs = events.get(n);
-  if (!cbs) {
+  if (!cbs)
     cbs = [];
-    events.set(n, cbs);
-  }
   cbs.push(c);
+  events.set(n, cbs);
   return {
     unListen() {
       ArrayUtils.remove(cbs!, c);
+      events.set(n, cbs!);
     },
   };
 };
@@ -164,6 +165,7 @@ const {
 } = useEditorSizeChecker(editorHost, viewPort as Ref<NodeGraphEditorViewport>);
 
 const {
+  onMouseUp,
   onMouseDown,
   onMouseMove,
   onMouseWhell,
@@ -202,11 +204,8 @@ const {
 useEditorUserController(context);
 useEditorClipBoardControllerController(context);
 
-const eventSelectConnectorChanged = context.listenEvent('selectConnectorChanged', () => {
-  emit('selectConnectorChanged', context.getSelectConnectors());
-});
-const eventSelectNodeChanged = context.listenEvent('selectNodeChanged', () => {
-  emit('selectNodeChanged', context.getSelectNodes());
+const eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged', () => {
+  emit('selectNodeOrConnectorChanged', context.getSelectNodes(), context.getSelectConnectors());
 });
 
 //init
@@ -216,8 +215,7 @@ onMounted(() => {
   initRenderer();
   loadGraph(props.graph);
 });
-onBeforeMount(() => {
-  eventSelectConnectorChanged.unListen();
+onBeforeUnmount(() => {
   eventSelectNodeChanged.unListen();
 })
 

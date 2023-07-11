@@ -1,7 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry } from "./MouseHandler"
+import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry, type IMouseWhellHandlerEntry } from "./MouseHandler"
 
 /**
  * 鼠标事件控制器上下文函数
@@ -30,6 +30,7 @@ export class EditorMousHandlerExtendHandlers {
   mouseDownHandlers = [] as IMouseEventHandlerEntry[];
   mouseMoveHandlers = [] as IMouseMoveHandlerEntry[];
   mouseUpHandlers = [] as IMouseMoveHandlerEntry[];
+  mouseWhellHandlers = [] as IMouseWhellHandlerEntry[];
 
   pushMouseDownHandler(handler: IMouseEventHandlerEntry) {
     this.mouseDownHandlers.push(handler);
@@ -39,6 +40,9 @@ export class EditorMousHandlerExtendHandlers {
   }
   pushMouseUpHandlers(handler: IMouseMoveHandlerEntry) {
     this.mouseUpHandlers.push(handler);
+  }
+  pushMouseWhellHandlers(handler: IMouseWhellHandlerEntry) {
+    this.mouseWhellHandlers.push(handler);
   }
 }
 
@@ -86,6 +90,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   });
 
   extendHandlerObject.pushMouseDownHandler(viewDragHandler);
+  extendHandlerObject.pushMouseWhellHandlers(viewDragHandler);
 
   //按下入口
   function onMouseDown(e: MouseEvent) {
@@ -120,15 +125,8 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     if (isMouseEventInNoDragControl(e))
       return;
     updateMousePos(e);
-
-    //缩放功能
-    if (e.deltaY !== 0) {
-      if (e.deltaY < 0) {
-        viewPort.scaleAndCenter(Math.min(2, viewPort.scale + 0.05), mouseInfo.mouseCurrentPosScreen);
-      } else {
-        viewPort.scaleAndCenter(Math.max(0.5, viewPort.scale - 0.05), mouseInfo.mouseCurrentPosScreen);
-      }
-    }
+    for (const handler of extendHandlerObject.mouseWhellHandlers)
+      handler(e);
   }
 
   function updateMousePos(e: MouseEvent) {

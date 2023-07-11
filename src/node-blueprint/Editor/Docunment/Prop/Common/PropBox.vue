@@ -13,12 +13,23 @@ export interface PropBoxContext {
   updateGridSize: (size: number) => void,
 }
 
+const props = defineProps({
+  gridMaxWidth: {
+    type: Number,
+    default: 1,
+  },
+  gridMinWidth: {
+    type: Number,
+    default: 0.2,
+  },
+});
+
 const gridSize = ref(0.5);
 
 provide<PropBoxContext>('PropBoxContext', {
   gridSize,
   updateGridSize(size: number) {
-    gridSize.value = MathUtils.limitNumber(size, 0, 1);
+    gridSize.value = MathUtils.limitNumber(size, props.gridMinWidth, props.gridMaxWidth);
   },
 });
 

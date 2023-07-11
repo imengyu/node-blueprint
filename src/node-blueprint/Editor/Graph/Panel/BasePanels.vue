@@ -152,8 +152,8 @@ onMounted(() => {
   allNodesGrouped.value = NodeRegistry.getInstance().getAllNodesGrouped();
 
   //鼠标未拖拽未选择情况下，弹出添加单元菜单
-  context.getMouseHandler().pushMouseUpHandlers((info) => {
-    if (!info.mouseMoved && !context.isAnyConnectorHover()) {
+  context.getMouseHandler().pushMouseUpHandlers((info, e) => {
+    if (!info.mouseMoved && e.button === 2 && !context.isAnyConnectorHover()) {
       showAddNodePanel(
         info.mouseCurrentPosScreen, 
         undefined,

@@ -35,7 +35,6 @@ const { gridSize, updateGridSize } = inject<PropBoxContext>('PropBoxContext', {
 const titleSize = computed(() => gridSize.value * 100);
 const editorSize = computed(() => (1 - gridSize.value) * 100);
 
-
 let mouseDragDownX = 0;
 const splterDrageHandler = createMouseDragHandler({
   onDown() { 
@@ -44,12 +43,12 @@ const splterDrageHandler = createMouseDragHandler({
     return true;
   },
   onMove(downPos, movedPos, e) {
-    if (propItem.value)
-      updateGridSize((e.x - mouseDragDownX) / propItem.value.offsetWidth)
+    if (propItem.value) {
+      const size = (e.x - mouseDragDownX) / propItem.value.offsetWidth;
+      updateGridSize(size)
+    }
   },
-  onUp() {
-    
-  },
+  onUp() {},
 })
 </script>
 
@@ -57,25 +56,35 @@ const splterDrageHandler = createMouseDragHandler({
 .prop-item {
   white-space: nowrap;
   position: relative;
-  padding: 3px 2px 5px 0;
   border-bottom: 1px solid var(--mx-editor-border-color);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   font-size: 12px;
 
   > .prop-item-editor {
     position: relative;
     display: inline-block;
+    padding: 4px;
+    color: var(--mx-editor-text-color);
   }
   > .prop-split {
-    height: 100%;
+    position: relative;
     width: 1px;
-    margin: 0 5px;
-    background-color: var(--mx-editor-border-color);
+    padding: 0 5px;
     cursor: ew-resize;
+
+    &::after {
+      position: absolute;
+      content: '';
+      width: 1px;
+      height: 100%;
+      background-color: var(--mx-editor-border-color);
+
+    }
   }
   > span {
+    padding: 4px;
     display: inline-block;
     text-align: right;
     color: var(--mx-editor-text-color);

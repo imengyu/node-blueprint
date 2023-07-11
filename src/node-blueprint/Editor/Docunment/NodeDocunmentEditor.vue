@@ -23,8 +23,7 @@
         :context="graph.context"
         :graph="(graph.graph as NodeGraph)"
         :settings="editorSettings"
-        @select-connector-changed="(p) => onSelectConnectorChanged(graph.graph.uid, p)"
-        @select-node-changed="(p) =>onSelectNodeChanged(graph.graph.uid, p)"
+        @select-node-or-connector-changed="(p, p2) =>onSelectNodeChanged(graph.graph.uid, p, p2)"
       />
     </ColumnView>
   </RowView>
@@ -123,11 +122,8 @@ function onAdd() {
 function onDelete() {
   context.getActiveGraphEditor()?.userDelete();
 }
-function onSelectConnectorChanged(graphUid: string, connectors: NodeConnectorEditor[]) {
-  emit('activeGraphSelectionChange', graphUid, [], connectors);
-}
-function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[]) {
-  emit('activeGraphSelectionChange', graphUid, nodes, []);
+function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: NodeConnectorEditor[]) {
+  emit('activeGraphSelectionChange', graphUid, nodes, connectors);
 }
 
 onMounted(() => {

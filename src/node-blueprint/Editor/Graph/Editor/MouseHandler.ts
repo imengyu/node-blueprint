@@ -3,6 +3,7 @@ import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
 
 export type IMouseEventHandlerEntry = (e: MouseEvent) => boolean;
 export type IMouseMoveHandlerEntry = (mouseInfo : NodeGraphEditorMouseInfo, e: MouseEvent) => boolean;
+export type IMouseWhellHandlerEntry = (e: WheelEvent) => void;
 
 /**
  * 创建鼠标按下移动处理器

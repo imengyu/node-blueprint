@@ -140,6 +140,15 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   });
 
   mouseHandlers.pushMouseDownHandler(selectDragHandler);
+  mouseHandlers.pushMouseUpHandlers((_mouseInfo) => {
+    if (!_mouseInfo.mouseMoved) {
+      if (context.isAnyConnectorHover())
+        context.selectHoverConnectors();
+      else
+        context.unSelectAllConnectors();
+    }
+    return false;
+  });
 
   /**
    * 取消选中所有连接线
@@ -150,7 +159,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       b.hover = false;
     });
     ArrayUtils.clear(selectConnectors.value);
-    notifySelectConnectorChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中所有连接线
@@ -161,7 +170,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       b.hover = false;
     });
     ArrayUtils.clear(selectConnectors.value);
-    notifySelectConnectorChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 取消选中所有单元
@@ -169,7 +178,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   function unSelectAllNodes() {
     selectNodes.value.forEach((b) => doSelectNode(b as NodeEditor, false));
     ArrayUtils.clear(selectNodes.value);
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中当前编辑器中所有单元
@@ -182,7 +191,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       _selectNodes.push(node);
       doSelectNode(node, true);
     });
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 取消选中某个单元
@@ -190,7 +199,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   function unSelectNode(node: NodeEditor) {
     ArrayUtils.remove(selectNodes.value, node);
     doSelectNode(node, false);
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中某个单元
@@ -213,7 +222,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       selectNodes.value.push(node);
       doSelectNode(node,  true);
     }
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   //选择指定的单元
   function selectSomeNodes(nodes: NodeEditor[], append = false) {
@@ -231,7 +240,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
         doSelectNode(node, true);
       });
     }
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 获取最低矩形内的单元
@@ -314,7 +323,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
         const connector = context.getConnectors().get(i.data as string);
         if (connector) {
           (connector as NodeConnectorEditor).selected = true;
-          selectConnectors.value.push(connector as NodeConnectorEditor);
+          ArrayUtils.addOnce(selectConnectors.value, connector as NodeConnectorEditor);
         }
       });
 
@@ -325,7 +334,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       isMultiSelected.value = false;
     }
 
-    notifySelectNodeChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   function endSelectNodes() {
     isMulitSelect.value = false;
@@ -343,7 +352,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     ArrayUtils.remove(selectConnectors.value, connector);
     connector.selected = false;
 
-    notifySelectConnectorChanged();
+    notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中某个连接线
@@ -358,14 +367,11 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       selectConnectors.value.push(connector);
     }
     connector.selected = true;
-    notifySelectConnectorChanged();
+    notifySelectNodeOrConnectorChanged();
   }
 
-  function notifySelectConnectorChanged() {
-    context.emitEvent('selectConnectorChanged');
-  }
-  function notifySelectNodeChanged() {
-    context.emitEvent('selectNodeChanged');
+  function notifySelectNodeOrConnectorChanged() {
+    context.emitEvent('selectNodeOrConnectorChanged');
   }
 
   context.getNodesInRect = getNodesInRect;

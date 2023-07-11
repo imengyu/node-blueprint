@@ -8,8 +8,8 @@ import { SerializableObject } from "@/node-blueprint/Base/Serializable/Serializa
  * 编辑器视图信息结构体
  * 
  * 注：
- * screenPos: 以容器坐标为准，0，0是容器左上角。
- * viewPortPos: 以编辑器视口为准的坐标，视口移动后坐标也会变化。
+ * * screenPos: 以容器坐标为准，0，0是容器左上角。
+ * * viewPortPos: 以编辑器视口为准的坐标，视口移动后坐标也会变化。
  */
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
 
