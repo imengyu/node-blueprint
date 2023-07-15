@@ -26,6 +26,7 @@
         </template>
         <template v-else-if="panel.key==='Props'">
           <PropBox class="node-custom-editor">
+            <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
             <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
             <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
           </PropBox>
@@ -43,19 +44,22 @@ import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vu
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
+import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
+import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from './Prop/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';
 import { MenuBar, type MenuBarOptions } from '@imengyu/vue3-context-menu';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
+import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
-import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
+import Alert from '../Nana/Modal/Alert';
 
 const dockLayout = ref<DockLayoutInterface>();
 
@@ -87,23 +91,24 @@ const menuData = reactive<MenuBarOptions>({
         {
           label: '新建',
           shortcut: 'Ctrl+N',
-          onClick() {
-            newDocunment();
-          },
+          onClick: newDocunment,
         },
         {
           label: '打开',
           shortcut: 'Ctrl+O',
           divided: true,
+          onClick: loadDocunment,
         },
         {
           label: '保存',
           shortcut: 'Ctrl+S',
+          onClick: saveDocunment,
         },
         {
           label: '导出',
           shortcut: 'Ctrl+E',
           divided: true,
+          onClick: saveDocunment,
         },
         {
           label: '退出',
@@ -364,7 +369,35 @@ function openDocunment(doc: NodeDocunmentEditor) {
       if (doc.mainGraph)
         doc.activeEditor.openGraph(doc.mainGraph);
     }
+    dockLayout.value?.activePanel(`NodeEditor${doc.uid}`);
   }, 300);
+}
+/**
+ * 加载文档
+ */
+function loadDocunment() {
+  openJsonFile((content) => {
+    let json = {};
+    try {
+      json = JSON.parse(content);
+    } catch {
+      Alert.error({ content: '加载文档失败，无效的文件' });
+      return;
+    }
+
+    const doc = new NodeDocunmentEditor();
+    doc.load(json);
+
+    openDocunment(doc);
+  })
+}
+/**
+ * 保存文档
+ */
+function saveDocunment() {
+  const doc = currentActiveDocunment.value;
+  if (doc)
+    saveJsonFile(doc.name, doc.save());
 }
 
 //#endregion

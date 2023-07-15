@@ -214,6 +214,7 @@ onMounted(() => {
   instance.value.editorHooks.callbackTwinkle = twinkle;
   instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
   instance.value.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
+  instance.value.editorHooks.callbackUpdateComment = updateComment;
   instance.value.editorHooks.callbackGetLastMovedBlock = () => lastMovedBlock;
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;

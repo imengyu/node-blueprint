@@ -1,5 +1,5 @@
 import type { IKeyValueObject, ISaveableTypes } from "../Utils/BaseTypes";
-import { printWarning } from "../Logger/DevLog";
+import ObjectUtils from "../Utils/ObjectUtils";
 
 const createObjectFactorys = new Map<string, CreateObjectClassCallback<any>>();
 
@@ -80,8 +80,8 @@ export function mergeSerializableConfig<T = any>(superConfig: SerializableConfig
 }
 
 export interface SerializaeObjectSave<T> {
-  className: string,
-  obj: T,
+  [SerializableObjectSaveObjNameKey]: string,
+  [SerializableObjectSaveObjObjKey]: T,
 }
 export interface SerializePropCustomRet {
   parsed: boolean,
@@ -141,6 +141,12 @@ export interface SerializableConfig<T> extends SerializableSchemeConfig {
   loadOverride?: (data : T) => SerializableObject<T>;
 }
 
+const SerializableObjectSaveObjNameKey = '@SNK';
+const SerializableObjectSaveObjObjKey = '@SNO';
+const SerializableObjectSaveMapKey = '@SNM';
+const SerializableObjectSaveValueKey = '@SNV';
+const SerializableObjectForceNoSerializeProps = [ 'define', 'serializeClassName', 'serializeConfig', 'TAG' ]
+
 /**
  * Serializable Object. It can automatically recursively save class data or deserialize and load it.
  */
@@ -157,7 +163,7 @@ export class SerializableObject<T> {
     if (config) {
       if (!config.serializableProperties) 
         config.serializableProperties = [];
-      config.noSerializableProperties = config.noSerializableProperties?.concat(this.serializeConfig.noSerializableProperties!);
+      config.noSerializableProperties = config.noSerializableProperties || [];
       this.serializeConfig = config;
     }
   }
@@ -175,7 +181,7 @@ export class SerializableObject<T> {
    */
   serializeConfig : SerializableConfig<T> = {
     serializableProperties: [],
-    noSerializableProperties: [ 'define' ],
+    noSerializableProperties: [],
   };
   /**
    * The source define data
@@ -183,24 +189,24 @@ export class SerializableObject<T> {
   define: T|null = null;
   
   protected saveProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: unknown) : unknown {
+    if (config.saveProp) {
+      const ret = config.saveProp(key, parentKey, element);
+      if (ret?.parsed)
+        element = ret.return;
+    }
     if (typeof element === 'bigint' 
       || typeof element === 'number' 
       || typeof element === 'boolean' 
       || typeof element === 'string'
     ) {
-      if (this.serializeConfig.saveProp) {
-        const ret = this.serializeConfig.saveProp(key, parentKey, element);
-        if (ret?.parsed)
-          element = ret.return;
-      }
       return element as ISaveableTypes;
     }
     else if(element && typeof element === 'object') {
       if (element instanceof Array) {
         //This is array
         return {
-          className: 'Array',
-          obj: element.map((src, index) => this.saveProp(config, `${key}[${index}]`, key, src)),
+          [SerializableObjectSaveObjNameKey]: 'Array',
+          [SerializableObjectSaveObjObjKey]: element.map((src, index) => this.saveProp(config, `${key}[${index}]`, key, src)),
         } as SerializaeObjectSave<T>
       }
       else if (element instanceof Set) {
@@ -212,8 +218,8 @@ export class SerializableObject<T> {
           index++;
         }
         return {
-          className: 'Set',
-          obj: setArr,
+          [SerializableObjectSaveObjNameKey]: 'Set',
+          [SerializableObjectSaveObjObjKey]: setArr,
         } as SerializaeObjectSave<T>
       }
       else if (element instanceof Map) {
@@ -221,20 +227,15 @@ export class SerializableObject<T> {
         const arr = [];
         for (const [ mapKey, src ] of element)
           arr.push({
-            mapKey,
-            value: this.saveProp(config, `${key}[${mapKey}]`, key, src)
+            [SerializableObjectSaveMapKey]: mapKey,
+            [SerializableObjectSaveValueKey]: this.saveProp(config, `${key}[${mapKey}]`, key, src)
           });
         return {
-          className: 'Map',
-          obj: arr,
+          [SerializableObjectSaveObjNameKey]: 'Map',
+          [SerializableObjectSaveObjObjKey]: arr,
         } as SerializaeObjectSave<T>
       }
       else if (element instanceof SerializableObject) {
-        if (this.serializeConfig.saveProp) {
-          const ret = this.serializeConfig.saveProp(key, '', element);
-          if (ret?.parsed)
-            return ret.return;
-        }
         //This is a SerializableObject
         const serializableObject = element as unknown as SerializableObject<T>;
         if (
@@ -242,32 +243,35 @@ export class SerializableObject<T> {
           && typeof serializableObject.serializeClassName === 'string'
         ) 
           return {
-            className: serializableObject.serializeClassName,
-            obj: serializableObject.save()
+            [SerializableObjectSaveObjNameKey]: serializableObject.serializeClassName,
+            [SerializableObjectSaveObjObjKey]: serializableObject.save()
           } as SerializaeObjectSave<T>
       }
       else {
-        printWarning(this.TAG, `Faied to saveProp ${key}, Value: ${element}`);
+       return element;
       }
     }
     return undefined;
   }
   protected loadProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: IKeyValueObject) : unknown {
+    if (!key.startsWith('@') && config.loadProp) {
+      const ret = config.loadProp(key, parentKey, element);
+      if (ret?.parsed)
+        return ret.return as IKeyValueObject;
+    }
     if (typeof element === 'bigint'
       || typeof element === 'number'
       || typeof element === 'boolean'
       || typeof element === 'string'
       || typeof element === 'function'
     ) {
-      if (this.serializeConfig.loadProp) {
-        const ret = this.serializeConfig.loadProp(key, parentKey, element);
-        if (ret?.parsed)
-          return ret.return as IKeyValueObject;
-      }
       return element;
     }
-    else if (element && typeof element === 'object' && typeof element.className === 'string') {
-      const { obj, className } = element as unknown as SerializaeObjectSave<unknown>;
+    else if (element && typeof element === 'object' && typeof element[SerializableObjectSaveObjNameKey] === 'string') {
+      const { 
+        [SerializableObjectSaveObjNameKey]: className,
+        [SerializableObjectSaveObjObjKey]: obj, 
+      } = element as unknown as SerializaeObjectSave<unknown>;
       switch (className) {
         case 'Array':
           return (obj as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
@@ -281,22 +285,17 @@ export class SerializableObject<T> {
         case 'Map': {
           const map = new Map();
           (obj as {
-            key: string,
-            value: IKeyValueObject,
+            [SerializableObjectSaveMapKey]: string,
+            [SerializableObjectSaveValueKey]: IKeyValueObject,
           }[]).forEach((v, index) => {
-            map.set(v.key, this.loadProp(config, `${key}[${index}]`, key, v.value));
+            map.set(v[SerializableObjectSaveMapKey], this.loadProp(config, `${key}[${index}]`, key, v[SerializableObjectSaveValueKey]));
           });
           return map;
         }
         default: {
-          if (this.serializeConfig.loadProp) {
-            const ret = this.serializeConfig.loadProp(key, '', element);
-            if (ret !== undefined)
-              return ret;
-          }
           const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
           if (forceSerializableClass) 
-            return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
+            return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, obj as any);
           if (typeof className === 'string' && typeof obj === 'object') 
             return CreateObjectFactory.createSerializableObject(className, this, obj as any);//This is a SerializableObject
           break;
@@ -307,11 +306,6 @@ export class SerializableObject<T> {
       if (element instanceof Array) {
         return (element as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
       } else {
-        if (this.serializeConfig.loadProp) {
-          const ret = this.serializeConfig.loadProp(key, '', element);
-          if (ret !== undefined)
-            return ret;
-        }
         const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
         if (forceSerializableClass) 
           return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
@@ -337,10 +331,12 @@ export class SerializableObject<T> {
     return keys;
   }
   private isPropertySerializable(key: string, config: SerializableSchemeConfig) {
+    if (SerializableObjectForceNoSerializeProps.includes(key))
+      return false;
     return (
       (
-        (config.serializableProperties && config.serializableProperties.includes(key) || config.serializeAll === true)
-        && (!config.noSerializableProperties || !config.noSerializableProperties.includes(key))
+        ((config.serializableProperties && config.serializableProperties.includes(key)) || config.serializeAll === true)
+        && !(config.noSerializableProperties && config.noSerializableProperties.includes(key))
       )
     );
   }
@@ -369,7 +365,8 @@ export class SerializableObject<T> {
       throw new Error("Not found scheme: " + scheme ? scheme : 'default');
 
     const o : IKeyValueObject = {}
-    for (const key of this.getSortedKeys(this, false)) {
+    const keys = this.getSortedKeys(this, false);
+    for (const key of keys) {
       if (!this.isPropertySerializable(key, config))
         continue;
       o[key] = this.saveProp(config, key, '', (this as unknown as Record<string, IKeyValueObject>)[key]) as ISaveableTypes;
@@ -400,12 +397,61 @@ export class SerializableObject<T> {
 
     this.define = data;
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
-    for (const key of this.getSortedKeys(data as object, true)) {
+    const keys = this.getSortedKeys(data as object, true);
+    for (const key of keys) {
       if (!this.isPropertySerializable(key, config))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }
     return this;
   }
+  /**
+   * Load this object from the key value object but to a new object.
+   * @param data If empty, use define data provided in constructor
+   * @returns Return this 
+   */
+  loadShadow(data: T, scheme?: string) : IKeyValueObject {
+    const config: SerializableSchemeConfig|undefined = scheme ? this.serializeConfig.serializeSchemes?.[scheme] : this.serializeConfig;
+    if (!config)
+      throw new Error("Not found scheme: " + scheme ? scheme : 'default');
+    const o : IKeyValueObject = {} as unknown as IKeyValueObject;
+    const keys = this.getSortedKeys(data as object, true);
+    for (const key of keys) {
+      if (!this.isPropertySerializable(key, config))
+        continue;
+      o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
+    }
+    return o;
+  }
+  /**
+   * 将影子数据以追加方式合并至当前对象中
+   * @param data 
+   */
+  mergeShadow(data: IKeyValueObject) {
+    const o : IKeyValueObject = this as unknown as IKeyValueObject;
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        const element = data[key];
+        const thisEle = o[key];
+        if (typeof element === 'object' && typeof thisEle === 'object') {
+          if (element instanceof Map && thisEle instanceof Map) {
+            o[key] = ObjectUtils.mergeMap(thisEle, element) as any;
+          } else if (element instanceof Set && thisEle instanceof Set) {
+            o[key] = ObjectUtils.mergeSet(thisEle, element) as any;
+          } else if (element instanceof Array && thisEle instanceof Array) {
+            o[key] = element.concat(thisEle);
+          } else {
+            o[key] = {
+              ...(thisEle as IKeyValueObject),
+              ...element
+            };
+          }
+        } else {
+          o[key] = element;
+        }
+      }
+    }
+  }
+
 }
 

@@ -28,6 +28,32 @@ function clone<T extends ISaveableTypes>(obj: T, deepArray = false): T {
   return temp as unknown as T;
 }
 
+/**
+ * 合并map2至map1中，以map2为准，map2会覆盖map1数据
+ * @param map1 
+ * @param map2 
+ */
+function mergeMap(map1: Map<unknown, unknown>, map2: Map<unknown, unknown>) {
+  for (const [k,v] of map2) {
+    map1.set(k, v)
+  }
+  return map1;
+}
+
+/**
+ * 合并set2至set1中
+ * @param set1 
+ * @param set2 
+ */
+function mergeSet(set1: Set<unknown>, set2: Set<unknown>) {
+  for (const iterator of set2) {
+    set1.add(iterator);
+  }
+  return set1;
+}
+
 export default {
   clone,
+  mergeMap,
+  mergeSet,
 };

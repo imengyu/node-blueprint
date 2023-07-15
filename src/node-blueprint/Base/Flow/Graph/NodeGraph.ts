@@ -38,30 +38,37 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
       serializeAll: true,
       serializableProperties: [],
       serializePropertyOrder: {
-        'nodes': 3,
-        'connectors': 1,
+        'nodes': 1,
+        'connectors': 3,
       },
       noSerializableProperties: [
         'docunment',
         'fileChanged',
         'activeEditor',
-      ],
+        'isEditor',
+        'parent',
+      ],     
+      forceSerializableClassProperties: {
+        children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
+      },
       //加载与保存
       loadProp: (key, parentKey, source) => {
         switch (parentKey) {
           case 'nodes': {
-            const { uid, guid, node } = source as INodeSaveData;
+            const { 
+              uid, 
+              guid, 
+              node
+            } = source as INodeSaveData;
             const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
             if (!nodeDefine) {
               printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
               return undefined;
             }
-            const finalNodeDefine = {
-              ...nodeDefine,
-              ...node
-            };
           
-            const nodeInstance = this.createNode(finalNodeDefine);
+            const nodeInstance = this.createNode(nodeDefine);
+            const shadowSettings = nodeInstance.loadShadow(node, 'graph');
+            nodeInstance.mergeShadow(shadowSettings);
 
             return {
               parsed: true,

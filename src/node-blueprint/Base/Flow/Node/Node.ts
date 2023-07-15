@@ -31,6 +31,7 @@ export class Node extends SerializableObject<INodeDefine> {
         'outputPorts',
         'guid',
         'data',
+        'parent',
       ],
       forceSerializableClassProperties: {
         ports: 'NodePort',
@@ -63,6 +64,7 @@ export class Node extends SerializableObject<INodeDefine> {
       },
       serializeSchemes: {
         graph: {
+          serializeAll: false,
           serializableProperties: [
             'uid',
             'guid',
@@ -447,6 +449,9 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   constructor(define?: INodeEventSettings) {
     super('NodeEventSettings', define, {
       serializeAll: true,
+      noSerializableProperties: [
+        'parent',
+      ]
     });
   }
 
@@ -569,7 +574,10 @@ export interface INodeStyleSettings {
 export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
   constructor(define?: INodeStyleSettings) {
     super('NodeStyleSettings', define, {
-      serializeAll: true
+      serializeAll: true,
+      noSerializableProperties: [
+        'parent',
+      ]
     });
   }
 
@@ -621,7 +629,10 @@ export interface INodeSimulateSettings {
 export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
   constructor(define?: INodeSimulateSettings) {
     super('NodeSimulate', define, {
-      serializeAll: true
+      serializeAll: true,
+      noSerializableProperties: [
+        'parent',
+      ]
     });
   }
 }

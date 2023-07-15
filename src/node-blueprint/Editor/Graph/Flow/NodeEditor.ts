@@ -33,6 +33,7 @@ export class NodeEditor extends Node {
   public editorHooks = {
     callbackUpdateNodeForMoveEnd: null as null|(() => void),
     callbackUpdateRegion: null as null|(() => void),
+    callbackUpdateComment: null as null|(() => void),
     callbackOnAddToEditor: null as null|(() => void),
     callbackOnRemoveFromEditor: null as null|(() => void),
     callbackGetRealSize: null as null|(() => Vector2),

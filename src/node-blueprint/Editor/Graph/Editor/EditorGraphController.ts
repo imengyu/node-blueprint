@@ -190,9 +190,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * 标记当前图表已经被用户修改
    */
   function markGraphChanged() {
-    
+    //TODO: markGraphChanged
   }
-
   /**
    * 加载图表
    * @param graph 
@@ -208,6 +207,25 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     graph.activeEditor = context;
     currentGraph.value = graph;
   }
+
+  function addNodes(nodes: NodeEditor[]) {
+    if (currentGraph.value) {
+      pushNodes(...nodes);
+      for (const node of nodes)
+        currentGraph.value.nodes.set(node.uid, node);
+    } else {
+      printWarning('Graph', 'addNode fail: no currentGraph');
+    }
+  }
+  function addNode(node: NodeEditor) {
+    if (currentGraph.value) {
+      pushNodes(node);
+      currentGraph.value.nodes.set(node.uid, node);
+    } else {
+      printWarning('Graph', 'addNode fail: no currentGraph');
+    }
+  }
+
   /**
    * 关闭图表
    * @param graph 
@@ -236,8 +254,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   context.removeConnector = removeConnector;
   context.addConnector = addConnector;
   context.removeNode = removeNode;
-  context.addNodes = (nodes) => pushNodes(...nodes);
-  context.addNode = (node) => pushNodes(node);
+  context.addNodes = addNodes;
+  context.addNode = addNode;
   context.getCurrentGraph = () => currentGraph.value as NodeGraph;
   context.markGraphChanged = markGraphChanged;
 

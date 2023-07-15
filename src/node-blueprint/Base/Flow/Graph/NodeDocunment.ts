@@ -18,6 +18,9 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
         'author',
         'mainGraph',
       ],
+      forceSerializableClassProperties: {
+        mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
+      },
     });
     this.isEditor = isEditor === true;
   }

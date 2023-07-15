@@ -1,5 +1,5 @@
 import ArrayUtils from "../../Utils/ArrayUtils";
-import { SerializableObject, type SerializableConfig } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";
@@ -20,7 +20,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
         'connectedToPort',
         'state',
         'pos',
-      ]
+        'parent',
+      ],
     });
     this.parent = parent as Node;
     this.define = define;
@@ -109,7 +110,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public isConnectToPort(port: NodePort): NodeConnector | null {
     for (let i = this.connectedToPort.length - 1; i >= 0; i--) {
-      if (this.connectedToPort[i].endPort == port)
+      if (this.connectedToPort[i].endPort === port)
         return this.connectedToPort[i];
     }
     return null;
@@ -121,7 +122,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public isConnectByPort(port: NodePort): NodeConnector | null {
     for (let i = this.connectedFromPort.length - 1; i >= 0; i--) {
-      if (this.connectedFromPort[i].startPort == port)
+      if (this.connectedFromPort[i].startPort === port)
         return this.connectedFromPort[i];
     }
     return null;
@@ -132,7 +133,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public removeConnectToPort(port: NodePort): void {
     for (let i = this.connectedToPort.length - 1; i >= 0; i--) {
-      if (this.connectedToPort[i].endPort == port) {
+      if (this.connectedToPort[i].endPort === port) {
         ArrayUtils.remove(this.connectedToPort, this.connectedToPort[i]);
       }
     }
@@ -143,7 +144,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public removeConnectByPort(port: NodePort): void {
     for (let i = this.connectedFromPort.length - 1; i >= 0; i--) {
-      if (this.connectedFromPort[i].startPort == port) {
+      if (this.connectedFromPort[i].startPort === port) {
         ArrayUtils.remove(this.connectedFromPort, this.connectedFromPort[i]);
       }
     }
@@ -153,8 +154,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    * @returns
    */
   public isConnected(): boolean {
-    if (this.direction == "input") return this.connectedFromPort.length > 0;
-    else if (this.direction == "output") return this.connectedToPort.length > 0;
+    if (this.direction === "input") return this.connectedFromPort.length > 0;
+    else if (this.direction === "output") return this.connectedToPort.length > 0;
     return false;
   }
   /**

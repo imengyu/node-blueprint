@@ -6,7 +6,7 @@
       </a>
       {{ title }}
     </div>
-    <div v-show="show">
+    <div v-show="show" class="prop-content">
       <slot />
     </div>
   </div>
@@ -43,6 +43,11 @@ const show = ref(true);
   }
   svg {
     fill: var(--mx-editor-text-color);
+  }
+} 
+.prop-content {
+  .prop-header {
+    margin-left: 10px;
   }
 }
 </style>
