@@ -11,19 +11,23 @@ export class NodeEditor extends Node {
 
   constructor(define: INodeDefine) {
     super(define, {
-      forceSerializableClassProperties: {
-        ports: 'NodePortEditor',
-      },
-      noSerializableProperties: [
-        'mouseConnectingPort',
-        'selected',
-        'breakpointTriggered',
-        'chunkInfo',
-        'connectors',
-        'lastBlockPos',
-        'lastBlockSize',
-        'editorHooks',
-      ],
+      serializeSchemes: {
+        default: {
+          forceSerializableClassProperties: {
+            ports: 'NodePortEditor',
+          },
+          noSerializableProperties: [
+            'mouseConnectingPort',
+            'selected',
+            'breakpointTriggered',
+            'chunkInfo',
+            'connectors',
+            'lastBlockPos',
+            'lastBlockSize',
+            'editorHooks',
+          ],
+        },
+      }
     });
   }
 

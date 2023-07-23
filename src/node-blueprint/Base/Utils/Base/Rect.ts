@@ -22,7 +22,11 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    */
   public constructor(x?: number | Rect, y? : number, w? : number, h? : number) {
     super('Rect', undefined, {
-      serializableProperties: [ 'x', 'y', 'w', 'h' ],
+      serializeSchemes: {
+        default: {
+          serializableProperties: [ 'x', 'y', 'w', 'h' ],
+        },
+      }
     });
     this.set(x || 0,y,w,h);
   }

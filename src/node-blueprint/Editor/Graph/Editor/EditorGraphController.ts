@@ -104,7 +104,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
           node.events.onAddToEditor?.(node);
         }
         resolve();
-      }, 500);
+      }, 200);
     })
   }
   /**
@@ -113,7 +113,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    */
   function addConnector(connector: NodeConnectorEditor) {
     allConnectors.set(connector.uid, connector);
-    currentGraph.value?.connectors.push(connector);
+    if (currentGraph.value)
+     ArrayUtils.addOnce(currentGraph.value.connectors, connector);
     ArrayUtils.addOnce((connector.startPort?.parent as NodeEditor).connectors, connector);
     ArrayUtils.addOnce((connector.endPort?.parent as NodeEditor).connectors, connector);
 
@@ -201,9 +202,13 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     graph.nodes.forEach((node) => {
       pushNodes(node as NodeEditor);
     });
-    graph.connectors.forEach((connector) => {
-      allConnectors.set(connector.uid, connector as NodeConnectorEditor);
-    });
+    setTimeout(() => {
+      graph.connectors.forEach((connector) => {
+        addConnector(connector as NodeConnectorEditor);
+        context.connectorSuccessSetState(connector as NodeConnectorEditor);
+      });
+    }, 200);
+    
     graph.activeEditor = context;
     currentGraph.value = graph;
   }

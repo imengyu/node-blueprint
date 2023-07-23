@@ -98,7 +98,13 @@
                 "options": {},
                 "ports": {
                   "@SNK": "Array",
-                  "@SNO": []
+                  "@SNO": [
+                    {
+                      "dynamicAdd": false,
+                      "guid": "TIME",
+                      "initialValue": 1000
+                    }
+                  ]
                 },
                 "uid": "30666838617669"
               }
@@ -129,12 +135,18 @@
                 "options": {
                   "port_TAG_custom_data": {
                     "editor_w": 90,
-                    "editor_h": 24
+                    "editor_h": 16
                   }
                 },
                 "ports": {
                   "@SNK": "Array",
-                  "@SNO": []
+                  "@SNO": [
+                    {
+                      "dynamicAdd": false,
+                      "guid": "TAG",
+                      "initialValue": "Test"
+                    }
+                  ]
                 },
                 "uid": "366770616f656c"
               }
@@ -170,7 +182,13 @@
                 },
                 "ports": {
                   "@SNK": "Array",
-                  "@SNO": []
+                  "@SNO": [
+                    {
+                      "dynamicAdd": false,
+                      "guid": "IN",
+                      "initialValue": "输出测试"
+                    }
+                  ]
                 },
                 "uid": "7377636d32686c"
               }

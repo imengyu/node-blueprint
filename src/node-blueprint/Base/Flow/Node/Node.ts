@@ -21,24 +21,7 @@ export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
     super('Node', define, mergeSerializableConfig({
-      serializeAll: true,
-      serializableProperties: [],
-      noSerializableProperties: [
-        'define',
-        'editorState',
-        'editorHooks',
-        'inputPorts',
-        'outputPorts',
-        'guid',
-        'data',
-        'parent',
-      ],
-      forceSerializableClassProperties: {
-        ports: 'NodePort',
-        style: 'NodeStyleSettings',
-        events: 'NodeEventSettings',
-        simulate: 'NodeSimulateSettings',
-      },
+      
       loadOverride: (data : INodeDefine) => {
         const ret = super.load(data);
     
@@ -62,8 +45,46 @@ export class Node extends SerializableObject<INodeDefine> {
         this.events.onCreate?.(this);
         return ret;
       },
+      mergeOverride(keyName, thisData, fromData) {
+        if (keyName === 'ports') {
+          const thisArray = thisData as NodePort[];
+          const fromArray = fromData as NodePort[];
+          for (const port of fromArray) {
+            if (port.dyamicAdd)
+              thisArray.push(port)
+            else {
+              const targetPort = thisArray.find(p => p.guid === port.guid);
+              if (targetPort) {
+                targetPort.initialValue = port.initialValue
+              }
+            }
+          }
+          return { parsed: true };
+        }
+      },
       serializeSchemes: {
+        default: {
+          serializeAll: true,
+          serializableProperties: [],
+          noSerializableProperties: [
+            'define',
+            'editorState',
+            'editorHooks',
+            'inputPorts',
+            'outputPorts',
+            'guid',
+            'data',
+            'parent',
+          ],
+          forceSerializableClassProperties: {
+            ports: 'NodePort',
+            style: 'NodeStyleSettings',
+            events: 'NodeEventSettings',
+            simulate: 'NodeSimulateSettings',
+          },
+        },
         graph: {
+          inhertForm: 'default',
           serializeAll: false,
           serializableProperties: [
             'uid',
@@ -82,6 +103,8 @@ export class Node extends SerializableObject<INodeDefine> {
               ports.forEach((port) => {
                 if (port.dyamicAdd)
                   portSaveArr.push(port.save<INodePortDefine>());
+                else
+                  portSaveArr.push(port.save<INodePortDefine>('onlyValues'));
               });
               return  { parsed: true, return: portSaveArr };
             }
@@ -448,10 +471,14 @@ export interface INodeEventSettings {
 export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   constructor(define?: INodeEventSettings) {
     super('NodeEventSettings', define, {
-      serializeAll: true,
-      noSerializableProperties: [
-        'parent',
-      ]
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          noSerializableProperties: [
+            'parent',
+          ]
+        }
+      }
     });
   }
 
@@ -574,10 +601,14 @@ export interface INodeStyleSettings {
 export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
   constructor(define?: INodeStyleSettings) {
     super('NodeStyleSettings', define, {
-      serializeAll: true,
-      noSerializableProperties: [
-        'parent',
-      ]
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          noSerializableProperties: [
+            'parent',
+          ],
+        }
+      }
     });
   }
 
@@ -629,10 +660,14 @@ export interface INodeSimulateSettings {
 export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
   constructor(define?: INodeSimulateSettings) {
     super('NodeSimulate', define, {
-      serializeAll: true,
-      noSerializableProperties: [
-        'parent',
-      ]
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          noSerializableProperties: [
+            'parent',
+          ],
+        },
+      }
     });
   }
 }

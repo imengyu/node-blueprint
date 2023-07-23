@@ -15,12 +15,16 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
 
   constructor() {
     super('NodeGraphEditorViewport', undefined, {
-      serializableProperties: [
-        'position', 
-        'scale', 
-        'scaledPosition', 
-        '_scaledPosition',
-      ],
+      serializeSchemes: {
+        default: {
+          serializableProperties: [
+            'position', 
+            'scale', 
+            'scaledPosition', 
+            '_scaledPosition',
+          ],
+        },
+      }
     });
   }
 

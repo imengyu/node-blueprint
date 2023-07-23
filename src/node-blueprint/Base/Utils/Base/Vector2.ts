@@ -19,7 +19,11 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
 
   public constructor(x: number|Vector2 = 0, y = 0) {
     super('Vector2', undefined, {
-      serializableProperties: [ 'x', 'y' ],
+      serializeSchemes: {
+        default: {
+          serializableProperties: [ 'x', 'y' ],
+        },
+      }
     });
     if (typeof x === 'object') {
       this.y = x.y;

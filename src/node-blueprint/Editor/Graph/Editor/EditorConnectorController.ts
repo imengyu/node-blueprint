@@ -50,6 +50,7 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
+  connectorSuccessSetState: (connector: NodeConnectorEditor) => void;
   endConnectToNew: (node?: NodeEditor) => [NodePortEditor|null,NodeConnector|null];
   /**
    * 断开连接线
@@ -493,15 +494,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       )
         startPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
 
-      endPort.connectedToPort.push(connector);
-      endPort.state = "active";
-      startPort.connectedFromPort.push(connector);
-      startPort.state = "active";
-
-      invokeOnPortConnect(endPort, startPort);
-
       connector.startPort = endPort;
       connector.endPort = startPort;
+
+      connectorSuccessSetState(connector);
+      invokeOnPortConnect(endPort, startPort);
     }
 
     //添加线段
@@ -510,6 +507,14 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connector.updatePortValue();
     }
     return connector;
+  }
+  function connectorSuccessSetState(connector: NodeConnectorEditor) {
+    const endPort = connector.endPort! as NodePortEditor;
+    const startPort = connector.startPort! as NodePortEditor;
+    endPort.connectedToPort.push(connector);
+    endPort.state = "active";
+    startPort.connectedFromPort.push(connector);
+    startPort.state = "active";
   }
   /**
    * 取消连接单元
@@ -563,6 +568,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.getCanConnect = getCanConnect;
   context.endConnectToNew = endConnectToNew;
   context.connectConnector = connectConnector;
+  context.connectorSuccessSetState = connectorSuccessSetState;
   context.unConnectConnector = unConnectConnector;
   context.unConnectPortConnectors = unConnectPortConnectors;
   context.unConnectNodeConnectors = unConnectNodeConnectors;

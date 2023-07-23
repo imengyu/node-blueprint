@@ -36,7 +36,7 @@ export const CreateObjectFactory = {
   }
 }
 
-function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig, childConfig: SerializableSchemeConfig) {
+function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig, childConfig: SerializableSchemeConfig) : SerializableSchemeConfig {
   return {
     ...superConfig,
     ...childConfig,
@@ -74,7 +74,6 @@ export function mergeSerializableConfig<T = any>(superConfig: SerializableConfig
   return {
     ...superConfig,
     ...childConfig,
-    ...mergeSerializableSchemeConfig(superConfig, childConfig),
     serializeSchemes: schemes,
   }
 }
@@ -106,6 +105,10 @@ export interface SerializableSchemeConfig {
    */
   noSerializableProperties?: string[],
   /**
+   * 表示当前序列化配置继承指定名称的配置。注意，不能循环引用。
+   */
+  inhertForm?: string;
+  /**
    * Properties that need force load whith class, key is the Property name, value is class name.
    */
   forceSerializableClassProperties?: { [index: string]: string },
@@ -123,8 +126,28 @@ export interface SerializableSchemeConfig {
    * @returns 
    */
   saveProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
+  /**
+   * 加载之前回调
+   * @returns 
+   */
+  beforeLoad?: (data: unknown) => void,
+  /**
+   * 加载之后回调
+   * @returns 
+   */
+  afterLoad?: () => void,
+  /**
+   * 加载之前回调
+   * @returns 
+   */
+  beforeSave?: () => void,
+  /**
+   * 加载之后回调
+   * @returns 
+   */
+  afterSave?: (data: unknown) => void,
 }
-export interface SerializableConfig<T> extends SerializableSchemeConfig {
+export interface SerializableConfig<T> {
   /**
    * 序列化预设
    */
@@ -139,6 +162,11 @@ export interface SerializableConfig<T> extends SerializableSchemeConfig {
    * @returns 
    */
   loadOverride?: (data : T) => SerializableObject<T>;
+  /**
+   * 覆盖默认混合函数
+   * @returns 
+   */
+  mergeOverride?: (keyName: string, thisData : unknown, fromData : unknown) =>  SerializePropCustomRet|undefined,
 }
 
 const SerializableObjectSaveObjNameKey = '@SNK';
@@ -160,12 +188,8 @@ export class SerializableObject<T> {
   constructor(className: string, define?: T, config?: SerializableConfig<T>) {
     this.serializeClassName = className;
     this.define = define || null;
-    if (config) {
-      if (!config.serializableProperties) 
-        config.serializableProperties = [];
-      config.noSerializableProperties = config.noSerializableProperties || [];
+    if (config)
       this.serializeConfig = config;
-    }
   }
 
   protected get TAG() {
@@ -179,10 +203,7 @@ export class SerializableObject<T> {
   /**
    * Serialize config
    */
-  serializeConfig : SerializableConfig<T> = {
-    serializableProperties: [],
-    noSerializableProperties: [],
-  };
+  serializeConfig : SerializableConfig<T> = {};
   /**
    * The source define data
    */
@@ -293,7 +314,7 @@ export class SerializableObject<T> {
           return map;
         }
         default: {
-          const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
+          const forceSerializableClass = this.isForceSerializableClassProperty(config, key, parentKey);
           if (forceSerializableClass) 
             return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, obj as any);
           if (typeof className === 'string' && typeof obj === 'object') 
@@ -306,7 +327,7 @@ export class SerializableObject<T> {
       if (element instanceof Array) {
         return (element as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
       } else {
-        const forceSerializableClass = this.isForceSerializableClassProperty(key, parentKey);
+        const forceSerializableClass = this.isForceSerializableClassProperty(config, key, parentKey);
         if (forceSerializableClass) 
           return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
         return element;
@@ -316,13 +337,38 @@ export class SerializableObject<T> {
     return undefined;
   }
 
-  private getSortedKeys(object: object, reverse = false) {
+  private getSerializeScheme(scheme: string, inhertCheck?: string[]) : SerializableSchemeConfig {
+    let config: SerializableSchemeConfig|undefined =  this.serializeConfig.serializeSchemes?.[scheme];
+    if (!config && scheme === 'default')
+      config = {
+        serializableProperties: [],
+        noSerializableProperties: [],
+      };
+    if (!config)
+      throw new Error("Not found scheme: " + scheme);
+    if (config.inhertForm) {
+      if (!inhertCheck)
+        inhertCheck = [ scheme ];
+      else {
+        if (inhertCheck.includes(config.inhertForm))
+          throw new Error("SerializableSchemeConfig inhertForm circular reference: " + inhertCheck.join('->'));
+        inhertCheck.push(scheme);
+      }
+      return mergeSerializableSchemeConfig(
+        this.getSerializeScheme(config.inhertForm, inhertCheck) as SerializableSchemeConfig, 
+        config
+      ) as SerializableSchemeConfig;
+    }
+    
+    return config; 
+  }
+  private getSortedKeys(config: SerializableSchemeConfig, object: object, reverse = false) {
     let keys = Object.keys(object);
-    if (this.serializeConfig.serializePropertyOrder) {
+    if (config.serializePropertyOrder) {
       const keyOrders = keys.map(key => {
         return {
           key,
-          order: this.serializeConfig.serializePropertyOrder![key] * (reverse ? 1 : -1) || 0,
+          order: config.serializePropertyOrder![key] * (reverse ? 1 : -1) || 0,
         }
       });
       keyOrders.sort((a, b) => a.order > b.order ? 1 : -1);
@@ -330,7 +376,7 @@ export class SerializableObject<T> {
     }
     return keys;
   }
-  private isPropertySerializable(key: string, config: SerializableSchemeConfig) {
+  private isPropertySerializable(config: SerializableSchemeConfig, key: string) {
     if (SerializableObjectForceNoSerializeProps.includes(key))
       return false;
     return (
@@ -340,10 +386,10 @@ export class SerializableObject<T> {
       )
     );
   }
-  private isForceSerializableClassProperty(key: string, pkey: string) {
+  private isForceSerializableClassProperty(config: SerializableSchemeConfig, key: string, pkey: string) {
     return (
-      this.serializeConfig.forceSerializableClassProperties?.[key] ||
-      this.serializeConfig.forceSerializableClassProperties?.[pkey]
+      config.forceSerializableClassProperties?.[key] ||
+      config.forceSerializableClassProperties?.[pkey]
     );
   }
 
@@ -360,17 +406,19 @@ export class SerializableObject<T> {
       return ret as unknown as K;
     }
 
-    const config: SerializableSchemeConfig|undefined = scheme ? this.serializeConfig.serializeSchemes?.[scheme] : this.serializeConfig;
-    if (!config)
-      throw new Error("Not found scheme: " + scheme ? scheme : 'default');
+    const config = this.getSerializeScheme(scheme || 'default');
+    config.beforeSave?.();
 
     const o : IKeyValueObject = {}
-    const keys = this.getSortedKeys(this, false);
+    const keys = this.getSortedKeys(config, this, false);
     for (const key of keys) {
-      if (!this.isPropertySerializable(key, config))
+      if (!this.isPropertySerializable(config, key))
         continue;
       o[key] = this.saveProp(config, key, '', (this as unknown as Record<string, IKeyValueObject>)[key]) as ISaveableTypes;
     }
+
+    config.afterSave?.(o);
+
     return o as unknown as K;
   }
   /**
@@ -391,18 +439,21 @@ export class SerializableObject<T> {
       this.serializeConfig.loadOverride = loadOverride;
       return ret;
     }
-    const config: SerializableSchemeConfig|undefined = scheme ? this.serializeConfig.serializeSchemes?.[scheme] : this.serializeConfig;
-    if (!config)
-      throw new Error("Not found scheme: " + scheme ? scheme : 'default');
+
+    const config = this.getSerializeScheme(scheme || 'default');
+    config.beforeLoad?.(data);
 
     this.define = data;
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
-    const keys = this.getSortedKeys(data as object, true);
+    const keys = this.getSortedKeys(config, data as object, true);
     for (const key of keys) {
-      if (!this.isPropertySerializable(key, config))
+      if (!this.isPropertySerializable(config, key))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }
+
+    config.afterLoad?.();
+
     return this;
   }
   /**
@@ -411,13 +462,11 @@ export class SerializableObject<T> {
    * @returns Return this 
    */
   loadShadow(data: T, scheme?: string) : IKeyValueObject {
-    const config: SerializableSchemeConfig|undefined = scheme ? this.serializeConfig.serializeSchemes?.[scheme] : this.serializeConfig;
-    if (!config)
-      throw new Error("Not found scheme: " + scheme ? scheme : 'default');
+    const config = this.getSerializeScheme(scheme || 'default');
     const o : IKeyValueObject = {} as unknown as IKeyValueObject;
-    const keys = this.getSortedKeys(data as object, true);
+    const keys = this.getSortedKeys(config, data as object, true);
     for (const key of keys) {
-      if (!this.isPropertySerializable(key, config))
+      if (!this.isPropertySerializable(config, key))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }
@@ -433,6 +482,15 @@ export class SerializableObject<T> {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
         const element = data[key];
         const thisEle = o[key];
+
+        if (this.serializeConfig.mergeOverride) {
+          const ret = this.serializeConfig.mergeOverride(key, thisEle, element);
+          if (ret?.return)
+            o[key] = ret.return as any;
+          if (ret?.parsed)
+            continue;
+        }
+
         if (typeof element === 'object' && typeof thisEle === 'object') {
           if (element instanceof Map && thisEle instanceof Map) {
             o[key] = ObjectUtils.mergeMap(thisEle, element) as any;

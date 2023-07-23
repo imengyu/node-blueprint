@@ -35,117 +35,121 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
 
   constructor(define: INodeGraphDefine, parent: NodeDocunment|NodeGraph, isEditor: boolean) {
     super('NodeGraph', define, {
-      serializeAll: true,
-      serializableProperties: [],
-      serializePropertyOrder: {
-        'nodes': 1,
-        'connectors': 3,
-      },
-      noSerializableProperties: [
-        'docunment',
-        'fileChanged',
-        'activeEditor',
-        'isEditor',
-        'parent',
-      ],     
-      forceSerializableClassProperties: {
-        children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
-      },
-      //加载与保存
-      loadProp: (key, parentKey, source) => {
-        switch (parentKey) {
-          case 'nodes': {
-            const { 
-              uid, 
-              guid, 
-              node
-            } = source as INodeSaveData;
-            const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
-            if (!nodeDefine) {
-              printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
-              return undefined;
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          serializableProperties: [],
+          serializePropertyOrder: {
+            'nodes': 1,
+            'connectors': 3,
+          },
+          noSerializableProperties: [
+            'docunment',
+            'fileChanged',
+            'activeEditor',
+            'isEditor',
+            'parent',
+          ],     
+          forceSerializableClassProperties: {
+            children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
+          },
+          //加载与保存
+          loadProp: (key, parentKey, source) => {
+            switch (parentKey) {
+              case 'nodes': {
+                const { 
+                  uid, 
+                  guid, 
+                  node
+                } = source as INodeSaveData;
+                const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
+                if (!nodeDefine) {
+                  printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
+                  return undefined;
+                }
+              
+                const nodeInstance = this.createNode(nodeDefine);
+                const shadowSettings = nodeInstance.loadShadow(node, 'graph');
+                nodeInstance.mergeShadow(shadowSettings);
+    
+                return {
+                  parsed: true,
+                  return: nodeInstance
+                };
+              }
+              case 'connectors': {
+                const { uid, startPort, endPort } = source as INodeConnectorSaveData;
+                const startNode = this.nodes.get(startPort.nodeUid);
+                const endNode = this.nodes.get(endPort.nodeUid);
+                if (!startNode) {
+                  printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
+                  return undefined;
+                }
+                if (!endNode) {
+                  printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
+                  return undefined;
+                }
+                
+                const startPortInstance = startNode.getPortByGUID(startPort.portUid);
+                const endPortInstance = endNode.getPortByGUID(endPort.portUid);
+                if (!startPortInstance) {
+                  printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
+                  return undefined;
+                }
+                if (!endPortInstance) {
+                  printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
+                  return undefined;
+                }
+    
+                const connector = (isEditor ? 
+                  CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
+                  CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
+                
+                connector.startPort = startPortInstance;
+                connector.endPort = endPortInstance;
+    
+                return {
+                  parsed: true,
+                  return: connector
+                };
+              }
             }
-          
-            const nodeInstance = this.createNode(nodeDefine);
-            const shadowSettings = nodeInstance.loadShadow(node, 'graph');
-            nodeInstance.mergeShadow(shadowSettings);
-
-            return {
-              parsed: true,
-              return: nodeInstance
-            };
-          }
-          case 'connectors': {
-            const { uid, startPort, endPort } = source as INodeConnectorSaveData;
-            const startNode = this.nodes.get(startPort.nodeUid);
-            const endNode = this.nodes.get(endPort.nodeUid);
-            if (!startNode) {
-              printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
-              return undefined;
+            return { parsed: false };
+          },
+          saveProp: (key, parentKey, source) => {
+            switch (parentKey) {
+              case 'nodes': {
+                const node = source as Node;
+                return {
+                  parsed: true,
+                  return: {
+                    guid: node.guid,
+                    uid: node.uid,
+                    node: node.save<INodeDefine>('graph'),
+                  } as INodeSaveData,
+                };
+              }
+              case 'connectors': {
+                const connector = source as NodeConnector;
+                return {
+                  parsed: true,
+                  return: {
+                    uid: connector.uid,
+                    startPort: {
+                      nodeUid: connector.startPort?.parent.uid,
+                      portUid: connector.startPort?.guid,
+                    },
+                    endPort: {
+                      nodeUid: connector.endPort?.parent.uid,
+                      portUid: connector.endPort?.guid,
+                    },
+                  } as INodeConnectorSaveData
+                };
+              }
             }
-            if (!endNode) {
-              printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
-              return undefined;
-            }
-            
-            const startPortInstance = startNode.getPortByGUID(startPort.portUid);
-            const endPortInstance = startNode.getPortByGUID(endPort.portUid);
-            if (!startNode) {
-              printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
-              return undefined;
-            }
-            if (!endNode) {
-              printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
-              return undefined;
-            }
-
-            const connector = (isEditor ? 
-              CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
-              CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
-            
-            connector.startPort = startPortInstance;
-            connector.endPort = endPortInstance;
-
-            return {
-              parsed: true,
-              return: connector
-            };
-          }
-        }
-        return { parsed: false };
-      },
-      saveProp: (key, parentKey, source) => {
-        switch (parentKey) {
-          case 'nodes': {
-            const node = source as Node;
-            return {
-              parsed: true,
-              return: {
-                guid: node.guid,
-                uid: node.uid,
-                node: node.save<INodeDefine>('graph'),
-              } as INodeSaveData,
-            };
-          }
-          case 'connectors': {
-            const connector = source as NodeConnector;
-            return {
-              parsed: true,
-              return: {
-                uid: connector.uid,
-                startPort: {
-                  nodeUid: connector.startPort?.parent.uid,
-                  portUid: connector.startPort?.guid,
-                },
-                endPort: {
-                  nodeUid: connector.endPort?.parent.uid,
-                  portUid: connector.endPort?.guid,
-                },
-              } as INodeConnectorSaveData
-            };
-          }
-        }
-        return { parsed: false };
+            return { parsed: false };
+          },
+        },
       },
     });
     this.parent = parent;

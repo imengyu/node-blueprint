@@ -521,27 +521,6 @@ function registerDebugBase() {
   return [ blockDebug, blockAssert, blockTrace  ]
 }
 
-/**
- *   const blockDebug : INodeDefine = {
-    guid: '4B6EA737-9702-A383-A268-AADC332038DF',
-    name: '输出日志',
-    description: '输出调试日志至控制台',
-    author: 'imengyu',
-    version: 1,
-    category: '基础/调试',
-    ports: [
-    ],
-    style: {
-      logo: NodeIconEntryTrace,
-      titleBakgroundColor: "rgba(120,200,254,0.6)",
-    },
-    simulate: {
-      onPortExecuteIn: (block, port) => {
-      }
-    },
-  };
- */
-
 function registerTypeBase() {
 
   const blockString : INodeDefine = {

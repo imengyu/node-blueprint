@@ -75,7 +75,11 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
   constructor() {
     super('NodeParamType', undefined, {
-      serializableProperties: [],
+      serializeSchemes: {
+        default: {
+          serializableProperties: [],
+        }
+      },
       loadOverride: (data) => {
         return NodeParamTypeRegistry.getInstance().getTypeByString((data as unknown as IKeyValueObject).name as string)
           || NodeParamTypeRegistry.getInstance().getTypeByString('any') as NodeParamType;

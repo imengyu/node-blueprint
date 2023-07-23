@@ -12,16 +12,31 @@ export class NodePort extends SerializableObject<INodePortDefine> {
 
   constructor(define: INodePortDefine, parent: Node) {
     super('NodePort', define, {
-      serializeAll: true,
-      noSerializableProperties: [
-        'guid',
-        'editorState',
-        'connectedFromPort',
-        'connectedToPort',
-        'state',
-        'pos',
-        'parent',
-      ],
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          noSerializableProperties: [
+            'guid',
+            'editorState',
+            'connectedFromPort',
+            'connectedToPort',
+            'state',
+            'pos',
+            'parent',
+          ],
+          afterLoad: () => {
+            if (this.paramDefaultValue !== undefined)
+              this.initialValue = this.paramDefaultValue;
+          },
+        },
+        onlyValues: {
+          serializableProperties: [
+            'guid',
+            'dyamicAdd',
+            'initialValue'
+          ],
+        },
+      },
     });
     this.parent = parent as Node;
     this.define = define;
@@ -44,6 +59,10 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   paramType: NodeParamType = NodeParamType.Any;
   /**
+   * 参数默认值，在创建节点时使用
+   */
+  paramDefaultValue = undefined;
+  /**
    * 端口方向
    */
   direction: NodePortDirection = 'input';
@@ -60,7 +79,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   connectedToPort: Array<NodeConnector> = [];
   /**
-   * 端口参数默认值
+   * 端口参数初始值，表示用户设置的在图表开始运行时，此端口的值
    */
   initialValue : unknown = null;
   /**
@@ -97,10 +116,11 @@ export class NodePort extends SerializableObject<INodePortDefine> {
   forceNoCycleDetection = false;
 
   public getValue() : unknown {
-    return null;
+    return this.initialValue;
   }
   public setValue(value: unknown) {
     //TODO: setValue
+    this.initialValue = value;
   }
 
   /**
@@ -199,7 +219,7 @@ export interface INodePortDefine {
    */
   paramType: NodeParamType;
   /**
-   * 端口参数默认值
+   * 端口参数默认值，在创建节点时使用
    */
   paramDefaultValue?: unknown,
   /**
@@ -239,7 +259,7 @@ export interface INodePortDefine {
    */
   isFlexible?: boolean;
   /**
-   * 这个端口的起始值，默认为null
+   * 端口参数初始值，表示用户设置的在图表开始运行时，此端口的值，默认为null
    */
   initialValue ?: ISaveableTypes|null,
   /**

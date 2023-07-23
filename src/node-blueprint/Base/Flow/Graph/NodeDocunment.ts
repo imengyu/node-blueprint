@@ -9,18 +9,22 @@ import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunme
 export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
   constructor(define?: INodeDocunmentDefine, isEditor?: boolean) {
     super('NodeDocunment', define, {
-      serializableProperties: [
-        'uid',
-        'name',
-        'comment',
-        'version',
-        'description',
-        'author',
-        'mainGraph',
-      ],
-      forceSerializableClassProperties: {
-        mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
-      },
+      serializeSchemes: {
+        default: {
+          serializableProperties: [
+            'uid',
+            'name',
+            'comment',
+            'version',
+            'description',
+            'author',
+            'mainGraph',
+          ],
+          forceSerializableClassProperties: {
+            mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
+          },
+        },
+      }
     });
     this.isEditor = isEditor === true;
   }
