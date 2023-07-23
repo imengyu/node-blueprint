@@ -14,7 +14,6 @@ export class NodeConnectorEditor extends NodeConnector {
 
   constructor(define?: INodeConnectorDefine) {
     super(define);
-    this.updatePortValue();
   }
 
   public hover = false;
@@ -70,6 +69,9 @@ export class NodeConnectorEditor extends NodeConnector {
       this.rect.y -= 3;
       this.rect.w += 6;
       this.rect.h += 6;
+
+      if (this.colorGradient)
+        this.colorGradientNeedCreate = true;
     }
     return this.rect;
   }
@@ -126,9 +128,12 @@ export class NodeConnectorEditor extends NodeConnector {
         //渐变的创建
         if(this.colorGradientNeedCreate) {
           this.colorGradientNeedCreate = false;
-          this.colorGradient = ctx.createLinearGradient(0, 0, this.rect.w, 0);
-          this.colorGradient.addColorStop(0, this.startColor);
-          this.colorGradient.addColorStop(1, this.endColor);
+          this.colorGradient = ctx.createLinearGradient(
+            this.tempPoint1.x, this.tempPoint1.y, 
+            this.tempPoint2.x, this.tempPoint2.y, 
+          );
+          this.colorGradient.addColorStop(0.2,this.startColor);
+          this.colorGradient.addColorStop(0.8, this.endColor);
         } else if(this.colorGradient) {
           ctx.strokeStyle = this.colorGradient;
           ctx.fillStyle = this.colorGradient;

@@ -209,6 +209,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       setTimeout(() => {
         graph.connectors.forEach((connector) => {
           addConnector(connector as NodeConnectorEditor);
+          (connector as NodeConnectorEditor).updatePortValue();
           context.connectorSuccessSetState(connector as NodeConnectorEditor);
         });
         resolve();
