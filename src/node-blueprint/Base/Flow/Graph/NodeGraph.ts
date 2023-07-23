@@ -107,7 +107,15 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                 
                 connector.startPort = startPortInstance;
                 connector.endPort = endPortInstance;
-    
+           
+                if (connector.startPort.direction === 'input') {
+                  connector.startPort.connectedFromPort.push(connector);
+                  connector.endPort.connectedToPort.push(connector);
+                } else {
+                  connector.startPort.connectedToPort.push(connector);
+                  connector.endPort.connectedFromPort.push(connector);
+                }
+
                 return {
                   parsed: true,
                   return: connector

@@ -287,7 +287,6 @@ function getDocunmentByUid(uid: string) {
  * 文档更改事件
  */
 function onCurrentActiveDocunmentChanged() {
-  currentActiveGraph.value = null;
   currentActiveNodes.value = [];
   currentActiveConnectors.value = [];
 }
@@ -407,6 +406,7 @@ function onActiveTabChange(currentActive: DockPanel) {
     const doc = getDocunmentByUid(currentActive.key.substring(10));
     if (doc) {
       currentActiveDocunment.value = doc;
+      currentActiveGraph.value = doc.activeEditor?.getActiveGraph() || null;
       onCurrentActiveDocunmentChanged();
     }
   }

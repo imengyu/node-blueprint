@@ -198,19 +198,22 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * @param graph 
    */
   function loadGraph(graph: NodeGraph) {
-    closeGraph();
-    graph.nodes.forEach((node) => {
-      pushNodes(node as NodeEditor);
-    });
-    setTimeout(() => {
-      graph.connectors.forEach((connector) => {
-        addConnector(connector as NodeConnectorEditor);
-        context.connectorSuccessSetState(connector as NodeConnectorEditor);
+    return new Promise<void>((resolve) => {
+      closeGraph();
+      graph.nodes.forEach((node) => {
+        pushNodes(node as NodeEditor);
       });
-    }, 200);
-    
-    graph.activeEditor = context;
-    currentGraph.value = graph;
+      graph.activeEditor = context;
+      currentGraph.value = graph;
+
+      setTimeout(() => {
+        graph.connectors.forEach((connector) => {
+          addConnector(connector as NodeConnectorEditor);
+          context.connectorSuccessSetState(connector as NodeConnectorEditor);
+        });
+        resolve();
+      }, 200);
+    });
   }
 
   function addNodes(nodes: NodeEditor[]) {
