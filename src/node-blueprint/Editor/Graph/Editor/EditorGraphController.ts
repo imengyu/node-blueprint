@@ -191,7 +191,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * 标记当前图表已经被用户修改
    */
   function markGraphChanged() {
-    //TODO: markGraphChanged
+    if (currentGraph.value)
+      currentGraph.value.fileChanged = true;
   }
   /**
    * 加载图表

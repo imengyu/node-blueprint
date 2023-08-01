@@ -1,11 +1,12 @@
 import { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
-import type { INodeDefine, Node, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { Node, INodeDefine, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 
 export interface NodeEditorUserControllerContext {
   /**
@@ -70,6 +71,11 @@ export interface NodeEditorUserControllerContext {
    * @param baseNode 
    */
   moveViewportToNode(baseNode : NodeEditor) : void; 
+
+  /**
+   * 为选中项创建注释
+   */
+  genCommentForSelectedNode() : void;
 }
 
 /**
@@ -308,7 +314,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
   /**
    * 移动视口至节点中心位置
-   * @param baseNode 
+   * @param node 
    */
   function moveViewportToNode(node : Node) {
     const size = (node as NodeEditor).getRealSize();
@@ -319,6 +325,21 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     );
     viewPort.scaleScreenSizeToViewportSize(offset);
     viewPort.position = new Vector2(node.position).add(offset);
+  }
+
+  /**
+   * 为选中项创建注释
+   */
+  function genCommentForSelectedNode() {
+    const selectedNodes = context.getSelectNodes();
+    if (selectedNodes.length < 0)
+      return;
+
+    const rect = context.calcNodesRegion(selectedNodes);
+    const node = userAddNode(BaseNodes.getScriptBaseCommentNode(), new Vector2(rect.x - 15, rect.y - 15 - 50));
+    if (node) {
+      node.customSize.set(rect.w + 30, rect.h + 30 + 50);
+    }
   }
 
   context.userAddNode = userAddNode;
@@ -332,6 +353,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.alignSelectedNode = alignSelectedNode;
   context.setSelectedNodeBreakpointState = setSelectedNodeBreakpointState;
   context.moveViewportToNode = moveViewportToNode;
+  context.genCommentForSelectedNode = genCommentForSelectedNode;
 
   return {}
 }

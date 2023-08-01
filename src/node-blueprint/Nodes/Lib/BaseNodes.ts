@@ -196,7 +196,7 @@ function registerScriptBase()  {
       titleBakgroundColor: "rgba(255,20,147,0.6)",
       titleState: 'hide',
     },
-    simulate: {
+    exec: {
       onPortParamRequest: () => {
         //TODO: return getCurrentPlatform()
       }
@@ -243,7 +243,7 @@ function registerScriptBase()  {
       logo: NodeIconClock,
       logoRight: NodeIconClock,
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (node, port) => {
         /* let v = node.getInputParamValue('TIME');
         let context = node.currentRunningContext;
@@ -301,7 +301,7 @@ function registerScriptBase()  {
         defaultConnectPort: false,
       },
     ],
-    simulate: {
+    exec: {
       onPortExecuteIn: (node, port) => {
         /* let context = node.currentRunningContext;
         let variables = node.variables();
@@ -352,6 +352,7 @@ function registerDebugBase() {
     typeTitle: '输出日志等级',
     baseType: 'enum',
     options: [ 'log', 'info', 'warn', 'error' ],
+    autoCreateEnumConverter: true,
     defaultValue: () => '',
   });
 
@@ -405,7 +406,7 @@ function registerDebugBase() {
         paramType: NodeParamType.Execute,
       },
     ],
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
         /* let con = node.getInputParamValue('CONDITION');
         let throwError = node.getInputParamValue('THROWERR');
@@ -450,7 +451,7 @@ function registerDebugBase() {
       logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
         //打印调用堆栈
         //logger.log(node.getName(), node.currentRunningContext.runner.mainContext.printCallStack(true));
@@ -512,7 +513,7 @@ function registerDebugBase() {
       logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
       }
     },
@@ -550,7 +551,7 @@ function registerTypeBase() {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
       }
     },
@@ -582,7 +583,7 @@ function registerTypeBase() {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
       }
     },
@@ -614,7 +615,7 @@ function registerTypeBase() {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (block, port) => {
       }
     },
@@ -876,7 +877,7 @@ function registerConvertNode() {
       titleState: 'hide',
       titleBakgroundColor: "rgba(250,250,250,0.6)",
     },
-    simulate: {
+    exec: {
       onPortExecuteIn: (node, port) => {
         /**
          * let coverter = <NodeParameterTypeConverterData>node.data['coverter'];
@@ -937,7 +938,7 @@ function registerConnNode() {
         node.addClass('node-block-extended-line');
       },
     },
-    simulate: {
+    exec: {
       onPortParamRequest() {
 
       },

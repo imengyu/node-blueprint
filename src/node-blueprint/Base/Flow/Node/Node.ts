@@ -80,7 +80,7 @@ export class Node extends SerializableObject<INodeDefine> {
             ports: 'NodePort',
             style: 'NodeStyleSettings',
             events: 'NodeEventSettings',
-            simulate: 'NodeSimulateSettings',
+            simulate: 'NodeExecSettings',
           },
         },
         graph: {
@@ -313,9 +313,9 @@ export interface INodeDefine {
    */
   hideInAddPanel ?: boolean;
   /**
-   * 单元模拟设置
+   * 单元运行设置
    */
-  simulate ?: INodeSimulateSettings;
+  exec ?: INodeExecSettings;
   /**
    * [仅编辑器可用] 指定这个单元在每个图表中是否只能出现一次。默认为 false
    */
@@ -634,9 +634,9 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
 }
 
 /**
- * 单元模拟运行设置
+ * 单元运行设置
  */
-export interface INodeSimulateSettings {
+export interface INodeExecSettings {
   /**
    * 当图表开始运行
    */
@@ -657,8 +657,8 @@ export interface INodeSimulateSettings {
 /**
  * 单元自定义事件设置
  */
-export class NodeSimulateSettings extends SerializableObject<INodeSimulateSettings> {
-  constructor(define?: INodeSimulateSettings) {
+export class NodeExecSettings extends SerializableObject<INodeExecSettings> {
+  constructor(define?: INodeExecSettings) {
     super('NodeSimulate', define, {
       serializeSchemes: {
         default: {

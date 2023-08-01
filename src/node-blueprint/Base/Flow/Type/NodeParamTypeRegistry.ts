@@ -67,7 +67,8 @@ export class NodeParamTypeRegistry extends Singleton {
     this.allTypes.set(defString, newType);
 
     if(newType.baseType === 'enum' && define.autoCreateEnumConverter) {
-      //TODO: CreateEnumConverter
+      //创建枚举类型的转换器
+      this.createEnumDefaultConverter(newType);
     }
 
     this.onTypeChanged.invoke('add', defString, newType);
@@ -84,6 +85,43 @@ export class NodeParamTypeRegistry extends Singleton {
     }
     this.allTypes.delete(name);
     this.onTypeChanged.invoke('remove', name);
+  }
+
+  /**
+   * 创建枚举类型的转换器，
+   * 默认支持 ：
+   * * 字符串转换 string->enum /enum->string
+   * * 索引转换 number->enum /enum->number
+   */
+  private createEnumDefaultConverter(newType: NodeParamType) {
+    this.registerTypeCoverter({
+      fromType: NodeParamType.String,
+      toType: newType,
+      converter(source) { return source; },
+    });
+    this.registerTypeCoverter({
+      fromType: NodeParamType.Number,
+      toType: newType,
+      converter(source) {
+        if (newType.define?.options)
+          return newType.define.options[source]; 
+        return null;
+      },
+    });
+    this.registerTypeCoverter({
+      fromType: newType,
+      toType: NodeParamType.String,
+      converter(source) { return source; },
+    });
+    this.registerTypeCoverter({
+      fromType: newType,
+      toType: NodeParamType.Number,
+      converter(source) { 
+        if (newType.define?.options)
+          return newType.define.options.indexOf(source); 
+        return 0;
+      },
+    });
   }
 
   /**

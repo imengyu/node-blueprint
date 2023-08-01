@@ -548,7 +548,8 @@ const dragMouseHandler = createMouseDragHandler({
       updateNodeForMoveEnd();
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
-      context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
+      if (!props.instance.selected)
+        context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
     }
   },
 })

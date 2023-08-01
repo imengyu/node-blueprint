@@ -177,7 +177,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         { 
           label: "为选中项创建注释", 
           disabled: selectedCount < 2,
-          onClick: () => {/*TODO: context.genCommentForSelectedNode() */} 
+          onClick: () => context.genCommentForSelectedNode() 
         },
       ]
     );
