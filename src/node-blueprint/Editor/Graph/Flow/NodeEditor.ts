@@ -3,6 +3,8 @@ import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { ChunkInstance } from "../Cast/ChunkedPanel";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
+import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
+import type { NodeContextMenuItem } from "../Editor/EditorContextMenuHandler";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
@@ -54,6 +56,8 @@ export class NodeEditor extends Node {
   public connectors = [] as NodeConnectorEditor[];
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
+  public editorProp ?: PropControlItem[];
+  public menu ?: { items: NodeContextMenuItem[] };
   
   /**
    * 保存块当前位置，以供移动使用

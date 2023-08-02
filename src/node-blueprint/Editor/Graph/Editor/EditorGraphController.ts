@@ -171,6 +171,9 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       //断开所有连接
       context.unConnectNodeConnectors(node);
 
+      if (currentGraph.value)
+        currentGraph.value.nodes.delete(node.uid);
+        
       node.editorHooks.callbackOnRemoveFromEditor?.();
 
       //删除

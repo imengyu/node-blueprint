@@ -71,7 +71,8 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                 const nodeInstance = this.createNode(nodeDefine);
                 const shadowSettings = nodeInstance.loadShadow(node, 'graph');
                 nodeInstance.mergeShadow(shadowSettings);
-    
+                nodeInstance.events.onCreate?.(nodeInstance);
+
                 return {
                   parsed: true,
                   return: nodeInstance

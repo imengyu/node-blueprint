@@ -1,8 +1,10 @@
 $custom-editor-base-color: rgba(104, 104, 104, 0.5);
 
+//编辑器样式
 .node-custom-editor {
   display: inline-block;
 
+  //输入框
   input[type="text"],input[type="password"], textarea, select, .prop-box {
     display: inline-block;
     padding: 2px 5px;
@@ -35,7 +37,7 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
     }
 
     &.input-border {
-      border: 21px solid transparent;
+      border: 2px solid transparent;
     }
     &.input-error {
       border: 2px solid #f76758!important;
@@ -45,12 +47,24 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
     }
   }
 
+  //复选框
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    border-radius: 3px;
+    background-color: $custom-editor-base-color;
+  }
+
+  //结束图标
   .end-icon {
     display: inline-block;
     vertical-align: middle;
     padding: 3px 0 0 0;
   }
 }
+
+//选择框
 .node-checkbox {
   vertical-align: middle;
   display: inline-block;

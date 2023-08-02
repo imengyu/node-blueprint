@@ -11,6 +11,7 @@ import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/E
 import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import type { PropControlItem } from "../../Editor/PropDefine";
 
 const TAG = 'Node';
 
@@ -41,8 +42,6 @@ export class Node extends SerializableObject<INodeDefine> {
             printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
           }
         });
-    
-        this.events.onCreate?.(this);
         return ret;
       },
       mergeOverride(keyName, thisData, fromData) {
@@ -266,7 +265,6 @@ export class Node extends SerializableObject<INodeDefine> {
       printError(this.getName(), 'changePortParamType: Must provide port');
     else if(port.parent === this) {
       port.paramType = newType;
-      port.define.paramType = newType;
       //TODO: 弹性端口
     }
   }
@@ -316,6 +314,7 @@ export interface INodeDefine {
    * 单元运行设置
    */
   exec ?: INodeExecSettings;
+
   /**
    * [仅编辑器可用] 指定这个单元在每个图表中是否只能出现一次。默认为 false
    */
@@ -348,10 +347,6 @@ export interface INodeDefine {
    * [仅编辑器可用] 单元的自定义事件控制
    */
   events ?: INodeEventSettings;
-  /**
-   * [仅编辑器可用] 单元的右键菜单操作
-   */
-  menu ?: { items: NodeContextMenuItem[] },
 
   options?: CustomStorageObject;
   markContent?: string;
@@ -367,6 +362,17 @@ export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, conte
 export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
 export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up" | "leave" | "enter", e: MouseEvent) => boolean;
 export type NodeEditorEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "select" | "unselect") => void;
+
+export interface NodeEditorCreateReturnData {
+  /**
+   * [仅编辑器可用] 指定这个单元在属性栏中附加的属性
+   */
+  editorProp ?: PropControlItem[],
+  /**
+   * [仅编辑器可用] 单元的右键菜单操作
+   */
+  menu ?: { items: NodeContextMenuItem[] },
+}
 
 /**
  * 单元自定义事件设置
@@ -414,7 +420,7 @@ export interface INodeEventSettings {
   /**
    * 编辑器创建回调
    */
-  onEditorCreate ?: NodeEditorEventCallback<void, HTMLDivElement>,
+  onEditorCreate ?: NodeEditorEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>,
   /**
    * 用户添加了一个端口时的回调。
    */
@@ -494,7 +500,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
     type : 'execute'|'param',
   }>;
   onRemoveFormEditor ?: NodeEventCallback;
-  onEditorCreate ?: NodeEditorEventCallback<void, HTMLDivElement>;
+  onEditorCreate ?: NodeEditorEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;
   onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;

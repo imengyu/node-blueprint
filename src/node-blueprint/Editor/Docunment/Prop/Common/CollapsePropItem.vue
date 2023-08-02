@@ -84,6 +84,7 @@ const splterDrageHandler = createMouseDragHandler({
     }
   }
   > span {
+    flex-shrink: 0;
     padding: 4px;
     display: inline-block;
     text-align: right;

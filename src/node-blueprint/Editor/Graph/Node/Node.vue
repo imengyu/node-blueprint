@@ -229,7 +229,11 @@ onMounted(() => {
     appendClass.value.push(cls);
   };
   nextTick(() => {
-    instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
+    const ret = instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
+    if (ret && typeof ret === 'object') {
+      instance.value.editorProp = ret.editorProp;
+      instance.value.menu = ret.menu;
+    }
     updateComment();
   })
 });

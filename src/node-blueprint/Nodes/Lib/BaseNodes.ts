@@ -936,6 +936,22 @@ function registerConnNode() {
       },
       onEditorCreate: (node, el) => {
         node.addClass('node-block-extended-line');
+
+        return {
+          editorProp: [
+            { 
+              type: 'check',
+              title: '是否是执行',
+              getValue: () => node.options['type'] as string === 'execute',
+              onUpdateValue(newValue) {
+                node.options['type'] = newValue ? 'execute' : 'any';
+                const paramType = newValue ? NodeParamType.Execute : NodeParamType.Any;
+                node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 
+                node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 
+              },
+            },
+          ],
+        }
       },
     },
     exec: {
