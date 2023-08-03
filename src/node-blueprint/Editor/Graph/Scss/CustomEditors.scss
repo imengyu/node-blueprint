@@ -8,6 +8,7 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
   input[type="text"],input[type="password"], textarea, select, .prop-box {
     display: inline-block;
     padding: 2px 5px;
+    border: 1px solid transparent;
     background-color: $custom-editor-base-color;
     color: rgb(255, 255, 255);
     outline: none;

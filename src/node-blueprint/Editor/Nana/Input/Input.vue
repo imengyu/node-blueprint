@@ -84,6 +84,13 @@ function onInput(e: Event) {
 
 <style lang="scss">
 .nana-input {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+  input {
+    flex: 1;
+  }
 
   &.disabled {
     

@@ -1,5 +1,5 @@
 <template>
-  <div ref="propItem" class="prop-item">
+  <div v-if="filterShow" ref="propItem" class="prop-item">
     <span :style="{ width: `${titleSize}%` }">{{ title }}</span>
     <div v-if="resizeable" class="prop-split" @mousedown="splterDrageHandler" />
     <div :style="{ width: `${editorSize}%` }" class="prop-item-editor">
@@ -16,7 +16,7 @@ import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
 const propItem = ref<HTMLElement>();
 
-defineProps({
+const prop = defineProps({
   title: {
     type: String,
     default: '',
@@ -27,11 +27,17 @@ defineProps({
   },
 });
 
-const { gridSize, updateGridSize } = inject<PropBoxContext>('PropBoxContext', {
+const { gridSize, updateGridSize, filterProp } = inject<PropBoxContext>('PropBoxContext', {
+  filterProp: ref(''),
   gridSize: ref(0.5),
   updateGridSize() {},
 });
 
+const filterShow = computed(() => {
+  if (!filterProp.value)
+    return true;
+  return prop.title.includes(filterProp.value);
+});
 const titleSize = computed(() => gridSize.value * 100);
 const editorSize = computed(() => (1 - gridSize.value) * 100);
 
