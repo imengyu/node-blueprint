@@ -5,16 +5,18 @@
     <div 
       v-if="instance" 
       :class="'node-port '+instance.state"
-      @contextmenu="onContextMenu($event)"
-      @mouseenter="onPortMouseEnter"
-      @mouseleave="onPortMouseLeave"
-      @mousedown="onPortMouseDown($event)"
     >
       <div v-if="instance.direction === 'output' && instance.forceEditorControlOutput" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
-      <div class="default-content">
+      <div 
+        class="default-content"
+        @contextmenu="onContextMenu($event)"
+        @mouseenter="onPortMouseEnter"
+        @mouseleave="onPortMouseLeave"
+        @mousedown="onPortMouseDown($event)"
+      >
         <!--删除端口按扭-->
         <Tooltip v-if="instance.dyamicAdd" content="删除参数">
           <Icon class="delete" icon="icon-close" @click="onDeleteParam" />

@@ -14,12 +14,34 @@ export interface NodeEditorMouseControllerContext {
   getMouseHandler: () => EditorMousHandlerExtendHandlers,
 }
 
+const noDragControl = [
+  'node-editor-no-move',
+  'param-editor',
+]
+
 //鼠标事件目标元素是否不可拖动
 export function isMouseEventInNoDragControl(e: MouseEvent) {
+  const stopElement = e.currentTarget;
+
+  function checkElement(el: HTMLElement) {
+    for (const c of noDragControl) {
+      if (el.classList.contains(c))
+        return true;
+    }
+    return false;
+  }
+
+  function checkLoop(el: HTMLElement) {
+    if (checkElement(el))
+      return true;
+    if (el.parentNode && el.parentNode !== stopElement)
+      return checkLoop(el.parentNode as HTMLElement);
+    return false;
+  }
+
   return (
     HtmlUtils.isEventInControl(e) 
-    || (e.target as HTMLElement).classList.contains('node-editor-no-move')
-    
+    || checkLoop(e.target as HTMLElement)
   );
 }
 

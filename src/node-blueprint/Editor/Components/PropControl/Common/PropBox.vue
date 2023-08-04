@@ -30,13 +30,9 @@ const props = defineProps({
     type: Number,
     default: 0.2,
   },
-  innerClass: {
-    type: String,
-    default: '',
-  },
 });
 
-const gridSize = ref(0.5);
+const gridSize = ref(0.3);
 const filterProp = ref("");
 
 provide<PropBoxContext>('PropBoxContext', {

@@ -573,9 +573,13 @@ export interface INodeStyleSettings {
    */
   noComment?: boolean;
   /**
-   * 是否隐logo
+   * 是否隐藏logo
    */
   noLogo ?: boolean;
+  /**
+   * 是否永远保持常亮，没有孤立节点暗色显示，默认：false
+   */
+  noIsolate ?: boolean;
   /**
    * 单元最小宽度(px)
    */
@@ -637,6 +641,7 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
   public noTooltip = false;
   public noComment = false;
   public noLogo = false;
+  public noIsolate = false;
   public minWidth = 0;
   public minHeight = 0;
   public maxWidth = 0;

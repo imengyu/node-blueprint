@@ -121,6 +121,7 @@ function registerScriptBase()  {
     style: {
       logo: NodeIconEntryGo,
       titleBakgroundColor: "rgba(25,25,112,0.6)",
+      noIsolate: true,
     },
     events: {
       onAddCheck(node, graph) {
@@ -153,6 +154,7 @@ function registerScriptBase()  {
     style: {
       logo: NodeIconEntryExit,
       titleBakgroundColor: "rgba(112,30,133,0.6)",
+      noIsolate: true,
     },
     events: {
       onAddCheck(node, graph) {

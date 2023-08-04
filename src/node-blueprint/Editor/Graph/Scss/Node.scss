@@ -33,6 +33,10 @@
     }
   }
 
+  &.isolate:not(.selected) {
+    opacity: 0.7;
+  }
+
   &.round {
     border-radius: 30px;
   }

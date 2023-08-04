@@ -501,6 +501,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       invokeOnPortConnect(endPort, startPort);
     }
 
+
     //添加线段
     if (connector !== null) {
       context.addConnector(connector);
@@ -515,6 +516,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     endPort.state = "active";
     startPort.connectedFromPort.push(connector);
     startPort.state = "active";
+    
+    //更新孤立状态
+    (startPort.parent as NodeEditor).checkIsolate();
+    (endPort.parent as NodeEditor).checkIsolate();
   }
   /**
    * 取消连接单元
@@ -525,8 +530,12 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       start = connector.startPort as NodePortEditor,
       end = connector.endPort as NodePortEditor;
 
+    const 
+      startNode = (start.parent as NodeEditor),
+      endNode = (end.parent as NodeEditor);
+
     context.unSelectConnector(connector);
-    context.removeConnector(connector );
+    context.removeConnector(connector);
 
     if (start !== null && end !== null) {
 
@@ -534,6 +543,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       start.state = start.isConnected() ? 'active' : 'normal';
       end.removeConnectByPort(start);
       end.state = end.isConnected() ? 'active' : 'normal';
+
+      startNode.checkIsolate();
+      endNode.checkIsolate();
 
       if (start.parent.events.onPortUnConnect) start.parent.events.onPortUnConnect(start.parent, start);
       if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);

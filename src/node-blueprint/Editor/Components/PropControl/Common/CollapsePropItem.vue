@@ -109,6 +109,7 @@ const splterDrageHandler = createMouseDragHandler({
     flex-shrink: 0;
     padding: 6px 14px;
     display: flex;
+    justify-content: flex-end;
     text-align: right;
     color: var(--mx-editor-text-color);
   }

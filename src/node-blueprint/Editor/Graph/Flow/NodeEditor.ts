@@ -56,6 +56,7 @@ export class NodeEditor extends Node {
   public connectors = [] as NodeConnectorEditor[];
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
+  public currentIsolateState = true;
   public nodeProp ?: { 
     before?: PropControlItem[],
     after?: PropControlItem[],
@@ -80,6 +81,42 @@ export class NodeEditor extends Node {
    */
   public getLastMovedBlock() {
     return this.editorHooks.callbackGetLastMovedBlock?.() || false;
+  }
+  /**
+   * 检查当前节点是否被孤立, 孤立节点显示暗色
+   */
+  public checkIsolate(visitedNodes?: NodeEditor[]) {
+    if (!visitedNodes)
+      visitedNodes = [];
+
+    if (visitedNodes.includes(this))
+      return this.currentIsolateState;
+    visitedNodes.push(this);
+
+    const check = () => {
+      if (this.style.noIsolate)
+        return false;
+      if (this.ports.length === 0)
+        return true;
+      for (const port of this.ports) {
+        if (port.connectedFromPort.length > 0) {
+          for (const con of port.connectedFromPort) {
+            if (!(con.startPort?.parent as NodeEditor).checkIsolate(visitedNodes))
+              return false;
+          }
+        }
+        if (port.connectedToPort.length > 0) {
+          for (const con of port.connectedToPort) {
+            if (!(con.endPort?.parent as NodeEditor).checkIsolate(visitedNodes))
+              return false;
+          }
+        }
+      }
+      return true;
+    }
+    const result = check();
+    this.currentIsolateState = result;
+    return result;
   }
 
   //通用函数

@@ -13,6 +13,7 @@
                (instance.selected ? 'selected ' : ''),
                (instance.style.customClassNames),
                (twinkleActive ? 'actived' : ''),
+               (instance.currentIsolateState ? 'isolate' : ''),
                ...appendClass
       ]"
       :style="{
@@ -166,7 +167,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType, inject, nextTick } from 'vue';
+import { onMounted, computed, ref, toRefs, type PropType, inject, nextTick } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';
@@ -244,6 +245,7 @@ onMounted(() => {
       instance.value.nodeProp = ret.nodeProp;
       instance.value.menu = ret.menu;
     }
+    instance.value.currentIsolateState = !instance.value.style.noIsolate;
     updateComment();
   })
 });
