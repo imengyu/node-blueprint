@@ -51,7 +51,7 @@ export interface NodeParamTypeDefine {
    */
   typeTitle: string;
   /**
-   * [Editor only] Title of this type
+   * [Editor only] Generic of this type
    */
   typeGenericNameMerger?: (genericNames: string[]) => string;
   /**
@@ -140,6 +140,24 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
   define : NodeParamTypeDefine|null = null;
 
+  /**
+   * 获取当前类型是不是基础类型
+   */
+  get isBaseType() {
+    return this.inheritType === null && (
+      this.baseType === 'string' ||
+      this.baseType === 'boolean' ||
+      this.baseType === 'number' ||
+      this.baseType === 'any' ||
+      this.baseType === 'null'
+    );
+  }
+  /**
+   * 获取类型是不是枚举
+   */
+  get isEnum() {
+    return this.baseType === 'enum';
+  }
   /**
    * Get whether the current type is generic
    */

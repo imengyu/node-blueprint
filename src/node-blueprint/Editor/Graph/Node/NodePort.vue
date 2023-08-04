@@ -10,7 +10,7 @@
       @mouseleave="onPortMouseLeave"
       @mousedown="onPortMouseDown($event)"
     >
-      <div v-if="instance.direction === 'output' && instance.define.forceEditorControlOutput" class="editor node-custom-editor">
+      <div v-if="instance.direction === 'output' && instance.forceEditorControlOutput" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
@@ -24,10 +24,10 @@
           v-if="instance.direction === 'output'"
           :style="{ minWidth: instance.parent.style.outputPortMinWidth }"
         >
-          {{ instance.define.name }}
+          {{ instance.name }}
         </span>
         <!--异步图标-->
-        <Icon v-show="instance.define.isAsync" class="async" icon="icon-port-async" />
+        <Icon v-show="instance.isAsync" class="async" icon="icon-port-async" />
         <!--连接图标-->
         <div ref="portDot" class="connect-dot">
           <Icon v-show="instance.state==='error'" class="dot error" icon="icon-close" />
@@ -46,7 +46,7 @@
           v-if="instance.direction === 'input'" 
           :style="{ minWidth: instance.parent.style.inputPortMinWidth }"
         >
-          {{ instance.define.name }}
+          {{ instance.name }}
         </span>
       </div>
       <div v-if="instance.direction === 'input'" class="editor node-custom-editor">
@@ -56,19 +56,19 @@
     </div>
     <!--工具提示-->
     <template #content>
-      <h5>{{ !instance.define.name ? (instance.define.direction == 'input' ? '入口' : '出口') : instance.define.name }}</h5>
+      <h5>{{ !instance.name ? (instance.direction == 'input' ? '入口' : '出口') : instance.name }}</h5>
       <span class="text-secondary">
-        <small v-html="instance.define.description" />
+        <small v-html="instance.description" />
       </span>
       <span>
         <br>类型：
         <span
-          v-if="instance.define.paramType" 
-          v-html="instance.define.paramType.toUserFriendlyName() + '<br/>(' + instance.define.paramType.toString() + ')'"
+          v-if="instance.paramType" 
+          v-html="instance.paramType.toUserFriendlyName() + '<br/>(' + instance.paramType.toString() + ')'"
         />
         <span v-else class="text-danger">未知</span>
       </span>
-      <span v-if="instance.define.isAsync">
+      <span v-if="instance.isAsync">
         <br>
         <Icon icon="icon-async" />
         该端口执行是异步调用的

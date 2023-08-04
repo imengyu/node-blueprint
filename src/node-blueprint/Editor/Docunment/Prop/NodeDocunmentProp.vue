@@ -13,9 +13,9 @@
 <script setup lang="ts">
 import type { PropType } from 'vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
-import CollapsePropHeader from './Common/CollapsePropHeader.vue';
 import Input from '../../Nana/Input/Input.vue';
-import CollapsePropItem from './Common/CollapsePropItem.vue';
+import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue'
+import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
 
 defineEmits([ 'updateDocTitle' ])
 defineProps({

@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-import Icon from '../../../../Nana/Icon.vue';
+import Icon from '../../../Nana/Icon.vue';
 
 defineProps({
   modelValue: {

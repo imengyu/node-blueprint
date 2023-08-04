@@ -1,4 +1,4 @@
-import { NodePort, type INodePortDefine, type NodePortState } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import { NodePort, type NodePortState } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 
 export class NodePortEditor extends NodePort {

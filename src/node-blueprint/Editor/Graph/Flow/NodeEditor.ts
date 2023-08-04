@@ -56,6 +56,10 @@ export class NodeEditor extends Node {
   public connectors = [] as NodeConnectorEditor[];
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
+  public nodeProp ?: { 
+    before?: PropControlItem[],
+    after?: PropControlItem[],
+  };
   public editorProp ?: PropControlItem[];
   public menu ?: { items: NodeContextMenuItem[] };
   

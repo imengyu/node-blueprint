@@ -7,18 +7,6 @@ export type ChooseTypePanelCallback = undefined;
 
 export interface NodeGraphEditorBasePanelsContext {
   /**
-   * 显示选择类型菜单
-   * @param screenPos 显示位置（屏幕坐标） 
-   * @param canbeExecute 是否可以选择执行类型  
-   * @param canbeAny 是否可以选择any类型 
-   * @param callback 用户选择完成后的回调
-   */
-  showChooseTypePanel: (screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean, callback: ChooseTypePanelCallback) => void;
-  /**
-   * 关闭选择类型菜单
-   */
-  closeChooseTypePanel: () => void;
-  /**
    * 显示添加单元菜单
    * @param screenPos 显示位置（屏幕坐标） 
    * @param filterByPortType 按单元端口的类型进行筛选 
@@ -31,6 +19,17 @@ export interface NodeGraphEditorBasePanelsContext {
    * 关闭添加单元菜单
    */
   closeAddNodePanel: () => void;
+  /**
+   * 显示选择类型菜单
+   * @param canbeExecute 是否可以选择执行类型  
+   * @param canbeAny 是否可以选择any类型 
+   * @param screenPos 显示位置（屏幕坐标） 
+   */
+  showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean): Promise<NodeParamType>;
+  /**
+   * 关闭选择类型菜单
+   */
+  closeSelectTypePanel(): void;
   /**
    * 显示小信息提示
    * @param text 显示文字 

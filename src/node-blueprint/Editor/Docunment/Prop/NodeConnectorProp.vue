@@ -13,8 +13,8 @@
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
 import type { NodeConnectorEditor } from '../../Graph/Flow/NodeConnectorEditor';
-import CollapsePropHeader from './Common/CollapsePropHeader.vue';
-import CollapsePropItem from './Common/CollapsePropItem.vue';
+import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue';
+import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
 
 const props = defineProps({
   connectors: {

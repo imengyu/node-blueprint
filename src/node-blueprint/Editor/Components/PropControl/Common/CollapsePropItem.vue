@@ -1,8 +1,15 @@
 <template>
-  <div v-if="filterShow" ref="propItem" class="prop-item">
-    <span :style="{ width: `${titleSize}%` }">{{ title }}</span>
+  <div
+    v-if="filterShow"
+    ref="propItem" 
+    :class="[ 
+      'prop-item',
+      border ? 'border' : '',
+    ]"
+  >
+    <span :style="{ width: resizeable && titleSize > 0 ? `${titleSize}%` : undefined }">{{ title }}</span>
     <div v-if="resizeable" class="prop-split" @mousedown="splterDrageHandler" />
-    <div :style="{ width: `${editorSize}%` }" class="prop-item-editor">
+    <div :style="{ width: resizeable && titleSize > 0 ? `${editorSize}%` : undefined }" class="prop-item-editor">
       <slot />
     </div>
   </div>
@@ -25,11 +32,15 @@ const prop = defineProps({
     type: Boolean,
     default: true,
   },
+  border: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const { gridSize, updateGridSize, filterProp } = inject<PropBoxContext>('PropBoxContext', {
   filterProp: ref(''),
-  gridSize: ref(0.5),
+  gridSize: ref(-1),
   updateGridSize() {},
 });
 
@@ -62,11 +73,17 @@ const splterDrageHandler = createMouseDragHandler({
 .prop-item {
   white-space: nowrap;
   position: relative;
-  border-bottom: 1px solid var(--mx-editor-border-color);
   display: flex;
-  justify-content: space-between;
   align-items: stretch;
   font-size: 12px;
+  
+  &.border {
+    border-bottom: 1px solid var(--mx-editor-border-color);
+
+    > .prop-split::after {
+      background-color: var(--mx-editor-border-color);
+    }
+  }
 
   > .prop-item-editor {
     position: relative;
@@ -85,14 +102,13 @@ const splterDrageHandler = createMouseDragHandler({
       content: '';
       width: 1px;
       height: 100%;
-      background-color: var(--mx-editor-border-color);
-
     }
   }
+
   > span {
     flex-shrink: 0;
-    padding: 4px;
-    display: inline-block;
+    padding: 6px 14px;
+    display: flex;
     text-align: right;
     color: var(--mx-editor-text-color);
   }

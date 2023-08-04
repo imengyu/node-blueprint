@@ -9,7 +9,9 @@ import BaseRadio from "./Components/BaseRadio.vue";
 import BaseSelectVue from "./Components/BaseSelect.vue";
 import BaseTextAreaVue from "./Components/BaseTextArea.vue";
 import BaseText from "./Components/BaseText.vue";
-import { type PropControlItem, PropControlItemRegistry, type PropControlItemRegistryItem } from "./PropControl";
+import { PropControlItemRegistry, type PropControlItemRegistryItem } from "./PropControl";
+import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
+import { registerOtherComponents } from "./Components";
 
 let registeredInternal = false;
 
@@ -57,6 +59,7 @@ export default defineComponent({
         PropControlItemRegistry.registerPropControlItemControl('radio', markRaw(BaseRadio));
         PropControlItemRegistry.registerPropControlItemControl('divider', markRaw(BaseDivider));
         PropControlItemRegistry.registerPropControlItemControl('static', markRaw(BaseText));
+        registerOtherComponents();
       }
     }
     function findComponent() {

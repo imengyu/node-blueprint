@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Node, NodeCreateEditorFunction } from '@/node-blueprint/Base/Flow/Node/Node';
-import { ref, h, type PropType, type VNode, type VNodeRef, onMounted, nextTick, defineComponent, inject } from 'vue'
+import { ref, h, type PropType, type VNode, onMounted, nextTick, defineComponent, inject } from 'vue'
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodeEditor } from '../Flow/NodeEditor';
 
@@ -8,13 +8,14 @@ export default defineComponent({
   props: {
     createEditorFunction: {
       type: Function as PropType<NodeCreateEditorFunction>,
+      default: null,
     },
     node: {
       type: Object as PropType<Node>,
       required: true,
     },
   },
-  setup(props, ctx) {
+  setup(props) {
     const hostRef = ref();
     const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 

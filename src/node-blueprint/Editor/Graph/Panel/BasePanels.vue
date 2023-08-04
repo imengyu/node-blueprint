@@ -42,6 +42,15 @@
       :position="(addNodePanelPosition as Vector2)"
       @addNode="onAddNode"
     />
+    <SelectTypePanel 
+      ref="selectTypePanel"
+      v-model:show="isShowSelectTypePanel"
+      :position="(selectTypePanelPosition as Vector2)"
+      :canBeAny="selectTypePanelCanbeAny"
+      :canBeExecute="selectTypePanelCanbeExecute"
+      class="node-editor-no-move"
+      @selectType="onSelectType"
+    />
   </Teleport>
 </template>
 
@@ -57,6 +66,7 @@ import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
+import SelectTypePanel from './SelectType/SelectTypePanel.vue';
 import Alert from '../../Nana/Modal/Alert';
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
@@ -147,6 +157,37 @@ watch(isShowAddNodePanel, (show) => {
 
 //#endregion
 
+//#region 选择类型菜单
+
+const isShowSelectTypePanel = ref(false);
+const selectTypePanelPosition = ref(new Vector2());
+const selectTypePanelCanbeExecute = ref(false);
+const selectTypePanelCanbeAny = ref(false);
+let selectPromiseResolve: ((e: NodeParamType) => void)|undefined = undefined;
+
+function showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean) {
+  isShowSelectTypePanel.value = true;
+  selectTypePanelPosition.value = screenPos;
+  selectTypePanelCanbeExecute.value = canbeExecute;
+  selectTypePanelCanbeAny.value = canbeAny;
+  return new Promise<NodeParamType>((resolve) => {
+    selectPromiseResolve = resolve;
+  });
+}
+function closeSelectTypePanel() {
+  isShowSelectTypePanel.value = false;
+}
+
+function onSelectType(type: NodeParamType) {
+  closeSelectTypePanel();
+  if (selectPromiseResolve) {
+    selectPromiseResolve(type);
+    selectPromiseResolve = undefined;
+  }
+}
+
+//#endregion
+
 onMounted(() => {
   allNodesGrouped.value = NodeRegistry.getInstance().getAllNodesGrouped();
 
@@ -165,6 +206,8 @@ onMounted(() => {
     return false;
   })
 
+  context.showSelectTypePanel = showSelectTypePanel;
+  context.closeSelectTypePanel = closeSelectTypePanel;
   context.showAddNodePanel = showAddNodePanel;
   context.closeAddNodePanel = closeAddNodePanel;
   context.showSmallTip = showSmallTip;

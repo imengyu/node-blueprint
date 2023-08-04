@@ -11,6 +11,8 @@
   </CollapsePropHeader>
   <CollapsePropItem
     v-else
+    :resizeable="!PropBoxIsMini"
+    :border="!PropBoxIsMini"
     :title="item.title"
   >
     <PropControlItemRenderer :item="item" />
@@ -18,11 +20,13 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import type { PropControlItem } from './PropControl';
-import CollapsePropHeader from '../Common/CollapsePropHeader.vue';
-import CollapsePropItem from '../Common/CollapsePropItem.vue';
+import { inject, type PropType } from 'vue';
+import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
+import CollapsePropHeader from './Common/CollapsePropHeader.vue';
+import CollapsePropItem from './Common/CollapsePropItem.vue';
 import PropControlItemRenderer from './PropControlItemRenderer.vue';
+
+const PropBoxIsMini = inject('PropBoxIsMini', false);
 
 defineProps({
   /**

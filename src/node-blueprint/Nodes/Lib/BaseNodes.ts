@@ -568,7 +568,7 @@ function registerTypeBase() {
         direction: 'input',
         guid: 'IN',
         paramType: NodeParamType.Number,
-        paramDefaultValue: true,
+        paramDefaultValue: 0,
       },
       {
         direction: 'output',
@@ -621,7 +621,132 @@ function registerTypeBase() {
     },
   };
 
-  return [ blockString, blockNumber, blockBoolean ];
+  const blockGetTypeName : INodeDefine = {
+    guid: '8D9C564C-E7A8-6741-0A8A-28ABB353A484',
+    name: '获取类型名称',
+    description: '此节点用于获取一个通配符参数的实际传入类型',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/类型',
+    ports: [
+      {
+        direction: 'input',
+        guid: 'IN',
+        paramType: NodeParamType.Any,
+        paramDefaultValue: true,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.String,
+      },
+    ],
+    style: {
+      logo: NodeIconEntryBoolean,
+      titleState: 'hide',
+      logoBackground: 'title:获取类型名称',
+      minWidth: 200,
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+    },
+    exec: {
+      onPortExecuteIn: (block, port) => {
+      }
+    },
+  };
+  const blockAsTypeTypeName : INodeDefine = {
+    guid: 'F0D988B1-54EE-1EFD-6CB4-5BFD2DB67EBA',
+    name: '作为类型',
+    description: '此节点用于定义一个通配符参数为另一个类型，如果输入类型是目标类型，则它会正确返回；反之则会抛出异常',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/类型',
+    ports: [
+      {
+        direction: 'input',
+        name: '输入',
+        guid: 'IN',
+        paramType: NodeParamType.Any,
+        paramDefaultValue: true,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.Any,
+      },
+    ],
+    style: {
+      logo: NodeIconEntryBoolean,
+      minWidth: 200,
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+    },
+    events: {
+      onEditorCreate(node) {
+        function changeOutParamType(newType: NodeParamType) {
+          const outNode = node.getPortByGUID('OUT');
+          if (outNode) {
+            node.options.type = newType.toString();
+            node.changePortParamType(outNode, newType);
+            outNode.name = `作为 ${newType.toUserFriendlyName()}`;
+          }
+        }
+
+        if (node.options.type)
+          changeOutParamType(NodeParamType.FromString(node.options.type as string));
+
+        return {
+          nodeProp: {
+            before: [
+              {
+                title: '作为类型',
+                type: 'param-type-picker',
+                getValue: () => NodeParamType.FromString(node.options.type as string),
+                onUpdateValue: (newValue) => changeOutParamType(newValue as NodeParamType),
+              }
+            ],
+          }
+        };
+      },
+    },
+    exec: {
+      onPortExecuteIn: (block, port) => {
+      }
+    },
+  };
+  const blockConvertToTypeTypeName : INodeDefine = {
+    guid: '8D9C564C-E7A8-6741-0A8A-28ABB353A484',
+    name: '强制转换类型',
+    description: '此节点用于强制转换一个通配符参数为另一个类型，如果输入类型是目标类型，则它会原样返回；反之，它会尝试可能的转换，如果无法转换，则会抛出异常',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/类型',
+    ports: [
+      {
+        direction: 'input',
+        guid: 'IN',
+        paramType: NodeParamType.Any,
+        paramDefaultValue: true,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.String,
+      },
+    ],
+    style: {
+      logo: NodeIconEntryBoolean,
+      minWidth: 200,
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+    },
+    exec: {
+      onPortExecuteIn: (block, port) => {
+      }
+    },
+  };
+
+  return [ blockString, blockNumber, blockBoolean, blockGetTypeName, blockAsTypeTypeName ];
 }
 function registerLoadLib() {
   //TODO: LoadLib
@@ -934,9 +1059,8 @@ function registerConnNode() {
           node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 
         }
       },
-      onEditorCreate: (node, el) => {
+      onEditorCreate: (node) => {
         node.addClass('node-block-extended-line');
-
         return {
           editorProp: [
             { 

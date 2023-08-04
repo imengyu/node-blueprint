@@ -46,7 +46,7 @@ import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
-import PropBox from './Prop/Common/PropBox.vue';
+import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';

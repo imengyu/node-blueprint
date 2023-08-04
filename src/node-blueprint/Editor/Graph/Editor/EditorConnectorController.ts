@@ -250,8 +250,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
           if(!connectingInfo.canConnect) {
             const startPot = connectingInfo.startPort.direction === 'output' ? connectingInfo.startPort : connectingInfo.currentHoverPort;
             const endPot = connectingInfo.currentHoverPort.direction === 'input' ? connectingInfo.currentHoverPort : connectingInfo.startPort;
-            const startType = startPot.define.paramType;
-            const endType = endPot.define.paramType;
+            const startType = startPot.paramType;
+            const endType = endPot.paramType;
 
             //检查类型有没有转换器
             const converter = NodeParamTypeRegistry.getInstance().getTypeCoverter(startType, endType);
@@ -332,7 +332,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     //连接到新的节点
     if(connectingInfo.currentHoverPort === null && connectingInfo.startPort !== null) {
 
-      connectingInfo.otherSideRequireType = connectingInfo.startPort.define.paramType;
+      connectingInfo.otherSideRequireType = connectingInfo.startPort.paramType;
       connectingInfo.otherSideRequireDirection = connectingInfo.startPort.direction === 'input' ? 'output' : 'input';
 
       const viewPort = context.getViewPort();
@@ -421,11 +421,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         endPort.parent.events.onPortConnect(endPort.parent, endPort);
 
       //两个端口有一个是弹性端口，并且两者类型不一样，则触发弹性端口事件
-      if(!startPort.define.paramType.equal(endPort.define.paramType)) {
-        if(startPort.define.paramType.isAny && startPort.define.isFlexible) {
+      if(!startPort.paramType.equal(endPort.paramType)) {
+        if(startPort.paramType.isAny && startPort.isFlexible) {
           if (startPort.parent.events.onFlexPortConnect) 
             startPort.parent.events.onFlexPortConnect(startPort.parent, startPort, endPort);
-        } else if(endPort.define.paramType.isAny && endPort.define.isFlexible) {
+        } else if(endPort.paramType.isAny && endPort.isFlexible) {
           if (endPort.parent.events.onFlexPortConnect) 
           endPort.parent.events.onFlexPortConnect(endPort.parent, endPort, startPort);
         }
@@ -453,13 +453,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       //如果是行为端口，只能输出一条线路。取消连接之前的线路
       if (
-        startPort.define.paramType.isExecute &&
+        startPort.paramType.isExecute &&
         startPort.connectedToPort.length >= 0
       )
         startPort.connectedToPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
       //如果是参数端口，只能输入一条线路。取消连接之前的线路
       if (
-        !startPort.define.paramType.isExecute &&
+        !startPort.paramType.isExecute &&
         endPort.connectedFromPort.length >= 0
       )
         endPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
@@ -485,11 +485,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connector = new NodeConnectorEditor();
 
       //如果是行为端口，只能输出一条线路。
-      if (endPort.define.paramType.isExecute && endPort.connectedToPort.length > 0)
+      if (endPort.paramType.isExecute && endPort.connectedToPort.length > 0)
         endPort.connectedToPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
       //如果是参数端口，只能输入一条线路。
       if (
-        !startPort.define.paramType.isExecute &&
+        !startPort.paramType.isExecute &&
         startPort.connectedFromPort.length > 0
       )
         startPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));

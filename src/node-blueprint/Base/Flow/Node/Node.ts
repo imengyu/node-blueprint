@@ -250,7 +250,7 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public getPortByTypeAndDirection(type: NodeParamType, direction: NodePortDirection, includeAny = true) : NodePort|null  {
     if(type.isExecute) {
-      return this.ports.find(p => p.direction === direction && p.define.paramType.isExecute) || null;
+      return this.ports.find(p => p.direction === direction && p.paramType.isExecute) || null;
     } else {
       return this.ports.find(p => type.acceptable(p.paramType), includeAny) || null;
     }
@@ -357,6 +357,7 @@ export interface INodeDefine {
 
 export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?: T) => R;
 export type NodeEditorEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, data?: T) => R;
+export type NodeEditorContextEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, context: NodeGraphEditorContext, data?: T) => R;
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
 export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
@@ -368,6 +369,13 @@ export interface NodeEditorCreateReturnData {
    * [仅编辑器可用] 指定这个单元在属性栏中附加的属性
    */
   editorProp ?: PropControlItem[],
+  /**
+   * [仅编辑器可用] 指定这个单元在单元顶部/底部区域中附加的属性
+   */
+  nodeProp ?: { 
+    before?: PropControlItem[],
+    after?: PropControlItem[],
+  },
   /**
    * [仅编辑器可用] 单元的右键菜单操作
    */
@@ -420,7 +428,7 @@ export interface INodeEventSettings {
   /**
    * 编辑器创建回调
    */
-  onEditorCreate ?: NodeEditorEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>,
+  onEditorCreate ?: NodeEditorContextEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>,
   /**
    * 用户添加了一个端口时的回调。
    */
@@ -500,7 +508,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
     type : 'execute'|'param',
   }>;
   onRemoveFormEditor ?: NodeEventCallback;
-  onEditorCreate ?: NodeEditorEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>;
+  onEditorCreate ?: NodeEditorContextEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;
   onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;

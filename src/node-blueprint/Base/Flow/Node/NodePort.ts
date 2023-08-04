@@ -51,6 +51,14 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   get guid() : string { return this.define.guid; }
   /**
+   * 名称
+   */
+  name = '';
+  /**
+   * 说明
+   */
+  description = '';
+  /**
    * 端口所属节点
    */
   parent: Node;
@@ -184,7 +192,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   public checkTypeAllow(targetPort : NodePort) : boolean {
 
-    const targetType = targetPort.define.paramType;
+    const targetType = targetPort.paramType;
     const thisType = this.paramType;
 
     //判断是否是执行

@@ -2,10 +2,9 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
 
 //编辑器样式
 .node-custom-editor {
-  display: inline-block;
-
   //输入框
   .nana-input,
+  .node-simple-box,
   input[type="text"],
   input[type="password"], 
   textarea, 

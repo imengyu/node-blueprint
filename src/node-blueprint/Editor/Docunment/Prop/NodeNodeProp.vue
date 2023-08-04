@@ -17,13 +17,13 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import CollapsePropHeader from './Common/CollapsePropHeader.vue';
-import CollapsePropItem from './Common/CollapsePropItem.vue';
-import PropControl from './PropControl/PropControl.vue';
+import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue';
+import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
+import PropControl from '../../Components/PropControl/PropControl.vue';
 import type { NodeEditor } from '../../Graph/Flow/NodeEditor';
 import type { NodeBreakPoint } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
-import type { BaseSelectProps } from './PropControl/Components/BaseSelect';
+import type { BaseSelectProps } from '../../Components/PropControl/Components/BaseSelect';
 
 const props = defineProps({
   nodes: {

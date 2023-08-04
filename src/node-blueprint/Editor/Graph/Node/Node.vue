@@ -131,6 +131,10 @@
           {{ instance.style.logoBackground.substring(6) }}
         </span>
       </NodeIconImageRender>
+      <!--自定义属性区域（上）-->
+      <div v-if="instance.nodeProp?.before" class="node-block-custom-editor node-custom-editor">
+        <PropControl :items="instance.nodeProp.before" :mini="true" />
+      </div>
       <!--自定义编辑器区域-->
       <NodeCustomEditorWrapper
         :node="instance"
@@ -150,6 +154,10 @@
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
           </div>
         </div>
+      </div>
+      <!--自定义属性区域（下）-->
+      <div v-if="instance.nodeProp?.after" class="ode-custom-editor">
+        <PropControl :items="instance.nodeProp.after" :mini="true" />
       </div>
       <!--右下角拖拽-->
       <div v-if="instance.style.userResize" class="node-size-dragger" />
@@ -177,6 +185,7 @@ import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
+import PropControl from '../../Components/PropControl/PropControl.vue';
 
 const props = defineProps({
   instance: {
@@ -229,9 +238,10 @@ onMounted(() => {
     appendClass.value.push(cls);
   };
   nextTick(() => {
-    const ret = instance.value.events.onEditorCreate?.(instance.value, nodeRef.value);
+    const ret = instance.value.events.onEditorCreate?.(instance.value, context, nodeRef.value);
     if (ret && typeof ret === 'object') {
       instance.value.editorProp = ret.editorProp;
+      instance.value.nodeProp = ret.nodeProp;
       instance.value.menu = ret.menu;
     }
     updateComment();

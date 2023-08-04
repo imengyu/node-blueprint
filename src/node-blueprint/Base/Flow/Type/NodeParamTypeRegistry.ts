@@ -23,6 +23,12 @@ export class NodeParamTypeRegistry extends Singleton {
   private allConverter : Map<string, NodeTypeCoverter> = new Map<string, NodeTypeCoverter>();
 
   /**
+   * 获取所有类型
+   */
+  public getAllTypes() {
+    return this.allTypes;
+  }
+  /**
    * 从字符串获取类型实例
    * @param defString 定义字符串
    * @returns 类型实例
