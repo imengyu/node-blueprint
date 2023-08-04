@@ -3,6 +3,7 @@
     :class="[
       'nana-input',
       disabled ? 'disabled' : '',
+      focus ? 'focus' : '',
       size,
     ]"
   >
@@ -11,12 +12,15 @@
     </div>
 
     <input 
+      class="nana-input-inner"
       :type="type"
       :value="modelValue"
       :placeholder="placeholder"
       :readonly="readonly"
       :disabled="disabled"
       @input="onInput"
+      @focus="onFocus"
+      @blur="onBlur"
     >
 
     <div class="nana-suffix">
@@ -26,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { ref, type PropType } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -76,10 +80,18 @@ const props = defineProps({
 
 const emit = defineEmits([ 'update:modelValue' ])
 
+const focus = ref(false);
+
 function onInput(e: Event) {
-  
   emit('update:modelValue', (e.target as HTMLInputElement).value);
 }
+function onFocus() {
+  focus.value = true;
+}
+function onBlur() {
+  focus.value = false;
+}
+
 </script>
 
 <style lang="scss">
@@ -87,12 +99,28 @@ function onInput(e: Event) {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
+  align-items: center;
+
+  .nana-prefix, .nana-suffix {
+    display: flex;
+    align-self: center;
+  }
 
   input {
     flex: 1;
+    border: none;
+    color: inherit;
+    background-color: transparent;
+
+    &:focus {
+      outline: none;
+    }
   }
 
   &.disabled {
+    
+  }
+  &.focus {
     
   }
 

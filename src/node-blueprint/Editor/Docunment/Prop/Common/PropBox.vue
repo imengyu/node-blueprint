@@ -1,8 +1,8 @@
 <template>
   <div class="prop-box">  
-    <Input v-model="filterProp" class="prop-search">
-      <template #suffix>
-        <Icon icon="icon-search" />
+    <Input v-model="filterProp" class="prop-search" placeholder="搜索属性">
+      <template #prefix>
+        <Icon icon="icon-search-" />
       </template>
     </Input>
     <slot />
@@ -30,6 +30,10 @@ const props = defineProps({
     type: Number,
     default: 0.2,
   },
+  innerClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const gridSize = ref(0.5);
@@ -46,23 +50,21 @@ provide<PropBoxContext>('PropBoxContext', {
 </script>
 
 <style lang="scss">
+.prop-search {
+  margin: 5px 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: var(--mx-editor-backgroud);
+  border: 1px solid var(--mx-editor-border-color);
+  color: var(--mx-editor-text-color);
 
+  input {
+    background-color: transparent;
+    color: var(--mx-editor-text-color);
+  }
+}
 .prop-box {
   display: flex;
   flex-direction: column;
-
-  .prop-search {
-    margin: 5px 10px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    background-color: var(--mx-editor-backgroud);
-    border: 1px solid var(--mx-editor-border-color);
-    color: var(--mx-editor-text-color);
-
-    input {
-      background-color: transparent!important;
-      color: var(--mx-editor-text-color)!important;
-    }
-  }
 }
 </style>

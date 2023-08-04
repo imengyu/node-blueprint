@@ -5,46 +5,69 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
   display: inline-block;
 
   //输入框
-  input[type="text"],input[type="password"], textarea, select, .prop-box {
-    display: inline-block;
-    padding: 2px 5px;
-    border: 1px solid transparent;
-    background-color: $custom-editor-base-color;
-    color: rgb(255, 255, 255);
-    outline: none;
-    border: none;
-    border-radius: 6px;
-    vertical-align: middle;    
-    font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-    font-size: 12px;
+  .nana-input,
+  input[type="text"],
+  input[type="password"], 
+  textarea, 
+  select {
+    &:not(.nana-input-inner) {
+      padding: 2px 5px;
+      border: 1px solid transparent;
+      background-color: $custom-editor-base-color;
+      color: rgb(255, 255, 255);
+      outline: none;
+      border: none;
+      border-radius: 6px;
+      vertical-align: middle;    
+      font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      font-size: 12px;
 
-    &::-webkit-input-placeholder {
-      color: #bbbbbb;
-    }
+      svg {
+        fill: #fff;
+      }
 
-    &:disabled {
-      background-color: rgba(75, 75, 75, 0.514);
-      color: #919191;
+      &::-webkit-input-placeholder {
+        color: #bbbbbb;
+      }
+
+      &:disabled {
+        background-color: rgba(75, 75, 75, 0.514);
+        color: #919191;
+
+        svg {
+          fill: #919191;
+        }
+        input {
+          color: #919191;
+        }
+
+        &:hover , &:active {
+          background-color: #686868;
+          color: #e7e7e7;
+        }
+      }
 
       &:hover , &:active {
-        background-color: #686868;
-        color: #e7e7e7;
+        background-color: #fff;
+        color: #000;
+
+        input {
+          color: #000;
+        }
+        svg {
+          fill: #000;
+        }
       }
-    }
 
-    &:hover , &:active {
-      background-color: #fff;
-      color: #000;
-    }
-
-    &.input-border {
-      border: 2px solid transparent;
-    }
-    &.input-error {
-      border: 2px solid #f76758!important;
-    }
-    &.input-warn {
-      border: 2px solid #daa000!important;
+      &.input-border {
+        border: 2px solid transparent;
+      }
+      &.input-error {
+        border: 2px solid #f76758!important;
+      }
+      &.input-warn {
+        border: 2px solid #daa000!important;
+      }
     }
   }
 
