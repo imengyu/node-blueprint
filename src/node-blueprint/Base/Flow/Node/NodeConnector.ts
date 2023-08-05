@@ -11,8 +11,17 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
   }
 
+  /**
+   * 位移ID
+   */
   public uid : string;
+  /**
+   * 输出端口 （direction == output）
+   */
   public startPort : NodePort|null = null;
+  /**
+   * 输入端口 （direction == input）
+   */
   public endPort : NodePort|null = null;
 }
 

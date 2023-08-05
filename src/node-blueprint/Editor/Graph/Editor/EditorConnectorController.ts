@@ -406,7 +406,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.isConnecting = false;
     
     if(connectingInfo.startPort !== null) {
-      (connectingInfo.startPort as NodePortEditor).state =  connectingInfo.startPort.isConnected() ? 'active' : 'normal';
+      (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected() ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
     return [port,connector];
@@ -472,15 +472,15 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       )
         endPort.connectedFromPort.forEach((d) => unConnectConnector(d as NodeConnectorEditor));
 
-      startPort.connectedToPort.push(connector);
-      startPort.state = "active";
-      endPort.connectedFromPort.push(connector);
-      endPort.state = "active";
-
-      invokeOnPortConnect(startPort, endPort);
-
       connector.startPort = startPort;
       connector.endPort = endPort;
+
+      startPort.connectedToPort.push(connector);
+      endPort.connectedFromPort.push(connector);
+
+      connectorSuccessSetState(connector);
+      invokeOnPortConnect(startPort, endPort);
+
     } else if (endPort.direction === "output") {
       //如果已经链接上了，取消链接
       const connData = startPort.isConnectByPort(endPort);
@@ -505,17 +505,25 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connector.startPort = endPort;
       connector.endPort = startPort;
 
+      startPort.connectedFromPort.push(connector);
+      endPort.connectedToPort.push(connector);
+
       connectorSuccessSetState(connector);
       invokeOnPortConnect(endPort, startPort);
     }
-
 
     //添加线段
     if (connector !== null) {
       context.addConnector(connector);
       connector.updatePortValue();
       //更新孤立状态
-      afterConnectDoIsolateCheck(startPort, endPort, startPort.parent as NodeEditor, endPort.parent as NodeEditor, true);
+      afterConnectDoIsolateCheck(
+        connector.startPort as NodePortEditor, 
+        connector.endPort as NodePortEditor, 
+        connector.startPort!.parent as NodeEditor, 
+        connector.endPort!.parent as NodeEditor, 
+        true
+      );
     }
     return connector;
   }
@@ -524,12 +532,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
    * @param connector 连接线
    */
   function connectorSuccessSetState(connector: NodeConnectorEditor) {
-    const endPort = connector.endPort! as NodePortEditor;
-    const startPort = connector.startPort! as NodePortEditor;
-    endPort.connectedToPort.push(connector);
-    endPort.state = "active";
-    startPort.connectedFromPort.push(connector);
-    startPort.state = "active";
+    (connector.endPort as NodePortEditor).state = "active";
+    (connector.startPort as NodePortEditor).state = "active";
   }
   /**
    * 取消连接单元

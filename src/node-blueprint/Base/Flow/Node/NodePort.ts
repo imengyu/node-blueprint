@@ -80,11 +80,11 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   dyamicAdd = false;
   /**
-   * 被连接的端口
+   * 被连接的端口，仅 direction == input 时有效
    */
   connectedFromPort: Array<NodeConnector> = [];
   /**
-   * 连接至的端口
+   * 连接至的端口，仅 direction == output 时有效
    */
   connectedToPort: Array<NodeConnector> = [];
   /**
