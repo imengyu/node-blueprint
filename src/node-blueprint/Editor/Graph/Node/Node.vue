@@ -13,7 +13,7 @@
                (instance.selected ? 'selected ' : ''),
                (instance.style.customClassNames),
                (twinkleActive ? 'actived' : ''),
-               (instance.currentIsolateState ? 'isolate' : ''),
+               (instance.isolateState ? 'isolate' : ''),
                ...appendClass
       ]"
       :style="{
@@ -245,7 +245,7 @@ onMounted(() => {
       instance.value.nodeProp = ret.nodeProp;
       instance.value.menu = ret.menu;
     }
-    instance.value.currentIsolateState = !instance.value.style.noIsolate;
+    instance.value.isolateState = !instance.value.style.noIsolate;
     updateComment();
   })
 });

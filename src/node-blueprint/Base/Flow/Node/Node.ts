@@ -5,7 +5,7 @@ import { printError, printWarning } from "../../Logger/DevLog";
 import { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
-import type { NodeParamType } from "../Type/NodeParamType";
+import { NodeParamType } from "../Type/NodeParamType";
 import type { NodeGraph } from "../Graph/NodeGraph";
 import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
 import type { VNode } from "vue";
@@ -231,6 +231,29 @@ export class Node extends SerializableObject<INodeDefine> {
       return this.outputPorts.get(guid) || null;
     else
       return this.getPortByGUID(guid);
+  }
+  /**
+   * 获取第一个执行端口
+   * @param direction 方向，默认是：input
+   */
+  public getOneExecutePort(direction: NodePortDirection = 'input') {
+    return this.getPortByTypeAndDirection(NodeParamType.Execute, direction);
+  }
+  /**
+   * 查询当前节点是否有执行端口
+   */
+  public hasExecutePort() {
+    return this.ports.find(p => p.paramType.isExecute) !== undefined;
+  }
+  /**
+   * 查询当前节点是否有执行端口
+   */
+  public hasAnyPortConnected() {
+    for (const port of this.ports) {
+      if (port.isConnected())
+        return true;
+    }
+    return false;
   }
   /**
    * 根据GUID获取某个端口

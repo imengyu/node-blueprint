@@ -70,6 +70,11 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   unConnectNodeConnectors: (node: NodeEditor) => void;
+
+  /**
+   * 对整个图表进行孤立节点检查
+   */
+  startGlobalIsolateCheck(): void;
 }
 
 
@@ -506,6 +511,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     if (connector !== null) {
       context.addConnector(connector);
       connector.updatePortValue();
+      //更新孤立状态
+      afterConnectDoIsolateCheck(startPort, endPort, startPort.parent as NodeEditor, endPort.parent as NodeEditor, true);
     }
     return connector;
   }
@@ -516,10 +523,6 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     endPort.state = "active";
     startPort.connectedFromPort.push(connector);
     startPort.state = "active";
-    
-    //更新孤立状态
-    (startPort.parent as NodeEditor).checkIsolate();
-    (endPort.parent as NodeEditor).checkIsolate();
   }
   /**
    * 取消连接单元
@@ -544,8 +547,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       end.removeConnectByPort(start);
       end.state = end.isConnected() ? 'active' : 'normal';
 
-      startNode.checkIsolate();
-      endNode.checkIsolate();
+      //更新孤立状态
+      afterConnectDoIsolateCheck(start, end, startNode, endNode, false);
 
       if (start.parent.events.onPortUnConnect) start.parent.events.onPortUnConnect(start.parent, start);
       if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);
@@ -573,6 +576,126 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
   //#endregion
 
+  //#region 孤立节点检查
+
+  /**
+   * 对整个图表进行孤立节点检查
+   * 
+   * 首先将全部的节点置为孤立，从非孤立节点开始
+   * 遍历所有节点，不可达的节点即为孤立
+   */
+  function startGlobalIsolateCheck() {
+    const visitedNodes : NodeEditor[] = [];
+    const noIsolateNodes : NodeEditor[] = [];
+    const allNodes = context.getNodes();
+    for (const [,node] of allNodes) {
+      if (node.style.noIsolate)
+        noIsolateNodes.push((node as NodeEditor));
+      else if (node.hasExecutePort())
+        (node as NodeEditor).isolateState = true;
+      else
+        //对于没有执行端口的节点，判断是否孤立永远是判断是否有任意连接
+        (node as NodeEditor).isolateState = !node.hasAnyPortConnected();
+    }
+
+    function loopNodeTree(node: NodeEditor) {
+      if (visitedNodes.includes(node))
+        return;
+      visitedNodes.includes(node);
+      node.isolateState = false;
+      
+      for (const [,port] of node.outputPorts) {
+        for (const connector of port.connectedToPort) {
+          if (connector.endPort)
+            loopNodeTree(connector.endPort.parent as NodeEditor);
+        }
+      }
+    }
+
+    for (const node of noIsolateNodes)
+      loopNodeTree(node);
+  }
+  /**
+   * 连接和断开连接后执行孤立节点检查
+   */
+  function afterConnectDoIsolateCheck(
+    start: NodePortEditor,
+    end: NodePortEditor,
+    startNode: NodeEditor,
+    endNode: NodeEditor,
+    isConnect: boolean
+  ) {
+    const visitedNodes : NodeEditor[] = [];
+
+    /**
+     * 向上访问，如果可达非孤立节点，则返回true
+     * @param node
+     * @returns 
+     */
+    function prevLoopNodeTreeAndGetHasNoIsolateNode(node: NodeEditor) {
+      if (visitedNodes.includes(node))
+        return;
+      visitedNodes.includes(node);
+
+      if (node.style.noIsolate)
+        return true;
+
+      for (const [,port] of node.inputPorts) {
+        for (const connector of port.connectedFromPort) {
+          if (connector.startPort)
+            if (prevLoopNodeTreeAndGetHasNoIsolateNode(connector.startPort.parent as NodeEditor))
+              return true;
+        }
+      }
+
+      return false;
+    }
+    /**
+     * 执行循环
+     * @param node 起始节点
+     * @param prevCheck 是否进行向上可达非孤立节点检查
+     * @returns 
+     */
+    function loopNodeTree(node: NodeEditor, prevCheck: boolean) {
+      if (visitedNodes.includes(node))
+        return;
+      visitedNodes.includes(node);
+
+
+      if (prevCheck) {
+        node.isolateState = !prevLoopNodeTreeAndGetHasNoIsolateNode(node);
+      } else {
+        node.isolateState = false;
+      }
+      
+      for (const [,port] of node.outputPorts) {
+        for (const connector of port.connectedToPort) {
+          if (connector.endPort)
+            loopNodeTree(connector.endPort.parent as NodeEditor,prevCheck );
+        }
+      }
+    }
+
+    /**
+     * 连接后：判断上游节点是不是孤立，是则将下游全部节点设置为非孤立
+     * 断开连接后：向下游节点循环访问，某个节点向上访问，如果可达非孤立节点，则当前节点设为非孤立，否则设置为孤立
+     */
+    if (isConnect) {
+      if (!endNode.hasExecutePort())
+        endNode.isolateState = false; //对于没有执行端口的节点，有任意连接则不孤立
+      else if (!startNode.isolateState) 
+        loopNodeTree(endNode, false);
+    } else {
+      if (!endNode.hasExecutePort())
+        endNode.isolateState = !endNode.hasAnyPortConnected();//对于没有执行端口的节点，判断是否孤立永远是判断是否有任意连接
+      else
+        loopNodeTree(endNode, true);
+    }
+  }
+
+  //#endregion
+
+
   context.updateCurrentHoverPort = updateCurrentHoverPort;
   context.updateConnectEnd = updateConnectEnd;
   context.startConnect = startConnect;
@@ -588,6 +711,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.isConnectToNew = isConnectToNew;
   context.selectHoverConnectors = selectHoverConnectors;
   context.getConnectingInfo = getConnectingInfo;
+  context.startGlobalIsolateCheck = startGlobalIsolateCheck;
 
   return {
     connectingInfo,

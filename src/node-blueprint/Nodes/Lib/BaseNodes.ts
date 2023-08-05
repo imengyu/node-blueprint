@@ -154,7 +154,6 @@ function registerScriptBase()  {
     style: {
       logo: NodeIconEntryExit,
       titleBakgroundColor: "rgba(112,30,133,0.6)",
-      noIsolate: true,
     },
     events: {
       onAddCheck(node, graph) {

@@ -216,6 +216,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
           (connector as NodeConnectorEditor).updatePortValue();
           context.connectorSuccessSetState(connector as NodeConnectorEditor);
         });
+
+        context.startGlobalIsolateCheck();
         resolve();
       }, 200);
     });

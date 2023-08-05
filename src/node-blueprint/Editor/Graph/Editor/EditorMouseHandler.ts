@@ -34,7 +34,7 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
   function checkLoop(el: HTMLElement) {
     if (checkElement(el))
       return true;
-    if (el.parentNode && el.parentNode !== stopElement)
+    if (el.parentNode && el.classList && el.parentNode !== stopElement)
       return checkLoop(el.parentNode as HTMLElement);
     return false;
   }
