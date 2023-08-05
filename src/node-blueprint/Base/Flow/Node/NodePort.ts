@@ -33,7 +33,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
           serializableProperties: [
             'guid',
             'dyamicAdd',
-            'initialValue'
+            'initialValue',
+            'paramType',
           ],
         },
       },
@@ -107,9 +108,9 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    */
   isAsync = false;
   /**
-   * 指示这个端口是否是弹性的端口，它在连接时会触发单元的 onFlexPortConnect 事件，默认为 false
+   * 指示这个端口是否是弹性的端口，默认为 false
    */
-  isFlexible = false;
+  isFlexible : NodePortFlex = false;
   /**
    * 是否强制不显示编辑参数控件
    */
@@ -216,6 +217,10 @@ export type NodePortDirection = "input" | "output";
  * 状态
  */
 export type NodePortState = "normal" | "active" | "error" | "success";
+/**
+ * 状态
+ */
+export type NodePortFlex = 'auto'|'custom'|undefined|false;
 
 
 /**
@@ -263,9 +268,16 @@ export interface INodePortDefine {
    */
   isStatic?: boolean;
   /**
-   * 指示这个端口是否是弹性的端口，它在连接时会触发单元的 onFlexPortConnect 事件，默认为 false
+   * 指示这个端口是否是弹性类型的端口，默认为 false
+   * 
+   * 弹性类型端口（简称弹性端口），默认类型是 Any，在其他类型的连接线连接至本
+   * 端口后，可以触发本单元其他端口改变类型。
+   * 
+   * * false: 非弹性端口，其他弹性端口不会影响到本端口
+   * * 'custom': 它在连接时会触发单元的 onFlexPortConnect 事件，可由你自定义处理。
+   * * 'auto': 默认模式，在任意一个设置了auto的端口连接后，会触发其他auto端口改变类型。
    */
-  isFlexible?: boolean;
+  isFlexible?: NodePortFlex;
   /**
    * 端口参数初始值，表示用户设置的在图表开始运行时，此端口的值，默认为null
    */

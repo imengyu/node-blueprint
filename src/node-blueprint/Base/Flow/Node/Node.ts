@@ -54,7 +54,8 @@ export class Node extends SerializableObject<INodeDefine> {
             else {
               const targetPort = thisArray.find(p => p.guid === port.guid);
               if (targetPort) {
-                targetPort.initialValue = port.initialValue
+                targetPort.initialValue = port.initialValue;
+                targetPort.paramType = port.paramType;
               }
             }
           }
@@ -286,10 +287,8 @@ export class Node extends SerializableObject<INodeDefine> {
   public changePortParamType(port: NodePort, newType: NodeParamType) {
     if(!port)
       printError(this.getName(), 'changePortParamType: Must provide port');
-    else if(port.parent === this) {
+    else if(port.parent === this)
       port.paramType = newType;
-      //TODO: 弹性端口
-    }
   }
 
 }
@@ -487,6 +486,7 @@ export interface INodeEventSettings {
    * @param node 当前用户操作的单元
    * @param thisPort 当前端口
    * @param anotherPort 另外一个端口
+   * @returns 返回你修改过类型的其他弹性端口，将会递归触发其他节点的弹性端口事件。
    */
   onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
   /**
@@ -537,7 +537,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
   onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
   onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
-  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => NodePort[];
   onPortConnect ?: NodePortEventCallback;
   onPortUnConnect ?: NodePortEventCallback;
 }

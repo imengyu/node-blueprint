@@ -3,7 +3,7 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePort, NodePortDirection } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
-import type { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
@@ -70,7 +70,12 @@ export interface NodeGraphEditorConnectorContext {
    * @returns 
    */
   unConnectNodeConnectors: (node: NodeEditor) => void;
-
+  /**
+   * 在弹性端口连接后执行弹性事件
+   * @param thisPort 当前端口
+   * @param anotherPort 另外一个端口
+   */
+  doFlexPortConnect(thisPort: NodePort, anotherPort: NodePort): void
   /**
    * 对整个图表进行孤立节点检查
    */
@@ -428,11 +433,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       //两个端口有一个是弹性端口，并且两者类型不一样，则触发弹性端口事件
       if(!startPort.paramType.equal(endPort.paramType)) {
         if(startPort.paramType.isAny && startPort.isFlexible) {
-          if (startPort.parent.events.onFlexPortConnect) 
-            startPort.parent.events.onFlexPortConnect(startPort.parent, startPort, endPort);
+          doFlexPortConnect(startPort, endPort);
         } else if(endPort.paramType.isAny && endPort.isFlexible) {
-          if (endPort.parent.events.onFlexPortConnect) 
-          endPort.parent.events.onFlexPortConnect(endPort.parent, endPort, startPort);
+          doFlexPortConnect(endPort, startPort);
         }
       }
     };
@@ -516,6 +519,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
     return connector;
   }
+  /**
+   * 连接成功后设置各自端口的状态
+   * @param connector 连接线
+   */
   function connectorSuccessSetState(connector: NodeConnectorEditor) {
     const endPort = connector.endPort! as NodePortEditor;
     const startPort = connector.startPort! as NodePortEditor;
@@ -549,6 +556,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       //更新孤立状态
       afterConnectDoIsolateCheck(start, end, startNode, endNode, false);
+      //更新弹性端口状态
+      doFlexPortUnConnect(startNode);
+      doFlexPortUnConnect(endNode);
 
       if (start.parent.events.onPortUnConnect) start.parent.events.onPortUnConnect(start.parent, start);
       if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);
@@ -572,6 +582,73 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   //获取用户连接控制器的状态
   function getConnectingInfo() {
     return connectingInfo;
+  }
+
+  //#endregion
+
+  //#region 弹性端口
+  
+  /**
+   * 在弹性端口触发后执行弹性事件
+   */
+  function doFlexPortConnect(_thisPort: NodePort, _anotherPort: NodePort) {
+    const visitedNodes : Node[] = [];
+
+    function doPort(thisPort: NodePort, anotherPort: NodePort) {
+      
+      if (thisPort.isFlexible) {
+        const node = thisPort.parent;
+        const type = anotherPort.paramType;
+
+        if (visitedNodes.includes(node))
+          return;
+        visitedNodes.includes(node);
+
+        let changedPorts: NodePort[]|undefined;
+
+        if (thisPort.isFlexible === 'custom') 
+          //custom 模式下用户自己处理
+          changedPorts = thisPort.parent.events.onFlexPortConnect?.(thisPort.parent, thisPort, anotherPort);
+        else if (thisPort.isFlexible === 'auto') {
+          changedPorts = [];
+          //auto 模式下变换其他弹性端口为指定类型
+          for (const port of thisPort.parent.ports) {
+            if (port.isFlexible) {
+              node.changePortParamType(port, type);
+              (port as NodePortEditor).updatePortValue();
+              if (port !== thisPort)
+                changedPorts.push(port);
+            }
+          }
+        }
+
+        //递归触发其他节点的弹性端口更改
+        if (changedPorts) {
+          for (const port of changedPorts) {
+            if (port.direction === 'input') {
+              for (const connector of port.connectedFromPort)
+                doPort(connector.startPort!, port);
+            } else if (port.direction === 'output') {
+              for (const connector of port.connectedToPort)
+                doPort(connector.endPort!, port);
+            } 
+          }
+        }
+      } 
+    }
+    doPort(_thisPort, _anotherPort);
+  }
+  /**
+   * 在断开连接后取消弹性端口。
+   * 只有当前节点所有连接都断开之后，才会恢复默认通配符状态
+   */
+  function doFlexPortUnConnect(node: NodeEditor) {
+    if (!node.hasAnyPortConnected()) {
+      node.ports.forEach((port) => {
+        if (port.isFlexible)
+          node.changePortParamType(port, NodeParamType.Any);
+      });
+    }
   }
 
   //#endregion
@@ -634,7 +711,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
      */
     function prevLoopNodeTreeAndGetHasNoIsolateNode(node: NodeEditor) {
       if (visitedNodes.includes(node))
-        return;
+        return !node.isolateState;
       visitedNodes.includes(node);
 
       if (node.style.noIsolate)
@@ -651,7 +728,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       return false;
     }
     /**
-     * 执行循环
+     * 向下访问
      * @param node 起始节点
      * @param prevCheck 是否进行向上可达非孤立节点检查
      * @returns 
@@ -659,8 +736,6 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     function loopNodeTree(node: NodeEditor, prevCheck: boolean) {
       if (visitedNodes.includes(node))
         return;
-      visitedNodes.includes(node);
-
 
       if (prevCheck) {
         node.isolateState = !prevLoopNodeTreeAndGetHasNoIsolateNode(node);
@@ -668,6 +743,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         node.isolateState = false;
       }
       
+      visitedNodes.includes(node);
+
       for (const [,port] of node.outputPorts) {
         for (const connector of port.connectedToPort) {
           if (connector.endPort)
@@ -677,17 +754,23 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
 
     /**
-     * 连接后：判断上游节点是不是孤立，是则将下游全部节点设置为非孤立
-     * 断开连接后：向下游节点循环访问，某个节点向上访问，如果可达非孤立节点，则当前节点设为非孤立，否则设置为孤立
+     * 连接后：判断上游节点是不是非孤立状态，是则将下游全部节点设置为非孤立
+     * 断开连接后：向下游节点循环访问，每个节点向上访问，如果可达非孤立节点，则当前节点设为非孤立，否则设置为孤立
      */
-    if (isConnect) {
+    if (isConnect) { 
+      //对于没有执行端口的节点，有任意连接则不孤立
+      if (!startNode.hasExecutePort())
+        startNode.isolateState = false;
       if (!endNode.hasExecutePort())
-        endNode.isolateState = false; //对于没有执行端口的节点，有任意连接则不孤立
+        endNode.isolateState = false; 
       else if (!startNode.isolateState) 
         loopNodeTree(endNode, false);
     } else {
+      //对于没有执行端口的节点，判断是否孤立永远是判断是否有任意连接
+      if (!startNode.hasExecutePort())
+        startNode.isolateState = !startNode.hasAnyPortConnected();
       if (!endNode.hasExecutePort())
-        endNode.isolateState = !endNode.hasAnyPortConnected();//对于没有执行端口的节点，判断是否孤立永远是判断是否有任意连接
+        endNode.isolateState = !endNode.hasAnyPortConnected();
       else
         loopNodeTree(endNode, true);
     }
@@ -712,6 +795,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.selectHoverConnectors = selectHoverConnectors;
   context.getConnectingInfo = getConnectingInfo;
   context.startGlobalIsolateCheck = startGlobalIsolateCheck;
+  context.doFlexPortConnect = doFlexPortConnect;
 
   return {
     connectingInfo,

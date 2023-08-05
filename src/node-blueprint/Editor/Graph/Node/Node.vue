@@ -167,7 +167,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, computed, ref, toRefs, type PropType, inject, nextTick } from 'vue';
+import { onMounted, ref, toRefs, type PropType, inject, nextTick } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';

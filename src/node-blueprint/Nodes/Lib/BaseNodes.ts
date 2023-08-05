@@ -537,7 +537,7 @@ function registerTypeBase() {
         direction: 'input',
         guid: 'IN',
         paramType: NodeParamType.String,
-        paramDefaultValue: true,
+        paramDefaultValue: '',
       },
       {
         direction: 'output',
@@ -1033,13 +1033,17 @@ function registerConnNode() {
         guid: 'INPUT',
         paramType: NodeParamType.Any,
         isRefPassing: true,
+        isFlexible: 'auto',
         direction: 'input',
         defaultConnectPort: true,
+        forceNoEditorControl: true,
       },
       {
         guid: 'OUTPUT',
         paramType: NodeParamType.Any,
+        isFlexible: 'auto',
         isRefPassing: true,
+        forceNoEditorControl: true,
         direction: 'output'
       },
     ],

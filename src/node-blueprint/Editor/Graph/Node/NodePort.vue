@@ -51,7 +51,7 @@
           {{ instance.name }}
         </span>
       </div>
-      <div v-if="instance.direction === 'input'" class="editor node-custom-editor">
+      <div v-if="!instance.forceNoEditorControl && instance.direction === 'input'" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
