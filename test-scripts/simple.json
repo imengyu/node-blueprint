@@ -1,5 +1,5 @@
 {
-  "uid": "6b33706a39796474",
+  "uid": "c6b787079797a307",
   "name": "新文档",
   "version": "1.0",
   "description": "新文档",
@@ -8,14 +8,63 @@
   "mainGraph": {
     "@SNK": "NodeGraph",
     "@SNO": {
+      "connectors": {
+        "@SNK": "Array",
+        "@SNO": [
+          {
+            "uid": "716f7869697577",
+            "startPort": {
+              "nodeUid": "570713072766967",
+              "portUid": "START"
+            },
+            "endPort": {
+              "nodeUid": "771386862343178",
+              "portUid": "IN"
+            }
+          },
+          {
+            "uid": "238626c6e6f6b69",
+            "startPort": {
+              "nodeUid": "771386862343178",
+              "portUid": "OUT"
+            },
+            "endPort": {
+              "nodeUid": "7631346c6f6536",
+              "portUid": "IN"
+            }
+          },
+          {
+            "uid": "368696170316270",
+            "startPort": {
+              "nodeUid": "7631346c6f6536",
+              "portUid": "OUT"
+            },
+            "endPort": {
+              "nodeUid": "756a72676a3737",
+              "portUid": "END"
+            }
+          },
+          {
+            "uid": "26e687630693037",
+            "startPort": {
+              "nodeUid": "6f777730356b75",
+              "portUid": "OUT"
+            },
+            "endPort": {
+              "nodeUid": "7631346c6f6536",
+              "portUid": "PRINT"
+            }
+          }
+        ]
+      },
       "nodes": {
         "@SNK": "Map",
         "@SNO": [
           {
-            "@SNM": "756765716e6266",
+            "@SNM": "570713072766967",
             "@SNV": {
               "guid": "0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F",
-              "uid": "756765716e6266",
+              "uid": "570713072766967",
               "node": {
                 "customSize": {
                   "@SNK": "Vector2",
@@ -27,8 +76,8 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 86,
-                    "y": 96
+                    "x": 34,
+                    "y": 83
                   }
                 },
                 "markOpen": true,
@@ -36,17 +85,28 @@
                 "options": {},
                 "ports": {
                   "@SNK": "Array",
-                  "@SNO": []
+                  "@SNO": [
+                    {
+                      "guid": "START",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
                 },
-                "uid": "756765716e6266"
+                "uid": "570713072766967"
               }
             }
           },
           {
-            "@SNM": "647a383674346f",
+            "@SNM": "756a72676a3737",
             "@SNV": {
               "guid": "77885802-92C8-569B-1E7F-48938943A549",
-              "uid": "647a383674346f",
+              "uid": "756a72676a3737",
               "node": {
                 "customSize": {
                   "@SNK": "Vector2",
@@ -58,8 +118,8 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 844,
-                    "y": 91
+                    "x": 799,
+                    "y": 84
                   }
                 },
                 "markOpen": true,
@@ -67,17 +127,28 @@
                 "options": {},
                 "ports": {
                   "@SNK": "Array",
-                  "@SNO": []
+                  "@SNO": [
+                    {
+                      "guid": "END",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
                 },
-                "uid": "647a383674346f"
+                "uid": "756a72676a3737"
               }
             }
           },
           {
-            "@SNM": "30666838617669",
+            "@SNM": "6f777730356b75",
             "@SNV": {
-              "guid": "6C01D858-CF4D-D9EF-C18E-DE5DAE400702",
-              "uid": "30666838617669",
+              "guid": "A81899CF-766B-F511-B179-90A81BBB088B",
+              "uid": "6f777730356b75",
               "node": {
                 "customSize": {
                   "@SNK": "Vector2",
@@ -89,8 +160,66 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 248,
-                    "y": 95
+                    "x": 182,
+                    "y": 212
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {
+                  "port_IN_custom_data": {
+                    "editor_w": 157,
+                    "editor_h": 62
+                  }
+                },
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "guid": "IN",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "string"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": "哈哈哈哈哈哈哈"
+                    },
+                    {
+                      "guid": "OUT",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "string"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "6f777730356b75"
+              }
+            }
+          },
+          {
+            "@SNM": "771386862343178",
+            "@SNV": {
+              "guid": "6C01D858-CF4D-D9EF-C18E-DE5DAE400702",
+              "uid": "771386862343178",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 193,
+                    "y": 86
                   }
                 },
                 "markOpen": false,
@@ -100,21 +229,47 @@
                   "@SNK": "Array",
                   "@SNO": [
                     {
-                      "dynamicAdd": false,
+                      "guid": "IN",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "OUT",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
                       "guid": "TIME",
-                      "initialValue": 1000
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "number"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": 1500
                     }
                   ]
                 },
-                "uid": "30666838617669"
+                "uid": "771386862343178"
               }
             }
           },
           {
-            "@SNM": "366770616f656c",
+            "@SNM": "7631346c6f6536",
             "@SNV": {
               "guid": "4B6EA737-9702-A383-A268-AADC332038DF",
-              "uid": "366770616f656c",
+              "uid": "7631346c6f6536",
               "node": {
                 "customSize": {
                   "@SNK": "Vector2",
@@ -126,56 +281,14 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 532,
-                    "y": 96
+                    "x": 492,
+                    "y": 86
                   }
                 },
                 "markOpen": false,
                 "markContent": "",
                 "options": {
                   "port_TAG_custom_data": {
-                    "editor_w": 90,
-                    "editor_h": 16
-                  }
-                },
-                "ports": {
-                  "@SNK": "Array",
-                  "@SNO": [
-                    {
-                      "dynamicAdd": false,
-                      "guid": "TAG",
-                      "initialValue": "Test"
-                    }
-                  ]
-                },
-                "uid": "366770616f656c"
-              }
-            }
-          },
-          {
-            "@SNM": "7377636d32686c",
-            "@SNV": {
-              "guid": "A81899CF-766B-F511-B179-90A81BBB088B",
-              "uid": "7377636d32686c",
-              "node": {
-                "customSize": {
-                  "@SNK": "Vector2",
-                  "@SNO": {
-                    "x": 0,
-                    "y": 0
-                  }
-                },
-                "position": {
-                  "@SNK": "Vector2",
-                  "@SNO": {
-                    "x": 275,
-                    "y": 209
-                  }
-                },
-                "markOpen": false,
-                "markContent": "",
-                "options": {
-                  "port_IN_custom_data": {
                     "editor_w": 90,
                     "editor_h": 24
                   }
@@ -184,63 +297,61 @@
                   "@SNK": "Array",
                   "@SNO": [
                     {
-                      "dynamicAdd": false,
                       "guid": "IN",
-                      "initialValue": "输出测试"
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "OUT",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "TAG",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "string"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": "测试"
+                    },
+                    {
+                      "guid": "PRINT",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "any"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "LEVEL",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "DebugLogLevel"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": "log"
                     }
                   ]
                 },
-                "uid": "7377636d32686c"
+                "uid": "7631346c6f6536"
               }
-            }
-          }
-        ]
-      },
-      "connectors": {
-        "@SNK": "Array",
-        "@SNO": [
-          {
-            "uid": "7773757438746d",
-            "startPort": {
-              "nodeUid": "756765716e6266",
-              "portUid": "START"
-            },
-            "endPort": {
-              "nodeUid": "30666838617669",
-              "portUid": "IN"
-            }
-          },
-          {
-            "uid": "786c326a6a6c64",
-            "startPort": {
-              "nodeUid": "30666838617669",
-              "portUid": "OUT"
-            },
-            "endPort": {
-              "nodeUid": "366770616f656c",
-              "portUid": "IN"
-            }
-          },
-          {
-            "uid": "36307567306a71",
-            "startPort": {
-              "nodeUid": "366770616f656c",
-              "portUid": "OUT"
-            },
-            "endPort": {
-              "nodeUid": "647a383674346f",
-              "portUid": "END"
-            }
-          },
-          {
-            "uid": "72686467333534",
-            "startPort": {
-              "nodeUid": "7377636d32686c",
-              "portUid": "OUT"
-            },
-            "endPort": {
-              "nodeUid": "366770616f656c",
-              "portUid": "PRINT"
             }
           }
         ]
@@ -265,7 +376,7 @@
       "author": "",
       "description": "主图表是整个程序的入口",
       "version": "1.0",
-      "uid": "64666634646c69",
+      "uid": "34373132743664",
       "name": "主图表",
       "type": "main"
     }

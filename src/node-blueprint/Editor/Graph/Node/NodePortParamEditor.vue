@@ -18,7 +18,7 @@ export default defineComponent({
           port: this.port,
           value: this.port.getValue(),
           'onUpdate:value': (v : ISaveableTypes) => this.port.setValue(v),
-          onUpdateCustomData: (v : ISaveableTypes) => this.$props.port.parent.options[`port_${this.port.guid}_custom_data`] = v,
+          'onUpdate:custom-data': (v : ISaveableTypes) => this.$props.port.parent.options[`port_${this.port.guid}_custom_data`] = v,
         } as unknown as IKeyValueObject)
       ];
     return [];

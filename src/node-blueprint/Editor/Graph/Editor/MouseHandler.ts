@@ -36,14 +36,12 @@ export function createMouseDragHandler(options: {
   const movedPosition = new Vector2();
 
   function mousemove(e: MouseEvent) {
-    e.preventDefault();
     e.stopPropagation();
     movedPosition.set(e.x, e.y);
     movedPosition.substract(mouseDownPosition);
     onMove(mouseDownPosition, movedPosition, e);
   }
   function mouseup(e: MouseEvent) {
-    e.preventDefault();
     onUp(e);
     mouseDownPosition.set(0, 0);
     document.removeEventListener('mousemove', mousemove);
@@ -53,11 +51,9 @@ export function createMouseDragHandler(options: {
   //MouseDown handler
   return (e: MouseEvent) => {
     if (onDown(e)) {
-      e.preventDefault();
       mouseDownPosition.set(e.x, e.y);
       document.addEventListener('mousemove', mousemove);
       document.addEventListener('mouseup', mouseup);
-      e.preventDefault();
       e.stopPropagation();
       return true;
     }

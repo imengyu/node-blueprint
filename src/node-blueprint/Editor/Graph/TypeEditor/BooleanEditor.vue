@@ -1,5 +1,5 @@
 <template>
-  <div class="node-checkbox no-drag param-editor" @click="() => $emit('update-value', value ? false : true)">
+  <div class="node-checkbox no-drag param-editor" @click="() => $emit('update:value', value ? false : true)">
     <div class="checker">
       <Icon v-if="value" icon="icon-select-bold" />
     </div>
@@ -14,15 +14,21 @@ import Icon from '../../Nana/Icon.vue';
 
 export default defineComponent({
   name: "BooleanEditor",
-  emits: ["update-value", "update-custom-data"],
+  components: { Icon },
   props: {
     value: {
       type: [Number,Object],
       default: null
     },
-    port: Object as PropType<NodePort>,
-    customData: Object as PropType<IKeyValueObject>,
+    port: {
+      type: Object as PropType<NodePort>,
+       default: null
+    },
+    customData: {
+      type: Object as PropType<IKeyValueObject>,
+      default: null
+    },
   },
-  components: { Icon }
+  emits: ["update:value", "update:custom-data"]
 })
 </script>

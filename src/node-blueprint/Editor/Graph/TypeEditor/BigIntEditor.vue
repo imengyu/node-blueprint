@@ -3,9 +3,10 @@
     v-model="numberStringValue"
     type="text" 
     :class="'param-editor'+(numberIsOk?'':' input-border input-warn')" 
-    style="display: inline-block;; width: 88px">
+    style="display: inline-block;; width: 88px"
+  >
   <span v-if="!numberIsOk" title="'输入数字格式不正确'">
-    <i class="iconfont icon-error-1 text-warning"></i>
+    <i class="iconfont icon-error-1 text-warning" />
   </span>
 </template>
 
@@ -17,30 +18,39 @@ import { defineComponent, type PropType } from 'vue'
 
 export default defineComponent({
   name: 'NumberEditor',
-  emits: [ 'update-value', 'update-custom-data' ],
   props: {
-    value: Object as PropType<null>,
-    port: Object as PropType<NodePort>,
-    customData: Object as PropType<IKeyValueObject>,
+    value: {
+      type: [Number,Object],
+      default: null
+    },
+    port: {
+      type: Object as PropType<NodePort>,
+       default: null
+    },
+    customData: {
+      type: Object as PropType<IKeyValueObject>,
+      default: null
+    },
   },
+  emits: [ 'update:value', 'update:custom-data' ],
   data() {
     return {
       numberIsOk: true,
       numberStringValue: '',
     }
   },
-  mounted() {
-    this.numberStringValue = '' + this.value;
-  },
   watch: {
     numberStringValue(newV: string) {
       this.checkNumber(newV);
     },
   },
+  mounted() {
+    this.numberStringValue = '' + this.value;
+  },
   methods: {
     checkNumber(v : string) {
       if(StringUtils.isInteger(v)) {
-        this.$emit('update-value', BigInt(parseInt(v)));
+        this.$emit('update:value', BigInt(parseInt(v)));
         this.numberIsOk = true;
       }
       else this.numberIsOk = false;

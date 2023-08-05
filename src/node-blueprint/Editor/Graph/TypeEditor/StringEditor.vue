@@ -1,58 +1,63 @@
 <template>
   <textarea 
+    ref="editor" 
     :value="value" 
-    @update-value="(v: string) => $emit('update-value', v)" 
-    ref="editor"
-    class="custom-editor param-editor" 
+    class="custom-editor param-editor"
     :style="{
       minHeight: '20px',
       minWidth: '40px',
       resize: 'both',
       display: 'inline-block',
-    }"
-    @mouseup="onEditorMouseUp">
-  </textarea>
+    }" 
+    @change="onTextareaChange"
+    @mouseup="onEditorMouseUp"
+  />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
-import { defineComponent, onMounted, type PropType, ref, toRefs } from 'vue'
+import { onMounted, type PropType, ref, toRefs } from 'vue'
 
-export default defineComponent({
-  name: 'StringEditor ',
-  emits: [ 'update-value', 'update-custom-data'  ],
-  props: {
-    value: String,
-    port: Object as PropType<NodePort>,
-    customData: Object as PropType<IKeyValueObject>,
+const props = defineProps( {
+  value: {
+    type: String,
+    default: '',
   },
-  setup(props, context) {
-    const { customData } = toRefs(props);
+  port: {
+    type: Object as PropType<NodePort>,
+      default: null
+  },
+  customData: {
+    type: Object as PropType<IKeyValueObject>,
+    default: null
+  },
+});
 
-    const editor = ref<HTMLTextAreaElement>();
+const emit = defineEmits([ 'update:value', 'update:custom-data'  ])
 
-    onMounted(() => {
-      const _editor = editor.value;
-      if(customData?.value && parent && _editor) {
-        _editor.style.width = (customData.value[`editor_w`] as number || 80) + 'px';
-        _editor.style.height = (customData.value[`editor_h`] as number || 20) + 'px';
-      }
-    });
+const { customData } = toRefs(props);
+const editor = ref<HTMLTextAreaElement>();
 
-    function onEditorMouseUp() {
-      const _editor = editor.value;
-      if(customData?.value && _editor) {
-        customData.value[`editor_w`] = _editor.offsetWidth;
-        customData.value[`editor_h`] = _editor.offsetHeight;
-        context.emit('update-custom-data', customData.value);
-      }
-    }
-
-    return {
-      editor,
-      onEditorMouseUp,
-    }
+onMounted(() => {
+  const _editor = editor.value;
+  if(customData?.value && parent && _editor) {
+    _editor.style.width = (customData.value[`editor_w`] as number || 80) + 'px';
+    _editor.style.height = (customData.value[`editor_h`] as number || 20) + 'px';
   }
-})
+});
+
+function onEditorMouseUp() {
+  const _editor = editor.value;
+  if(customData?.value && _editor) {
+    customData.value[`editor_w`] = _editor.offsetWidth;
+    customData.value[`editor_h`] = _editor.offsetHeight;
+    emit('update:custom-data', customData.value);
+  }
+}
+
+function onTextareaChange(e: Event) {
+  emit('update:value', (e.target as HTMLTextAreaElement).value)
+}
+
 </script>

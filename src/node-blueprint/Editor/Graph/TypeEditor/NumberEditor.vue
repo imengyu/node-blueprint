@@ -5,7 +5,7 @@
     :class="'param-editor' + (numberIsOk ? '' : ' input-border input-warn')"
     style="display: inline-block; width: 70px"
   >
-  <Tooltip v-if="!numberIsOk" class="end-icon"  content="输入数字格式不正确">
+  <Tooltip v-if="!numberIsOk" class="end-icon" content="输入数字格式不正确">
     <Icon class="text-warning" icon="icon-warning-filling" />
   </Tooltip>
 </template>
@@ -20,15 +20,22 @@ import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 
 export default defineComponent({
   name: "NumberEditor",
-  emits: ["update-value", "update-custom-data"],
+  components: { Icon, Tooltip },
   props: {
     value: {
       type: [Number,Object],
       default: null
     },
-    port: Object as PropType<NodePort>,
-    customData: Object as PropType<IKeyValueObject>,
+    port: {
+      type: Object as PropType<NodePort>,
+       default: null
+    },
+    customData: {
+      type: Object as PropType<IKeyValueObject>,
+      default: null
+    },
   },
+  emits: ["update:value", "update:custom-data"],
   data() {
     return {
       numberStringValue: "",
@@ -53,13 +60,12 @@ export default defineComponent({
   methods: {
     checkNumber(v: string) {
       if (StringUtils.isNumber(v)) {
-        this.$emit("update-value", parseFloat(v));
+        this.$emit("update:value", parseFloat(v));
         this.numberIsOk = true;
       }
       else
         this.numberIsOk = false;
     }
-  },
-  components: { Icon, Tooltip }
+  }
 })
 </script>

@@ -9,6 +9,7 @@
     </template>
     <div 
       ref="nodeRef"
+      tabindex="-1"
       :class="['node-block',
                (instance.selected ? 'selected ' : ''),
                (instance.style.customClassNames),

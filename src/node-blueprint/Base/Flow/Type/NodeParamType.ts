@@ -113,6 +113,10 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    */
   public static Number: NodeParamType;
   /**
+   * 内置类型 大数字
+   */
+  public static Bigint: NodeParamType;  
+  /**
    * 内置类型 布尔值
    */
   public static Boolean: NodeParamType;

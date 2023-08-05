@@ -20,6 +20,15 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeTitle: '数字',
     typeEditor: (props) => h(NumberEditor, props),
   });
+  NodeParamType.Bigint = registry.registerType('bigint', {
+    baseType: 'number',
+    inheritType: null,
+    defaultValue: () => 0,
+    typeColor: '#40d444',
+    typeDescription: '',
+    typeTitle: '大数字',
+    typeEditor: (props) => h(BigIntEditor, props),
+  });
   NodeParamType.Boolean = registry.registerType('boolean', {
     baseType: 'boolean',
     inheritType: null,

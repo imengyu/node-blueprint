@@ -41,16 +41,17 @@ export class NodePort extends SerializableObject<INodePortDefine> {
     });
     this.parent = parent as Node;
     this.define = define;
+    this.guid = define.guid;
   }
 
   /**
    * 定义
    */
-  define: INodePortDefine;
+  readonly define: INodePortDefine;
   /**
    * 获取端口GUID
    */
-  get guid() : string { return this.define.guid; }
+  readonly guid : string;
   /**
    * 名称
    */
