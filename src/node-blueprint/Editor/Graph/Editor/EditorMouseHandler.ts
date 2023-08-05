@@ -24,24 +24,25 @@ export function isMouseEventInNoDragControl(e: MouseEvent) {
   const stopElement = e.currentTarget;
 
   function checkElement(el: HTMLElement) {
-    for (const c of noDragControl) {
-      if (el.classList.contains(c))
-        return true;
-    }
+    if (el.classList)
+      for (const c of noDragControl) {
+        if (el.classList.contains(c))
+          return true;
+      }
     return false;
   }
 
-  function checkLoop(el: HTMLElement) {
+  function checkLoop(el: HTMLElement, loop: number) {
     if (checkElement(el))
       return true;
-    if (el.parentNode && el.classList && el.parentNode !== stopElement)
-      return checkLoop(el.parentNode as HTMLElement);
+    if (loop < 8 && el.parentNode && el.parentNode !== stopElement)
+      return checkLoop(el.parentNode as HTMLElement, loop + 1);
     return false;
   }
 
   return (
     HtmlUtils.isEventInControl(e) 
-    || checkLoop(e.target as HTMLElement)
+    || checkLoop(e.target as HTMLElement, 1)
   );
 }
 

@@ -245,7 +245,6 @@ onMounted(() => {
       instance.value.nodeProp = ret.nodeProp;
       instance.value.menu = ret.menu;
     }
-    instance.value.isolateState = !instance.value.style.noIsolate;
     updateComment();
   })
 });

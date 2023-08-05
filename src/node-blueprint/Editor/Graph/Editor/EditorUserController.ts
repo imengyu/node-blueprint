@@ -1,3 +1,4 @@
+import { nextTick } from "vue";
 import { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
@@ -36,6 +37,11 @@ export interface NodeEditorUserControllerContext {
    * @param message 信息
    */
   userActionAlert(type: 'error'|'warning'|'help', message: string) : void;
+  /**
+   * 递交回调至下一个界面更新执行
+   * @param cb 
+   */
+  userInterfaceNextTick(cb: () => void): void;
 
   /**
    * 删除选中连接线
@@ -217,6 +223,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       content: message
     });
   }
+  function userInterfaceNextTick(cb: () => void) {
+    nextTick(cb);
+  }
+
   /**
    * 用户删除端口
    * @param port 
@@ -274,19 +284,24 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       context.addNode(newNode);
       const [ port, _connector ] = context.endConnectToNew(newNode);  
       const pos = new Vector2();
+
+      //强制同步连接线位置，保证显示正确
       if (_connector && _connector instanceof NodeConnectorEditor) {
         const connector = (_connector as NodeConnectorEditor);
         connector.forceSetPos(undefined, connectingEndPos);
       }
 
-      setTimeout(() => {
-        //重新定位单元位置至连接线末端位置
-        pos.set(port!.getPortPositionViewport());
-        pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
-        pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
-        newNode.position.set(pos);
-        newNode.updateRegion();
-      }, 50);
+      //延时以保证VUE将节点原件加载完成，获取端口的位置
+      userInterfaceNextTick(() => {
+        if (port) {
+          //重新定位单元位置至连接线末端位置
+          pos.set(port.getPortPositionViewport());
+          pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
+          pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
+          newNode.position.set(pos);
+          newNode.updateRegion();
+        }
+      });
     } else if(addNodeInPos) { //在指定位置添加单元
       newNode.position.set(addNodeInPos);
       context.addNode(newNode)
@@ -346,6 +361,8 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userDeleteNode = userDeleteNode;
   context.userDeletePort = userDeletePort;
   context.userDelete = userDelete;
+  context.userActionAlert = userActionAlert;
+  context.userInterfaceNextTick = userInterfaceNextTick;
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

@@ -718,7 +718,7 @@ function registerTypeBase() {
   const blockConvertToTypeTypeName : INodeDefine = {
     guid: '8D9C564C-E7A8-6741-0A8A-28ABB353A484',
     name: '强制转换类型',
-    description: '此节点用于强制转换一个通配符参数为另一个类型，如果输入类型是目标类型，则它会原样返回；反之，它会尝试可能的转换，如果无法转换，则会抛出异常',
+    description: '此节点用于强制转换一个通配符参数为另一个类型，如果输入类型是目标类型，则它会原样返回；反之，它会尝试可能的转换，如果无法转换，执行异常',
     author: 'imengyu',
     version: 1,
     category: '基础/类型',
@@ -1085,6 +1085,46 @@ function registerConnNode() {
       },
     },
   };
+  const connNode2 : INodeDefine = {
+    guid: '799E6D41-BB70-83FA-6995-F7A8B6037AEB',
+    name: '执行延长线',
+    author: 'imengyu',
+    version: 1,
+    category: '',
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Execute,
+        isRefPassing: true,
+        direction: 'input',
+        defaultConnectPort: true,
+      },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Execute,
+        isRefPassing: true,
+        direction: 'output'
+      },
+    ],
+    style: {
+      logo: NodeIconConvert,
+      titleState: 'hide',
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+      noComment: true,
+      minWidth: 0,
+    },
+    exec: {
+      onPortParamRequest() {
 
-  return [ connNode ];
+      },
+    },
+    events: {
+      onEditorCreate: (node) => {
+        node.addClass('node-block-extended-line');
+      },
+    },
+  };
+
+  return [ connNode, connNode2 ];
 }

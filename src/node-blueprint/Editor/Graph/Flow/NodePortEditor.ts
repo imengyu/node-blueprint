@@ -20,7 +20,8 @@ export class NodePortEditor extends NodePort {
   }
 
   /**
-   * 获取当前端口连接点的绝对视口位置
+   * 获取当前端口连接点的绝对视口位置。
+   * 此函数需要等待VUE实际渲染节点完成才能获取正确数据。
    * @returns 
    */
   public getPortPositionViewport() : Vector2 {

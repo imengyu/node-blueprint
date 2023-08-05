@@ -221,7 +221,10 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    */
   acceptable(another: NodeParamType, includeAny = true) {
     //通配符
-    if (includeAny && (this.baseType === 'any' || another.baseType === 'any'))
+    if (includeAny 
+      && (this.baseType === 'any' || another.baseType === 'any')
+      && (this.baseType !== 'execute' && another.baseType !== 'execute')
+    )
       return true;
     //检查类型
     if (
