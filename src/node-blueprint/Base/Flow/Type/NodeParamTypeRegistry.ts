@@ -1,7 +1,7 @@
 import { EventHandler } from "../../Utils/Events/EventHandler";
 import { printWarning } from "../../Logger/DevLog";
 import { Singleton } from "../../Singleton/Singleton";
-import { registerInternalTypes } from "./NodeParamInternalTypes";
+import { createEnumInternalEditor, registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
 
 const TAG = 'NodeParamTypeRegistry';
@@ -72,10 +72,12 @@ export class NodeParamTypeRegistry extends Singleton {
 
     this.allTypes.set(defString, newType);
 
-    if(newType.baseType === 'enum' && define.autoCreateEnumConverter) {
-      //创建枚举类型的转换器
+    //创建枚举类型的转换器
+    if(newType.baseType === 'enum' && define.autoCreateEnumConverter)
       this.createEnumDefaultConverter(newType);
-    }
+    //创建枚举编辑器
+    if(newType.baseType === 'enum' && !define.typeEditor && newType.define.options)
+      define.typeEditor = createEnumInternalEditor(newType.define.options as string[]);
 
     this.onTypeChanged.invoke('add', defString, newType);
     return newType;

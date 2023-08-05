@@ -1,10 +1,11 @@
 import { h } from "vue";
-import { NodeParamType } from "./NodeParamType";
+import { NodeParamType, type NodeParamEditorCreateCallback } from "./NodeParamType";
 import type { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 import BigIntEditor from "../../../Editor/Graph/TypeEditor/BigIntEditor.vue";
 import NumberEditor from "../../../Editor/Graph/TypeEditor/NumberEditor.vue";
 import BooleanEditor from "../../../Editor/Graph/TypeEditor/BooleanEditor.vue";
 import StringEditor from "../../../Editor/Graph/TypeEditor/StringEditor.vue";
+import EnumEditor from "../../../Editor/Graph/TypeEditor/EnumEditor.vue";
 
 /**
  * 注册系统的自定义类型
@@ -63,4 +64,12 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeDescription: '',
     typeTitle: '通配符',
   });
+}
+
+/**
+ * 创建自动枚举的编辑器
+ * @param enumOptions 
+ */
+export function createEnumInternalEditor(enumOptions: string[]) : NodeParamEditorCreateCallback {
+  return (props) => h(EnumEditor, { options: enumOptions, ...props });
 }
