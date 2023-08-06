@@ -63,6 +63,10 @@ export interface NodeParamTypeDefine {
    */
   typeColorMerger?: (type: NodeParamType) => string;
   /**
+   * 编辑器：自定义类型创建，通常在用户在编辑器中选择类型时触发
+   */
+  typeCreate?: (type: NodeParamType) => NodeParamType;
+  /**
    * 编辑器：编辑器
    */
   typeEditor?: NodeParamEditorCreateCallback|undefined;

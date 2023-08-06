@@ -25,7 +25,7 @@ export interface NodeGraphEditorBasePanelsContext {
    * @param canbeAny 是否可以选择any类型 
    * @param screenPos 显示位置（屏幕坐标） 
    */
-  showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean): Promise<NodeParamType>;
+  showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean, canBeArrayOrSetOrDict: boolean): Promise<NodeParamType>;
   /**
    * 关闭选择类型菜单
    */

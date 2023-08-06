@@ -65,6 +65,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  canBeArrayOrSetOrDict: {
+    type: Boolean,
+    default: false
+  },
 });
 
 const size = computed(() => {
@@ -80,14 +84,23 @@ const types = computed(() => {
   if (props.canBeExecute)
     list.push(NodeParamType.Execute);
 
+  function preFilterType(type: NodeParamType) {
+    return (
+      (props.canBeArrayOrSetOrDict || 
+        (!type.isArray && !type.isSet && !type.isDictionary)
+      ) &&
+      (!type.isAny && !type.isExecute)
+    );
+  }
+
   const map = NodeParamTypeRegistry.getInstance().getAllTypes();
   if (searchValue.value === '') {
     for (const [,type] of map)
-      if (!type.isAny && !type.isExecute)
+      if (preFilterType(type))
         list.push(type);
   } else
     for (const [,type] of map) {
-      if (!type.isAny && !type.isExecute && type.toUserFriendlyName().includes(searchValue.value))
+      if (preFilterType(type) && type.toUserFriendlyName().includes(searchValue.value))
         list.push(type);
     }
   return list;

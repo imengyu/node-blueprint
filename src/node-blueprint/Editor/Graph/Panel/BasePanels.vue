@@ -48,6 +48,7 @@
       :position="(selectTypePanelPosition as Vector2)"
       :canBeAny="selectTypePanelCanbeAny"
       :canBeExecute="selectTypePanelCanbeExecute"
+      :canBeArrayOrSetOrDict="selectTypePanelCanBeArrayOrSetOrDict"
       class="node-editor-no-move"
       @selectType="onSelectType"
     />
@@ -163,13 +164,15 @@ const isShowSelectTypePanel = ref(false);
 const selectTypePanelPosition = ref(new Vector2());
 const selectTypePanelCanbeExecute = ref(false);
 const selectTypePanelCanbeAny = ref(false);
+const selectTypePanelCanBeArrayOrSetOrDict = ref(false);
 let selectPromiseResolve: ((e: NodeParamType) => void)|undefined = undefined;
 
-function showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean) {
+function showSelectTypePanel(screenPos: Vector2, canbeExecute: boolean, canbeAny: boolean, canBeArrayOrSetOrDict: boolean) {
   isShowSelectTypePanel.value = true;
   selectTypePanelPosition.value = screenPos;
   selectTypePanelCanbeExecute.value = canbeExecute;
   selectTypePanelCanbeAny.value = canbeAny;
+  selectTypePanelCanBeArrayOrSetOrDict.value = canBeArrayOrSetOrDict;
   return new Promise<NodeParamType>((resolve) => {
     selectPromiseResolve = resolve;
   });
@@ -179,6 +182,7 @@ function closeSelectTypePanel() {
 }
 
 function onSelectType(type: NodeParamType) {
+  type = type.define?.typeCreate ? type.define.typeCreate(type) : type;
   closeSelectTypePanel();
   if (selectPromiseResolve) {
     selectPromiseResolve(type);

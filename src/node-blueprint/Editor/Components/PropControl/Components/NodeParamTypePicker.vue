@@ -9,14 +9,17 @@
           @update:type="(t) => $emit('update:modelValue', t)"
         >
           <NodeParamIconRender :type="modelValue" />
-          <!--用于映射类型的键类型修改-->
-          <NodeParamTypeRender 
-            v-if="modelValue && modelValue.isDictionary" 
-            :showIcon="false"
-            :type="modelValue.genericTypes[0]"
-            @click.stop="onPickDictionaryKeyType"
-          />
         </NodeParamSetTypeChoose>
+      </template>
+      <template v-if="canChangeSetType && modelValue && modelValue.isGeneric" #name>
+        <NodeParamTypePicker
+          v-for="(gtype, i) in modelValue.genericTypes"
+          :key="i"
+          :canChangeSetType="true"
+          :type="gtype"
+          @update:type="(t) => onChangeGenericType(i, t)"
+          @click.stop="onPickDictionaryKeyType"
+        />
       </template>
     </NodeParamTypeRender>
   </div>
@@ -47,6 +50,10 @@ const prop = defineProps({
     type: Boolean,
     default: false
   },
+  canBeArrayOrSetOrDict: {
+    type: Boolean,
+    default: true
+  },
   canChangeSetType: {
     type: Boolean,
     default: false
@@ -61,7 +68,8 @@ function onPickMainType() {
     context.getCurrentActiveGraphEditor()?.showSelectTypePanel(
       new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
       prop.canBeExecute,
-      prop.canBeAny
+      prop.canBeAny,
+      prop.canBeArrayOrSetOrDict
     ).then((type) => {
       const oldType = prop.modelValue;
       if (!oldType)
@@ -82,13 +90,14 @@ function onPickDictionaryKeyType() {
     context.getCurrentActiveGraphEditor()?.showSelectTypePanel(
       new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
       prop.canBeExecute,
-      prop.canBeAny
+      prop.canBeAny,
+      prop.canBeArrayOrSetOrDict
     ).then((type) => {
       const oldType = prop.modelValue;
-      if (oldType?.isDictionary) {
+      if (oldType) {
         const genericType = `<${type.toString()},${oldType.genericTypes[1].toString()}>`
-        const define = NodeParamTypeRegistry.getInstance().getTypeByString('dictionary');
-        const newType = NodeParamTypeRegistry.getInstance().registerType('dictionary' + genericType, {
+        const define = NodeParamTypeRegistry.getInstance().getTypeByString(oldType.name);
+        const newType = NodeParamTypeRegistry.getInstance().registerType(oldType.name + genericType, {
           ...define?.define as NodeParamTypeDefine,
           hiddenInChoosePanel: true,
         });
@@ -97,22 +106,28 @@ function onPickDictionaryKeyType() {
     });
   }
 }
+function onChangeGenericType(index: number, type: NodeParamType) {
+  const genericTypes = prop.modelValue.genericTypes;
+  genericTypes[index] = type;
+}
 
 </script>
 
 <style lang="scss">
 .node-param-type-picker {
   display: inline-flex ;
-  padding: 2px 5px;
+  padding: 1px 3px;
   border-radius: 5px;
   cursor: pointer;
   user-select: none;
+  border: 1px solid transparent;
   background-color: var(--mx-editor-clickable-background-color);
   color: var(--mx-editor-text-color);
 
   &:hover {
+    border-color: var(--mx-editor-border-color);
     background-color: var(--mx-editor-hover-text-color);
-  color: var(--mx-editor-text-color);
+    color: var(--mx-editor-text-color);
   }
 }
 </style>

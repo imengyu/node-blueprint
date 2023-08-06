@@ -1,5 +1,5 @@
 import { h } from "vue";
-import { NodeParamType, type NodeParamEditorCreateCallback } from "./NodeParamType";
+import { NodeParamType, type NodeParamEditorCreateCallback, type NodeParamTypeDefine } from "./NodeParamType";
 import type { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
 import BigIntEditor from "../../../Editor/Graph/TypeEditor/BigIntEditor.vue";
 import NumberEditor from "../../../Editor/Graph/TypeEditor/NumberEditor.vue";
@@ -71,6 +71,12 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeColor: '#fff',
     typeDescription: '可以将同一类型的多个变量存储在一个数组数据结构中。',
     typeTitle: '数组',
+    typeCreate(type) {
+      return registry.registerType(type.name + '<any>', {
+        ...type.define as NodeParamTypeDefine,
+        hiddenInChoosePanel: true,
+      });
+    },
     typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
     typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
   });
@@ -81,6 +87,12 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeColor: '#fff',
     typeDescription: '集是一种元素不重复的数据结构',
     typeTitle: '集',
+    typeCreate(type) {
+      return registry.registerType(type.name + '<any>', {
+        ...type.define as NodeParamTypeDefine,
+        hiddenInChoosePanel: true,
+      });
+    },
     typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
     typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
   });
@@ -91,6 +103,12 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeColor: '#fff',
     typeDescription: '映射表示键和值的一对一映射集合。',
     typeTitle: '映射',
+    typeCreate(type) {
+      return registry.registerType(type.name + '<any,any>', {
+        ...type.define as NodeParamTypeDefine,
+        hiddenInChoosePanel: true,
+      });
+    },
     typeColorMerger: (type) => (type.genericTypes.length === 2 ? type.genericTypes[1].define?.typeColor : '') || '#fff',
     typeGenericNameMerger: (genericNames, source, inControl) => {
       if (genericNames.length === 2)

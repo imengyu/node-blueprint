@@ -754,7 +754,7 @@ function registerTypeBase() {
       {
         direction: 'output',
         guid: 'OUT',
-        paramType: NodeParamType.String,
+        paramType: NodeParamType.Any,
       },
     ],
     style: {
