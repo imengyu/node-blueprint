@@ -13,17 +13,31 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { watch, ref } from 'vue';
 import Icon from '../../../Nana/Icon.vue';
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: '',
   }
 })
 
-const show = ref(true);
+const show = ref(readGroupCollapse());
+
+function readGroupCollapse() {
+  const set = JSON.parse(localStorage.getItem('CollapsePropHeaderState') || '{}')
+  return set[props.title] !== false;
+}
+function saveGroupCollapse() {
+  const set = JSON.parse(localStorage.getItem('CollapsePropHeaderState') || '{}')
+  set[props.title] = show.value ? undefined : false;
+  localStorage.setItem('CollapsePropHeaderState', JSON.stringify(set));
+}
+
+watch(show, () => {
+  saveGroupCollapse();
+});
 </script>
 
 <style lang="scss">

@@ -42,7 +42,7 @@ export class NodeParamTypeRegistry extends Singleton {
    */
   public registerType(defString : string, define : NodeParamTypeDefine) : NodeParamType {
     const old = this.getTypeByString(defString);
-    if(old !== null) {
+    if(old !== null && !define.hiddenInChoosePanel) {
       printWarning(TAG, "Type " + defString + " alreday registered !");
       return old;
     }
@@ -61,7 +61,7 @@ export class NodeParamTypeRegistry extends Singleton {
     if (cotLeft > 0) {
       if (cotRight < cotLeft)
         throw new Error(`Bad type ${defString}, generic definition bracket error`);
-      const genericTypesStr = defString.substring(cotLeft, cotRight);
+      const genericTypesStr = defString.substring(cotLeft + 1, cotRight);
       genericTypesStr.split(',').forEach((typeStr, i) => {
         const type = this.getTypeByString(typeStr);
         if (!type) 

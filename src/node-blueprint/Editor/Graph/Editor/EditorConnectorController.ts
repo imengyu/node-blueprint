@@ -144,6 +144,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   function selectOneConnector() : NodeConnectorEditor|null {
     const _mousePos = context.getMouseInfo().mouseCurrentPosViewPort;
+    const _mousePosEditor = context.getMouseInfo().mouseCurrentPosEditor;
     const pointCastConnectors = context
       .getBaseChunkedPanel()
       .testPointCastTag(_mousePos, "connector");
@@ -152,7 +153,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         const connector = context
           .getConnectors()
           .get(pointCastConnectors[i].data as string) as NodeConnectorEditor;
-        if (connector && connector.testInConnector(_mousePos, context.getMouseInfo().mouseCurrentPosScreen)) {
+        if (connector && connector.testInConnector(_mousePos, _mousePosEditor)) {
           connector.hoverChecked = true;
           connector.hover = true;
           context.selectConnector(connector, false);
@@ -670,7 +671,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     const noIsolateNodes : NodeEditor[] = [];
     const allNodes = context.getNodes();
     for (const [,node] of allNodes) {
-      if (node.style.noIsolate)
+      if (node.style.noIsolate) 
         noIsolateNodes.push((node as NodeEditor));
       else if (node.hasExecutePort())
         (node as NodeEditor).isolateState = true;

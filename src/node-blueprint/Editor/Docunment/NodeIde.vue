@@ -28,6 +28,7 @@
           <PropBox class="node-custom-editor">
             <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
             <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
+            <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
             <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
           </PropBox>
         </template>
@@ -45,6 +46,7 @@ import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
+import NodeGraphProp from './Prop/NodeGraphProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';

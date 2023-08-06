@@ -35,13 +35,11 @@
           <Icon v-show="instance.state==='error'" class="dot error" icon="icon-close" />
           <Icon v-show="instance.state==='success'" class="dot success" icon="icon-select-bold" />
           <!--普通状态图标-->
-          <template v-if="instance.state==='normal' || instance.state==='active'">
-            <VNodeRenderer
-              v-if="instance.paramType?.define?.customPortIconRender"
-              :render="() => instance.paramType.define!.customPortIconRender!(instance, instance.paramType)"
-            />
-            <Icon v-else class="dot" :icon="portIcon" :fill="portColor" />
-          </template>
+          <NodeParamIconRender 
+            v-if="instance.state==='normal' || instance.state==='active'"
+            :port="instance"
+            :type="instance.paramType"
+          />
         </div>
         <!--文字-->
         <span
@@ -80,11 +78,11 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, toRefs, type PropType, inject, ref } from 'vue';
+import { toRefs, type PropType, inject, ref } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
-import VNodeRenderer from '../../Nana/VNodeRenderer.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
+import NodeParamIconRender from '../../Components/Small/NodeParamIconRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
@@ -106,24 +104,6 @@ const {
 const emit = defineEmits([ 'deletePort' ]);
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
-
-//图标
-const portIcon = computed(() => {
-  const type = instance.value.paramType;
-  if (!type)
-    return 'icon-help-filling';
-  const editorState = instance.value;
-  if(type.isExecute) 
-    return editorState.state === 'active' ? 'icon-port-exe-active' : 'icon-port-exe';
-  else if(type.name === 'array') 
-    return editorState.state === 'active' ? 'icon-port-array-full' : 'icon-port-array';
-  return editorState.state === 'active' ? 'icon-port-active' : 'icon-port';
-});
-//图标颜色
-const portColor = computed(() => {
-  return instance.value.paramType?.define?.typeColor || 'rgb(250, 250, 250)';
-});
-
 const portDot = ref<HTMLElement>();
 
 //#region 位置钩子

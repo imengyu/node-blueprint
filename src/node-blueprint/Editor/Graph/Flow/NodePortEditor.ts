@@ -17,7 +17,9 @@ export class NodePortEditor extends NodePort {
    * 获取当前节点的主颜色
    */
   public getTypeColor() : string {
-    return this.paramType.define?.typeColor || '';
+    return this.paramType.define?.typeColorMerger ? 
+      this.paramType.define.typeColorMerger(this.paramType) : 
+      (this.paramType.define?.typeColor || '');
   }
 
   /**

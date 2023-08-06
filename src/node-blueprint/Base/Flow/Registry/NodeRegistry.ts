@@ -58,7 +58,7 @@ export class NodeRegistry extends Singleton {
    */
   public registerNode(nodeDef: INodeDefine, updateList = true) : void {
     const oldNode = this.getRegisteredNode(nodeDef.guid);
-    if (oldNode != null && oldNode != undefined) {
+    if (oldNode !== null && oldNode !== undefined) {
       printWarning(
         TAG,
         "Node guid " + nodeDef.guid + " alreday registered !"
@@ -183,14 +183,14 @@ export class NodeRegistry extends Singleton {
 
     let category: CategoryData|null = null;
     for (let i = 0, c = parent.length; i < c; i++) {
-      if (parent[i].category == categoryName) {
+      if (parent[i].category === categoryName) {
         category = parent[i];
         break;
       }
     }
 
     //没有则创建
-    if (category == null) {
+    if (category === null) {
       category = {
         category: categoryName,
         childCategories: [],

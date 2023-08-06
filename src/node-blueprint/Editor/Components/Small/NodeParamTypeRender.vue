@@ -1,34 +1,32 @@
 <template>
-  <div class="node-param-type-display" @click="$emit('click')">
-    <Icon :icon="icon" :fill="type?.define?.typeColor" />
-    <span v-if="type">{{ type.toUserFriendlyName() }}</span>
-    <span v-else>请选择</span>
+  <div class="node-param-type-display">
+    <slot name="icon">
+      <NodeParamIconRender v-if="showIcon" :type="type" @click="$emit('click', $event)" />
+    </slot>
+    <slot name="name">
+      <span v-if="type" @click="$emit('click', $event)">{{ type.toUserFriendlyName(true) }}</span>
+      <span v-else @click="$emit('click', $event)">请选择</span>
+    </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
+import type { PropType } from 'vue';
 import type { NodeParamType } from '../../../Base/Flow/Type/NodeParamType';
+import NodeParamIconRender from './NodeParamIconRender.vue';
 
-const props = defineProps({
+defineProps({
   type: {
     type: Object as PropType<NodeParamType>,
     default: null,
   },
+  showIcon: {
+    type: Boolean,
+    default: true
+  }
 });
 
 defineEmits([ 'click' ]);
-
-const icon = computed(() => {
-  if (!props.type)
-    return "icon-help-filling";
-  if (props.type.isBaseType)
-    return "icon-sphere";
-  if (props.type.isEnum)
-    return "icon-diamond";
-  return "icon-hexagon";
-});
 </script>
 
 <style lang="scss">
@@ -37,8 +35,9 @@ const icon = computed(() => {
   flex-direction: row;
   align-items: center;
 
-  span {
-    margin-left: 10px;
+  > span {
+    margin-left: 5px;
+    flex: 1;
   }
 }
 </style>

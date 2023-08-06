@@ -64,6 +64,40 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeDescription: '',
     typeTitle: '通配符',
   });
+  NodeParamType.Array = registry.registerType('array', {
+    baseType: 'object',
+    inheritType: null,
+    defaultValue: () => null,
+    typeColor: '#fff',
+    typeDescription: '可以将同一类型的多个变量存储在一个数组数据结构中。',
+    typeTitle: '数组',
+    typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
+    typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
+  });
+  NodeParamType.Set = registry.registerType('set', {
+    baseType: 'object',
+    inheritType: null,
+    defaultValue: () => null,
+    typeColor: '#fff',
+    typeDescription: '集是一种元素不重复的数据结构',
+    typeTitle: '集',
+    typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
+    typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
+  });
+  NodeParamType.Dictionary = registry.registerType('dictionary', {
+    baseType: 'object',
+    inheritType: null,
+    defaultValue: () => null,
+    typeColor: '#fff',
+    typeDescription: '映射表示键和值的一对一映射集合。',
+    typeTitle: '映射',
+    typeColorMerger: (type) => (type.genericTypes.length === 2 ? type.genericTypes[1].define?.typeColor : '') || '#fff',
+    typeGenericNameMerger: (genericNames, source, inControl) => {
+      if (genericNames.length === 2)
+        return (inControl ? '' : genericNames[0]) + ' 映射到 ' + genericNames[1];
+      return source;
+    },
+  });
 }
 
 /**

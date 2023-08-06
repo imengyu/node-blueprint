@@ -88,6 +88,9 @@ import NodeIconEntryBoolean from '../NodeIcon/boolean.svg';
 import NodeIconInfo from '../NodeIcon/info.svg';
 import NodeIconInfo2 from '../NodeIcon/info2.svg';
 import NodeIconConvert from '../NodeIcon/convert.svg';
+import NodeIconConvert2 from '../NodeIcon/convert-number.svg';
+import NodeIconConvert3 from '../NodeIcon/convert-number-2.svg';
+import NodeIconType from '../NodeIcon/cpu.svg';
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
@@ -643,7 +646,7 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: NodeIconEntryBoolean,
+      logo: NodeIconType,
       titleState: 'hide',
       logoBackground: 'title:获取类型名称',
       minWidth: 200,
@@ -677,7 +680,7 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: NodeIconEntryBoolean,
+      logo: NodeIconConvert2,
       minWidth: 200,
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
@@ -702,6 +705,7 @@ function registerTypeBase() {
               {
                 title: '作为类型',
                 type: 'param-type-picker',
+                additionalProps: { canChangeSetType: true },
                 getValue: () => NodeParamType.FromString(node.options.type as string),
                 onUpdateValue: (newValue) => changeOutParamType(newValue as NodeParamType),
               }
@@ -716,7 +720,7 @@ function registerTypeBase() {
     },
   };
   const blockConvertToTypeTypeName : INodeDefine = {
-    guid: '8D9C564C-E7A8-6741-0A8A-28ABB353A484',
+    guid: 'EC05F8A0-AD4E-EE00-0BE4-6F02BDFD6470',
     name: '强制转换类型',
     description: '此节点用于强制转换一个通配符参数为另一个类型，如果输入类型是目标类型，则它会原样返回；反之，它会尝试可能的转换，如果无法转换，执行异常',
     author: 'imengyu',
@@ -726,8 +730,26 @@ function registerTypeBase() {
       {
         direction: 'input',
         guid: 'IN',
+        paramType: NodeParamType.Execute,
+        paramDefaultValue: true,
+      },
+      {
+        direction: 'input',
+        guid: 'DATA',
         paramType: NodeParamType.Any,
         paramDefaultValue: true,
+      },
+      {
+        direction: 'output',
+        name: '转换成功',
+        guid: 'EXEC-SUCCESS',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'output',
+        name: '转换失败',
+        guid: 'EXEC-FAILED',
+        paramType: NodeParamType.Execute,
       },
       {
         direction: 'output',
@@ -736,10 +758,39 @@ function registerTypeBase() {
       },
     ],
     style: {
-      logo: NodeIconEntryBoolean,
+      logo: NodeIconConvert3,
       minWidth: 200,
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
+    },
+    events: {
+      onEditorCreate(node) {
+        function changeOutParamType(newType: NodeParamType) {
+          const outNode = node.getPortByGUID('OUT');
+          if (outNode) {
+            node.options.type = newType.toString();
+            node.changePortParamType(outNode, newType);
+            outNode.name = `转为 ${newType.toUserFriendlyName()}`;
+          }
+        }
+
+        if (node.options.type)
+          changeOutParamType(NodeParamType.FromString(node.options.type as string));
+
+        return {
+          nodeProp: {
+            before: [
+              {
+                title: '转为类型',
+                type: 'param-type-picker',
+                additionalProps: { canChangeSetType: true },
+                getValue: () => NodeParamType.FromString(node.options.type as string),
+                onUpdateValue: (newValue) => changeOutParamType(newValue as NodeParamType),
+              }
+            ],
+          }
+        };
+      },
     },
     exec: {
       onPortExecuteIn: (block, port) => {
@@ -747,7 +798,10 @@ function registerTypeBase() {
     },
   };
 
-  return [ blockString, blockNumber, blockBoolean, blockGetTypeName, blockAsTypeTypeName ];
+  return [ 
+    blockString, blockNumber, blockBoolean, 
+    blockGetTypeName, blockAsTypeTypeName, blockConvertToTypeTypeName 
+  ];
 }
 function registerLoadLib() {
   //TODO: LoadLib
@@ -809,6 +863,7 @@ function registerCommentNode() {
       logo: NodeIconInfo,
       minHeight: 100,
       noComment: true,
+      noIsolate: true,
     },
   };
 
@@ -865,6 +920,16 @@ function registerCommentNode() {
         ele.classList.add('comment-block-title');
         ele.appendChild(input);
         ele.appendChild(span);
+
+        const borderLeft = document.createElement('div');
+        const borderTop = document.createElement('div');
+        const borderBottom = document.createElement('div');
+        borderLeft.classList.add('comment-block-border','left');
+        borderTop.classList.add('comment-block-border','right');
+        borderBottom.classList.add('comment-block-border','bottom');
+        parentEle.appendChild(borderLeft);
+        parentEle.appendChild(borderTop);
+        parentEle.appendChild(borderBottom);
         parentEle.appendChild(ele);
         node.data.input = input;
       },
@@ -942,6 +1007,7 @@ function registerCommentNode() {
       minHeight: 100,
       noTooltip: true,
       noComment: true,
+      noIsolate: true,
       titleState: 'hide',
       layer: 'background',
       userResize: 'all',

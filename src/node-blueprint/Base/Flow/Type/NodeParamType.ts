@@ -41,19 +41,27 @@ export interface NodeParamTypeDefine {
   /**
    * [Editor only] Type color
    */
-  typeColor: string;
+  typeColor?: string;
   /**
    * [Editor only] Description of this type
    */
-  typeDescription: string;
+  typeDescription?: string;
   /**
    * [Editor only] Title of this type
    */
-  typeTitle: string;
+  typeTitle?: string;
   /**
-   * [Editor only] Generic of this type
+   * 编辑器：是否在选择类型编辑器中隐藏
    */
-  typeGenericNameMerger?: (genericNames: string[]) => string;
+  hiddenInChoosePanel?: boolean;
+  /**
+   * 编辑器：自定义泛型名称拼接
+   */
+  typeGenericNameMerger?: (genericNames: string[], sourceName: string, inControl: boolean) => string;
+  /**
+   * 编辑器：自定义颜色色合并
+   */
+  typeColorMerger?: (type: NodeParamType) => string;
   /**
    * 编辑器：编辑器
    */
@@ -81,8 +89,9 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
         }
       },
       loadOverride: (data) => {
-        return NodeParamTypeRegistry.getInstance().getTypeByString((data as unknown as IKeyValueObject).name as string)
-          || NodeParamTypeRegistry.getInstance().getTypeByString('any') as NodeParamType;
+        return NodeParamTypeRegistry.getInstance().getTypeByString(
+          (data as unknown as IKeyValueObject).name as string
+        ) || NodeParamType.Any;
       },
       saveOverride: () => {
         return {
@@ -124,6 +133,18 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * 内置类型 执行
    */
   public static Execute = new NodeParamType();
+  /**
+   * 内置类型 数组
+   */
+  public static Array: NodeParamType;
+  /**
+   * 内置类型 集
+   */
+  public static Set: NodeParamType;
+  /**
+   * 内置类型 映射
+   */
+  public static Dictionary: NodeParamType;
 
   /**
    * 类型名称
@@ -141,6 +162,10 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * object 继承类型
    */
   inheritType: NodeParamType|null = null;
+  /**
+   * 是否在选择类型编辑器中隐藏
+   */
+  hiddenInChoosePanel = false;
 
   define : NodeParamTypeDefine|null = null;
 
@@ -155,6 +180,24 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
       this.baseType === 'any' ||
       this.baseType === 'null'
     );
+  }
+  /**
+   * 获取类型是不是数组
+   */
+  get isArray() {
+    return this.name === 'array';
+  }
+  /**
+   * 获取类型是不是集
+   */
+  get isSet() {
+    return this.name === 'set';
+  }
+  /**
+   * 获取类型是不是字典
+   */
+  get isDictionary() {
+    return this.name === 'dictionary';
   }
   /**
    * 获取类型是不是枚举
@@ -192,12 +235,12 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * 获取当前类型对用户友好的说明文字
    * @returns 
    */
-  toUserFriendlyName() {
+  toUserFriendlyName(inControl = false) {
     let string = `${this.define?.typeTitle || this.name} `;
     if (this.genericTypes.length > 0) {
       const genericNames = this.genericTypes.map(t => t.toUserFriendlyName());
       if (this.define?.typeGenericNameMerger)
-        string += this.define.typeGenericNameMerger(genericNames);
+        string = this.define.typeGenericNameMerger(genericNames, string, inControl);
       else
         string += '泛型参数' + this.genericTypes.map(t => t.toUserFriendlyName()).join(',');
     }
