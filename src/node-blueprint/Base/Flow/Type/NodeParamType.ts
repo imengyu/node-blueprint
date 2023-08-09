@@ -3,6 +3,7 @@ import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "../Node/NodePort";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
+import { devWarning } from "../../Logger/DevLog";
 
 /**
  * Base types
@@ -54,6 +55,17 @@ export interface NodeParamTypeDefine {
    * 编辑器：是否在选择类型编辑器中隐藏
    */
   hiddenInChoosePanel?: boolean;
+  /**
+   * 用于编辑器获取泛型参数的开关控制
+   * @param index 当前参数索引
+   * @returns 
+   */
+  typeGenericPickerOption?: (index: number) => ({
+    canBeAny: boolean,
+    canBeExecute: boolean,
+    canBeNoHash: boolean,
+    canBeContainer: boolean,
+  })|undefined;
   /**
    * 编辑器：自定义泛型名称拼接
    */
@@ -110,7 +122,10 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * @param typeString 
    */
   public static FromString(typeString: string) {
-    return NodeParamTypeRegistry.getInstance().getTypeByString(typeString) as NodeParamType;
+    const newType = NodeParamTypeRegistry.getInstance().getTypeByString(typeString) as NodeParamType;
+    if (!newType)
+      devWarning('NodeParamType',`Not found type ${typeString}!`);
+    return newType;
   }
 
   /**

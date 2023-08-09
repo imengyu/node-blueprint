@@ -772,6 +772,7 @@ function registerTypeBase() {
             node.changePortParamType(outNode, newType);
             outNode.name = `转为 ${newType.toUserFriendlyName()}`;
           }
+          node.updateRegion();
         }
 
         if (node.options.type)

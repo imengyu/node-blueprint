@@ -1,12 +1,8 @@
 <template>
   <div class="node-param-type-display">
-    <slot name="icon">
-      <NodeParamIconRender v-if="showIcon" :type="type" @click="$emit('click', $event)" />
-    </slot>
-    <slot name="name">
-      <span v-if="type" @click="$emit('click', $event)">{{ type.toUserFriendlyName(true) }}</span>
-      <span v-else @click="$emit('click', $event)">请选择</span>
-    </slot>
+    <NodeParamIconRender v-if="showIcon" :type="type" />
+    <span v-if="type">{{ type.toUserFriendlyName(true) }}</span>
+    <span v-else>请选择</span>
   </div>
 </template>
 
@@ -25,8 +21,6 @@ defineProps({
     default: true
   }
 });
-
-defineEmits([ 'click' ]);
 </script>
 
 <style lang="scss">

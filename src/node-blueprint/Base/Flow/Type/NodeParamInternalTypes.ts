@@ -110,6 +110,16 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
       });
     },
     typeColorMerger: (type) => (type.genericTypes.length === 2 ? type.genericTypes[1].define?.typeColor : '') || '#fff',
+    typeGenericPickerOption(index) {
+      if (index === 0) {
+        return {
+          canBeAny: true,
+          canBeExecute: false,
+          canBeNoHash: false,
+          canBeContainer: false,
+        }
+      }
+    },
     typeGenericNameMerger: (genericNames, source, inControl) => {
       if (genericNames.length === 2)
         return (inControl ? '' : genericNames[0]) + ' 映射到 ' + genericNames[1];

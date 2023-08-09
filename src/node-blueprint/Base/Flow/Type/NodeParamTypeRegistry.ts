@@ -37,6 +37,44 @@ export class NodeParamTypeRegistry extends Singleton {
     return this.allTypes.get(defString) || null;
   }
   /**
+   * 获取类型是否注册
+   * @param defString 定义字符串
+   * @returns 是否注册
+   */
+  public isTypeRegistered(defString: string) {
+    return this.allTypes.has(defString);
+  }
+  /**
+   * 重新创建类型的泛型然后重新注册
+   * @param oldType 基础类
+   * @param geneicTypes 泛型类参数，如果为空，则返回类型为空的泛型类型
+   */
+  public reRegisterNewGenericType(oldType: NodeParamType, geneicTypes: NodeParamType[]|null) {
+    if (!geneicTypes || geneicTypes.length === 0)
+      return this.getTypeByString(oldType.name);
+
+    let mergedName = `${oldType.name}<`;
+    for (let i = 0; i < geneicTypes.length; i++) {
+      if (i > 0)
+        mergedName += ',';
+      if (geneicTypes[i] === undefined)
+        mergedName += oldType.genericTypes[i].toString();
+      else 
+        mergedName += geneicTypes[i].toString();
+    }
+    mergedName += '>';
+
+    const registeredType = this.getTypeByString(mergedName);
+    if (registeredType)
+      return registeredType;
+
+    const baseType = this.getTypeByString(oldType.name);
+    return this.registerType(mergedName, {
+      ...baseType?.define as NodeParamTypeDefine,
+      hiddenInChoosePanel: true,
+    });
+  }
+  /**
    * 注册自定义类型
    * @param reg 类型数据
    */
@@ -53,16 +91,28 @@ export class NodeParamTypeRegistry extends Singleton {
     newType.define = define;
 
     const cotLeft = defString.indexOf('<');
-    const cotRight = defString.lastIndexOf('>');
-
     newType.name = cotLeft > 0 ? defString.substring(0, cotLeft) : defString;
 
     //处理泛型定义
     if (cotLeft > 0) {
-      if (cotRight < cotLeft)
+      let cotIndex = 1, lastCotIndex = cotLeft + 1;
+      const types : string[] = [];
+      for (let i = cotLeft + 1; i < defString.length; i++) {
+        if (defString.charAt(i) === '<') {
+          cotIndex++;
+        } else if (defString.charAt(i) === '>') {
+          cotIndex--;
+          if (cotIndex === 0)
+            types.push(defString.substring(lastCotIndex, i));
+        } else if (defString.charAt(i) === ',' && cotIndex === 1) {
+          types.push(defString.substring(lastCotIndex, i));
+          lastCotIndex = i + 1;
+        }
+      }
+      if (cotIndex !== 0)
         throw new Error(`Bad type ${defString}, generic definition bracket error`);
-      const genericTypesStr = defString.substring(cotLeft + 1, cotRight);
-      genericTypesStr.split(',').forEach((typeStr, i) => {
+
+      types.forEach((typeStr, i) => {
         const type = this.getTypeByString(typeStr);
         if (!type) 
           throw new Error(`Error when create type ${defString}, not found generic type ${typeStr} (pos ${i}).`);

@@ -33,6 +33,8 @@ const emit = defineEmits([ 'update:type' ]);
 
 function switchType(type: 'variable'|'array'|'set'|'dictionary') {
   const registry = NodeParamTypeRegistry.getInstance()
+  console.log('NodeParamSetTypeChoose switchType');
+  
   switch(type) {
     case 'variable':
       if (!props.type)

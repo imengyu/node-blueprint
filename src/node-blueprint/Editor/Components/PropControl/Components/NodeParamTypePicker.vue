@@ -1,40 +1,46 @@
 <template>
   <!--类型选择器-->
   <div ref="selectBox" class="node-param-type-picker">
-    <NodeParamTypeRender :type="modelValue" @click="onPickMainType">
-      <template v-if="canChangeSetType" #icon>
-        <!--用于修改容器类型-->
-        <NodeParamSetTypeChoose 
-          :type="modelValue"
-          @update:type="(t) => $emit('update:modelValue', t)"
-        >
-          <NodeParamIconRender :type="modelValue" />
-        </NodeParamSetTypeChoose>
-      </template>
-      <template v-if="canChangeSetType && modelValue && modelValue.isGeneric" #name>
+    <template v-if="canChangeSetType">
+      <!--用于修改容器类型-->
+      <NodeParamSetTypeChoose 
+        :type="modelValue"
+        @update:type="(t) => $emit('update:modelValue', t)"
+      >
+        <NodeParamIconRender :type="modelValue" />
+      </NodeParamSetTypeChoose>
+      <template v-if="modelValue && modelValue.isGeneric">
+        <!--用于嵌套容器类型-->
         <NodeParamTypePicker
           v-for="(gtype, i) in modelValue.genericTypes"
           :key="i"
-          :canChangeSetType="true"
-          :type="gtype"
-          @update:type="(t) => onChangeGenericType(i, t)"
-          @click.stop="onPickDictionaryKeyType"
+          :canChangeSetType="modelValue.define?.typeGenericPickerOption?.(i)?.canBeContainer ?? true"
+          :canBeArrayOrSetOrDict="modelValue.define?.typeGenericPickerOption?.(i)?.canBeContainer ?? true"
+          :canBeAny="modelValue.define?.typeGenericPickerOption?.(i)?.canBeAny ?? canBeAny"
+          :canBeExecute="modelValue.define?.typeGenericPickerOption?.(i)?.canBeExecute ?? canBeExecute"
+          :modelValue="gtype"
+          @update:modelValue="(t) => onChangeGenericType(i, t)"
         />
+        <Icon v-tooltip="'删除泛型参数'" class="type-clear-button" icon="icon-close" @click="onClearMainGenericType" />
       </template>
-    </NodeParamTypeRender>
+      <span v-else @click="onPickMainType">{{ modelValue?.toUserFriendlyName() || '请选择' }}</span>
+    </template>
+    <!--普通选择类型-->
+    <NodeParamTypeRender v-else :type="modelValue" @click="onPickMainType" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { inject, ref, type PropType } from 'vue';
+import { ref, type PropType } from 'vue';
 import NodeParamTypeRender from '../../Small/NodeParamTypeRender.vue';
 import NodeParamIconRender from '../../Small/NodeParamIconRender.vue';
 import NodeParamSetTypeChoose from '../../Small/NodeParamSetTypeChoose.vue';
-import type { NodeParamType, NodeParamTypeDefine } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import type { NodeIdeControlContext } from '@/node-blueprint/Editor/Docunment/NodeIde';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '@/node-blueprint/Editor/Docunment/NodeIde';
 import { NodeParamTypeRegistry } from '@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry';
+import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
+import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
 const emit = defineEmits([ 'update:modelValue' ])
 const prop = defineProps({
@@ -61,54 +67,41 @@ const prop = defineProps({
 });
 
 const selectBox = ref<HTMLElement>();
-const context = inject('NodeIdeControlContext') as NodeIdeControlContext;
+const { getNodeGraphEditorContext } = injectNodeGraphEditorContextInEditorOrIDE();
 
-function onPickMainType() {
-  if (selectBox.value) {
-    context.getCurrentActiveGraphEditor()?.showSelectTypePanel(
-      new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
-      prop.canBeExecute,
-      prop.canBeAny,
-      prop.canBeArrayOrSetOrDict
-    ).then((type) => {
-      const oldType = prop.modelValue;
-      if (!oldType)
-        emit('update:modelValue', type);
-      else if (oldType.isArray || oldType.isSet) {
-        oldType.genericTypes[0] = type;
-        emit('update:modelValue', oldType);
-      } else if (oldType.isDictionary) {
-        oldType.genericTypes[1] = type;
-        emit('update:modelValue', oldType);
-      } else
-        emit('update:modelValue', type);
-    });
-  }
-}
-function onPickDictionaryKeyType() {
-  if (selectBox.value) {
-    context.getCurrentActiveGraphEditor()?.showSelectTypePanel(
-      new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
-      prop.canBeExecute,
-      prop.canBeAny,
-      prop.canBeArrayOrSetOrDict
-    ).then((type) => {
-      const oldType = prop.modelValue;
-      if (oldType) {
-        const genericType = `<${type.toString()},${oldType.genericTypes[1].toString()}>`
-        const define = NodeParamTypeRegistry.getInstance().getTypeByString(oldType.name);
-        const newType = NodeParamTypeRegistry.getInstance().registerType(oldType.name + genericType, {
-          ...define?.define as NodeParamTypeDefine,
-          hiddenInChoosePanel: true,
-        });
-        emit('update:modelValue', newType);
-      }
-    });
-  }
+function onClearMainGenericType() {
+  const oldType = prop.modelValue;
+  if (!oldType)
+    emit('update:modelValue', NodeParamType.Any);
+  else if (oldType.isDictionary) 
+    emit('update:modelValue', oldType.genericTypes[1]);
+  else
+    emit('update:modelValue', oldType.genericTypes[0]);
 }
 function onChangeGenericType(index: number, type: NodeParamType) {
-  const genericTypes = prop.modelValue.genericTypes;
-  genericTypes[index] = type;
+  if (prop.modelValue) {
+    const genericTypes = new Array(prop.modelValue.genericTypes.length);
+    genericTypes[index] = type;
+
+    emit('update:modelValue', 
+      NodeParamTypeRegistry.getInstance().reRegisterNewGenericType(
+        prop.modelValue, 
+        genericTypes
+      )
+    );
+  }
+}
+function onPickMainType() {
+  if (selectBox.value) {
+    getNodeGraphEditorContext()?.showSelectTypePanel(
+      new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
+      prop.canBeExecute,
+      prop.canBeAny,
+      prop.canBeArrayOrSetOrDict
+    ).then((type) => {
+      emit('update:modelValue', type);
+    });
+  }
 }
 
 </script>
@@ -116,6 +109,8 @@ function onChangeGenericType(index: number, type: NodeParamType) {
 <style lang="scss">
 .node-param-type-picker {
   display: inline-flex ;
+  flex-direction: row;
+  align-items: center;
   padding: 1px 3px;
   border-radius: 5px;
   cursor: pointer;
@@ -123,6 +118,18 @@ function onChangeGenericType(index: number, type: NodeParamType) {
   border: 1px solid transparent;
   background-color: var(--mx-editor-clickable-background-color);
   color: var(--mx-editor-text-color);
+
+  .type-clear-button {
+    border-radius: 4px;
+    background-color: var(--mx-editor-background-third-color);
+    cursor: pointer;
+    user-select: none;
+    z-index: 10;
+
+    &:hover {
+      fill: var(--mx-editor-red-light-text-color);
+    }
+  }
 
   &:hover {
     border-color: var(--mx-editor-border-color);

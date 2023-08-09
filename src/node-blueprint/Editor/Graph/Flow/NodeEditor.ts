@@ -71,7 +71,9 @@ export class NodeEditor extends Node {
     this.lastBlockPos.set(this.position);
   }
   /**
-   * 在单元的大小或者位置变化后，更新区块信息，保证用户多选可以选择
+   * 在单元的大小或者位置变化后，更新区块信息，此操作保证：
+   * * 保证连接到此单元的所有连接线更新位置
+   * * 保证用户多选可以选择
    */
   public updateRegion() {
     this.editorHooks.callbackUpdateRegion?.();

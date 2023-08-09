@@ -8,7 +8,7 @@
   <Icon v-else-if="type.isSet" icon="icon-port-set" :fill="genericColor" />
   <NodeParamIconDictionaryRender 
     v-else-if="type.isDictionary"
-    :type="type" 
+    :type="type"
   />
   <Icon v-else :icon="icon" :fill="color" />
 </template>
