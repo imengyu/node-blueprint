@@ -239,6 +239,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
    */
   static = false;
 
+  
   /**
    * 通过名称获取参数
    * @param name 参数名

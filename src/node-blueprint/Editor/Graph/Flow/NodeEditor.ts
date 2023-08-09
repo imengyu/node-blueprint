@@ -5,6 +5,7 @@ import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
 import type { NodeContextMenuItem } from "../Editor/EditorContextMenuHandler";
+import type { NodeGraphEditorContext } from "../NodeGraphEditor";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
@@ -48,6 +49,7 @@ export class NodeEditor extends Node {
     callbackTwinkle: null as null|((time: number) => void),
     callbackAddClass: null as null|((className: string) => void),
     callbackDoAutoResizeCheck: null as null|(() => void),
+    callbackRequireContext: null as null|(() => NodeGraphEditorContext),
   };
 
   public mouseConnectingPort = false;
@@ -123,5 +125,16 @@ export class NodeEditor extends Node {
    */
   public getCurrentSizeType() : number  {
     return this.editorHooks.callbackGetCurrentSizeType?.() || 0;
+  }
+
+  /**
+   * 向自己发送消息
+   */
+  public sendSelfMessage(message: string|number, data: any) {
+    this.events.onEditorMessage?.(
+      this as NodeEditor, 
+      this.editorHooks.callbackRequireContext?.()!,
+      { message, data }
+    );
   }
 }

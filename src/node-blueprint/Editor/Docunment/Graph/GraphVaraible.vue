@@ -19,6 +19,7 @@
       <PropItem title="变量名称">
         <Input 
           :model-value="(variable as NodeVariable).name" 
+          :update-at="'blur'"
           @update:model-value="(v) => onGraphVariableNameUpdate((variable as NodeVariable), v as string)"
         />
       </PropItem>
@@ -58,6 +59,7 @@ import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
+import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
 
 const props = defineProps({
   graph: {
@@ -71,7 +73,7 @@ const { getNodeGraphEditorContext } = injectNodeGraphEditorContextInEditorOrIDE(
 function onAddGraphVariable() {
   const graph = props.graph;
   const variable = new NodeVariable();
-  variable.name = '变量' + graph.variables.length;
+  variable.name = graph.getUseableVariableName('变量');
   variable.type = NodeParamType.Any;
   graph.variables.push(variable);
 }
@@ -92,21 +94,25 @@ function onDeleteGraphVariable(variable: NodeVariable) {
 function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {
   //检查是否有其他变量也使用了这个名称，如果有则不允许更改
   const graph = props.graph;
+  if (newName === variable.name)
+    return;
+
   if (graph.variables.find(k => k.name === newName)) {
     getNodeGraphEditorContext()?.userActionAlert('warning', `已有一个名为 ${newName} 的变量，请换一个名称`);
     return;
   }
 
+  const oldName = variable.name;
   variable.name = newName;
 
   //进行图表中所有变量节点的更新
-
+  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(oldName, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
 }
 function onGraphVariableTypeUpdate(variable: NodeVariable, type: NodeParamType) {
   variable.type = type;
 
   //进行图表中所有变量节点的更新
-  
+  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(variable.name, BaseNodes.messages.VARIABLE_UPDATE_TYPE, { type });
 }
 
 </script>

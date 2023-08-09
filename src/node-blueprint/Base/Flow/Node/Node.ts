@@ -21,8 +21,7 @@ const TAG = 'Node';
 export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
-    super('Node', define, mergeSerializableConfig({
-      
+    super('Node', define, mergeSerializableConfig({    
       loadOverride: (data : INodeDefine) => {
         const ret = super.load(data);
     
@@ -91,7 +90,7 @@ export class Node extends SerializableObject<INodeDefine> {
             'guid',
             'ports',
             'options',
-            'name',
+            'tags',
             'markContent',
             'markOpen',
             'position',
@@ -123,6 +122,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public define: INodeDefine;
   public uid = RandomUtils.genNonDuplicateIDHEX(32);
   public name = '';
+  public description = '';
   /**
    * 获取GUID
    */
@@ -150,6 +150,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public markOpen = false;
   public position = new Vector2();
   public customSize = new Vector2();
+  public tags : string[] = [];
 
   //非序列化
 
@@ -278,13 +279,25 @@ export class Node extends SerializableObject<INodeDefine> {
    * @param port 参数端口
    * @param newType 新的数据类型
    */
-  public changePortParamType(port: NodePort, newType: NodeParamType) {
-    if(!port)
+  public changePortParamType(port: NodePort|string, newType: NodeParamType) {
+    if(!port) {
       printError(this.name, 'changePortParamType: Must provide port');
-    else if(port.parent === this)
-      port.paramType = newType;
-  }
+      return;
+    }
+    if (typeof port === 'string')
+      port = this.getPortByGUID(port) as NodePort;
+    if (!port) {
+      printError(this.name, `changePortParamType: Port ${port} not found`);
+      return;
+    }
 
+    if(port.parent !== this) {
+      printError(this.name, `changePortParamType: Port ${port.guid} is not this node children `);
+      return;
+    }
+      
+    port.paramType = newType;
+  }
 }
 
 export type NodeBreakPoint = 'none'|'disable'|'enable';
@@ -330,6 +343,10 @@ export interface INodeDefine {
    * 单元运行设置
    */
   exec ?: INodeExecSettings;
+  /**
+   * 单元筛选标签
+   */
+  tags ?: string[],
 
   /**
    * [仅编辑器可用] 指定这个单元在每个图表中是否只能出现一次。默认为 false
@@ -380,6 +397,10 @@ export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: 
 export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up" | "leave" | "enter", e: MouseEvent) => boolean;
 export type NodeEditorEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "select" | "unselect") => void;
 
+export interface NodeEditorMessageData {
+  message: string|number,
+  data: { [index: string]: any; }
+}
 export interface NodeEditorCreateReturnData {
   /**
    * [仅编辑器可用] 指定这个单元在属性栏中附加的属性
@@ -445,6 +466,10 @@ export interface INodeEventSettings {
    * 编辑器创建回调
    */
   onEditorCreate ?: NodeEditorContextEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>,
+  /**
+   * 编辑器中的消息回调
+   */
+  onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>,
   /**
    * 用户添加了一个端口时的回调。
    */
@@ -519,6 +544,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onAddToEditor ?: NodeEventCallback;
   onCreateCustomEditor ?: NodeCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
+  onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;
   onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
     direction : NodePortDirection,

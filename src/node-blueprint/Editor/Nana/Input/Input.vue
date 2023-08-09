@@ -37,6 +37,15 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  /**
+   * 更新策略 
+   * * 'input' 输入后立即更新
+   * * 'blur' 在失去焦点时更新
+   */
+  updateAt: {
+    type: String as PropType<'input'|'blur'>,
+    default: 'input',
+  },
   type: {
     type: String,
     default: 'text',
@@ -78,18 +87,23 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([ 'update:modelValue' ])
+const emit = defineEmits([ 'update:modelValue', 'focus', 'blur' ])
 
 const focus = ref(false);
 
 function onInput(e: Event) {
-  emit('update:modelValue', (e.target as HTMLInputElement).value);
+  if (props.updateAt === 'input')
+    emit('update:modelValue', (e.target as HTMLInputElement).value);
 }
 function onFocus() {
   focus.value = true;
+  emit('focus');
 }
-function onBlur() {
+function onBlur(e: Event) {
   focus.value = false;
+  if (props.updateAt === 'blur')
+    emit('update:modelValue', (e.target as HTMLInputElement).value);
+  emit('blur');
 }
 
 </script>

@@ -2,6 +2,11 @@ import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 
+const messages = {
+  VARIABLE_UPDATE_TYPE: 0,
+  VARIABLE_UPDATE_NAME: 1,
+};
+
 export default { 
   register,
   getScriptBaseNodeIn() { return blockIn; },
@@ -13,6 +18,7 @@ export default {
   getScriptBaseVariableSet() { return variableSet;  },
   getScriptBaseCommentNode() { return commentNode;  },
   getScriptBaseConvertNode() { return convertNode;  },
+  messages,
   packageName: 'Base',
   version: 1,
 }
@@ -348,6 +354,7 @@ function registerScriptVariableBase()  {
     version: 1,
     category: '基础',
     hideInAddPanel: true,
+    tags: [ 'variable', 'variable-get' ],
     ports: [
       {
         direction: 'output',
@@ -359,6 +366,40 @@ function registerScriptVariableBase()  {
       titleState: 'hide',
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
+    },
+    events: {
+      onEditorCreate(node, context) {
+        //在初始化时加载之前绑定的变量信息
+        const graph = context.getCurrentGraph();
+        const variableName = node.options.variable as string;
+        const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
+        if (variable) {
+          //直接调用下方消息进行相关状态设置
+          node.sendSelfMessage(messages.VARIABLE_UPDATE_NAME, { name: variableName });
+          node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: variable.type });
+        }
+      },
+      onEditorMessage(node, context, msg) {
+        //变量类型更改消息
+        if (msg?.message === messages.VARIABLE_UPDATE_TYPE) {
+          node.changePortParamType('OUTPUT', msg.data.type);
+        }
+        //变量名称更改消息
+        else if (msg?.message === messages.VARIABLE_UPDATE_NAME) 
+        {
+          const newName = msg.data.name as string;
+          const oldName = node.options.variable as string;
+
+          ArrayUtils.remove(node.tags, oldName);
+          ArrayUtils.addOnce(node.tags, newName);
+
+          node.options.variable = newName;
+
+          const OUTPUT = node.getPortByGUID('OUTPUT');
+          if (OUTPUT)
+            OUTPUT.name = newName;
+        } 
+      }
     },
     exec: {
       onPortParamRequest: (block, port) => {
@@ -373,6 +414,7 @@ function registerScriptVariableBase()  {
     version: 1,
     category: '基础',
     hideInAddPanel: true,
+    tags: [ 'variable', 'variable-set' ],
     ports: [
       {
         direction: 'input',
@@ -398,6 +440,42 @@ function registerScriptVariableBase()  {
     style: {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
+    },
+    events: {
+      onEditorCreate(node, context) {
+        //在初始化时加载之前绑定的变量信息
+        const graph = context.getCurrentGraph();
+        const variableName = node.options.variable as string;
+        const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
+        if (variable) {
+          //直接调用下方消息进行相关状态设置
+          node.sendSelfMessage(messages.VARIABLE_UPDATE_NAME, { name: variableName });
+          node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: variable.type });
+        }
+      },
+      onEditorMessage(node, context, msg) {
+        //变量类型更改消息
+        if (msg?.message === messages.VARIABLE_UPDATE_TYPE) {
+          node.changePortParamType('INPUT', msg.data.type);
+          node.changePortParamType('OUTPUT', msg.data.type);
+        } 
+        //变量名称更改消息
+        else if (msg?.message === messages.VARIABLE_UPDATE_NAME) 
+        {
+          const newName = msg.data.name as string;
+          const oldName = node.options.variable as string;
+
+          node.name = `设置变量 ${newName} 的值`;
+          ArrayUtils.remove(node.tags, oldName);
+          ArrayUtils.addOnce(node.tags, newName);
+
+          node.options.variable = newName;
+          
+          const OUTPUT = node.getPortByGUID('OUTPUT');
+          if (OUTPUT)
+            OUTPUT.name = newName;
+        } 
+      }
     },
     exec: {
       onPortParamRequest: (block, port) => {

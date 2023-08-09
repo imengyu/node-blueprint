@@ -31,6 +31,8 @@ export class NodePort extends SerializableObject<INodePortDefine> {
         },
         onlyValues: {
           serializableProperties: [
+            'name',
+            'description',
             'guid',
             'dyamicAdd',
             'initialValue',

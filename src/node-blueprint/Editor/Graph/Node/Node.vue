@@ -4,8 +4,8 @@
     :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
     <template #content>
-      <h4>{{ instance.define.name }}</h4>
-      <p>{{ instance.define.description }}</p>
+      <h4>{{ instance.name }}</h4>
+      <p>{{ instance.description }}</p>
     </template>
     <div 
       ref="nodeRef"
@@ -73,7 +73,7 @@
       >
         <template #content>
           <h4>{{ instance.name }}</h4>
-          <p>{{ instance.define.description }}</p>
+          <p>{{ instance.description }}</p>
         </template>
         <div 
           :class="'node-block-header state-'+(instance.style.titleState)"
@@ -240,6 +240,7 @@ onMounted(() => {
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
     updateRegion();
   };
+  instance.value.editorHooks.callbackRequireContext = () => context;
   instance.value.editorHooks.callbackUpdateRegion = updateRegion;
   instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
     chunkedPanel.value.removeInstance(instance.value.chunkInfo);

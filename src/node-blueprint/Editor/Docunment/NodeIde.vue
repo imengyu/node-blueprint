@@ -414,6 +414,8 @@ function onActiveTabChange(currentActive: DockPanel) {
   }
 }
 
+import TestScript from '../../../../test-scripts/graph-variable.json';
+
 onMounted(() => {
   nextTick(() => {
     dockLayout.value?.setData({
@@ -458,7 +460,7 @@ onMounted(() => {
   setTimeout(() => {
     //newDocunment();
     const doc = new NodeDocunmentEditor();
-    doc.load(JSON.parse('{"uid":"6b7a687873723869","name":"新文档","version":"1.0","description":"新文档","author":"","comment":"","mainGraph":{"@SNK":"NodeGraph","@SNO":{"connectors":{"@SNK":"Array","@SNO":[]},"nodes":{"@SNK":"Map","@SNO":[{"@SNM":"e65376b7a733864","@SNV":{"guid":"0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F","uid":"e65376b7a733864","node":{"customSize":{"serializeClassName":"Vector2","serializeConfig":{"serializeSchemes":{"default":{"serializableProperties":["x","y"]}}},"define":{"x":0,"y":0},"x":0,"y":0},"position":{"serializeClassName":"Vector2","serializeConfig":{"serializeSchemes":{"default":{"serializableProperties":["x","y"]}}},"define":{"x":81,"y":161},"x":81,"y":161},"markOpen":false,"markContent":"这是入口节点，程序从这里开始运行","options":{},"ports":{"@SNK":"Array","@SNO":[{"guid":"START","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false}]},"uid":"e65376b7a733864"}}},{"@SNM":"69776b396c7573","@SNV":{"guid":"77885802-92C8-569B-1E7F-48938943A549","uid":"69776b396c7573","node":{"customSize":{"serializeClassName":"Vector2","serializeConfig":{"serializeSchemes":{"default":{"serializableProperties":["x","y"]}}},"define":{"x":0,"y":0},"x":0,"y":0},"position":{"serializeClassName":"Vector2","serializeConfig":{"serializeSchemes":{"default":{"serializableProperties":["x","y"]}}},"define":{"x":864,"y":157},"x":864,"y":157},"markOpen":false,"markContent":"这是程序结束节点，运行到这里后程序结束","options":{},"ports":{"@SNK":"Array","@SNO":[{"guid":"END","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false}]},"uid":"69776b396c7573"}}}]},"outputPorts":{"@SNK":"Array","@SNO":[]},"inputPorts":{"@SNK":"Array","@SNO":[]},"static":false,"variables":{"@SNK":"Array","@SNO":[{"@SNK":"NodeVariable","@SNO":{"name":"数字变量","type":{"@SNK":"NodeParamType","@SNO":{"name":"number"}},"static":false,"customData":{}}},{"@SNK":"NodeVariable","@SNO":{"name":"字符串变量","type":{"@SNK":"NodeParamType","@SNO":{"name":"string"}},"static":false,"customData":{}}}]},"children":{"@SNK":"Array","@SNO":[]},"author":"","description":"主图表是整个程序的入口","version":"1.0","uid":"6e713871727473","name":"主图表","type":"main"}}}'));
+    doc.load(TestScript as any);
     openDocunment(doc);
   }, 500);
 });

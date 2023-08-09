@@ -386,6 +386,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       const OUTPUT = node?.getPortByGUID('OUTPUT');
       if (node && OUTPUT) {
         OUTPUT.name = variable.name;
+        node.options.variable = name;
         node.changePortParamType(OUTPUT, variable.type);
       }
     } else {
@@ -394,6 +395,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         const INPUT = node.getPortByGUID('INPUT');
         const OUTPUT = node.getPortByGUID('OUTPUT');
         node.name = `设置变量 ${name} 的值`;
+        node.options.variable = name;
         if (INPUT) {
           node.changePortParamType(INPUT, variable.type);
         }
@@ -404,6 +406,8 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       }
     }
   }
+
+
 
   let autoNodeSizeChangeCheckerTimer = 0;
 

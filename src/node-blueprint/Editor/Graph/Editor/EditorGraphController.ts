@@ -60,6 +60,33 @@ export interface NodeGraphEditorGraphControllerContext {
    * 清空编辑器内所有内容
    */
   clearAll() : void;
+  
+  /**
+   * 按标签筛选节点
+   * @param tag 标签
+   */
+  filterNodes(tag: string): NodeEditor[];
+  /**
+   * 向指定节点发送消息
+   * @param node 节点
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  sendMessageToNode(node: NodeEditor, message: string | number, data: any): void;
+  /**
+   * 向多个节点发送消息
+   * @param nodes 节点数组
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  sendMessageToNodes(nodes: NodeEditor[], message: string | number, data: any): void;
+  /**
+   * 向多个已筛选的节点发送消息
+   * @param tag 筛选标签
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  sendMessageToFilteredNodes(tag: string, message: string|number, data: any) : void;
 }
 
 const TAG = 'EditorGraphController';
@@ -189,7 +216,6 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     }
     return true;
   }
-
   /**
    * 标记当前图表已经被用户修改
    */
@@ -222,7 +248,6 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       }, 200);
     });
   }
-
   function addNodes(nodes: NodeEditor[]) {
     if (currentGraph.value) {
       pushNodes(...nodes);
@@ -240,7 +265,6 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       printWarning('Graph', 'addNode fail: no currentGraph');
     }
   }
-
   /**
    * 关闭图表
    * @param graph 
@@ -262,8 +286,55 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
     allConnectors.clear();
   }
 
-  context.closeGraph = () => closeGraph;
-  context.clearAll = () => clearAll;
+  /**
+   * 按标签筛选节点
+   * @param tag 筛选标签
+   */
+  function filterNodes(tag: string) {
+    if (!currentGraph.value)
+      return [];
+    const nodes : NodeEditor[] = [];
+    for (const [,node] of currentGraph.value.nodes) {
+      if (node.tags.includes(tag))
+        nodes.push(node as NodeEditor);
+    }
+    return nodes;
+  }
+  /**
+   * 向指定节点发送消息
+   * @param node 节点
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  function sendMessageToNode(node: NodeEditor, message: string|number, data: any) {
+    node.events.onEditorMessage?.(node, context, { message, data });
+  }
+  /**
+   * 向多个节点发送消息
+   * @param nodes 节点数组
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  function sendMessageToNodes(nodes: NodeEditor[], message: string|number, data: any) {
+    nodes.forEach(node => node.events.onEditorMessage?.(node, context, { message, data }));
+  }
+  /**
+   * 向多个已筛选的节点发送消息
+   * @param tag 筛选标签
+   * @param message 消息号
+   * @param data 消息数据
+   */
+  function sendMessageToFilteredNodes(tag: string, message: string|number, data: any) {
+    filterNodes(tag).forEach(node => node.events.onEditorMessage?.(node, context, { message, data }));
+  }
+
+  context.filterNodes = filterNodes;
+  context.sendMessageToNode = sendMessageToNode;
+  context.sendMessageToNodes = sendMessageToNodes;
+  context.sendMessageToFilteredNodes = sendMessageToFilteredNodes;
+
+  context.closeGraph = closeGraph;
+  context.clearAll = clearAll;
   context.getConnectors = () => allConnectors;
   context.getNodes = () => allNodes;
   context.removeConnector = removeConnector;
