@@ -72,7 +72,7 @@
         :enable="!instance.style.noTooltip"
       >
         <template #content>
-          <h4>{{ instance.define.name }}</h4>
+          <h4>{{ instance.name }}</h4>
           <p>{{ instance.define.description }}</p>
         </template>
         <div 
@@ -88,7 +88,7 @@
             :imageUrlOrIcon="instance.style.logo || DefaultBlockLogo"
             :size="20"
           />
-          <div class="title">{{ instance.define.name }}</div>
+          <div class="title">{{ instance.name }}</div>
           
           <NodeIconImageRender
             class="logo-right"
@@ -227,6 +227,14 @@ onMounted(() => {
   instance.value.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
   instance.value.editorHooks.callbackUpdateComment = updateComment;
   instance.value.editorHooks.callbackGetLastMovedBlock = () => lastMovedBlock;
+  instance.value.editorHooks.callbackDoAutoResizeCheck = function () {
+    if (nodeRef.value) {
+      const w = nodeRef.value.offsetWidth;
+      const h = nodeRef.value.offsetHeight;
+      if (w !== lastCheckSizeW || h !== lastCheckSizeH)
+        updateRegion();
+    }
+  };
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
@@ -254,6 +262,8 @@ onMounted(() => {
 
 //#region 区块大小与区块功能
 
+let lastCheckSizeW = 0, lastCheckSizeH = 0;
+
 /**
  * 获取真实节点大小
  */
@@ -268,6 +278,11 @@ function getRealSize() {
 function updateRegion() {
   const realSize = getRealSize();
   const chunkInfo = instance.value.chunkInfo;
+
+  if (nodeRef.value) {
+    lastCheckSizeW = nodeRef.value.offsetWidth;
+    lastCheckSizeH = nodeRef.value.offsetHeight;
+  }
 
   chunkInfo.rect.set( 
     instance.value.position.x,

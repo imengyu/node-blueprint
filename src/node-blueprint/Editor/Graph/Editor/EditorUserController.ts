@@ -382,21 +382,40 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     }
 
     if (type === 'get') {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableGet());
+      const node = userAddNode(BaseNodes.getScriptBaseVariableGet(), context.getMouseInfo().mouseCurrentPosViewPort);
       const OUTPUT = node?.getPortByGUID('OUTPUT');
       if (node && OUTPUT) {
-        OUTPUT.name = `获取变量 ${name} 的值`;
+        OUTPUT.name = variable.name;
         node.changePortParamType(OUTPUT, variable.type);
       }
     } else {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableSet());
-      const OUTPUT = node?.getPortByGUID('OUTPUT');
+      const node = userAddNode(BaseNodes.getScriptBaseVariableSet(), context.getMouseInfo().mouseCurrentPosViewPort);
       if (node) {
-        node.define.name = `设置变量 ${name} 的值`;
+        const INPUT = node.getPortByGUID('INPUT');
+        const OUTPUT = node.getPortByGUID('OUTPUT');
+        node.name = `设置变量 ${name} 的值`;
+        if (INPUT) {
+          node.changePortParamType(INPUT, variable.type);
+        }
         if (OUTPUT) {
+          OUTPUT.name = variable.name;
           node.changePortParamType(OUTPUT, variable.type);
         }
       }
+    }
+  }
+
+  let autoNodeSizeChangeCheckerTimer = 0;
+
+  function autoNodeSizeChangeCheckerStartStop(start: boolean) {
+    if (autoNodeSizeChangeCheckerTimer) {
+      clearInterval(autoNodeSizeChangeCheckerTimer);
+      autoNodeSizeChangeCheckerTimer = 0;
+    }
+    if (start) {
+      autoNodeSizeChangeCheckerTimer = setInterval(() => {
+        context.getSelectNodes().forEach((n) => n.editorHooks.callbackDoAutoResizeCheck?.())
+      }, 1000);
     }
   }
 
@@ -416,6 +435,8 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.setSelectedNodeBreakpointState = setSelectedNodeBreakpointState;
   context.moveViewportToNode = moveViewportToNode;
   context.genCommentForSelectedNode = genCommentForSelectedNode;
+
+  context.autoNodeSizeChangeCheckerStartStop = autoNodeSizeChangeCheckerStartStop;
 
   return {}
 }

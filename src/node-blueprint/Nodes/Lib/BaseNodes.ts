@@ -396,7 +396,6 @@ function registerScriptVariableBase()  {
       },
     ],
     style: {
-      titleState: 'hide',
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },

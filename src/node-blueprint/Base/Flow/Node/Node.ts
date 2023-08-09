@@ -91,6 +91,7 @@ export class Node extends SerializableObject<INodeDefine> {
             'guid',
             'ports',
             'options',
+            'name',
             'markContent',
             'markOpen',
             'position',
@@ -121,6 +122,7 @@ export class Node extends SerializableObject<INodeDefine> {
 
   public define: INodeDefine;
   public uid = RandomUtils.genNonDuplicateIDHEX(32);
+  public name = '';
   /**
    * 获取GUID
    */
@@ -158,14 +160,6 @@ export class Node extends SerializableObject<INodeDefine> {
   //=====================
 
   /**
-   * 获取名称
-   * @returns 
-   */
-  public getName() : string {
-    return this.define.name;
-  }
-
-  /**
    * 添加端口
    * @param data 端口数据
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
@@ -173,7 +167,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null = null, forceChangeDirection ?: NodePortDirection) : NodePort {
     const oldData = this.getPort(data.guid, data.direction);
     if(oldData !== null && oldData !== undefined) {
-      printWarning(this.getName() + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
+      printWarning(this.name + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
         srcNode: this
       });
       return oldData;
@@ -206,7 +200,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public deletePort(guid : string|NodePort, direction ?: NodePortDirection) : void {
     const oldData = typeof guid === 'string' ? this.getPort(guid, direction) : guid;
     if(oldData === null || oldData === undefined) {
-      printWarning(this.getName() + ".deletePort", guid + " port not exist !", {
+      printWarning(this.name + ".deletePort", guid + " port not exist !", {
         srcNode: this,
       });
       return;
@@ -286,7 +280,7 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public changePortParamType(port: NodePort, newType: NodeParamType) {
     if(!port)
-      printError(this.getName(), 'changePortParamType: Must provide port');
+      printError(this.name, 'changePortParamType: Must provide port');
     else if(port.parent === this)
       port.paramType = newType;
   }

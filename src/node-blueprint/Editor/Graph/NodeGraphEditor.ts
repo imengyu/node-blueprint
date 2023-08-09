@@ -71,6 +71,7 @@ export interface NodeGraphEditorBaseEventListener {
  * 内部上下文函数
  */
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
+  autoNodeSizeChangeCheckerStartStop(start: boolean) : void;
   mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
 }
 

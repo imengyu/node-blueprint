@@ -40,7 +40,7 @@ const nodeDefaultProps : PropControlItem[] = [
   {
     type: 'static',
     title: '名称',
-    getValue: () => firstSelectNode.value?.getName(),
+    getValue: () => firstSelectNode.value?.name,
   },
   {
     type: 'select',

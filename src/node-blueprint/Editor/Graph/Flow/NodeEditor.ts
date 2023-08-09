@@ -47,6 +47,7 @@ export class NodeEditor extends Node {
     callbackGetLastMovedBlock: null as null|(() => boolean),
     callbackTwinkle: null as null|((time: number) => void),
     callbackAddClass: null as null|((className: string) => void),
+    callbackDoAutoResizeCheck: null as null|(() => void),
   };
 
   public mouseConnectingPort = false;

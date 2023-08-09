@@ -92,7 +92,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
             backgroundNodes.value.push(node);
             break;
           default:
-            printError(TAG, `Faild to add node: ${node.getName()} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
+            printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
             break;
         }        
         allNodes.set(node.uid, node);

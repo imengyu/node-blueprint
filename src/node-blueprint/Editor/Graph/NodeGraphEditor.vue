@@ -214,9 +214,13 @@ const eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged
 onMounted(() => {
   initRenderer();
   loadGraph(props.graph);
+  setTimeout(() => {
+    context.autoNodeSizeChangeCheckerStartStop(true);
+  }, 1999);
 });
 onBeforeUnmount(() => {
   eventSelectNodeChanged.unListen();
+  context.autoNodeSizeChangeCheckerStartStop(false);
 })
 
 function initRenderer() {
