@@ -205,23 +205,34 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
    * 新图表初始化
    */
   public initNew(): void {
-    if (this.type === 'main') {
-      const startNode = this.createNode({
-        ...BaseNodes.getScriptBaseNodeIn(),
-        position: new Vector2(250, 100),
-        markOpen: true,
-        markContent: '这是入口节点，程序从这里开始运行',
-      });
-      const endNode = this.createNode({
-        ...BaseNodes.getScriptBaseNodeOut(),
-        position: new Vector2(650, 100),
-        markOpen: true,
-        markContent: '这是程序结束节点，运行到这里后程序结束',
-      });
-      this.nodes.set(startNode.uid, startNode);
-      this.nodes.set(endNode.uid, endNode);
+    switch (this.type) {
+      case 'main': {
+        const startNode = this.createNode({
+          ...BaseNodes.getScriptBaseNodeIn(),
+          position: new Vector2(250, 100),
+          markOpen: true,
+          markContent: '这是入口节点，程序从这里开始运行',
+        });
+        const endNode = this.createNode({
+          ...BaseNodes.getScriptBaseNodeOut(),
+          position: new Vector2(650, 100),
+          markOpen: true,
+          markContent: '这是程序结束节点，运行到这里后程序结束',
+        });
+        this.nodes.set(startNode.uid, startNode);
+        this.nodes.set(endNode.uid, endNode);
+        break;
+      }
+      case 'function': {
+        break;
+      }
+      case 'static': {
+        break;
+      }
+      default:
+        //TODO: 其他类型初始化
+        break;
     }
-    //TODO: 其他类型初始化
   }
 
   parent: NodeDocunment|NodeGraph;

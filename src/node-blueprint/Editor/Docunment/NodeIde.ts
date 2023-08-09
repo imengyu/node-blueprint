@@ -8,6 +8,7 @@ export interface NodeIdeControlContext {
   openDocunment(doc: NodeDocunmentEditor): void;
   getDocunmentByUid(uid: string): NodeDocunmentEditor | undefined;
   getCurrentActiveGraphEditor(): NodeGraphEditorContext | null;
+  getOtherGraphEditor(): NodeGraphEditorContext[] | null;
 }
 
 export function injectNodeGraphEditorContextInEditorOrIDE() {
@@ -18,5 +19,8 @@ export function injectNodeGraphEditorContextInEditorOrIDE() {
     getNodeGraphEditorContext() {
       return editorContext ? editorContext : (context.getCurrentActiveGraphEditor());
     },
+    getNodeIdeControlContext() {
+      return context
+    }
   }
 }

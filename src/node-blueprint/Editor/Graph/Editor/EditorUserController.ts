@@ -36,6 +36,12 @@ export interface NodeEditorUserControllerContext {
    * @param type 类型
    * @param message 信息
    */
+  userActionConfirm(type: 'error'|'warning'|'help', message: string) : Promise<boolean>;
+  /**
+   * 用户操作显示弹出框
+   * @param type 类型
+   * @param message 信息
+   */
   userActionAlert(type: 'error'|'warning'|'help', message: string) : void;
   /**
    * 递交回调至下一个界面更新执行
@@ -230,6 +236,17 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       content: message
     });
   }
+  /**
+   * 用户操作显示弹出框
+   * @param type 类型
+   * @param message 信息
+   */
+  function userActionConfirm(type: 'error'|'warning'|'help', message: string) {
+    return context.showConfirm({
+      icon: type,
+      content: message
+    });
+  }
   function userInterfaceNextTick(cb: () => void) {
     nextTick(cb);
   }
@@ -383,30 +400,14 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
     if (type === 'get') {
       const node = userAddNode(BaseNodes.getScriptBaseVariableGet(), context.getMouseInfo().mouseCurrentPosViewPort);
-      const OUTPUT = node?.getPortByGUID('OUTPUT');
-      if (node && OUTPUT) {
-        OUTPUT.name = variable.name;
-        node.options.variable = name;
-        node.changePortParamType(OUTPUT, variable.type);
-      }
+      if (node)
+        node.options.variable = variable.name;
     } else {
       const node = userAddNode(BaseNodes.getScriptBaseVariableSet(), context.getMouseInfo().mouseCurrentPosViewPort);
-      if (node) {
-        const INPUT = node.getPortByGUID('INPUT');
-        const OUTPUT = node.getPortByGUID('OUTPUT');
-        node.name = `设置变量 ${name} 的值`;
-        node.options.variable = name;
-        if (INPUT) {
-          node.changePortParamType(INPUT, variable.type);
-        }
-        if (OUTPUT) {
-          OUTPUT.name = variable.name;
-          node.changePortParamType(OUTPUT, variable.type);
-        }
-      }
+      if (node)
+        node.options.variable = variable.name;
     }
   }
-
 
 
   let autoNodeSizeChangeCheckerTimer = 0;
@@ -427,8 +428,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userDeleteNode = userDeleteNode;
   context.userDeletePort = userDeletePort;
   context.userDelete = userDelete;
-  context.userActionAlert = userActionAlert;
   context.userAddVariableNode = userAddVariableNode;
+
+  context.userActionConfirm = userActionConfirm;
+  context.userActionAlert = userActionAlert;
   context.userInterfaceNextTick = userInterfaceNextTick;
 
   context.deleteSelectedNodes = deleteSelectedNodes;

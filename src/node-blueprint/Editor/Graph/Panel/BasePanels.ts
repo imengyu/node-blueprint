@@ -45,4 +45,9 @@ export interface NodeGraphEditorBasePanelsContext {
    * @returns 
    */
   showModal: (options: AlertProps) => void;
+  /**
+   * 显示对话框
+   * @returns 
+   */
+  showConfirm: (options: AlertProps) => Promise<boolean>;
 }

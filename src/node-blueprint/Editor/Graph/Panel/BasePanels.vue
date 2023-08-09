@@ -120,6 +120,10 @@ function closeSmallTip() {
 context.showModal = (options) => {
   Alert.alert(options);
 };
+context.showConfirm = (options) => {
+  return Alert.confirm(options);
+};
+
 
 //#endregion
 

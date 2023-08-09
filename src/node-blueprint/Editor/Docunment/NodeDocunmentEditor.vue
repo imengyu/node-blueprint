@@ -76,6 +76,9 @@ const context = {
   getActiveGraph() {
     return currentGraph.value;
   },
+  getOtherGraphs() {
+    return openedGraphs.value.filter(p => p.graph !== currentGraph.value).map(p => p.graph);
+  },
   getActiveGraphEditor() {
     return currentGraph.value?.activeEditor || undefined;
   },

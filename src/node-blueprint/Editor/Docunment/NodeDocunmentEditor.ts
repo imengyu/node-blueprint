@@ -23,6 +23,11 @@ export interface NodeDocunmentEditorContext {
     */
   getActiveGraph() : NodeGraph|undefined;
   /**
+    * 获取其他已打开的图表
+    * @param graph 
+    */
+  getOtherGraphs() : NodeGraph[]|undefined;
+  /**
    * 获取当前激活的图表上下文
    */
   getActiveGraphEditor(): NodeGraphEditorContext | undefined;

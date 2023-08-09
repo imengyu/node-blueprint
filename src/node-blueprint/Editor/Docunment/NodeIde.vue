@@ -279,6 +279,12 @@ function getCurrentActiveGraphEditor() {
   return currentActiveDocunment.value?.activeEditor?.getActiveGraph()?.activeEditor || null;
 }
 /**
+ * 获取其他打开的编辑器
+ */
+function getOtherGraphEditor() {
+  return currentActiveDocunment.value?.activeEditor?.getOtherGraphs()?.map(g => g.activeEditor) || null;
+}
+/**
  * 通过UID获取文档实例
  * @param uid 
  */
@@ -470,6 +476,7 @@ const context = reactive({
   closeDocunment,
   openDocunment,
   getCurrentActiveGraphEditor,
+  getOtherGraphEditor,
   getDocunmentByUid,
 } as NodeIdeControlContext);
 
