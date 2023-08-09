@@ -72,6 +72,7 @@ export class NodeParamTypeRegistry extends Singleton {
     return this.registerType(mergedName, {
       ...baseType?.define as NodeParamTypeDefine,
       hiddenInChoosePanel: true,
+      isCustomType: true,
     });
   }
   /**
@@ -88,6 +89,7 @@ export class NodeParamTypeRegistry extends Singleton {
     const newType = new NodeParamType();
     newType.baseType = define.baseType;
     newType.inheritType = define.inheritType || null;
+    newType.isCustomType = define.isCustomType === true;
     newType.define = define;
 
     const cotLeft = defString.indexOf('<');

@@ -2,6 +2,7 @@ import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
 import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
+import { NodeParamTypeRegistry } from "../Type/NodeParamTypeRegistry";
 
 /**
  * 蓝图文档定义
@@ -19,9 +20,29 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
             'description',
             'author',
             'mainGraph',
+            'customData',
+            'customTypes',
           ],
           forceSerializableClassProperties: {
             mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
+          },
+          beforeSave: () => {
+            //保存其他数据
+            //保存自定义组合类型
+            const typeRegistry = NodeParamTypeRegistry.getInstance();
+            this.customTypes = [];
+            for (const [,type] of typeRegistry.getAllTypes()) {
+              if (type.isCustomType)
+                this.customTypes.push({ name: type.toString(), define: type.define });
+            }
+          },
+          afterLoad: () => {
+            //加载自定义组合类型数据
+            const typeRegistry = NodeParamTypeRegistry.getInstance();
+            for (const type of this.customTypes) {
+              if (!typeRegistry.isTypeRegistered(type.name))
+                typeRegistry.registerType(type.name, type.define);
+            }
           },
         },
       }
@@ -57,6 +78,17 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
    * 主图表
    */
   mainGraph : NodeGraph|null = null;
+  /**
+   * 自定义保存数据
+   */
+  customData = {};
+  /**
+   * 自定义组合类型数据
+   */
+  customTypes : { name: string, define: any }[] = [];
+
+  //下方属性不序列化
+
   /**
    * 是否是编辑器模式
    */

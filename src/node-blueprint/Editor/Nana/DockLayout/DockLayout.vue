@@ -977,8 +977,10 @@ $tab-height: 35px;
   z-index: 60;
   display: none;
   overflow: hidden;
-
+  overflow-y: scroll;
   background-color: $tab-active-color;
+
+  @include pc-fix-scrollbar-white();
 }
 
 //light theme

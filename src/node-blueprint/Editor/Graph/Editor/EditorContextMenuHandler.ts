@@ -37,6 +37,12 @@ export interface NodeEditorContextMenuContext {
    * @param input 
    */
   showInputRightMenu(screenPos : Vector2, input: HTMLInputElement|undefined) : void;
+  /**
+   * 显示添加参数节点菜单
+   * @param variableName 参数名称
+   * @param callback 用户点击回调
+   */
+  showAddVariableMenu(variableName: string, callback: (action: 'get'|'set') => void) : void;
 }
 
 export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
@@ -124,7 +130,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     let nodeMenuSettingsMenuItems : NodeContextMenuItem[]|null = null;
 
     if(selectedCount === 1) {
-      nodeMenuSettingsMenuItems = selectedNodes[0].define.menu?.items || [];
+      nodeMenuSettingsMenuItems = selectedNodes[0].menu?.items || [];
 
       const loopMenuClick = (items : NodeContextMenuItem[]) => {
         items.forEach((item) => {
@@ -141,7 +147,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       loopMenuClick(nodeMenuSettingsMenuItems);
     }
 
-    const menuItems = (selectedCount === 1 ? (selectedNodes[0].define.menu?.items || []) : []).concat(
+    const menuItems = (selectedCount === 1 ? (selectedNodes[0].menu?.items || []) : []).concat(
       [
         { 
           label: "删除", 
@@ -298,6 +304,32 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     });
   }
 
+  //显示添加参数节点菜单
+  function showAddVariableMenu(variableName: string, callback: (action: 'get'|'set') => void) {
+    const screenPos = context.getMouseInfo().mouseCurrentPosScreen;
+    showContextMenu({
+      x: screenPos.x,
+      y: screenPos.y,
+      items: [
+        {
+          label: `获取变量 ${variableName}`,
+          onClick() {
+            callback('get');
+          },
+        },
+        {
+          label: `设置变量 ${variableName}`,
+          onClick() {
+            callback('set');
+          },
+        },
+      ],
+      zIndex: 100,
+      theme: 'flat',
+    });
+  }
+
+  context.showAddVariableMenu = showAddVariableMenu;
   context.showInputRightMenu = showInputRightMenu;
   context.showNodeRightMenu = showNodeRightMenu;
   context.showPortRightMenu = showPortRightMenu;

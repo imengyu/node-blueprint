@@ -340,8 +340,73 @@ function registerScriptBase()  {
   return [ blockIn, blockOut, blockDelay, blockTimer, blockPlatform ];
 }
 function registerScriptVariableBase()  {
-  // todo: variableGet, variableSet
-  return []
+  variableGet = {
+    guid: '04414FD9-45A2-980B-813C-2957849BEF47',
+    name: '',
+    description: '',
+    author: 'imengyu',
+    version: 1,
+    category: '基础',
+    hideInAddPanel: true,
+    ports: [
+      {
+        direction: 'output',
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Any,
+      },
+    ],
+    style: {
+      titleState: 'hide',
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+    },
+    exec: {
+      onPortParamRequest: (block, port) => {
+      }
+    },
+  };
+  variableSet = {
+    guid: 'C9E5A4F2-B7FC-D2C4-724B-DB770A1AFBA6',
+    name: '',
+    description: '',
+    author: 'imengyu',
+    version: 1,
+    category: '基础',
+    hideInAddPanel: true,
+    ports: [
+      {
+        direction: 'input',
+        guid: 'IN',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'input',
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'output',
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Any,
+      },
+    ],
+    style: {
+      titleState: 'hide',
+      inputPortMinWidth: '0',
+      outputPortMinWidth: '0',
+    },
+    exec: {
+      onPortParamRequest: (block, port) => {
+      }
+    },
+  };
+
+  return [ variableGet, variableSet ]
 }
 function registerScriptGraphBase()  {
   //TODO: registerScriptGraphBase
@@ -706,7 +771,7 @@ function registerTypeBase() {
                 title: '作为类型',
                 type: 'param-type-picker',
                 additionalProps: { canChangeSetType: true },
-                getValue: () => NodeParamType.FromString(node.options.type as string),
+                getValue: () => node.options.type ? NodeParamType.FromString(node.options.type as string) : undefined,
                 onUpdateValue: (newValue) => changeOutParamType(newValue as NodeParamType),
               }
             ],

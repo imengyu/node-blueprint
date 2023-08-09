@@ -32,6 +32,11 @@ export interface NodeParamTypeDefine {
    */
   defaultValue: () => unknown;
   /**
+   * 指示当前类型是否是自定义组合类型，
+   * 自定义组合类型会被保存至文件中，下次打开后可以加载
+   */
+  isCustomType?: boolean;
+  /**
    * 当此类型是 enum 时，是否自动创建转换器 
    */
   autoCreateEnumConverter?: boolean;
@@ -122,6 +127,8 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * @param typeString 
    */
   public static FromString(typeString: string) {
+    if (!typeString)
+      throw new Error('typeString is empty! ');
     const newType = NodeParamTypeRegistry.getInstance().getTypeByString(typeString) as NodeParamType;
     if (!newType)
       devWarning('NodeParamType',`Not found type ${typeString}!`);
@@ -188,6 +195,11 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
   define : NodeParamTypeDefine|null = null;
 
+  /**
+   * 指示当前类型是否是自定义组合类型，
+   * 自定义组合类型会被保存至文件中，下次打开后可以加载
+   */
+  isCustomType = false;
   /**
    * 获取当前类型是不是基础类型
    */

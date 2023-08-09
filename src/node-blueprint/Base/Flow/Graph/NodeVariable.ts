@@ -6,8 +6,14 @@ import { NodeParamType } from "../Type/NodeParamType";
  * 变量定义
  */
 export class NodeVariable extends SerializableObject<INodeVariableDefine> {
-  constructor() {
-    super('NodeVariable');
+  constructor(define?: INodeVariableDefine) {
+    super('NodeVariable', define, {
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+        },
+      }
+    });
   }
 
   name = '';  

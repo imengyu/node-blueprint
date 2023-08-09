@@ -56,6 +56,7 @@ function switchType(type: 'variable'|'array'|'set'|'dictionary') {
       const dictType = registry.registerType('array' + genericType, {
         ...arrayDefine?.define as NodeParamTypeDefine,
         hiddenInChoosePanel: true,
+        isCustomType: true,
       });
       updateType(dictType);
       break;
@@ -72,6 +73,7 @@ function switchType(type: 'variable'|'array'|'set'|'dictionary') {
       const dictType = registry.registerType('set' + genericType, {
         ...define?.define as NodeParamTypeDefine,
         hiddenInChoosePanel: true,
+        isCustomType: true,
       });
       updateType(dictType);
       break;
@@ -90,6 +92,7 @@ function switchType(type: 'variable'|'array'|'set'|'dictionary') {
       const dictType = registry.registerType('dictionary' + genericType, {
         ...define?.define as NodeParamTypeDefine,
         hiddenInChoosePanel: true,
+        isCustomType: true,
       });
       updateType(dictType);
       break;

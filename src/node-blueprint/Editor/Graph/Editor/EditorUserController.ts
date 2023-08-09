@@ -42,6 +42,13 @@ export interface NodeEditorUserControllerContext {
    * @param cb 
    */
   userInterfaceNextTick(cb: () => void): void;
+  /**
+   * 添加图表变量节点
+   * @param uid 图表UID
+   * @param name 变量名称
+   * @param type 添加类型
+   */
+  userAddVariableNode(uid: string, name: string, type: 'get'|'set'): void;
 
   /**
    * 删除选中连接线
@@ -314,7 +321,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     return newNode;
   }
   /**
-   * 用户操作
+   * 用户删除操作
    */
   function userDelete() {
     if(context.isKeyAltDown())
@@ -357,12 +364,50 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     }
   }
 
+  /**
+   * 添加图表变量节点
+   * @param uid 
+   * @param name 
+   * @param type 
+   */
+  function userAddVariableNode(uid: string, name: string, type: 'get'|'set') {
+    const currentGraph = context.getCurrentGraph();
+    if (currentGraph.uid !== uid)
+      return;
+
+    const variable = currentGraph.variables.find(v => v.name === name);
+    if (!variable) {
+      userActionAlert('error', `未找到变量 ${name}`);
+      return;
+    }
+
+    if (type === 'get') {
+      const node = userAddNode(BaseNodes.getScriptBaseVariableGet());
+      const OUTPUT = node?.getPortByGUID('OUTPUT');
+      if (node && OUTPUT) {
+        OUTPUT.name = `获取变量 ${name} 的值`;
+        node.changePortParamType(OUTPUT, variable.type);
+      }
+    } else {
+      const node = userAddNode(BaseNodes.getScriptBaseVariableSet());
+      const OUTPUT = node?.getPortByGUID('OUTPUT');
+      if (node) {
+        node.define.name = `设置变量 ${name} 的值`;
+        if (OUTPUT) {
+          node.changePortParamType(OUTPUT, variable.type);
+        }
+      }
+    }
+  }
+
   context.userAddNode = userAddNode;
   context.userDeleteNode = userDeleteNode;
   context.userDeletePort = userDeletePort;
   context.userDelete = userDelete;
   context.userActionAlert = userActionAlert;
+  context.userAddVariableNode = userAddVariableNode;
   context.userInterfaceNextTick = userInterfaceNextTick;
+
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

@@ -12,7 +12,7 @@
     .prop-delete {
       display: inline-block;
       position: absolute;
-      padding: 4px;
+      padding: 1px 2px;
       fill: var(--mx-editor-red-text-color);
       right: 3px;
       bottom: 3px;
@@ -30,7 +30,6 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      padding: 2px 0;
       border-bottom: none;
 
       span {

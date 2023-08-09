@@ -17,10 +17,16 @@
         <Icon icon="icon-close" />
       </div>
       <PropItem title="变量名称">
-        <Input v-model="(variable as NodeVariable).name" />
+        <Input 
+          :model-value="(variable as NodeVariable).name" 
+          @update:model-value="(v) => onGraphVariableNameUpdate((variable as NodeVariable), v as string)"
+        />
       </PropItem>
       <PropItem title="变量类型">
-        <NodeParamTypePicker v-model="(variable as NodeVariable).type" />
+        <NodeParamTypePicker
+          :model-value="(variable as NodeVariable).type" 
+          @update:model-value="(v) => onGraphVariableTypeUpdate((variable as NodeVariable), v as NodeParamType)"
+        />
       </PropItem>
       <PropItem title="变量默认值">
         <GraphVaraibleParamEditor :variable="(variable as NodeVariable)" />
@@ -51,6 +57,7 @@ import BaseCheck from '../../Components/PropControl/Components/BaseCheck.vue';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 
 const props = defineProps({
   graph: {
@@ -58,6 +65,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const { getNodeGraphEditorContext } = injectNodeGraphEditorContextInEditorOrIDE();
 
 function onAddGraphVariable() {
   const graph = props.graph;
@@ -79,4 +88,25 @@ function onDeleteGraphVariable(variable: NodeVariable) {
   const graph = props.graph;
   ArrayUtils.remove(graph.variables, variable);
 }
+
+function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {
+  //检查是否有其他变量也使用了这个名称，如果有则不允许更改
+  const graph = props.graph;
+  if (graph.variables.find(k => k.name === newName)) {
+    getNodeGraphEditorContext()?.userActionAlert('warning', `已有一个名为 ${newName} 的变量，请换一个名称`);
+    return;
+  }
+
+  variable.name = newName;
+
+  //进行图表中所有变量节点的更新
+
+}
+function onGraphVariableTypeUpdate(variable: NodeVariable, type: NodeParamType) {
+  variable.type = type;
+
+  //进行图表中所有变量节点的更新
+  
+}
+
 </script>
