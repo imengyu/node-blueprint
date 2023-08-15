@@ -14,8 +14,18 @@ import { Vector2 } from "../../Utils/Base/Vector2";
 
 /**
  * 流图类型
+ * 
+ * 基础
+ * * none 未知
+ * * main 静态主入口（单文档只有一个）
+ * * subblock 子程序块（一个图表只有一个，只能被自己或者父级范围）
+ * 类
+ * * static 静态函数
+ * * constructor 类构造函数
+ * * function 类实例函数
+ * * macro 宏
  */
-export type NodeGraphType = 'main' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
+export type NodeGraphType = 'main' | 'subblock' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
 
 /**
  * 图表数据
@@ -71,6 +81,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                 const nodeInstance = this.createNode(nodeDefine);
                 const shadowSettings = nodeInstance.loadShadow(node, 'graph');
                 nodeInstance.mergeShadow(shadowSettings);
+                nodeInstance.isLoad = true;
                 nodeInstance.events.onCreate?.(nodeInstance);
 
                 return {
@@ -218,6 +229,19 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
           position: new Vector2(650, 100),
           markOpen: true,
           markContent: '这是程序结束节点，运行到这里后程序结束',
+        });
+        this.nodes.set(startNode.uid, startNode);
+        this.nodes.set(endNode.uid, endNode);
+        break;
+      }
+      case 'subblock': {
+        const startNode = this.createNode({
+          ...BaseNodes.getScriptBaseGraphIn(),
+          position: new Vector2(250, 100),
+        });
+        const endNode = this.createNode({
+          ...BaseNodes.getScriptBaseNodeOut(),
+          position: new Vector2(650, 100),
         });
         this.nodes.set(startNode.uid, startNode);
         this.nodes.set(endNode.uid, endNode);

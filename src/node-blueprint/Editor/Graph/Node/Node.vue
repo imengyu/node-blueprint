@@ -146,12 +146,12 @@
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class="node-block-base">
         <div class="node-block-ports">
           <div class="left">
-            <NodePort v-for="[guid,port] in instance.inputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
+            <NodePort v-for="port in instance.inputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
           </div>
           <div class="right">
-            <NodePort v-for="[guid,port] in instance.outputPorts" :key="guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
+            <NodePort v-for="port in instance.outputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
             <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
           </div>

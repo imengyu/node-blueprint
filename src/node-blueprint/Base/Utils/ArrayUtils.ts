@@ -6,6 +6,15 @@ function remove<T>(array: T[], item: T) {
   }
   return false;
 }
+function removeBy<T>(array: T[], checkFunction: (item: T, index: number) => boolean, onlyOne = false) {
+  for (let i = array.length - 1; i > 0; i--) {
+    if (checkFunction(array[i], i)) {
+      array.splice(i, 1);
+      if (onlyOne)
+        break;
+    }
+  }
+}
 function removeAt<T>(array: T[], index: number) {
   if (index >= 0) {
     array.splice(index, 1);
@@ -41,5 +50,6 @@ export default {
   contains,
   insert,
   removeAt,
+  removeBy,
   remove,
 };

@@ -12,6 +12,7 @@ import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
+import ArrayUtils from "../../Utils/ArrayUtils";
 
 const TAG = 'Node';
 
@@ -25,18 +26,18 @@ export class Node extends SerializableObject<INodeDefine> {
       loadOverride: (data : INodeDefine) => {
         const ret = super.load(data);
     
-        this.inputPorts.clear();
-        this.outputPorts.clear();
+        ArrayUtils.clear(this.inputPorts);
+        ArrayUtils.clear(this.outputPorts);
         this.mapPorts.clear();
     
         //加载端口
         this.ports.forEach((port) => {
           if (port.direction === 'input') {
-            this.inputPorts.set(port.guid, port);
             this.mapPorts.set(port.guid, port);
+            this.inputPorts.push(port);
           } else if (port.direction === 'output') {
-            this.outputPorts.set(port.guid, port);
             this.mapPorts.set(port.guid, port);
+            this.outputPorts.push(port);
           } else {
             printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
           }
@@ -120,20 +121,50 @@ export class Node extends SerializableObject<INodeDefine> {
   //=====================
 
   public define: INodeDefine;
+  /**
+   * 唯一ID
+   */
   public uid = RandomUtils.genNonDuplicateIDHEX(32);
+  /**
+   * 名称。此数据会被保存至单元
+   */
   public name = '';
+  /**
+   * 说明。此数据会被保存至单元
+   */
   public description = '';
   /**
-   * 获取GUID
+   * 获取GUID（只读）
    */
   public get guid() : string { return this.define.guid; }
+  /**
+   * 断点状态
+   */
   public breakpoint : NodeBreakPoint = 'none';
+  /**
+   * 端口
+   */
   public ports : NodePort[] = [];
-  public mapPorts = new Map<string, NodePort>();
-  public inputPorts = new Map<string, NodePort>();
-  public outputPorts = new Map<string, NodePort>();
-  public get inputPortCount() { return this.inputPorts.size; }
-  public get outputPortCount() { return this.outputPorts.size; }
+  /**
+   * 端口（影子）（只读）
+   */
+  public readonly mapPorts = new Map<string, NodePort>();
+  /**
+   * 入端口（影子）（只读）
+   */
+  public readonly inputPorts : NodePort[] = [];
+  /**
+   * 出端口（影子）（只读）
+   */
+  public readonly outputPorts : NodePort[] = [];
+  /**
+   * 入端口数量（只读）
+   */
+  public get inputPortCount() { return this.inputPorts.length; }
+  /**
+   * 出端口数量（只读）
+   */
+  public get outputPortCount() { return this.outputPorts.length; }
   /**
    * 自定义单元数据供代码使用（全局）（不会保存至文件中）
    */
@@ -146,16 +177,43 @@ export class Node extends SerializableObject<INodeDefine> {
   //编辑器运行数据
   //=====================
 
+  /**
+   * 注释气泡内容
+   */
   public markContent = '';
+  /**
+   * 注释气泡打开状态
+   */
   public markOpen = false;
+  /**
+   * 节点位置（图表坐标）
+   */
   public position = new Vector2();
+  /**
+   * 节点自定义大小
+   */
   public customSize = new Vector2();
+  /**
+   * 自定义标签
+   */
   public tags : string[] = [];
 
   //非序列化
 
+  /**
+   * 单元样式设置
+   */
   public style = new NodeStyleSettings();
+  /**
+   * 单元事件设置
+   */
   public events = new NodeEventSettings();
+  /**
+   * 指示当前节点是否是由加载而来。
+   * 如果为true：表示这是由加载器从文件中加载而来节点
+   * 如果为false：表示这是用户手动新添加的节点
+   */
+  public isLoad = false;
 
   //通用函数
   //=====================
@@ -180,10 +238,10 @@ export class Node extends SerializableObject<INodeDefine> {
     newPort.initialValue = initialValue;
 
     if(newPort.direction === 'input')
-      this.inputPorts.set(newPort.guid, newPort);
+      this.inputPorts.push(newPort);
     else if(newPort.direction === 'output')
-      this.outputPorts.set(newPort.guid, newPort);
-
+      this.outputPorts.push(newPort);
+    
     if (data.defaultConnectPort)
       this.ports.unshift(newPort);
     else
@@ -210,10 +268,13 @@ export class Node extends SerializableObject<INodeDefine> {
     this.mapPorts.delete(oldData.guid);
     this.events.onPortRemove?.(this, oldData);
 
+    const deleteGuid = typeof guid === 'string' ? guid : guid.guid;
+    
+    ArrayUtils.removeBy(this.ports, (p) => p.guid === deleteGuid, true);
     if(direction === 'input')
-      this.inputPorts.delete(typeof guid === 'string' ? guid : guid.guid);
+      ArrayUtils.removeBy(this.inputPorts, (p) => p.guid === deleteGuid, true);
     else if(direction === 'output')
-      this.outputPorts.delete(typeof guid === 'string' ? guid : guid.guid);
+      ArrayUtils.removeBy(this.outputPorts, (p) => p.guid === deleteGuid, true);
   }
   /**
    * 根据方向获取某个端口
@@ -222,9 +283,9 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public getPort(guid : string, direction ?: NodePortDirection) : NodePort|null {
     if(direction === 'input')
-      return this.inputPorts.get(guid) || null;
+      return this.inputPorts.find(p => p.guid === guid) || null;
     else if(direction === 'output')
-      return this.outputPorts.get(guid) || null;
+      return this.outputPorts.find(p => p.guid === guid) || null;
     else
       return this.getPortByGUID(guid);
   }
@@ -268,11 +329,10 @@ export class Node extends SerializableObject<INodeDefine> {
    * @returns 返回端口，如果没有匹配则返回null
    */
   public getPortByTypeAndDirection(type: NodeParamType, direction: NodePortDirection, includeAny = true) : NodePort|null  {
-    if(type.isExecute) {
-      return this.ports.find(p => p.direction === direction && p.paramType.isExecute) || null;
-    } else {
-      return this.ports.find(p => type.acceptable(p.paramType), includeAny) || null;
-    }
+    if(type.isExecute) 
+      return (direction === 'input' ? this.inputPorts : this.outputPorts).find(p => p.paramType.isExecute) || null;
+    else 
+      return (direction === 'input' ? this.inputPorts : this.outputPorts).find(p => type.acceptable(p.paramType), includeAny) || null;
   }
   /**
    * 更改参数端口的数据类型

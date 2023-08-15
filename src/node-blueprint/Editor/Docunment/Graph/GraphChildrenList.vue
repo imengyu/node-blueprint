@@ -37,16 +37,16 @@
 </template>
 
 <script setup lang="ts">
-import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { PropType } from 'vue';
 import DraggerBg from '../../Images/dragger-bg.svg';
 import PropItem from '../../Components/PropList/PropItem.vue';
 import PropList from '../../Components/PropList/PropList.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
+import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 
 const props = defineProps({
   graph: {
@@ -95,13 +95,13 @@ function onDeleteChildGraph(childGraph: NodeGraph) {
     if (confirm) {
       ArrayUtils.remove(graph.children, childGraph);
       //通知当前图表中所有调用节点移除
-      getNodeGraphEditorContext()?.sendMessageToFilteredNodes(`graphCall${childGraph.name}`, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
+      getNodeGraphEditorContext()?.sendMessageToFilteredNodes(`GraphCall${childGraph.name}`, BaseNodes.messages.GRAPH_DELETE, { name: childGraph.name });
     }
   })
 
 }
 function onChildGraphNameUpdate(childGraph: NodeGraph, newName: string) {
-  //检查是否有其他变量也使用了这个名称，如果有则不允许更改
+  //检查是否有其他图表也使用了这个名称，如果有则不允许更改
   const graph = props.graph;
   if (newName === childGraph.name)
     return;
@@ -115,7 +115,7 @@ function onChildGraphNameUpdate(childGraph: NodeGraph, newName: string) {
   childGraph.name = newName;
 
   //进行图表中所有调用节点的更新
-  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(`graphCall${oldName}`, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
+  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(`GraphCall${oldName}`, BaseNodes.messages.GRAPH_NAME_CHANGE, { name: newName });
 }
 
 </script>

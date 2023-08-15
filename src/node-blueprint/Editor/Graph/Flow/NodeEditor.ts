@@ -130,7 +130,7 @@ export class NodeEditor extends Node {
   /**
    * 向自己发送消息
    */
-  public sendSelfMessage(message: string|number, data: any) {
+  public sendSelfMessage(message: string|number, data?: any|undefined) {
     this.events.onEditorMessage?.(
       this as NodeEditor, 
       this.editorHooks.callbackRequireContext?.()!,

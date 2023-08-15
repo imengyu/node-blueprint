@@ -5,6 +5,9 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 const messages = {
   VARIABLE_UPDATE_TYPE: 0,
   VARIABLE_UPDATE_NAME: 1,
+  GRAPH_DELETE: 2,
+  GRAPH_NAME_CHANGE: 3,
+  GRAPH_PORT_CHANGE: 4,
 };
 
 export default { 
@@ -103,6 +106,7 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 
 function registerScriptBase()  {
   const NodeParamTypeRegistryInstance = NodeParamTypeRegistry.getInstance();
@@ -487,7 +491,167 @@ function registerScriptVariableBase()  {
 }
 function registerScriptGraphBase()  {
   //TODO: registerScriptGraphBase
-  return []
+
+  graphCall = {
+    guid: '0A2C56F2-7101-7747-50E0-40E4B73C25D9',
+    name: '',
+    description: '',
+    author: 'imengyu',
+    version: 1,
+    category: '基础',
+    hideInAddPanel: true,
+    tags: [ 'GraphCall' ],
+    ports: [],
+    events: {
+      onEditorCreate(node, context) {
+        //在初始化时加载绑定的子图表信息
+        const graph = context.getCurrentGraph();
+        const callName = node.options.callName as string;
+        const childGraph = callName ? graph.children.find(v => v.name === callName) : undefined;
+        if (childGraph) {
+          //直接调用下方消息进行相关状态设置
+          node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: callName });
+          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
+        } else {
+          node.sendSelfMessage(messages.GRAPH_DELETE, {});
+        }
+      },
+      onEditorMessage(node, context, msg) {
+        //子图表更改消息，重建入口端口
+        if (msg?.message === messages.GRAPH_PORT_CHANGE) {
+          const graph = msg.data.graph as NodeGraph;
+          const inputPorts = graph.inputPorts;
+          const outputPorts = graph.outputPorts;
+
+          //添加图表的端口至当前节点
+          inputPorts.forEach((port, index) => {
+            const oldPort = node.inputPorts[index];
+            if (oldPort)
+              oldPort.load(port);
+            else
+              node.addPort(port, true, port.initialValue);
+          });
+          //移除多余的端口
+          for (let i = inputPorts.length; i < node.inputPorts.length; i++) 
+            node.deletePort(node.inputPorts[i]);
+
+          outputPorts.forEach((port, index) => {
+            const oldPort = node.outputPorts[index];
+            if (oldPort)
+              oldPort.load(port);
+            else
+              node.addPort(port, true, port.initialValue);
+          });
+          for (let i = outputPorts.length; i < node.outputPorts.length; i++) 
+            node.deletePort(node.outputPorts[i]);
+        }
+        //子图表名称更改消息
+        else if (msg?.message === messages.GRAPH_NAME_CHANGE) 
+        {
+          const newName = msg.data.name as string;
+
+          node.tags[0] = `GraphCall${newName}`;
+          node.options.callName = newName;
+          node.name = `调用子图表 ${newName}`;
+        } 
+        //子图表移除消息
+        else if (msg?.message === messages.GRAPH_DELETE) 
+        {
+          node.name = '未知调用';
+        }
+      }
+    },
+    exec: {
+      onPortParamRequest: (block, port) => {
+      }
+    },
+  };
+
+  graphIn = {
+    guid: '4AD57ADE-04FE-DC87-7AA6-6F3D4384F872',
+    name: '入口',
+    description: '',
+    author: 'imengyu',
+    version: 1,
+    category: '基础',
+    hideInAddPanel: true,
+    canNotDelete: true,
+    tags: [ 'GraphEntry' ],
+    ports: [],
+    events: {
+      onEditorCreate(node) {
+        if (!node.isLoad) 
+          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
+      },
+      onEditorMessage(node, context, msg) {
+        //子图表更改消息，重建入口端口
+        if (msg?.message === messages.GRAPH_PORT_CHANGE) {
+          const graph = msg.data.graph as NodeGraph;
+          const inputPorts = graph.inputPorts;
+
+          //添加图表的端口至当前节点
+          inputPorts.forEach((port, index) => {
+            const oldPort = node.outputPorts[index];
+            if (oldPort)
+              oldPort.load(port);
+            else
+              node.addPort(port, true, port.initialValue, 'output');
+          });
+          //移除多余的端口
+          for (let i = inputPorts.length; i < node.outputPorts.length; i++) 
+            node.deletePort(node.outputPorts[i]);
+        }
+      }
+    },
+    exec: {
+      onPortParamRequest: (block, port) => {
+      }
+    },
+  };
+
+  graphOut = {
+    guid: '8E5E3FFF-FC2F-BAA7-00AF-A14B89125D7E',
+    name: '出口',
+    description: '',
+    author: 'imengyu',
+    version: 1,
+    category: '基础',
+    hideInAddPanel: true,
+    canNotDelete: true,
+    tags: [ 'GraphEntry' ],
+    ports: [],
+    events: {
+      onEditorCreate(node) {
+        if (!node.isLoad) 
+          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
+      },
+      onEditorMessage(node, context, msg) {
+        //子图表更改消息，重建入口端口
+        if (msg?.message === messages.GRAPH_PORT_CHANGE) {
+          const graph = msg.data.graph as NodeGraph;
+          const outputPorts = graph.outputPorts;
+
+          //添加图表的端口至当前节点
+          outputPorts.forEach((port, index) => {
+            const oldPort = node.inputPorts[index];
+            if (oldPort)
+              oldPort.load(port);
+            else
+              node.addPort(port, true, port.initialValue, 'input');
+          });
+          //移除多余的端口
+          for (let i = outputPorts.length; i < node.inputPorts.length; i++) 
+            node.deletePort(node.inputPorts[i]);
+        }
+      }
+    },
+    exec: {
+      onPortParamRequest: (block, port) => {
+      }
+    },
+  };
+
+  return [ graphCall, graphIn, graphOut ]
 }
 function registerDebugBase() { 
   const NodeParamTypeRegistryInstance = NodeParamTypeRegistry.getInstance();

@@ -686,7 +686,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       visitedNodes.includes(node);
       node.isolateState = false;
       
-      for (const [,port] of node.outputPorts) {
+      for (const port of node.outputPorts) {
         for (const connector of port.connectedToPort) {
           if (connector.endPort)
             loopNodeTree(connector.endPort.parent as NodeEditor);
@@ -722,11 +722,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       if (node.style.noIsolate)
         return true;
 
-      for (const [,port] of node.inputPorts) {
+      for (const port of node.inputPorts) {
         for (const connector of port.connectedFromPort) {
-          if (connector.startPort)
-            if (prevLoopNodeTreeAndGetHasNoIsolateNode(connector.startPort.parent as NodeEditor))
-              return true;
+          if (connector.startPort && prevLoopNodeTreeAndGetHasNoIsolateNode(connector.startPort.parent as NodeEditor))
+            return true;
         }
       }
 
@@ -750,7 +749,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       
       visitedNodes.includes(node);
 
-      for (const [,port] of node.outputPorts) {
+      for (const port of node.outputPorts) {
         for (const connector of port.connectedToPort) {
           if (connector.endPort)
             loopNodeTree(connector.endPort.parent as NodeEditor,prevCheck );
