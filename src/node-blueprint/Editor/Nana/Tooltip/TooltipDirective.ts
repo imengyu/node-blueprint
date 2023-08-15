@@ -16,12 +16,15 @@ const tooltipDirective : ObjectDirective = {
     function showTooltip() {
       if (isMouseDown)
         return;
+      const content = ele.getAttribute('data-tooltip');
+      if (!content)
+        return;
       render(h(
         TooltipContent,
         { 
           x: currentMousePos.x + 20,
           y: currentMousePos.y + 10,
-          content: ele.getAttribute('data-tooltip'),
+          content: content,
           onMouseenter: () => {
             event.onTooltipMouseEnter();
           }, 

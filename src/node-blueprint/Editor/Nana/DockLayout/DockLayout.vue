@@ -948,6 +948,10 @@ export default defineComponent({
         }
       }
     },
+    resetAll() {
+      this.dockData = new DockRootData();
+      this.dockPanels.clear();
+    },
 
     //#endregion
 

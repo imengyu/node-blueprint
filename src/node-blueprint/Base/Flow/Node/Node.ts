@@ -1,18 +1,18 @@
 import RandomUtils from "../../Utils/RandomUtils";
+import ArrayUtils from "../../Utils/ArrayUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Serializable/SerializableObject";
 import { printError, printWarning } from "../../Logger/DevLog";
-import { NodePort } from "./NodePort";
+import { NodeParamType } from "../Type/NodeParamType";
+import type { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
-import { NodeParamType } from "../Type/NodeParamType";
 import type { NodeGraph } from "../Graph/NodeGraph";
 import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
 import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
-import ArrayUtils from "../../Utils/ArrayUtils";
 
 const TAG = 'Node';
 
@@ -232,7 +232,8 @@ export class Node extends SerializableObject<INodeDefine> {
       return oldData;
     }
 
-    const newPort = new NodePort(data, this);
+    const newPort = this.createSerializeObjectByScheme(data, 'ports') as NodePort;
+    newPort.load();
     newPort.direction = forceChangeDirection || data.direction;
     newPort.dyamicAdd = isDyamicAdd;
     newPort.initialValue = initialValue;

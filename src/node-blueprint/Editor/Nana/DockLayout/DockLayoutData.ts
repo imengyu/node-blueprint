@@ -471,5 +471,8 @@ export interface DockLayoutInterface {
    * @param key 面板唯一Key
   */
   activePanel: (key: string) => void;
-
+  /**
+   * 清空面板
+   */
+  resetAll: () => void;
 }

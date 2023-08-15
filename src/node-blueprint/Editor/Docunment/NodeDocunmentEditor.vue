@@ -87,14 +87,16 @@ const context = {
     emit('activeGraphEditorChange', graph);
   },
   openGraph(graph) {
+    currentGraph.value = graph;
+    emit('activeGraphEditorChange', graph);
+
     if (openedGraphs.value.find((g) => g.graph === graph))
       return;
+
     openedGraphs.value.push({
       graph,
       context: {} as NodeGraphEditorInternalContext,
     });
-    currentGraph.value = graph;
-    emit('activeGraphEditorChange', graph);
   },
   closeGraph(graph) {
     const index = openedGraphs.value.findIndex((g) => g.graph === graph);

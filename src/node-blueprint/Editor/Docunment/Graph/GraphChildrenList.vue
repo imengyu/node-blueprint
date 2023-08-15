@@ -1,6 +1,6 @@
 <template>
   <PropList 
-    :items="graph.variables"
+    :items="graph.children"
     @add="onAddChildGraph"
   >
     <template #row="{ item: childGraph }">
@@ -20,18 +20,23 @@
         <Input 
           :model-value="(childGraph as NodeGraph).name" 
           :update-at="'blur'"
+          placeholder="请输入图表名称"
           @update:model-value="(v: string) => onChildGraphNameUpdate((childGraph as NodeGraph), v as string)"
         />
       </PropItem>
       <PropItem title="图表注释">
         <Input 
           v-model="(childGraph as NodeGraph).description" 
+          placeholder="图表的解释注释或者说明"
         />
+      </PropItem>
+      <PropItem title="">
+        <SmallButton text="编辑图表" @click="onEditChildGraph(childGraph as NodeGraph)" />
       </PropItem>
     </template> 
     <template #add>
       <Icon icon="icon-add-bold" />
-      添加图表调用
+      添加子图表
     </template>
   </PropList>
 </template>
@@ -47,6 +52,9 @@ import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import Icon from '../../Nana/Icon.vue';
+import Input from '../../Nana/Input/Input.vue';
+import SmallButton from '../../Components/SmallButton.vue';
 
 const props = defineProps({
   graph: {
@@ -62,18 +70,19 @@ function onAddChildGraph() {
   const childGraph = new NodeGraph({
     name: '新子图表' + graph.children.length + 1,
     description: '',
-    type: 'function',
+    type: 'subblock',
     inputPorts: [{
       guid: 'DEFAULT_IN',
       direction: 'input',
-      paramType: NodeParamType.Any
+      paramType: NodeParamType.Execute,
     }],
     outputPorts: [{
       guid: 'DEFAULT_OUTPUT',
       direction: 'input',
-      paramType: NodeParamType.Any
+      paramType: NodeParamType.Execute
     }],
   }, graph, true);
+  childGraph.load();
   childGraph.initNew();
   graph.children.push(childGraph);
 }
@@ -117,5 +126,9 @@ function onChildGraphNameUpdate(childGraph: NodeGraph, newName: string) {
   //进行图表中所有调用节点的更新
   getNodeGraphEditorContext()?.sendMessageToFilteredNodes(`GraphCall${oldName}`, BaseNodes.messages.GRAPH_NAME_CHANGE, { name: newName });
 }
-
+function onEditChildGraph(childGraph: NodeGraph) {
+  getNodeIdeControlContext()
+    .getCurrentActiveDocunmentEditor()
+    ?.openGraph(childGraph);
+}
 </script>

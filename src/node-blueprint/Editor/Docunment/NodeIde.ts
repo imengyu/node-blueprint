@@ -1,6 +1,7 @@
 import { inject } from "vue";
 import type { NodeDocunmentEditor } from "../Graph/Flow/NodeDocunmentEditor";
 import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
+import type { NodeDocunmentEditorContext } from "./NodeDocunmentEditor";
 
 export interface NodeIdeControlContext {
   newDocunment() : NodeDocunmentEditor; 
@@ -8,6 +9,7 @@ export interface NodeIdeControlContext {
   openDocunment(doc: NodeDocunmentEditor): void;
   getDocunmentByUid(uid: string): NodeDocunmentEditor | undefined;
   getCurrentActiveGraphEditor(): NodeGraphEditorContext | null;
+  getCurrentActiveDocunmentEditor(): NodeDocunmentEditorContext | null;
   getOtherGraphEditor(): NodeGraphEditorContext[] | null;
 }
 

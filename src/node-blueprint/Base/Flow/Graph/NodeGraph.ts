@@ -1,5 +1,5 @@
 import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject, SerializableObjectPureObjName } from "../../Serializable/SerializableObject";
 import type { Node, INodeDefine } from "../Node/Node";
 import type { NodeConnector } from "../Node/NodeConnector";
 import type { NodeVariable } from "./NodeVariable";
@@ -62,6 +62,8 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
           ],     
           forceSerializableClassProperties: {
             children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
+            inputPorts: SerializableObjectPureObjName,
+            outputPorts: SerializableObjectPureObjName,
           },
           //加载与保存
           loadProp: (key, parentKey, source) => {
@@ -240,7 +242,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
           position: new Vector2(250, 100),
         });
         const endNode = this.createNode({
-          ...BaseNodes.getScriptBaseNodeOut(),
+          ...BaseNodes.getScriptBaseGraphOut(),
           position: new Vector2(650, 100),
         });
         this.nodes.set(startNode.uid, startNode);
@@ -260,6 +262,21 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   }
 
   parent: NodeDocunment|NodeGraph;
+
+  /**
+   * 获取当前图表的顶级父级文档
+   * @returns 
+   */
+  public getParentDocunment() {
+    let p = this.parent;
+    while(p) {
+      if (p instanceof NodeGraph)
+        p = p.parent;
+      else
+        return p;
+    }
+    return null;
+  }
 
   /**
    * 连接

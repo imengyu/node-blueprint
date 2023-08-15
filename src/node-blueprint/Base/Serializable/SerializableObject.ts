@@ -169,6 +169,7 @@ export interface SerializableConfig<T> {
   mergeOverride?: (keyName: string, thisData : unknown, fromData : unknown) =>  SerializePropCustomRet|undefined,
 }
 
+export const SerializableObjectPureObjName = 'PureObject';
 const SerializableObjectSaveObjNameKey = '@SNK';
 const SerializableObjectSaveObjObjKey = '@SNO';
 const SerializableObjectSaveMapKey = '@SNM';
@@ -268,8 +269,20 @@ export class SerializableObject<T> {
             [SerializableObjectSaveObjObjKey]: serializableObject.save()
           } as SerializaeObjectSave<T>
       }
-      else {
-       return element;
+      else { 
+        const forceSerializableClass = this.isForceSerializableClassProperty(config, key, parentKey);
+          if (forceSerializableClass === SerializableObjectPureObjName) {
+          //Serializable object keys
+          const saveObject : IKeyValueObject = {};
+          for (const skey in element) {
+            if (Object.prototype.hasOwnProperty.call(element, skey)) {
+              const selement = (element as IKeyValueObject)[skey];
+              saveObject[skey] = this.saveProp(config, `${key}.${skey}`, key, selement) as ISaveableTypes;
+            }
+          }
+          return saveObject;
+        }
+        return element;
       }
     }
     return undefined;
@@ -328,8 +341,21 @@ export class SerializableObject<T> {
         return (element as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
       } else {
         const forceSerializableClass = this.isForceSerializableClassProperty(config, key, parentKey);
+       
+        if (forceSerializableClass === SerializableObjectPureObjName) {
+          //Load object every Keys
+          const saveObject : IKeyValueObject = {};
+          for (const skey in element) {
+            if (Object.prototype.hasOwnProperty.call(element, skey)) {
+              const selement = element[skey];
+              saveObject[skey] = this.loadProp(config, `${key}.${skey}`, key, selement as IKeyValueObject) as ISaveableTypes;
+            }
+          }
+          return saveObject;
+        }
         if (forceSerializableClass) 
           return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, element as any);
+        
         return element;
       }
     }
@@ -510,6 +536,19 @@ export class SerializableObject<T> {
       }
     }
   }
-
+  /**
+   * 按当前对象的序列化配置直接创建单个序列化子对象
+   * @param define 传入定义
+   * @param key 参照的属性值
+   * @param scheme 预设名称。默认是：default
+   * @returns 
+   */
+  createSerializeObjectByScheme<K>(define: K, key: string, scheme?: string) {
+    const config = this.getSerializeScheme(scheme || 'default');
+    const forceSerializableClass = this.isForceSerializableClassProperty(config, key, '');
+    if (forceSerializableClass) 
+      return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, define);
+    return undefined;
+  }
 }
 

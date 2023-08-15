@@ -19,11 +19,11 @@ export default defineComponent({
     },
     showDelay: {
       type: Number,
-      default: 500,
+      default: 1000,
     },
     hideDelay: {
       type: Number,
-      default: 300,
+      default: 250,
     },
     show: {
       type: Boolean,

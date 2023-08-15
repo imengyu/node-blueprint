@@ -89,6 +89,7 @@ import NodeIconClock from '../NodeIcon/clock.svg';
 import NodeIconClock2 from '../NodeIcon/clock2.svg';
 import NodeIconEntryGo from '../NodeIcon/entry_go.svg';
 import NodeIconEntryExit from '../NodeIcon/entry_exit.svg';
+import NodeIconEntryIn from '../NodeIcon/entry-ing.svg';
 import NodeIconEntryWarning from '../NodeIcon/warning.svg';
 import NodeIconEntryTrace from '../NodeIcon/trace.svg';
 import NodeIconEntryNumber from '../NodeIcon/number.svg';
@@ -502,6 +503,9 @@ function registerScriptGraphBase()  {
     hideInAddPanel: true,
     tags: [ 'GraphCall' ],
     ports: [],
+    style: {
+      logo: NodeIconEntryIn,
+    },
     events: {
       onEditorCreate(node, context) {
         //在初始化时加载绑定的子图表信息
@@ -578,15 +582,18 @@ function registerScriptGraphBase()  {
     canNotDelete: true,
     tags: [ 'GraphEntry' ],
     ports: [],
+    style: {
+      noIsolate: true,
+      logo: NodeIconEntryGo,
+    },
     events: {
       onEditorCreate(node) {
-        if (!node.isLoad) 
-          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
+        node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
       },
       onEditorMessage(node, context, msg) {
         //子图表更改消息，重建入口端口
         if (msg?.message === messages.GRAPH_PORT_CHANGE) {
-          const graph = msg.data.graph as NodeGraph;
+          const graph = context.getCurrentGraph();
           const inputPorts = graph.inputPorts;
 
           //添加图表的端口至当前节点
@@ -595,7 +602,7 @@ function registerScriptGraphBase()  {
             if (oldPort)
               oldPort.load(port);
             else
-              node.addPort(port, true, port.initialValue, 'output');
+              node.addPort(port, false, port.initialValue, 'output');
           });
           //移除多余的端口
           for (let i = inputPorts.length; i < node.outputPorts.length; i++) 
@@ -620,15 +627,18 @@ function registerScriptGraphBase()  {
     canNotDelete: true,
     tags: [ 'GraphEntry' ],
     ports: [],
+    style: {
+      noIsolate: true,
+      logo: NodeIconEntryExit,
+    },
     events: {
       onEditorCreate(node) {
-        if (!node.isLoad) 
-          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
+        node.sendSelfMessage(messages.GRAPH_PORT_CHANGE);
       },
       onEditorMessage(node, context, msg) {
         //子图表更改消息，重建入口端口
         if (msg?.message === messages.GRAPH_PORT_CHANGE) {
-          const graph = msg.data.graph as NodeGraph;
+          const graph = context.getCurrentGraph();
           const outputPorts = graph.outputPorts;
 
           //添加图表的端口至当前节点
@@ -637,7 +647,7 @@ function registerScriptGraphBase()  {
             if (oldPort)
               oldPort.load(port);
             else
-              node.addPort(port, true, port.initialValue, 'input');
+              node.addPort(port, false, port.initialValue, 'input');
           });
           //移除多余的端口
           for (let i = outputPorts.length; i < node.inputPorts.length; i++) 

@@ -25,12 +25,20 @@
           />
         </template>
         <template v-else-if="panel.key==='Props'">
-          <PropBox class="node-custom-editor">
-            <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
-            <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
-            <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
-            <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
-          </PropBox>
+          <PropTab>
+            <PropTabPanel title="单元属性" icon="icon-cube">
+              <PropBox class="node-custom-editor">
+                <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
+                <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
+              </PropBox>
+            </PropTabPanel>
+            <PropTabPanel title="图表属性" icon="icon-docunment">
+              <PropBox class="node-custom-editor">
+                <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+                <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+              </PropBox>
+            </PropTabPanel>
+          </PropTab>
         </template>
         <template v-else-if="panel.key==='Console'">
           <Console />
@@ -49,6 +57,8 @@ import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
 import NodeGraphProp from './Prop/NodeGraphProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
+import PropTab from './Tab/PropTab.vue';
+import PropTabPanel from './Tab/PropTabPanel.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';
@@ -58,6 +68,7 @@ import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
+import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
@@ -204,7 +215,7 @@ const menuData = reactive<MenuBarOptions>({
         {
           label: '重置界面布局',
           onClick() {
-            
+            resetDefultLayout();
           },
         },
       ],
@@ -273,6 +284,12 @@ const currentActiveNodes = ref<NodeEditor[]>([]);
 const currentActiveConnectors = ref<NodeConnectorEditor[]>([]);
 
 /**
+ * 获取激活的文档编辑器
+ */
+function getCurrentActiveDocunmentEditor() : NodeDocunmentEditorContext|undefined {
+  return currentActiveDocunment.value?.activeEditor ?? undefined;
+}
+/**
  * 获取当前打开的编辑器
  */
 function getCurrentActiveGraphEditor() {
@@ -317,7 +334,6 @@ function onActiveGraphSelectionChange(docUid: string, graphUid: string, selected
     currentActiveConnectors.value = selectedConnectors;
   }
 }
-
 /**
  * 新文档
  */
@@ -409,20 +425,9 @@ function saveDocunment() {
 
 //#endregion
 
-function onActiveTabChange(currentActive: DockPanel) {
-  if (currentActive.key.startsWith('NodeEditor')) {
-    const doc = getDocunmentByUid(currentActive.key.substring(10));
-    if (doc) {
-      currentActiveDocunment.value = doc;
-      currentActiveGraph.value = doc.activeEditor?.getActiveGraph() || null;
-      onCurrentActiveDocunmentChanged();
-    }
-  }
-}
+//#region 界面布局
 
-import TestScript from '../../../../test-scripts/graph-variable.json';
-
-onMounted(() => {
+function initLayout() {
   nextTick(() => {
     dockLayout.value?.setData({
       name: 'root',
@@ -451,6 +456,7 @@ onMounted(() => {
         {
           size: 20,
           name: 'right',
+          tabStyle: { marginLeft: '30px' },
         },
       ],
     });
@@ -462,12 +468,42 @@ onMounted(() => {
       key: 'Props',
       title: '属性窗口',
     }, 'right');
-  })
+  });
+}
+function resetDefultLayout() {
+  dockLayout.value?.removePanel
+  initLayout();
+}
+
+//#endregion
+
+function onActiveTabChange(currentActive: DockPanel) {
+  if (!currentActive)
+    return;
+  if (currentActive.key.startsWith('NodeEditor')) {
+    const doc = getDocunmentByUid(currentActive.key.substring(10));
+    if (doc) {
+      currentActiveDocunment.value = doc;
+      currentActiveGraph.value = doc.activeEditor?.getActiveGraph() || null;
+      onCurrentActiveDocunmentChanged();
+    }
+  }
+}
+
+import TestScript from '../../../../test-scripts/sub-graph.json';
+
+const loadTestScript = true;
+
+onMounted(() => {
+  initLayout();
   setTimeout(() => {
-    //newDocunment();
-    const doc = new NodeDocunmentEditor();
-    doc.load(TestScript as any);
-    openDocunment(doc);
+    if (!loadTestScript) {
+      newDocunment();
+    } else {
+      const doc = new NodeDocunmentEditor();
+      doc.load(TestScript as any);
+      openDocunment(doc);
+    }
   }, 500);
 });
 
@@ -478,6 +514,7 @@ const context = reactive({
   getCurrentActiveGraphEditor,
   getOtherGraphEditor,
   getDocunmentByUid,
+  getCurrentActiveDocunmentEditor,
 } as NodeIdeControlContext);
 
 provide('NodeIdeControlContext', context);

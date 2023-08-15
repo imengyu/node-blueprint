@@ -125,13 +125,13 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
         allNodes.set(node.uid, node);
       }
 
-      setTimeout(() => {
+      context.userInterfaceNextTick(() => {
         for (const node of nodes) {
           node.editorHooks.callbackOnAddToEditor?.();
           node.events.onAddToEditor?.(node);
         }
         resolve();
-      }, 200);
+      });
     })
   }
   /**
@@ -236,7 +236,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       graph.activeEditor = context;
       currentGraph.value = graph;
 
-      setTimeout(() => {
+      context.userInterfaceNextTick(() => {
         graph.connectors.forEach((connector) => {
           addConnector(connector as NodeConnectorEditor);
           (connector as NodeConnectorEditor).updatePortValue();
@@ -245,7 +245,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
 
         context.startGlobalIsolateCheck();
         resolve();
-      }, 200);
+      });
     });
   }
   function addNodes(nodes: NodeEditor[]) {

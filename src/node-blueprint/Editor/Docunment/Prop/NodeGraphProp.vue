@@ -16,7 +16,7 @@
       <GraphVaraible :graph="graph" />
     </CollapsePropHeader>
     <CollapsePropHeader title="子图表">
-
+      <GraphChildrenList :graph="graph" />
     </CollapsePropHeader>
   </CollapsePropHeader>
 </template>
@@ -27,6 +27,7 @@ import Input from '../../Nana/Input/Input.vue';
 import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue'
 import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
 import GraphVaraible from '../Graph/GraphVaraible.vue';
+import GraphChildrenList from '../Graph/GraphChildrenList.vue';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 
 defineProps({
