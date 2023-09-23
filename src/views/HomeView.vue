@@ -1,16 +1,27 @@
 <template>
   <div class="full-container">
     <!-- <NodeIde /> -->
-    <SplitBase v-model:size="size" />
+    <CodeLayout :config="config" />
   </div>
 </template>
 
 <script setup lang="ts">
 import NodeIde from '@/node-blueprint/Editor/Docunment/NodeIde.vue';
-import SplitBase from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitBase.vue';
-import { ref } from 'vue';
+import CodeLayout, { type CodeLayoutConfig } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
+import { reactive } from 'vue';
 
-const size = ref(50);
+const config = reactive<CodeLayoutConfig>({
+  activityBar: true,
+  primarySideBar: true,
+  primarySideBarWidth: 20,
+  secondarySideBar: true,
+  secondarySideBarWidth: 20,
+  bottomPanel: true,
+  bottomPanelHeight: 30,
+  bottomAlignment: 'center',
+  statusBar: true,
+  statusBarHeight: '20px',
+});
 
 </script>
 

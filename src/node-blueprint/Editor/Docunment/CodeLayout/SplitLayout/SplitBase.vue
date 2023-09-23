@@ -2,21 +2,34 @@
   <div 
     ref="splitBase" 
     :class="[ 
-      'mx-split-base',
-      horizontal ? 'horizontal' : '',
+      'code-layot-split-base',
+      horizontal ? 'horizontal' : 'vertical',
     ]"
   >
-    <div :style="{ width: `calc(${size}% - 2px)` }">
+    <div 
+      v-if="showFirst"
+      :style="{ 
+        width: horizontal ? (showSecond ? `calc(${size}% - 2px)` : '100%' ) : '100%',
+        height: horizontal ? undefined : (showSecond ? `calc(${size}% - 2px)` : '100%' ),
+      }"
+    >
       <slot name="first" />
     </div>
     <div 
+      v-if="showFirst && showSecond"
       :class="[
-        'mx-split-dragger',
+        'code-layot-split-dragger',
         canResize ? 'resize' : '',
       ]" 
       @mousedown="dragHandler"
     />
-    <div :style="{ width: `calc(${100 - size}% - 1px)` }">
+    <div 
+      v-if="showSecond"
+      :style="{ 
+        width: horizontal ? (showFirst ? `calc(${100 - size}% - 1px)` : '100%') : '100%',
+        height: horizontal ? undefined : (showFirst ? `calc(${100 - size}% - 1px)` : '100%'),
+      }"
+    >
       <slot name="second" />
     </div>
   </div>
@@ -32,6 +45,8 @@ const emit = defineEmits([ 'update:size' ]);
 const props = defineProps({
   /**
    * Set user can resize
+   * 
+   * Default: true
    */
   canResize: {
     type: Boolean,
@@ -39,17 +54,39 @@ const props = defineProps({
   },
   /**
    * Is horizontal?
+   * 
+   * Default: true
    */
   horizontal: {
     type: Boolean,
     default: true,
   },
   /**
-   * Size of base panel
+   * Size of base panel, precent (0-100)
+   * 
+   * Default: 50
    */
   size: {
     type: Number,
     default: 50,
+  },
+  /**
+   * Show first panel?
+   * 
+   * Default: true
+   */
+  showFirst: {
+    type: Boolean,
+    default: true,
+  },
+  /**
+   * Show second panel?
+   * 
+   * Default: true
+   */
+  showSecond: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -58,7 +95,7 @@ const splitBase = ref<HTMLElement>();
 let baseLeft = 0;
 
 const dragHandler = createMouseDragHandler({
-  onDown(e) {
+  onDown() {
     if (splitBase.value) {
       baseLeft = (props.horizontal ? 
         HtmlUtils.getLeft(splitBase.value) : 
@@ -83,60 +120,3 @@ const dragHandler = createMouseDragHandler({
 });
 
 </script>
-
-<style lang="scss">
-
-.mx-split-base {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  align-items: flex-start;
-  width: 100%;
-  height: 100%;
-
-  &.horizontal {
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: stretch;
-
-    > .mx-split-dragger {
-      width: 3px;
-      height: 100%;
-      cursor: ew-resize;
-
-      &::after {
-        top: 0;
-        bottom: 0;
-        left: 1px;
-        width: 1px;
-      }
-    }
-  }
-
-  > .mx-split-dragger {
-    position: relative;
-    height: 100%;
-    width: 3px;
-    cursor: ns-resize;
-
-    &::after {
-      position: absolute;
-      content: '';
-      top: 0;
-      bottom: 0;
-      left: 1px;
-      width: 1px;
-      background-color: #2a2a2a;
-    }
-
-    &.resize:hover {
-      background-color: #0078d4;
-
-      &::after {
-        background-color: transparent;
-      }
-    }
-  }
-}
-</style>
