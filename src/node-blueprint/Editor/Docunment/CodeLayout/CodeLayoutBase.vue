@@ -15,7 +15,7 @@
         |left| center  |right|
         |--------------------|
         |    bottom panel    |
-        +----+---------+-----+
+        +--------------------+
       
       -->
       <SplitBase
@@ -67,7 +67,7 @@
             |left| center  |right|
             |--------------|     |
             |   panel      |     |
-            +----+---------+-----+
+            +--------------+-----+
           -->
           <SplitBase
             v-if="config.bottomAlignment === 'left'"
@@ -109,7 +109,7 @@
             |left| center  |right|
             |    |---------------|
             |    |     panel     |
-            +----+---------+-----+
+            +----+---------------+
           -->
           <SplitBase
             v-if="config.bottomAlignment === 'right'"
@@ -213,6 +213,15 @@ defineProps({
       align-items: center;
       background-color: var(--code-layot-color-background-light);
       width: 45px;
+
+      .item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 45px;
+        height: 45px;
+      }
     }
   }
   > .code-layot-status {

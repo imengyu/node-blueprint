@@ -27,11 +27,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType } from 'vue';
+import { ref , type PropType, computed } from 'vue';
 import type { CodeLayoutConfig } from './CodeLayout';
 import CodeLayoutBase from './CodeLayoutBase.vue';
 
-const panels = ref<CodeLayoutConfig[]>([]);
+const panels = ref<{
+  primary: CodeLayoutConfig[],
+  secondary: CodeLayoutConfig[],
+  bottom: CodeLayoutConfig[],
+  center: CodeLayoutConfig[],
+}>({
+  primary: [],
+  secondary: [],
+  bottom: [],
+  center: [],
+});
 
 const props = defineProps({
   layoutConfig: {
@@ -39,7 +49,5 @@ const props = defineProps({
     required: true,
   },
 });
-
-
 
 </script>
