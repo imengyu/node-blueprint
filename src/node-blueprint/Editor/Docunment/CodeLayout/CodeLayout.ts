@@ -17,11 +17,17 @@ export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'
 
 export interface CodeLayoutPanel {
   title: string,
-  tooltip: string,
+  tooltip?: string,
   name: string,
-  accept: CodeLayoutGrid[],
-  target: CodeLayoutGrid,
-  badge: string|(() => VNode),
-  iconLarge: string|(() => VNode),
-  iconSmall: string|(() => VNode),
+  accept?: CodeLayoutGrid[],
+  open: boolean,
+  badge?: string|(() => VNode)|undefined,
+  iconLarge?: string|(() => VNode)|undefined,
+  iconSmall?: string|(() => VNode)|undefined,
+  children?: CodeLayoutPanel[],
+  actions?: {
+    name: string,
+    icon: string|(() => VNode),
+    onClick: () => void,
+  }[]|undefined,
 }

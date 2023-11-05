@@ -1,0 +1,73 @@
+@import "./Root.scss";
+
+.code-layout-split-base {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  &.vertical {
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: flex-start;
+
+    > .code-layout-split-dragger {
+      width:100% ;
+      height: var(--code-layout-color-border-size);
+      cursor: ns-resize;
+
+      &::after {
+        left: 0;
+        right: 0;
+        top: 1px;
+        height: 1px;
+        bottom: unset;
+        width: unset;
+      }
+    }
+  }
+  &.horizontal {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: stretch;
+
+    > .code-layout-split-dragger {
+      width: var(--code-layout-color-border-size);
+      height: 100%;
+      cursor: ew-resize;
+
+      &::after {
+        top: 0;
+        bottom: 0;
+        left: 1px;
+        width: 1px;
+      }
+    }
+  }
+
+  > .code-layout-split-dragger {
+    position: relative;
+    height: 100%;
+    width: var(--code-layout-color-border-size);
+    cursor: ns-resize;
+    user-select: none;
+
+    &::after {
+      position: absolute;
+      content: '';
+      top: 0;
+      bottom: 0;
+      left: 1px;
+      width: 1px;
+      background-color: var(--code-layout-color-border-background);
+    }
+
+    &.resize:hover {
+      background-color: var(--code-layout-color-highlight);
+
+      &::after {
+        background-color: transparent;
+      }
+    }
+  }
+}

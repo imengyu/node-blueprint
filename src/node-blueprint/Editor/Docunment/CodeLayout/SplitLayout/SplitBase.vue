@@ -2,7 +2,7 @@
   <div 
     ref="splitBase" 
     :class="[ 
-      'code-layot-split-base',
+      'code-layout-split-base',
       horizontal ? 'horizontal' : 'vertical',
     ]"
   >
@@ -18,7 +18,7 @@
     <div 
       v-if="showFirst && showSecond"
       :class="[
-        'code-layot-split-dragger',
+        'code-layout-split-dragger',
         canResize ? 'resize' : '',
       ]" 
       @mousedown="dragHandler"
@@ -120,3 +120,7 @@ const dragHandler = createMouseDragHandler({
 });
 
 </script>
+
+<style lang="scss">
+@import "../Scss/Split.scss";
+</style>

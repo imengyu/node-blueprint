@@ -1,0 +1,45 @@
+:root {
+  --code-layout-color-background: #1e1e1e;
+  --code-layout-color-background-light: #333333;
+  --code-layout-color-highlight: #0078d4;
+  --code-layout-color-border-background: #2a2a2a;
+  --code-layout-color-border-size: 3px;
+}
+
+.code-layout-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--code-layout-color-background);
+
+  > .code-layout-activity {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex: 1;
+
+    .code-layout-activity-bar {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--code-layout-color-background-light);
+      width: 45px;
+
+      .item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 45px;
+        height: 45px;
+      }
+    }
+  }
+  > .code-layout-status {
+    flex-grow: 0;
+    background-color: var(--code-layout-color-highlight);
+  }
+}

@@ -1,0 +1,65 @@
+<template>
+  <div class="code-layout-group"> 
+    <div v-if="tabStyle != 'none'" class="tab">
+      <div v-for="(panel, key) in group.children" :key="key" class="tab">
+        <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
+        <span v-if="tabStyle == 'icon'" class="icon">
+          <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
+        </span>
+      </div>
+    </div>
+    <div :class="[ 'content', horizontal ? 'horizontal' : '' ]">
+
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { CodeLayoutPanel } from './CodeLayout';
+import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+
+defineProps({
+  group: {
+    type: Object as PropType<CodeLayoutPanel>,
+    required: true,
+  },
+  /**
+   * Is horizontal?
+   * 
+   * Default: true
+   */
+  horizontal: {
+    type: Boolean,
+    default: true,
+  },
+  /**
+   * Set group tab style
+   * * none: no tab, use in primary side area
+   * * text: tab header only show text
+   * * icon: tab header only show icon
+   * 
+   * Default: 'none'
+   */
+  tabStyle: {
+    type: String as PropType<'none'|'text'|'icon'>,
+    default: 'none',
+  },
+});
+
+</script>
+
+<style lang="scss">
+@import "./Scss/Root.scss";
+
+.code-layout-group {
+
+  > .tab {
+
+  }
+  > .content {
+    
+  }
+}
+
+</style>

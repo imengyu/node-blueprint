@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <div class="code-layot-root">
+  <div class="code-layout-root">
     <!--root-->
-    <div class="code-layot-activity">
+    <div class="code-layout-activity">
       <!--activity bar-->
-      <div class="code-layot-activity-bar">
+      <div class="code-layout-activity-bar">
         <slot name="activityBar" />
       </div>
       <!--
@@ -150,7 +150,7 @@
       </SplitBase>
     </div>
     <!--status bar-->
-    <div v-if="config.statusBar" class="code-layot-status" :style="{ height: config.statusBarHeight }">
+    <div v-if="config.statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
       <slot name="statusBar" />
     </div>
   </div>
@@ -184,121 +184,5 @@ defineProps({
 </script>
 
 <style lang="scss">
-:root {
-  --code-layot-color-background: #1e1e1e;
-  --code-layot-color-background-light: #333333;
-  --code-layot-color-highlight: #0078d4;
-  --code-layot-color-border-background: #2a2a2a;
-  --code-layot-color-border-size: 3px;
-}
-
-.code-layot-root {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  background-color: var(--code-layot-color-background);
-
-  > .code-layot-activity {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    flex: 1;
-
-    .code-layot-activity-bar {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      background-color: var(--code-layot-color-background-light);
-      width: 45px;
-
-      .item {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 45px;
-        height: 45px;
-      }
-    }
-  }
-  > .code-layot-status {
-    flex-grow: 0;
-    background-color: var(--code-layot-color-highlight);
-  }
-}
-
-.code-layot-split-base {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: 100%;
-
-  &.vertical {
-    flex-direction: column;
-    justify-content: stretch;
-    align-items: flex-start;
-
-    > .code-layot-split-dragger {
-      width:100% ;
-      height: var(--code-layot-color-border-size);
-      cursor: ns-resize;
-
-      &::after {
-        left: 0;
-        right: 0;
-        top: 1px;
-        height: 1px;
-        bottom: unset;
-        width: unset;
-      }
-    }
-  }
-  &.horizontal {
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: stretch;
-
-    > .code-layot-split-dragger {
-      width: var(--code-layot-color-border-size);
-      height: 100%;
-      cursor: ew-resize;
-
-      &::after {
-        top: 0;
-        bottom: 0;
-        left: 1px;
-        width: 1px;
-      }
-    }
-  }
-
-  > .code-layot-split-dragger {
-    position: relative;
-    height: 100%;
-    width: var(--code-layot-color-border-size);
-    cursor: ns-resize;
-    user-select: none;
-
-    &::after {
-      position: absolute;
-      content: '';
-      top: 0;
-      bottom: 0;
-      left: 1px;
-      width: 1px;
-      background-color: var(--code-layot-color-border-background);
-    }
-
-    &.resize:hover {
-      background-color: var(--code-layot-color-highlight);
-
-      &::after {
-        background-color: transparent;
-      }
-    }
-  }
-}
+@import "./Scss/Root.scss";
 </style>

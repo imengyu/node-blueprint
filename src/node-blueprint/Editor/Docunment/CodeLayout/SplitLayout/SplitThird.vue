@@ -2,7 +2,7 @@
   <div 
     ref="splitBase" 
     :class="[ 
-      'code-layot-split-base horizontal',
+      'code-layout-split-base horizontal',
     ]"
   >
     <div 
@@ -14,7 +14,7 @@
     <div 
       v-if="showLeft"
       :class="[
-        'code-layot-split-dragger',
+        'code-layout-split-dragger',
         canResize ? 'resize' : '',
       ]" 
       @mousedown="dragHandlerLeft"
@@ -25,7 +25,7 @@
     <div 
       v-if="showRight"
       :class="[
-        'code-layot-split-dragger',
+        'code-layout-split-dragger',
         canResize ? 'resize' : '',
       ]" 
       @mousedown="dragHandlerRight"
@@ -146,3 +146,7 @@ const dragHandlerRight = createMouseDragHandler({
 });
 
 </script>
+
+<style lang="scss">
+@import "../Scss/Split.scss";
+</style>
