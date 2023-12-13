@@ -15,16 +15,25 @@ export interface CodeLayoutConfig {
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea';
 
+
+export interface CodeLayoutInstance {
+  addPanel(panel: CodeLayoutPanel, target: CodeLayoutGrid): CodeLayoutPanel;
+  removePanel(panel: CodeLayoutPanel, target: CodeLayoutGrid): CodeLayoutPanel;
+}
+
+export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
+  open: boolean,
+  children: CodeLayoutPanelInternal[],
+}
+
 export interface CodeLayoutPanel {
   title: string,
   tooltip?: string,
   name: string,
   accept?: CodeLayoutGrid[],
-  open: boolean,
   badge?: string|(() => VNode)|undefined,
   iconLarge?: string|(() => VNode)|undefined,
   iconSmall?: string|(() => VNode)|undefined,
-  children?: CodeLayoutPanel[],
   actions?: {
     name: string,
     icon: string|(() => VNode),

@@ -2,6 +2,8 @@
   --code-layout-color-background: #1e1e1e;
   --code-layout-color-background-light: #333333;
   --code-layout-color-highlight: #0078d4;
+  --code-layout-color-text-highlight: #fff;
+  --code-layout-color-text-gray: #818181;
   --code-layout-color-border-background: #2a2a2a;
   --code-layout-color-border-size: 3px;
 }
@@ -21,6 +23,7 @@
     flex: 1;
 
     .code-layout-activity-bar {
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -29,12 +32,41 @@
       width: 45px;
 
       .item {
+        position: relative;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         width: 45px;
         height: 45px;
+        color: var(--code-layout-color-text-gray);
+        cursor: pointer;
+
+        svg {
+          fill: var(--code-layout-color-text-gray);
+        }
+
+        &.active, &:hover {
+          color: var(--code-layout-color-text-highlight);
+
+          svg {
+            fill: var(--code-layout-color-text-highlight);
+          }
+        }
+
+        &.active {
+
+          &::after {
+            content: '';
+            position: absolute;
+            display: block;
+            width: 2px;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            background-color: var(--code-layout-color-text-highlight);
+          }
+        }
       }
     }
   }

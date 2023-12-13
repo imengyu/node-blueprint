@@ -4,19 +4,21 @@
       
     </div>
     <div class="content">
-      
+      <slot :panel="panel" :open="open" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { CodeLayoutPanel } from './CodeLayout';
+import type { CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+
+defineEmits([ 'update:open' ])
 
 defineProps({
   panel: {
-    type: Object as PropType<CodeLayoutPanel>,
+    type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
   },
   /**
@@ -26,7 +28,7 @@ defineProps({
     type: Boolean,
     default: false,
   },
-  collapsed: {
+  open: {
     type: Boolean,
     default: false,
   },

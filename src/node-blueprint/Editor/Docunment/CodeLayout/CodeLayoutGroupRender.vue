@@ -9,19 +9,29 @@
       </div>
     </div>
     <div :class="[ 'content', horizontal ? 'horizontal' : '' ]">
-
+      <CodeLayoutPanelRender
+        v-for="(panel, key) in group.children" :key="key"
+        v-model:open="panel.open"
+        :panel="panel"
+        :alone="(group.children?.length === 1)"
+      >
+        <template #default="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+      </CodeLayoutPanelRender>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { CodeLayoutPanel } from './CodeLayout';
+import type { CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 
 defineProps({
   group: {
-    type: Object as PropType<CodeLayoutPanel>,
+    type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
   },
   /**
