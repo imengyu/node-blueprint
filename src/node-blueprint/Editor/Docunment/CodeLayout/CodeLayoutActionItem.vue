@@ -4,6 +4,7 @@
       'item',
       active ? 'active' : '',
     ]"
+    @click="$emit('activeItem', item)"
   >
     <div class="icon">
       <CodeLayoutVNodeStringRender :content="item.iconLarge" />
@@ -18,6 +19,8 @@
 import type { PropType } from 'vue';
 import type { CodeLayoutPanel } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+
+defineEmits(['activeItem'])
 
 defineProps({
   item: {

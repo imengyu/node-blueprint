@@ -21,7 +21,7 @@
       <SplitBase
         v-model:size="config.bottomPanelHeight"
         :horizontal="false"
-        :showSecond="config.bottomPanel && config.bottomAlignment === 'justify'"
+        :showSecond="bottomPanel && config.bottomAlignment === 'justify'"
       >
         <template #first>
           <!--
@@ -36,8 +36,8 @@
             v-if="config.bottomAlignment === 'center' || config.bottomAlignment === 'justify'"
             v-model:sizeLeft="config.primarySideBarWidth"
             v-model:sizeRight="config.secondarySideBarWidth"
-            :showLeft="config.primarySideBar"
-            :showRight="config.secondarySideBar"
+            :showLeft="primarySideBar"
+            :showRight="secondarySideBar"
           >
             <template #left>
               <slot name="primarySideBar" />
@@ -46,7 +46,7 @@
               <SplitBase
                 v-model:size="config.bottomPanelHeight"
                 :horizontal="false"
-                :showSecond="config.bottomPanel && config.bottomAlignment === 'center'"
+                :showSecond="bottomPanel && config.bottomAlignment === 'center'"
               >
                 <template #first>
                   <slot name="centerArea" />
@@ -72,18 +72,18 @@
           <SplitBase
             v-if="config.bottomAlignment === 'left'"
             :size="100 - config.secondarySideBarWidth"
-            :showSecond="config.secondarySideBar"
+            :showSecond="secondarySideBar"
             @update:size="(s) => config.secondarySideBarWidth = 100 - s"
           >
             <template #first>
               <SplitBase
                 v-model:size="config.bottomPanelHeight"
-                :showSecond="config.bottomPanel"
+                :showSecond="bottomPanel"
               >
                 <template #first>
                   <SplitBase
                     v-model:size="config.primarySideBarWidth"
-                    :showFirst="config.primarySideBar"
+                    :showFirst="primarySideBar"
                   >
                     <template #first>
                       <slot name="primarySideBar" />
@@ -114,17 +114,17 @@
           <SplitBase
             v-if="config.bottomAlignment === 'right'"
             v-model:size="config.primarySideBarWidth"
-            :showFirst="config.primarySideBar"
+            :showFirst="primarySideBar"
           >
             <template #first>
               <SplitBase
                 v-model:size="config.bottomPanelHeight"
-                :showSecond="config.bottomPanel"
+                :showSecond="bottomPanel"
               >
                 <template #first>
                   <SplitBase
                     v-model:size="config.primarySideBarWidth"
-                    :showFirst="config.primarySideBar"
+                    :showFirst="primarySideBar"
                   >
                     <template #first>
                       <slot name="centerArea" />
@@ -150,7 +150,7 @@
       </SplitBase>
     </div>
     <!--status bar-->
-    <div v-if="config.statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
+    <div v-if="statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
       <slot name="statusBar" />
     </div>
   </div>
@@ -160,24 +160,32 @@
 import type { PropType } from 'vue';
 import SplitThird from './SplitLayout/SplitThird.vue';
 import SplitBase from './SplitLayout/SplitBase.vue';
-
-export interface CodeLayoutConfig {
-  activityBar: boolean,
-  primarySideBar: boolean,
-  primarySideBarWidth: number,
-  secondarySideBar: boolean,
-  secondarySideBarWidth: number,
-  bottomPanel: boolean,
-  bottomPanelHeight: number,
-  bottomAlignment: 'left'|'center'|'right'|'justify',
-  statusBar: boolean,
-  statusBarHeight: number|string,
-}
+import type { CodeLayoutConfig } from './CodeLayout';
 
 defineProps({
   config: {
     type: Object as PropType<CodeLayoutConfig>,
     required: true,
+  },
+  activityBar: {
+    type: Boolean,
+    default: true,
+  },
+  primarySideBar: {
+    type: Boolean,
+    default: true,
+  },
+  secondarySideBar: {
+    type: Boolean,
+    default: true,
+  },
+  bottomPanel: {
+    type: Boolean,
+    default: true,
+  },
+  statusBar: {
+    type: Boolean,
+    default: true,
   },
 });
 

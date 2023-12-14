@@ -1,29 +1,34 @@
 import type { VNode } from "vue";
 
 export interface CodeLayoutConfig {
-  activityBar: boolean,
-  primarySideBar: boolean,
+  primarySideBarSwitchWithActivityBar: boolean,
   primarySideBarWidth: number,
-  secondarySideBar: boolean,
   secondarySideBarWidth: number,
-  bottomPanel: boolean,
   bottomPanelHeight: number,
   bottomAlignment: 'left'|'center'|'right'|'justify',
-  statusBar: boolean,
   statusBarHeight: number|string,
 }
 
-export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea';
+export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea'|'none';
 
 
 export interface CodeLayoutInstance {
-  addPanel(panel: CodeLayoutPanel, target: CodeLayoutGrid): CodeLayoutPanel;
-  removePanel(panel: CodeLayoutPanel, target: CodeLayoutGrid): CodeLayoutPanel;
+  addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanel;
+  removeGroup(panel: CodeLayoutPanel): CodeLayoutPanel;
+  activeGroup: (panel: CodeLayoutPanel) => void;
+  closePanel: (panel: CodeLayoutPanel) => void;
+  togglePanel: (panel: CodeLayoutPanel) => boolean;
+  openPanel: (panel: CodeLayoutPanel, closeOthers?: boolean) => void,
+  addPanel: (panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active?: boolean) => CodeLayoutPanel;
+  removePanel: (panel: CodeLayoutPanel) => CodeLayoutPanel;
 }
 
 export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
   open: boolean,
   children: CodeLayoutPanelInternal[],
+  activePanel: CodeLayoutPanelInternal|null;
+  parentGroup: CodeLayoutPanelInternal|null;
+  parentGrid: CodeLayoutGrid;
 }
 
 export interface CodeLayoutPanel {

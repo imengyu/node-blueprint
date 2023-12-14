@@ -1,5 +1,5 @@
 <template>
-  <div class="code-layout-group"> 
+  <div v-if="group.open" class="code-layout-group"> 
     <div v-if="tabStyle != 'none'" class="tab">
       <div v-for="(panel, key) in group.children" :key="key" class="tab">
         <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
@@ -9,11 +9,23 @@
       </div>
     </div>
     <div :class="[ 'content', horizontal ? 'horizontal' : '' ]">
+      <template v-if="group.children.length > 0">
+        <CodeLayoutPanelRender
+          v-for="(panel, key) in group.children" :key="key"
+          v-model:open="panel.open"
+          :panel="panel"
+          :alone="(group.children?.length === 1)"
+        >
+          <template #default="data">
+            <slot name="panelRender" v-bind="data" />
+          </template>
+        </CodeLayoutPanelRender>
+      </template>
       <CodeLayoutPanelRender
-        v-for="(panel, key) in group.children" :key="key"
-        v-model:open="panel.open"
-        :panel="panel"
-        :alone="(group.children?.length === 1)"
+        v-else
+        :open="true"
+        :panel="group"
+        :alone="true"
       >
         <template #default="data">
           <slot name="panelRender" v-bind="data" />
