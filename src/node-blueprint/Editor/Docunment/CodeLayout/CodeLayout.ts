@@ -3,8 +3,11 @@ import type { VNode } from "vue";
 export interface CodeLayoutConfig {
   primarySideBarSwitchWithActivityBar: boolean,
   primarySideBarWidth: number,
+  primarySideBarMinWidth: number,
   secondarySideBarWidth: number,
+  secondarySideBarMinWidth: number,
   bottomPanelHeight: number,
+  bottomPanelMinHeight: number,
   bottomAlignment: 'left'|'center'|'right'|'justify',
   statusBarHeight: number|string,
 }
@@ -39,9 +42,12 @@ export interface CodeLayoutPanel {
   badge?: string|(() => VNode)|undefined,
   iconLarge?: string|(() => VNode)|undefined,
   iconSmall?: string|(() => VNode)|undefined,
-  actions?: {
-    name: string,
-    icon: string|(() => VNode),
-    onClick: () => void,
-  }[]|undefined,
+  actions?: CodeLayoutActionButton[]|undefined,
+}
+
+
+export interface CodeLayoutActionButton {
+  name: string,
+  icon: string|(() => VNode),
+  onClick: () => void,
 }

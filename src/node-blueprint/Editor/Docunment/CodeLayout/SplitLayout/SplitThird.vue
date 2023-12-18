@@ -47,6 +47,8 @@ import { ref, computed } from 'vue';
 const emit = defineEmits([ 
   'update:sizeLeft',
   'update:sizeRight',
+  'closeLeft',
+  'closeRight',
 ]);
 
 const centerWidth = computed(() => {
@@ -63,6 +65,17 @@ const props = defineProps({
    * Default: true
    */
   canResize: {
+    type: Boolean,
+    default: true,
+  },
+  /**
+   * Set whether users can drag resize panels until the size is below the minimum value to close the panel.
+   * 
+   * Close panel will emit a event 'closeLeft' or 'closeRight'.
+   * 
+   * Default: true
+   */
+  canMinClose: {
     type: Boolean,
     default: true,
   },
@@ -102,8 +115,30 @@ const props = defineProps({
     type: Number,
     default: 20,
   },
-
-
+  /**
+   * Set the left panel min size.
+   * Zero is not limited.
+   * 
+   * If the value is between 0 and 1, it is considered a percentage.
+   * 
+   * Default: 0
+   */
+  leftMinSize: {
+    type: Number,
+    default: 0,
+  },
+  /**
+   * Set the right panel min size.
+   * Zero is not limited.
+   * 
+   * If the value is between 0 and 1, it is considered a percentage.
+   * 
+   * Default: 0
+   */
+  rightMinSize: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const splitBase = ref<HTMLElement>();
@@ -120,8 +155,18 @@ const dragHandlerLeft = createMouseDragHandler({
   },
   onMove(downPos, movedPos, e) {
     if (splitBase.value) {
-      let size = ((e.x - baseLeft) / splitBase.value.offsetWidth) * 100;
-      emit('update:sizeLeft', size);
+
+      let dragSize = (e.x - baseLeft);
+      let minSize = props.leftMinSize;
+      if (minSize > 0 && minSize < 1)
+        minSize = minSize * splitBase.value.offsetWidth;
+
+      if (minSize > 0) {
+        emit('closeLeft', dragSize > minSize / 2);
+        dragSize = Math.max(minSize, dragSize)
+      }
+
+      emit('update:sizeLeft', (dragSize / splitBase.value.offsetWidth) * 100);
     }
   },
   onUp() {
@@ -137,8 +182,18 @@ const dragHandlerRight = createMouseDragHandler({
   },
   onMove(downPos, movedPos, e) {
     if (splitBase.value) {
-      let size = 100 - ((e.x - baseLeft) / splitBase.value.offsetWidth) * 100;
-      emit('update:sizeRight', size);
+
+      let dragSize = splitBase.value.offsetWidth - (e.x - baseLeft);
+      let minSize = props.leftMinSize;
+      if (minSize > 0 && minSize < 1)
+        minSize = minSize * splitBase.value.offsetWidth;
+
+      if (minSize > 0) {
+        emit('closeLeft', dragSize >= minSize / 2);
+        dragSize = Math.max(minSize, dragSize)
+      }
+
+      emit('update:sizeLeft', (dragSize / splitBase.value.offsetWidth) * 100);
     }
   },
   onUp() {

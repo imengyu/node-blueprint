@@ -1,6 +1,8 @@
 :root {
   --code-layout-color-background: #1e1e1e;
+  --code-layout-color-background-second: #252526;
   --code-layout-color-background-light: #333333;
+  --code-layout-color-background-hover: #363737;
   --code-layout-color-highlight: #0078d4;
   --code-layout-color-text: #ccc;
   --code-layout-color-text-highlight: #fff;
@@ -8,6 +10,8 @@
   --code-layout-color-border: #474747;
   --code-layout-color-border-background: #2a2a2a;
   --code-layout-color-border-size: 3px;
+  --code-layout-color-border-radius-small: 5px;
+  --code-layout-color-border-radius-large: 5px;
 }
 
 .code-layout-root {

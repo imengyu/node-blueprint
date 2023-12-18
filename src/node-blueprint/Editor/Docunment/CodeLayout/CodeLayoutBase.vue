@@ -22,6 +22,8 @@
         v-model:size="config.bottomPanelHeight"
         :horizontal="false"
         :showSecond="bottomPanel && config.bottomAlignment === 'justify'"
+        :secondMinSize="config.bottomPanelMinHeight"
+        @closeSecond="(v) => $emit('update:bottomPanel', v)"
       >
         <template #first>
           <!--
@@ -38,6 +40,10 @@
             v-model:sizeRight="config.secondarySideBarWidth"
             :showLeft="primarySideBar"
             :showRight="secondarySideBar"
+            :leftMinSize="config.primarySideBarMinWidth"
+            :rightMinSize="config.secondarySideBarWidth"
+            @closeLeft="(v) => $emit('update:primarySideBar', v)"
+            @closeRight="(v) => $emit('update:secondarySideBar', v)"
           >
             <template #left>
               <slot name="primarySideBar" />
@@ -47,6 +53,8 @@
                 v-model:size="config.bottomPanelHeight"
                 :horizontal="false"
                 :showSecond="bottomPanel && config.bottomAlignment === 'center'"
+                :secondMinSize="config.bottomPanelMinHeight"
+                @closeSecond="(v) => $emit('update:bottomPanel', v)"
               >
                 <template #first>
                   <slot name="centerArea" />
@@ -73,17 +81,24 @@
             v-if="config.bottomAlignment === 'left'"
             :size="100 - config.secondarySideBarWidth"
             :showSecond="secondarySideBar"
+            :secondMinSize="config.secondarySideBarMinWidth"
+            @closeSecond="(v) => $emit('update:secondarySideBar', v)"
             @update:size="(s) => config.secondarySideBarWidth = 100 - s"
           >
             <template #first>
               <SplitBase
                 v-model:size="config.bottomPanelHeight"
+                :horizontal="false"
                 :showSecond="bottomPanel"
+                :secondMinSize="config.bottomPanelMinHeight"
+                @closeSecond="(v) => $emit('update:bottomPanel', v)"
               >
                 <template #first>
                   <SplitBase
                     v-model:size="config.primarySideBarWidth"
                     :showFirst="primarySideBar"
+                    :firstMinSize="config.primarySideBarMinWidth"
+                    @closeFirst="(v) => $emit('update:primarySideBar', v)"
                   >
                     <template #first>
                       <slot name="primarySideBar" />
@@ -115,16 +130,27 @@
             v-if="config.bottomAlignment === 'right'"
             v-model:size="config.primarySideBarWidth"
             :showFirst="primarySideBar"
+            :firstMinSize="config.primarySideBarMinWidth"
+            @closeFirst="(v) => $emit('update:primarySideBar', v)"
           >
             <template #first>
+              <slot name="primarySideBar" />
+            </template>
+            <template #second>
               <SplitBase
-                v-model:size="config.bottomPanelHeight"
+                :size="100 - config.bottomPanelHeight"
+                :horizontal="false"
                 :showSecond="bottomPanel"
+                :secondMinSize="config.bottomPanelMinHeight"
+                @update:size="(v) => config.bottomPanelHeight = 100 - v"
+                @closeSecond="(v) => $emit('update:bottomPanel', v)"
               >
                 <template #first>
                   <SplitBase
                     v-model:size="config.primarySideBarWidth"
                     :showFirst="primarySideBar"
+                    :firstMinSize="config.primarySideBarMinWidth"
+                    @closeFirst="(v) => $emit('update:primarySideBar', v)"
                   >
                     <template #first>
                       <slot name="centerArea" />
@@ -138,9 +164,6 @@
                   <slot name="bottomPanel" />
                 </template>
               </SplitBase>
-            </template>
-            <template #second>
-              <slot name="primarySideBar" />
             </template>
           </SplitBase>
         </template>
@@ -161,6 +184,12 @@ import type { PropType } from 'vue';
 import SplitThird from './SplitLayout/SplitThird.vue';
 import SplitBase from './SplitLayout/SplitBase.vue';
 import type { CodeLayoutConfig } from './CodeLayout';
+
+defineEmits([ 
+  'update:secondarySideBar',
+  'update:primarySideBar',
+  'update:bottomPanel'
+])
 
 defineProps({
   config: {

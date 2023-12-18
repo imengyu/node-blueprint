@@ -40,7 +40,7 @@ import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import { createMouseDragHandler } from '@/node-blueprint/Editor/Graph/Editor/MouseHandler';
 import { ref } from 'vue';
 
-const emit = defineEmits([ 'update:size' ]);
+const emit = defineEmits([ 'update:size', 'closeFirst', 'closeSecond' ]);
 
 const props = defineProps({
   /**
@@ -49,6 +49,17 @@ const props = defineProps({
    * Default: true
    */
   canResize: {
+    type: Boolean,
+    default: true,
+  },
+  /**
+   * Set whether users can drag resize panels until the size is below the minimum value to close the panel.
+   * 
+   * Close panel will emit a event 'closeFirst' or 'closeSecond'.
+   * 
+   * Default: true
+   */
+  canMinClose: {
     type: Boolean,
     default: true,
   },
@@ -69,6 +80,34 @@ const props = defineProps({
   size: {
     type: Number,
     default: 50,
+  },
+  /**
+   * Set the first panel min size.
+   * Zero is not limited.
+   * 
+   * Can not set both firstMinSize and secondMinSize.
+   * 
+   * If the value is between 0 and 1, it is considered a percentage.
+   * 
+   * Default: 0
+   */
+  firstMinSize: {
+    type: Number,
+    default: 0,
+  },
+  /**
+   * Set the second panel min size.
+   * Zero is not limited.
+   * 
+   * Can not set both firstMinSize and secondMinSize.
+   * 
+   * If the value is between 0 and 1, it is considered a percentage.
+   * 
+   * Default: 0
+   */
+  secondMinSize: {
+    type: Number,
+    default: 0,
   },
   /**
    * Show first panel?
@@ -107,12 +146,37 @@ const dragHandler = createMouseDragHandler({
   },
   onMove(downPos, movedPos, e) {
     if (splitBase.value) {
-      let size = 0;
+      let userDragSizePx = 0;
+      let userDragSize = 0;
+
+      //Real drag size
       if (props.horizontal)
-        size = ((e.x - baseLeft) / splitBase.value.offsetWidth) * 100;
+        userDragSizePx = (e.x - baseLeft);
       else 
-        size = ((e.y - baseLeft) / splitBase.value.offsetHeight) * 100;
-      emit('update:size', size);
+        userDragSizePx = (e.y - baseLeft);
+
+      //check size limit
+      const minSizeFirst = props.firstMinSize ? props.firstMinSize : props.secondMinSize;
+      if (minSizeFirst >= 1) {
+        //limit in px
+        emit(props.firstMinSize ? 'closeFirst' : 'closeSecond', userDragSizePx > minSizeFirst / 2); //below the minimum value, close the panel
+
+        userDragSizePx = Math.max(userDragSizePx, minSizeFirst);
+      }
+
+      userDragSize = (userDragSizePx / splitBase.value.offsetHeight);
+
+      if (minSizeFirst > 0 && minSizeFirst < 1) {
+        //limit in percentage
+        emit(props.firstMinSize ? 'closeFirst' : 'closeSecond', userDragSize > minSizeFirst / 2); //below the minimum value, close the panel
+
+        userDragSize = Math.max(userDragSize, minSizeFirst);
+      }
+
+      //Result size in percentage
+      userDragSize *= 100;
+
+      emit('update:size', userDragSize);
     }
   },
   onUp() {

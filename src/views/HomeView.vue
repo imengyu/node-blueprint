@@ -27,8 +27,11 @@ import { ref, reactive, onMounted, nextTick, h } from 'vue';
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
   primarySideBarWidth: 20,
+  primarySideBarMinWidth: 170,
   secondarySideBarWidth: 20,
+  secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
+  bottomPanelMinHeight: 40,
   bottomAlignment: 'center',
   statusBarHeight: '20px',
 });
@@ -70,6 +73,18 @@ onMounted(() => {
       tooltip: 'Panel2',
       name: 'group1.panel2',
       iconSmall: () => h(IconSearch),
+      actions: [
+        { 
+          name: 'test',
+          icon: () => h(IconSearch),
+          onClick() {},
+        },
+        { 
+          name: 'test2',
+          icon: () => h(IconFile),
+          onClick() {},
+        },
+      ]
     }, group1);
 
   });

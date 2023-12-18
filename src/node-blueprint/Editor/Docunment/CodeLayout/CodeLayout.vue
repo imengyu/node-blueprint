@@ -6,6 +6,9 @@
     :secondarySideBar="secondarySideBar"
     :bottomPanel="bottomPanel"
     :statusBar="statusBar"
+    @update:bottom-panel="(v) => $emit('update:bottomPanel', v)"
+    @update:primary-side-bar="onPrimarySideBarSwitch"
+    @update:secondary-side-bar="(v) => $emit('update:secondarySideBar', v)"
   >
     <template #activityBar>
       <div class="top">
@@ -13,7 +16,7 @@
           v-for="(panelGroup, key) in panels.primary"
           :key="key"
           :item="panelGroup"
-          :active="panelGroup.open && primarySideBar"
+          :active="panelGroup === activityBarActive && primarySideBar"
           @active-item="onActivityBarAcitve(panelGroup)"
         />
       </div>
@@ -27,6 +30,7 @@
         :key="key"
         :group="panelGroup"
         :horizontal="false"
+        :primary="true"
       >
         <template #panelRender="data">
           <slot name="panelRender" v-bind="data" />
@@ -86,6 +90,8 @@ const panels = ref<{
   center: [],
 });
 
+const activityBarActive = ref<CodeLayoutPanelInternal>();
+
 const emit = defineEmits([
   'update:primarySideBar',
   'update:secondarySideBar',
@@ -120,12 +126,27 @@ const props = defineProps({
 });
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
-  if (panelGroup.open && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
+  if (activityBarActive.value === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
+    //如果点击当前条目，则切换侧边栏
     emit('update:primarySideBar', !props.primarySideBar);
   } else {
+    //如果侧边栏关闭，则打开
+    if (!props.primarySideBar)
+      emit('update:primarySideBar', true);
+    //取消激活其他的面板
     panels.value.primary.forEach((p) => p.open = false);
     panelGroup.open = true;
+    activityBarActive.value = panelGroup;
   }
+}
+function onPrimarySideBarSwitch(on: boolean) {
+  //当侧边栏关闭时，取消激活全部的面板
+  if (!on) 
+    panels.value.primary.forEach((p) => p.open = false);
+  //当侧边栏重新打开时，需要重新显示激活面板
+  if (on &&  activityBarActive.value && !panels.value.primary.find((p) => p.open))
+    activityBarActive.value.open = true;
+  emit('update:primarySideBar', on);
 }
 
 function getPanelArray(target: CodeLayoutGrid) {
@@ -137,7 +158,6 @@ function getPanelArray(target: CodeLayoutGrid) {
   }
   throw new Error(`Grid can not insert panel`);
 }
-
 
 function closePanel(panel: CodeLayoutPanel) {
   const panelInternal = panel as CodeLayoutPanelInternal;
@@ -213,6 +233,15 @@ function removeGroup(panel: CodeLayoutPanel) {
   ArrayUtils.remove(getPanelArray(panelInternal.parentGrid), panel);
   panelInternal.parentGrid = 'none';
   panelInternal.parentGroup = null;
+
+  //当删除的面板是侧边栏当前激活的面板，则重置并激活其他面板
+  if (panelInternal === activityBarActive.value) {
+    if (panels.value.primary.length > 0)
+      activeGroup(panels.value.primary[0]);
+    else 
+      activityBarActive.value = undefined;
+  }
+
   return panel;
 }
 function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active = false) {

@@ -1,5 +1,11 @@
 <template>
-  <div v-if="group.open" class="code-layout-group"> 
+  <div 
+    v-if="group.open" 
+    :class="[
+      'code-layout-group',
+      primary ? 'primary' : '',
+    ]"
+  > 
     <div v-if="tabStyle != 'none'" class="tab">
       <div v-for="(panel, key) in group.children" :key="key" class="tab">
         <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
@@ -67,6 +73,11 @@ defineProps({
     type: String as PropType<'none'|'text'|'icon'>,
     default: 'none',
   },
+
+  primary: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 </script>
@@ -75,6 +86,13 @@ defineProps({
 @import "./Scss/Root.scss";
 
 .code-layout-group {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  &.primary {
+    background-color: var(--code-layout-color-background-second);
+  }
 
   > .tab {
 
