@@ -4,9 +4,12 @@
       'code-layout-panel',
       open ? 'open' : '',
       selected ? 'selected' : '',
+      draggable ? 'draggable' : '',
+      horizontal ? 'horizontal' : '',
     ]"
     tabindex="0"
   > 
+    <div v-if="draggable" class="drag-line" />
     <div 
       v-if="!alone" class="collapse"
       draggable="true"
@@ -55,6 +58,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  draggable: {
+    type: Boolean,
+    default: false,
+  },
+  horizontal: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 function handleDragStart(ev: DragEvent) {
@@ -73,6 +84,7 @@ function handleDragEnd(ev: DragEvent) {
 @import "./Scss/Root.scss";
 
 .code-layout-panel {
+  position: relative;
 
   &.open {
     > .collapse {
@@ -102,6 +114,28 @@ function handleDragEnd(ev: DragEvent) {
     border-top: none;
   }
 
+  &.horizontal {
+
+    > .drag-line {
+      cursor: ew-resize;
+    }
+  }
+
+  > .drag-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+    height: var(--code-layout-color-border-size-dragger);
+    transition: background-color ease-in-out 0.4s;
+    z-index: 10;
+    cursor: ns-resize;
+
+    &:hover, &.active {
+      background-color: var(--code-layout-color-highlight);
+    }
+  }
+
   > .collapse {
     position: relative;
     display: flex;
@@ -110,32 +144,36 @@ function handleDragEnd(ev: DragEvent) {
     align-items: center;
     height: 22px;
     color: var(--code-layout-color-text);
-    padding: 2px 5px;
+    padding: 0 5px;
     border: 1px solid transparent;
     border-top: 1px solid var(--code-layout-color-border);
     cursor: pointer;
     user-select: none;
     overflow: hidden;
 
+    svg {
+      fill: currentColor;
+    }
+
     .actions {
       visibility: hidden;
     }
-
-    svg {
-      fill: currentColor;
+    .arrow {
+      margin-top: 1px;
+      margin-right: 2px;
     }
 
     div {
       display: flex;
       align-items: center;
       flex-direction: row;
+      justify-content: start;
     }
-
     span {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      font-size: 14px;
+      font-size: 12px;
       min-width: 3ch;
     }
 

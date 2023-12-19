@@ -50,10 +50,11 @@
             </template>
             <template #center>
               <SplitBase
-                v-model:size="config.bottomPanelHeight"
+                :size="100 - config.bottomPanelHeight"
                 :horizontal="false"
                 :showSecond="bottomPanel && config.bottomAlignment === 'center'"
                 :secondMinSize="config.bottomPanelMinHeight"
+                @update:size="(s) => config.bottomPanelHeight = 100 - s"
                 @closeSecond="(v) => $emit('update:bottomPanel', v)"
               >
                 <template #first>

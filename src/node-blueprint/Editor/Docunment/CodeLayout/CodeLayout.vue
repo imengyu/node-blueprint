@@ -25,44 +25,59 @@
       </div>
     </template>
     <template #primarySideBar>
-      <CodeLayoutGroupRender
-        v-for="(panelGroup, key) in panels.primary"
-        :key="key"
-        :group="panelGroup"
-        :horizontal="false"
-        :primary="true"
-      >
-        <template #panelRender="data">
-          <slot name="panelRender" v-bind="data" />
-        </template>
-      </CodeLayoutGroupRender>
+      <template v-if="panels.primary.length > 0">
+        <CodeLayoutGroupRender
+          v-for="(panelGroup, key) in panels.primary"
+          :key="key"
+          :group="panelGroup"
+          :horizontal="false"
+          :primary="true"
+        >
+          <template #panelRender="data">
+            <slot name="panelRender" v-bind="data" />
+          </template>
+        </CodeLayoutGroupRender>
+      </template>
+      <slot name="emptyGroup" group="primarySideBar">
+        <div class="code-layout-empty">{{ emptyText }}</div>
+      </slot>
     </template>
     <template #secondarySideBar>
-      <CodeLayoutGroupRender
-        v-for="(panelGroup, key) in panels.secondary"
-        :key="key"
-        :group="panelGroup"
-        :horizontal="false"
-      >
-        <template #panelRender="data">
-          <slot name="panelRender" v-bind="data" />
-        </template>
-      </CodeLayoutGroupRender>
+      <template v-if="panels.secondary.length > 0">
+        <CodeLayoutGroupRender
+          v-for="(panelGroup, key) in panels.secondary"
+          :key="key"
+          :group="panelGroup"
+          :horizontal="false"
+        >
+          <template #panelRender="data">
+            <slot name="panelRender" v-bind="data" />
+          </template>
+        </CodeLayoutGroupRender>
+      </template>
+      <slot name="emptyGroup" group="secondarySideBar">
+        <div class="code-layout-empty">{{ emptyText }}</div>
+      </slot>
     </template>
     <template #bottomPanel>
-      <CodeLayoutGroupRender
-        v-for="(panelGroup, key) in panels.bottom"
-        :key="key"
-        :group="panelGroup"
-        :horizontal="true"
-      >
-        <template #panelRender="data">
-          <slot name="panelRender" v-bind="data" />
-        </template>
-      </CodeLayoutGroupRender>
+      <template v-if="panels.bottom.length > 0">
+        <CodeLayoutGroupRender
+          v-for="(panelGroup, key) in panels.bottom"
+          :key="key"
+          :group="panelGroup"
+          :horizontal="true"
+        >
+          <template #panelRender="data">
+            <slot name="panelRender" v-bind="data" />
+          </template>
+        </CodeLayoutGroupRender>
+      </template>
+      <slot name="emptyGroup" group="bottomPanel">
+        <div class="code-layout-empty">{{ emptyText }}</div>
+      </slot>
     </template>
     <template #centerArea>
-
+      <h1>center area</h1>
     </template>
     <template #statusBar>
       <slot name="statusBar" />
@@ -122,6 +137,10 @@ const props = defineProps({
   statusBar: {
     type: Boolean,
     default: true,
+  },
+  emptyText: {
+    type: String,
+    default: "Drag a view here to display",
   },
 });
 

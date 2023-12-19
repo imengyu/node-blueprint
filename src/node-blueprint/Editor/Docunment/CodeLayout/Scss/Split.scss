@@ -19,8 +19,8 @@
       &::after {
         left: 0;
         right: 0;
-        top: 1px;
-        height: 1px;
+        top: calc(var(--code-layout-color-border-size-dragger) / -2);
+        height: var(--code-layout-color-border-size-dragger);
         bottom: unset;
         width: unset;
       }
@@ -39,8 +39,8 @@
       &::after {
         top: 0;
         bottom: 0;
-        left: 1px;
-        width: 1px;
+        left: calc(var(--code-layout-color-border-size-dragger) / -2);
+        width: var(--code-layout-color-border-size-dragger);
       }
     }
   }
@@ -49,24 +49,21 @@
     position: relative;
     height: 100%;
     width: var(--code-layout-color-border-size);
+    background-color: var(--code-layout-color-border-background);
     cursor: ns-resize;
     user-select: none;
+    overflow: visible;
 
     &::after {
       position: absolute;
       content: '';
-      top: 0;
-      bottom: 0;
-      left: 1px;
-      width: 1px;
-      background-color: var(--code-layout-color-border-background);
+      transition: background-color ease-in-out 0.2s;
+      z-index: 10;
     }
 
-    &.resize:hover {
-      background-color: var(--code-layout-color-highlight);
-
+    &.resize:hover, &.active {
       &::after {
-        background-color: transparent;
+        background-color: var(--code-layout-color-highlight);
       }
     }
   }

@@ -16,6 +16,7 @@
       :class="[
         'code-layout-split-dragger',
         canResize ? 'resize' : '',
+        splitLeftDragging ? 'active' : '',
       ]" 
       @mousedown="dragHandlerLeft"
     />
@@ -27,6 +28,7 @@
       :class="[
         'code-layout-split-dragger',
         canResize ? 'resize' : '',
+        splitRightDragging ? 'active' : '',
       ]" 
       @mousedown="dragHandlerRight"
     />
@@ -142,6 +144,8 @@ const props = defineProps({
 });
 
 const splitBase = ref<HTMLElement>();
+const splitLeftDragging = ref(false);
+const splitRightDragging = ref(false);
 
 let baseLeft = 0;
 
@@ -149,6 +153,7 @@ const dragHandlerLeft = createMouseDragHandler({
   onDown() {
     if (splitBase.value) {
       baseLeft = HtmlUtils.getLeft(splitBase.value);
+      splitLeftDragging.value = true;
       return true;
     }
     return false;
@@ -170,12 +175,14 @@ const dragHandlerLeft = createMouseDragHandler({
     }
   },
   onUp() {
+    splitLeftDragging.value = false;
   },
 });
 const dragHandlerRight = createMouseDragHandler({
   onDown() {
     if (splitBase.value) {
       baseLeft = HtmlUtils.getLeft(splitBase.value);
+      splitRightDragging.value = true;
       return true;
     }
     return false;
@@ -189,14 +196,15 @@ const dragHandlerRight = createMouseDragHandler({
         minSize = minSize * splitBase.value.offsetWidth;
 
       if (minSize > 0) {
-        emit('closeLeft', dragSize >= minSize / 2);
+        emit('closeRight', dragSize >= minSize / 2);
         dragSize = Math.max(minSize, dragSize)
       }
 
-      emit('update:sizeLeft', (dragSize / splitBase.value.offsetWidth) * 100);
+      emit('update:sizeRight', (dragSize / splitBase.value.offsetWidth) * 100);
     }
   },
   onUp() {
+    splitRightDragging.value = false;
   },
 });
 

@@ -14,24 +14,22 @@
         </span>
       </div>
     </div>
-    <div :class="[ 'content', horizontal ? 'horizontal' : '' ]">
-      <template v-if="group.children.length > 0">
-        <CodeLayoutPanelRender
-          v-for="(panel, key) in group.children" :key="key"
-          v-model:open="panel.open"
-          :panel="panel"
-          :alone="(group.children?.length === 1)"
-        >
-          <template #default="data">
-            <slot name="panelRender" v-bind="data" />
-          </template>
-        </CodeLayoutPanelRender>
-      </template>
+    <div :class="[ 'content', horizontal ? 'horizontal' : 'vertical' ]">
+      <CodeLayoutGroupDraggerHost 
+        v-if="group.children.length > 0"
+        :group="group"
+        :horizontal="horizontal"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+      </CodeLayoutGroupDraggerHost>
       <CodeLayoutPanelRender
         v-else
         :open="true"
         :panel="group"
         :alone="true"
+        :horizontal="horizontal"
       >
         <template #default="data">
           <slot name="panelRender" v-bind="data" />
@@ -45,6 +43,7 @@
 import type { PropType } from 'vue';
 import type { CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import CodeLayoutGroupDraggerHost from './CodeLayoutGroupDraggerHost.vue';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 
 defineProps({
@@ -98,7 +97,18 @@ defineProps({
 
   }
   > .content {
-    
+    position: relative;
+
+    &.vertical {
+      .code-layout-panel {
+        width: 100%;
+      }
+    }
+    &.horizontal {
+      .code-layout-panel {
+        height: 100%;
+      }
+    }
   }
 }
 

@@ -20,6 +20,7 @@
       :class="[
         'code-layout-split-dragger',
         canResize ? 'resize' : '',
+        splitDragging ? 'active' : '',
       ]" 
       @mousedown="dragHandler"
     />
@@ -130,6 +131,7 @@ const props = defineProps({
 });
 
 const splitBase = ref<HTMLElement>();
+const splitDragging = ref(false);
 
 let baseLeft = 0;
 
@@ -140,6 +142,7 @@ const dragHandler = createMouseDragHandler({
         HtmlUtils.getLeft(splitBase.value) : 
         HtmlUtils.getTop(splitBase.value)
       );
+      splitDragging.value = true;
       return true;
     }
     return false;
@@ -155,31 +158,37 @@ const dragHandler = createMouseDragHandler({
       else 
         userDragSizePx = (e.y - baseLeft);
 
+      const limitFirst = props.firstMinSize !== 0;
+      const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
+
+
       //check size limit
-      const minSizeFirst = props.firstMinSize ? props.firstMinSize : props.secondMinSize;
-      if (minSizeFirst >= 1) {
-        //limit in px
-        emit(props.firstMinSize ? 'closeFirst' : 'closeSecond', userDragSizePx > minSizeFirst / 2); //below the minimum value, close the panel
+      let minSize = limitFirst ? props.firstMinSize : props.secondMinSize;
+      if (minSize > 0 && minSize < 1)
+        minSize = minSize * containerSize;
 
-        userDragSizePx = Math.max(userDragSizePx, minSizeFirst);
-      }
+      if (minSize > 0) {
+        if (limitFirst) {
 
-      userDragSize = (userDragSizePx / splitBase.value.offsetHeight);
+          emit('closeFirst', userDragSizePx > minSize / 2); //below the minimum value, close the panel
+          userDragSizePx = Math.max(userDragSizePx, minSize);
 
-      if (minSizeFirst > 0 && minSizeFirst < 1) {
-        //limit in percentage
-        emit(props.firstMinSize ? 'closeFirst' : 'closeSecond', userDragSize > minSizeFirst / 2); //below the minimum value, close the panel
+        } else {
 
-        userDragSize = Math.max(userDragSize, minSizeFirst);
+          emit('closeSecond', containerSize - userDragSizePx > minSize / 2); //below the minimum value, close the panel
+          userDragSizePx = Math.min(userDragSizePx, containerSize - minSize);
+
+        }
       }
 
       //Result size in percentage
-      userDragSize *= 100;
+      userDragSize = (userDragSizePx / containerSize) * 100;
 
       emit('update:size', userDragSize);
     }
   },
   onUp() {
+    splitDragging.value = false;
   },
 });
 
