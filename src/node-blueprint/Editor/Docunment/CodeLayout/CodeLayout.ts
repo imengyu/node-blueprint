@@ -28,6 +28,7 @@ export interface CodeLayoutInstance {
 
 export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
   open: boolean,
+  size: number,
   children: CodeLayoutPanelInternal[],
   activePanel: CodeLayoutPanelInternal|null;
   parentGroup: CodeLayoutPanelInternal|null;
@@ -41,6 +42,8 @@ export interface CodeLayoutPanel {
   accept?: CodeLayoutGrid[],
   accsizeept?: CodeLayoutGrid[],
   size?: number|undefined,
+  minSize?: number|undefined,
+  startOpen?: boolean|undefined,
   iconLarge?: string|(() => VNode)|undefined,
   iconSmall?: string|(() => VNode)|undefined,
   actions?: CodeLayoutActionButton[]|undefined,

@@ -49,29 +49,31 @@ onMounted(() => {
     if (!codeLayout.value)
       return;
 
-    const group1 = codeLayout.value!.addGroup({
+    const group1 = codeLayout.value.addGroup({
       title: 'Group1',
       tooltip: 'Group1',
       name: 'group1',
       iconLarge: () => h(IconFile),
     }, 'primarySideBar');
-    codeLayout.value!.addGroup({
+    codeLayout.value.addGroup({
       title: 'Group2',
       tooltip: 'Group2',
       name: 'group2',
       iconLarge: () => h(IconSearch),
     }, 'primarySideBar');
 
-    codeLayout.value!.addPanel({
+    codeLayout.value.addPanel({
       title: 'Panel1',
       tooltip: 'Panel1',
       name: 'group1.panel1',
+      startOpen: true,
       iconSmall: () => h(IconSearch),
     }, group1);
-    codeLayout.value!.addPanel({
+    codeLayout.value.addPanel({
       title: 'Panel2',
       tooltip: 'Panel2',
       name: 'group1.panel2',
+      startOpen: true,
       iconSmall: () => h(IconSearch),
       actions: [
         { 
@@ -87,6 +89,7 @@ onMounted(() => {
       ]
     }, group1);
 
+    codeLayout.value.activeGroup(group1)
   });
 });
 

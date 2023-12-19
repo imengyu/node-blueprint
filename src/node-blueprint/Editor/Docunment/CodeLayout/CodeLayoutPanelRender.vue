@@ -4,12 +4,24 @@
       'code-layout-panel',
       open ? 'open' : '',
       selected ? 'selected' : '',
-      draggable ? 'draggable' : '',
+      dragResizeable ? 'draggable' : '',
       horizontal ? 'horizontal' : '',
     ]"
+    :style="{
+      height: panelHeight ? `${panelHeight}%` : undefined,
+    }"
     tabindex="0"
   > 
-    <div v-if="draggable" class="drag-line" />
+    <div 
+      v-if="dragResizeable"
+      ref="resizeDragger"
+      draggable="false"
+      :class="[
+        'drag-line',
+        resizeDragging ? 'active' : ''
+      ]" 
+      @mousedown="resizeDragHandler"
+    />
     <div 
       v-if="!alone" class="collapse"
       draggable="true"
@@ -30,13 +42,14 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { ref, computed, type PropType, watch } from 'vue';
 import type { CodeLayoutPanelInternal } from './CodeLayout';
+import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
 
-defineEmits([ 'update:open' ])
+const emit = defineEmits([ 'update:open', 'toggleHandler' ])
 
 const props = defineProps({
   panel: {
@@ -58,14 +71,32 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  draggable: {
+  dragResizeable: {
     type: Boolean,
     default: false,
+  },
+  dragResizeStartHandler: {
+    type: Function as PropType<(panel: CodeLayoutPanelInternal, mousePx: number) => unknown>,
+    default: null,
+  },
+  dragResizeHandler: {
+    type: Function as PropType<(panel: CodeLayoutPanelInternal, data: unknown, mousePx: number) => void>,
+    default: null,
   },
   horizontal: {
     type: Boolean,
     default: true,
   },
+});
+
+const panelHeight = computed(() => {
+  if (!props.open)
+    return undefined;
+  return props.panel.size;
+});
+
+watch(() => props.open, (v) => {
+  emit('toggleHandler', props.panel, v);
 });
 
 function handleDragStart(ev: DragEvent) {
@@ -77,6 +108,38 @@ function handleDragStart(ev: DragEvent) {
 function handleDragEnd(ev: DragEvent) {
   (ev.target as HTMLElement).classList.remove("dragging");
 }
+
+let resizeDraggerData : any = null;
+const resizeDragger = ref<HTMLElement>();
+const resizeDragging = ref(false);
+const resizeDragHandler = createMouseDragHandler({
+  onDown(e) {
+    if (resizeDragger.value) {
+      resizeDragging.value = true;
+
+      resizeDraggerData = props.dragResizeStartHandler?.(
+        props.panel, 
+        (props.horizontal ? e.x : e.y)
+      );
+
+      if (resizeDraggerData === false)
+        return false;
+
+      return true;
+    }
+    return false;
+  },
+  onMove(downPos, movedPos, e) {
+    props.dragResizeHandler?.(
+      props.panel, 
+      resizeDraggerData,
+      (props.horizontal ? e.x : e.y)
+    );
+  },
+  onUp() {
+    resizeDragging.value = false;
+  },
+});
 
 </script>
 

@@ -205,7 +205,7 @@ function openPanel(panel: CodeLayoutPanel, closeOthers = false) {
     const group = panelInternal.parentGroup;
     panelInternal.parentGroup.activePanel = panelInternal;
     if (closeOthers)
-      panelInternal.children.forEach(p => p.open = false);
+      panelInternal.parentGroup.children.forEach(p => p.open = false);
     group.open = true;
   } else {
     throw new Error(`Panel ${panel.name} has not in any container, can not active it.`);
@@ -216,12 +216,16 @@ function activeGroup(panel: CodeLayoutPanel) {
   if (panelInternal.parentGroup) {
     throw new Error(`Panel ${panel.name} is not a group, can not active it.`);
   } else if (panelInternal.parentGrid) {
-    panelInternal.open = true;
     switch (panelInternal.parentGrid) {
-      case 'primarySideBar': panels.value.primary.forEach((p) => p.open = false); break;
+      case 'primarySideBar': {
+        panels.value.primary.forEach((p) => p.open = false); 
+        activityBarActive.value = panelInternal;
+        break;
+      }
       case 'secondarySideBar': panels.value.secondary.forEach((p) => p.open = false); break;
       case 'bottomPanel': panels.value.bottom.forEach((p) => p.open = false); break;
     }
+    panelInternal.open = true;
   } else {
     throw new Error(`Group ${panel.name} has not in any container, can not active it.`);
   } 
@@ -235,6 +239,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   const groupResult : CodeLayoutPanelInternal = { 
     ...panel,
     open: false,
+    size: panel.size ?? 0,
     children: [],
     parentGrid: target,
     parentGroup: null,
@@ -263,7 +268,7 @@ function removeGroup(panel: CodeLayoutPanel) {
 
   return panel;
 }
-function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active = false) {
+function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpen = false) {
   const parentGroupInternal = parentGroup as CodeLayoutPanelInternal;
   const panelInternal = panel as CodeLayoutPanelInternal;
   
@@ -273,16 +278,17 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active =
   const panelResult : CodeLayoutPanelInternal = {
     ...panel,
     open: false,
+    size: panel.size ?? 0,
     children: [],
     parentGrid: parentGroupInternal.parentGrid,
     parentGroup: parentGroupInternal,
     activePanel: null,
   };
 
-  parentGroupInternal.children.push(panelInternal);
+  parentGroupInternal.children.push(panelResult);
 
-  if (active)
-    openPanel(panel);
+  if (startOpen || panel.startOpen)
+    openPanel(panelResult);
 
   return panelResult;
 }
