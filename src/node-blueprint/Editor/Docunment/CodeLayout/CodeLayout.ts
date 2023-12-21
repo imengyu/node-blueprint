@@ -10,6 +10,8 @@ export interface CodeLayoutConfig {
   bottomPanelMinHeight: number,
   bottomAlignment: 'left'|'center'|'right'|'justify',
   statusBarHeight: number|string,
+  panelHeaderHeight: number,
+  panelMinHeight: number,
 }
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea'|'none';
@@ -28,6 +30,7 @@ export interface CodeLayoutInstance {
 
 export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
   open: boolean,
+  resizeable: boolean,
   size: number,
   children: CodeLayoutPanelInternal[],
   activePanel: CodeLayoutPanelInternal|null;

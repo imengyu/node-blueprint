@@ -4,7 +4,9 @@
       'code-layout-panel',
       open ? 'open' : '',
       selected ? 'selected' : '',
-      dragResizeable ? 'draggable' : '',
+      dragResizeable ? 'resizeable' : '',
+      resizeDraggingSelf ? 'resizing-self' : '',
+      resizeDragging ? 'resizing' : '',
       horizontal ? 'horizontal' : '',
     ]"
     :style="{
@@ -13,9 +15,14 @@
     tabindex="0"
   > 
     <div 
+      v-if="resizeDraggingSelf"
+      :draggable="false"
+      class="drag-line-hover" 
+    />
+    <div 
       v-if="dragResizeable"
       ref="resizeDragger"
-      draggable="false"
+      :draggable="false"
       :class="[
         'drag-line',
         resizeDragging ? 'active' : ''
@@ -24,7 +31,7 @@
     />
     <div 
       v-if="!alone" class="collapse"
-      draggable="true"
+      :draggable="true"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
       @click="$emit('update:open', !open)"
@@ -35,21 +42,24 @@
       </div>
       <CodeLayoutActionsRender class="actions" :actions="panel.actions" />
     </div>
-    <div v-if="open" class="content">
+    <div v-if="open" class="content" :draggable="false">
       <slot :panel="panel" :open="open" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, watch } from 'vue';
+import { ref, computed, type PropType, watch, onMounted } from 'vue';
 import type { CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
 
-const emit = defineEmits([ 'update:open', 'toggleHandler' ])
+const emit = defineEmits([ 
+  'update:open', 'update:resizeDragging',
+  'toggleHandler',
+])
 
 const props = defineProps({
   panel: {
@@ -87,11 +97,19 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  collapsedSize: {
+    type: Number,
+    default: 0,
+  },
+  resizeDragging: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const panelHeight = computed(() => {
   if (!props.open)
-    return undefined;
+    return props.collapsedSize;
   return props.panel.size;
 });
 
@@ -111,11 +129,12 @@ function handleDragEnd(ev: DragEvent) {
 
 let resizeDraggerData : any = null;
 const resizeDragger = ref<HTMLElement>();
-const resizeDragging = ref(false);
+const resizeDraggingSelf = ref(false);
 const resizeDragHandler = createMouseDragHandler({
   onDown(e) {
     if (resizeDragger.value) {
-      resizeDragging.value = true;
+      emit('update:resizeDragging', true);
+      resizeDraggingSelf.value = true;
 
       resizeDraggerData = props.dragResizeStartHandler?.(
         props.panel, 
@@ -137,7 +156,8 @@ const resizeDragHandler = createMouseDragHandler({
     );
   },
   onUp() {
-    resizeDragging.value = false;
+    emit('update:resizeDragging', false);
+    resizeDraggingSelf.value = false;
   },
 });
 
@@ -148,6 +168,7 @@ const resizeDragHandler = createMouseDragHandler({
 
 .code-layout-panel {
   position: relative;
+  transition: all ease-in-out 0.2s;
 
   &.open {
     > .collapse {
@@ -167,6 +188,24 @@ const resizeDragHandler = createMouseDragHandler({
       }
     }
   }
+  &.resizing {
+    transition: none ease-in-out 0s;
+    position: unset;
+
+    > .drag-line {
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      height: unset;
+      width: unset;
+    }
+  }
+  &.resizing-self {
+    > .drag-line-hover {
+      background-color: var(--code-layout-color-highlight);
+    }
+  }
 
   &:hover {
     > .collapse .actions {
@@ -178,25 +217,34 @@ const resizeDragHandler = createMouseDragHandler({
   }
 
   &.horizontal {
-
     > .drag-line {
       cursor: ew-resize;
+      top: unset;
+      left: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+      width: var(--code-layout-color-border-size-dragger);
+      height: unset;
+    }
+    > .drag-line-hover {
+      top: unset;
+      left: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+      width: var(--code-layout-color-border-size-dragger);
+      height: unset;
     }
   }
 
+  > .drag-line-hover {
+    top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+    height: var(--code-layout-color-border-size-dragger);
+    transition: background-color ease-in-out 0.4s;
+  }
   > .drag-line {
     position: absolute;
     left: 0;
     right: 0;
     top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
     height: var(--code-layout-color-border-size-dragger);
-    transition: background-color ease-in-out 0.4s;
     z-index: 10;
     cursor: ns-resize;
-
-    &:hover, &.active {
-      background-color: var(--code-layout-color-highlight);
-    }
   }
 
   > .collapse {

@@ -34,6 +34,8 @@ const config = reactive<CodeLayoutConfig>({
   bottomPanelMinHeight: 40,
   bottomAlignment: 'center',
   statusBarHeight: '20px',
+  panelHeaderHeight: 24,
+  panelMinHeight: 150,
 });
 
 const activityBar = ref(true);

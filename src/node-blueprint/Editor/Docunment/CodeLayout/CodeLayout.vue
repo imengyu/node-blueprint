@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, computed, onMounted } from 'vue';
+import { ref , type PropType, computed, onMounted, provide } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutGrid, CodeLayoutPanel, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutBase from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
@@ -112,6 +112,7 @@ const emit = defineEmits([
   'update:secondarySideBar',
   'update:bottomPanel',
 ]) ;
+
 
 const props = defineProps({
   layoutConfig: {
@@ -143,6 +144,8 @@ const props = defineProps({
     default: "Drag a view here to display",
   },
 });
+
+provide('layoutConfig', props.layoutConfig);
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
   if (activityBarActive.value === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
@@ -203,10 +206,10 @@ function openPanel(panel: CodeLayoutPanel, closeOthers = false) {
   const panelInternal = panel as CodeLayoutPanelInternal;
   if (panelInternal.parentGroup) {
     const group = panelInternal.parentGroup;
-    panelInternal.parentGroup.activePanel = panelInternal;
+    group.activePanel = panelInternal;
     if (closeOthers)
-      panelInternal.parentGroup.children.forEach(p => p.open = false);
-    group.open = true;
+      group.children.forEach(p => p.open = false);
+    panelInternal.open = true;
   } else {
     throw new Error(`Panel ${panel.name} has not in any container, can not active it.`);
   } 
