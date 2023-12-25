@@ -262,7 +262,7 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
 
   } else {
     const freeSize = panel.size - headerSize;
-    const adjustPanel = index < groupArray.length - 1 ? groupArray[index + 1] : groupArray[index - 1];
+    const adjustPanel = index < groupArray.length - 1 && groupArray[index + 1].open ? groupArray[index + 1] : groupArray[index - 1];
     if (adjustPanel)
       adjustPanel.size += freeSize;
   }

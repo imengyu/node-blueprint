@@ -17,14 +17,14 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { CodeLayoutPanel } from './CodeLayout';
+import type { CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 
 defineEmits(['activeItem'])
 
 defineProps({
   item: {
-    type: Object as PropType<CodeLayoutPanel>,
+    type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
   },
   active: {

@@ -42,6 +42,7 @@ export interface CodeLayoutPanel {
   title: string,
   tooltip?: string,
   name: string,
+  badge?: string|(() => VNode)|undefined,
   accept?: CodeLayoutGrid[],
   accsizeept?: CodeLayoutGrid[],
   size?: number|undefined,
