@@ -63,6 +63,12 @@ onMounted(() => {
       name: 'group2',
       iconLarge: () => h(IconSearch),
     }, 'primarySideBar');
+    const group3 = codeLayout.value.addGroup({
+      title: 'Group3',
+      tooltip: 'Group3',
+      name: 'group3',
+      iconLarge: () => h(IconFile),
+    }, 'bottomPanel');
 
     codeLayout.value.addPanel({
       title: 'Panel1',
@@ -90,6 +96,36 @@ onMounted(() => {
         },
       ]
     }, group1);
+    codeLayout.value.addPanel({
+      title: 'Panel3',
+      tooltip: 'Panel3',
+      name: 'group1.panel3',
+      startOpen: true,
+      iconSmall: () => h(IconSearch),
+      actions: [
+        { 
+          name: 'test',
+          icon: () => h(IconSearch),
+          onClick() {},
+        },
+      ]
+    }, group1);
+
+    
+    codeLayout.value.addPanel({
+      title: 'Panel4',
+      tooltip: 'Panel4',
+      name: 'group3.panel4',
+      startOpen: true,
+      iconSmall: () => h(IconSearch),
+      actions: [
+        { 
+          name: 'test',
+          icon: () => h(IconSearch),
+          onClick() {},
+        },
+      ]
+    }, group3);
 
     codeLayout.value.activeGroup(group1)
   });

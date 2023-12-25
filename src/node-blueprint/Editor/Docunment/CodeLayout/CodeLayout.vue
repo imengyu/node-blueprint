@@ -242,6 +242,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   const groupResult : CodeLayoutPanelInternal = { 
     ...panel,
     open: false,
+    resizeable: false,
     size: panel.size ?? 0,
     children: [],
     parentGrid: target,
@@ -281,6 +282,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   const panelResult : CodeLayoutPanelInternal = {
     ...panel,
     open: false,
+    resizeable: false,
     size: panel.size ?? 0,
     children: [],
     parentGrid: parentGroupInternal.parentGrid,

@@ -88,6 +88,7 @@ defineProps({
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 
   &.primary {
     background-color: var(--code-layout-color-background-second);

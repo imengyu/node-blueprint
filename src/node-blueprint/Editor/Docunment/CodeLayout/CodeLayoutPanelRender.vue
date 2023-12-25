@@ -15,23 +15,18 @@
     tabindex="0"
   > 
     <div 
-      v-if="resizeDraggingSelf"
-      :draggable="false"
-      class="drag-line-hover" 
-    />
-    <div 
       v-if="dragResizeable"
       ref="resizeDragger"
       :draggable="false"
       :class="[
         'drag-line',
-        resizeDragging ? 'active' : ''
+        resizeDraggingSelf ? 'active' : ''
       ]" 
       @mousedown="resizeDragHandler"
     />
     <div 
       v-if="!alone" class="collapse"
-      :draggable="true"
+      :draggable="!resizeDragging"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
       @click="$emit('update:open', !open)"
@@ -190,20 +185,17 @@ const resizeDragHandler = createMouseDragHandler({
   }
   &.resizing {
     transition: none ease-in-out 0s;
-    position: unset;
-
-    > .drag-line {
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      height: unset;
-      width: unset;
-    }
   }
   &.resizing-self {
-    > .drag-line-hover {
-      background-color: var(--code-layout-color-highlight);
+
+    .collapse {
+      cursor: inherit;
+    }
+
+    cursor: ns-resize;
+
+    &.horizontal {
+      cursor: ew-resize;
     }
   }
 
@@ -224,27 +216,21 @@ const resizeDragHandler = createMouseDragHandler({
       width: var(--code-layout-color-border-size-dragger);
       height: unset;
     }
-    > .drag-line-hover {
-      top: unset;
-      left: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
-      width: var(--code-layout-color-border-size-dragger);
-      height: unset;
-    }
   }
 
-  > .drag-line-hover {
-    top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
-    height: var(--code-layout-color-border-size-dragger);
-    transition: background-color ease-in-out 0.4s;
-  }
   > .drag-line {
     position: absolute;
     left: 0;
     right: 0;
     top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
     height: var(--code-layout-color-border-size-dragger);
+    transition: background-color ease-in-out 0.4s;
     z-index: 10;
     cursor: ns-resize;
+
+    &.active, &:hover {
+      background-color: var(--code-layout-color-highlight);
+    }
   }
 
   > .collapse {

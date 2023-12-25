@@ -60,6 +60,9 @@ interface PanelResizeDragData {
   index: number,
   baseLeft: number,
   startSizePx: number,
+  spaceSize: number,
+  headerSizePx: number,
+  prevPanelAndSelfSize: number,
   prevPanel: CodeLayoutPanelInternal,
 }
 
@@ -80,6 +83,7 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: nu
     return false;
 
   const contanterSizePx = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+  const headerSizePx = (layoutConfig.panelHeaderHeight / contanterSizePx) * 100;
 
   let startToPrevPanelSize = 0;
   for(let i = 0; i < index - 1; i++) 
@@ -97,12 +101,24 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: nu
     }
   }
 
+  if (!prevPanel)
+    throw new Error('no prevPanel');
+
+  //计算可调整的最大大小，为100-非自己的面板最小大小
+  let spaceSize = 100;
+  groupArray.forEach((p) => spaceSize -= (p !== panel ? (p.open ? getPanelMinSize(p.minSize, contanterSizePx) : headerSizePx) : 0));
+
+  const prevPanelAndSelfSize = prevPanel.size + panel.size;
+
   return {
     index,
+    headerSizePx,
     contanterSizePx,
     startToPrevPanelSize,
     baseLeft,
+    spaceSize,
     prevPanel,
+    prevPanelAndSelfSize,
     startSizePx: mousePx - baseLeft,
   } as PanelResizeDragData
 }
@@ -115,6 +131,8 @@ function panelResizeDraggingHandler(panel: CodeLayoutPanelInternal, data: unknow
     contanterSizePx,
     startToPrevPanelSize,
     index,
+    spaceSize,
+    prevPanelAndSelfSize,
     prevPanel,
     startSizePx,
     baseLeft,
@@ -125,21 +143,20 @@ function panelResizeDraggingHandler(panel: CodeLayoutPanelInternal, data: unknow
 
   //拖拽调整大小实际上是调整当前面板与上一个面板的大小占比
   //如果调整大小小于最小值，则继续向更外面调整其他面板大小
-
-  let bothSize = prevPanel.size + panel.size;
+  let bothSize = prevPanelAndSelfSize
 
   //先调整前一个面板的大小
   const prevSize = (sizePrecent - startToPrevPanelSize);
-  prevPanel.size = Math.max(prevSize, getPanelMinSize(prevPanel.minSize, contanterSizePx));
-  bothSize -= prevSize;
+  prevPanel.size = Math.min(spaceSize, Math.max(prevSize, getPanelMinSize(prevPanel.minSize, contanterSizePx)));
+  bothSize -= prevPanel.size;
 
 
   //再调整当前面板的大小
   const thisSize = bothSize;
   panel.size =  Math.max(thisSize, getPanelMinSize(panel.minSize, contanterSizePx));
-  bothSize -= thisSize;
+  bothSize -= panel.size;
 
-  console.log(prevSize, thisSize);
+  console.log(prevPanel.size, panel.size, bothSize);
 
   //鼠标移动的大小以及大于上面的面板可以调整的最小大小，剩余的需要更之前的面板来补偿
   if (bothSize > 0) {
@@ -184,7 +201,7 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
   if (open) {
 
     let onlyMeOpen = true;
-    for (let i = index + 1; i < groupArray.length; i++) {
+    for (let i = 0; i < groupArray.length; i++) {
       if (groupArray[i].open && groupArray[i] !== panel) {
         onlyMeOpen = false;
         break;
