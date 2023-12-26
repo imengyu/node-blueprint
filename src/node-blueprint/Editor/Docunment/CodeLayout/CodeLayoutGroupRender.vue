@@ -88,7 +88,7 @@ defineProps({
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  //overflow: hidden;
 
   &.primary {
     background-color: var(--code-layout-color-background-second);
@@ -106,6 +106,7 @@ defineProps({
     &.vertical {
       .code-layout-panel {
         width: 100%;
+        background-color: rgb(133, 0, 0);
       }
     }
     &.horizontal {

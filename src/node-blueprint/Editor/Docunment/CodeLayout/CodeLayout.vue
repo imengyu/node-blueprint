@@ -1,5 +1,6 @@
 <template>
   <CodeLayoutBase 
+    ref="codeLayoutBase"
     :config="layoutConfig"
     :activityBar="activityBar"
     :primarySideBar="primarySideBar"
@@ -86,9 +87,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, computed, onMounted, provide } from 'vue';
+import { ref , type PropType, onMounted, provide, onBeforeUnmount } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutGrid, CodeLayoutPanel, CodeLayoutPanelInternal } from './CodeLayout';
-import CodeLayoutBase from './CodeLayoutBase.vue';
+import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
@@ -105,6 +106,15 @@ const panels = ref<{
   center: [],
 });
 
+export interface CodeLayoutGroupInstance {
+  notifyRelayout: () => void,
+}
+export interface CodeLayoutContext {
+  addGroup: (instance: CodeLayoutGroupInstance) => void,
+  removeGroup: (instance: CodeLayoutGroupInstance) => void,
+}
+
+const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 const activityBarActive = ref<CodeLayoutPanelInternal>();
 
 const emit = defineEmits([
@@ -112,7 +122,6 @@ const emit = defineEmits([
   'update:secondarySideBar',
   'update:bottomPanel',
 ]) ;
-
 
 const props = defineProps({
   layoutConfig: {
@@ -145,7 +154,17 @@ const props = defineProps({
   },
 });
 
+const groupInstances = [] as CodeLayoutGroupInstance[];
+
 provide('layoutConfig', props.layoutConfig);
+provide<CodeLayoutContext>('codeLayoutContext', {
+  addGroup(instance) {
+    groupInstances.push(instance);
+  },
+  removeGroup(instance) {
+    ArrayUtils.remove(groupInstances, instance);
+  },
+});
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
   if (activityBarActive.value === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
@@ -180,6 +199,8 @@ function getPanelArray(target: CodeLayoutGrid) {
   }
   throw new Error(`Grid can not insert panel`);
 }
+
+//公开控制接口
 
 function closePanel(panel: CodeLayoutPanel) {
   const panelInternal = panel as CodeLayoutPanelInternal;
@@ -310,6 +331,10 @@ function removePanel(panel: CodeLayoutPanel) {
 
   return panel;
 }
+function relayoutAll() {
+  groupInstances.forEach(p => p.notifyRelayout());
+}
+
 
 defineExpose({
   getPanelArray,
@@ -321,9 +346,12 @@ defineExpose({
   removeGroup,
   addPanel,
   removePanel,
+  relayoutAll,
 });
 
 onMounted(() => {
+});
+onBeforeUnmount(() => {
 });
 
 </script>

@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, watch, onMounted } from 'vue';
+import { ref, computed, type PropType, watch } from 'vue';
 import type { CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
@@ -92,10 +92,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  collapsedSize: {
-    type: Number,
-    default: 0,
-  },
   resizeDragging: {
     type: Boolean,
     default: false,
@@ -104,7 +100,7 @@ const props = defineProps({
 
 const panelHeight = computed(() => {
   if (!props.open)
-    return props.collapsedSize;
+    return undefined;
   return props.panel.size;
 });
 

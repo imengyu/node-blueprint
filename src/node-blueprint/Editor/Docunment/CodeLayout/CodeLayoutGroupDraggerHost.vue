@@ -10,7 +10,6 @@
       :dragResizeStartHandler="panelResizeDragStartHandler"
       :dragResizeHandler="panelResizeDraggingHandler"
       :alone="(group.children?.length === 1)"
-      :collapsedSize="headerSizePrecent"
       @toggleHandler="panelHandleOpenClose"
     >
       <template #default="data">
@@ -21,15 +20,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, onMounted, nextTick, inject, watch } from 'vue';
+import { ref, type PropType, onMounted, nextTick, inject, watch, onBeforeUnmount } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout';
+import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import type { CodeLayoutContext, CodeLayoutGroupInstance } from './CodeLayout.vue';
 
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
-
 const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
+const codeLayoutContext = inject('codeLayoutContext') as CodeLayoutContext;
 
 const props = defineProps({
   group: {
@@ -47,13 +48,6 @@ const props = defineProps({
   },
 });
 
-const headerSizePrecent = computed(() => {
-  if (!container.value)
-    return 0;
-  const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
-  return (layoutConfig.panelHeaderHeight / containerSize) * 100;
-});
-
 interface PanelResizeDragData {
   startToPrevPanelSize: number,
   contanterSizePx: number,
@@ -62,6 +56,8 @@ interface PanelResizeDragData {
   startSizePx: number,
   spaceSize: number,
   headerSizePx: number,
+  panelSizes: number[],
+  selfSize: number,
   prevPanelAndSelfSize: number,
   prevPanel: CodeLayoutPanelInternal,
 }
@@ -74,6 +70,11 @@ function getPanelMinSize(minSize: number|undefined, contanterSizePx: number) {
   return (minSize / contanterSizePx) * 100;
 }
 
+function panelAdjustAndReturnAdjustedSize(panel: CodeLayoutPanelInternal, newSize: number) {
+  const oldSize = panel.size;
+  panel.size = newSize;
+  return newSize - oldSize;
+}
 function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: number) {
   if (!container.value)
     return false;  
@@ -95,11 +96,17 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: nu
   );
 
   let prevPanel = null;
-  for (let i = index; i >= 0; i--) {
+  for (let i = index - 1; i >= 0; i--) {
     if (groupArray[i].open && groupArray[i].size > 0) {
       prevPanel = groupArray[i];
+      break;
     }
   }
+
+
+  const panelSizes = [] as number[];
+  for (let i = 0; i < groupArray.length; i++)
+    panelSizes[i] = groupArray[i].size;
 
   if (!prevPanel)
     throw new Error('no prevPanel');
@@ -117,6 +124,8 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: nu
     startToPrevPanelSize,
     baseLeft,
     spaceSize,
+    panelSizes,
+    selfSize: panel.size,
     prevPanel,
     prevPanelAndSelfSize,
     startSizePx: mousePx - baseLeft,
@@ -132,43 +141,67 @@ function panelResizeDraggingHandler(panel: CodeLayoutPanelInternal, data: unknow
     startToPrevPanelSize,
     index,
     spaceSize,
+    panelSizes,
     prevPanelAndSelfSize,
     prevPanel,
-    startSizePx,
     baseLeft,
   } = data as PanelResizeDragData;
+
 
   const sizePx = mousePx - baseLeft;
   const sizePrecent = (sizePx / contanterSizePx) * 100;
 
   //拖拽调整大小实际上是调整当前面板与上一个面板的大小占比
   //如果调整大小小于最小值，则继续向更外面调整其他面板大小
-  let bothSize = prevPanelAndSelfSize
 
   //先调整前一个面板的大小
   const prevSize = (sizePrecent - startToPrevPanelSize);
-  prevPanel.size = Math.min(spaceSize, Math.max(prevSize, getPanelMinSize(prevPanel.minSize, contanterSizePx)));
-  bothSize -= prevPanel.size;
-
+  prevPanel.size = Math.min(spaceSize, Math.max(getPanelMinSize(prevPanel.minSize, contanterSizePx), prevSize));
 
   //再调整当前面板的大小
-  const thisSize = bothSize;
-  panel.size =  Math.max(thisSize, getPanelMinSize(panel.minSize, contanterSizePx));
-  bothSize -= panel.size;
-
-  console.log(prevPanel.size, panel.size, bothSize);
+  panel.size = Math.max(prevPanelAndSelfSize - prevPanel.size, getPanelMinSize(panel.minSize, contanterSizePx));
 
   //鼠标移动的大小以及大于上面的面板可以调整的最小大小，剩余的需要更之前的面板来补偿
-  if (bothSize > 0) {
+  let downOverflowSize = Math.abs(panel.size + prevPanel.size - prevPanelAndSelfSize);
+  let upOverflowSize = (prevPanel.size - prevSize);
 
-    if (sizePx > startSizePx) {
-      //向下拖动
+  //console.log('spaceSize', spaceSize, 'prev', prevPanel.size, 'this', panel.size, prevPanelAndSelfSize, overflowSize);
 
+  //向下拖动超出
+  if (downOverflowSize > 0) {
+    for (let i = index + 1; i < groupArray.length; i++) {
+      const adjustPanel = groupArray[i];
+      if (adjustPanel.open) {
+        const maxAdjustPanelSize = Math.min(
+          downOverflowSize,
+          panelSizes[i] - getPanelMinSize(panel.minSize, contanterSizePx)
+        );
+        adjustPanel.size = panelSizes[i] - maxAdjustPanelSize;
+        downOverflowSize -= maxAdjustPanelSize;
+        if (downOverflowSize < 0)
+          break;
+      }
+    }
+    //没有目标了还是超出，说明没有面板可供调整了，归还这些空间回去
+    if (downOverflowSize > 0)
+      downOverflowSize -= panelAdjustAndReturnAdjustedSize(prevPanel, prevPanel.size - downOverflowSize);
+  }
+  //向上拖动超出
+  else if (upOverflowSize > 0) {
+    for (let i = index - 2; i >= 0; i--) {
 
-
-    } else {
-      //向上拖动
-
+      const adjustPanel = groupArray[i];
+      if (adjustPanel.open) {
+        const maxAdjustPanelSize = Math.min(
+          upOverflowSize,
+          panelSizes[i] - getPanelMinSize(panel.minSize, contanterSizePx)
+        );
+        panel.size += maxAdjustPanelSize;
+        adjustPanel.size = panelSizes[i] - maxAdjustPanelSize;
+        upOverflowSize -= maxAdjustPanelSize;
+        if (upOverflowSize < 0)
+          break;
+      }
 
     }
   }
@@ -309,17 +342,62 @@ function initAllPanelSizes() {
   flushDraggable();
 }
 
+//当容器的大小更改后，重新布局
+function relayoutAllWhenSizeChange() {
+  if (!container.value)
+    return;
+  const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+  const sizeRatios = [] as number[];
+ 
+  let allSize = 100, allSizeForPrecent = 0;
+
+  props.group.children.forEach((panel, i) => {
+    sizeRatios[i] = panel.size;
+    allSizeForPrecent += panel.size;
+  });
+  sizeRatios.forEach((v,i) => {
+    sizeRatios[i] = v / allSizeForPrecent;
+  });
+
+  props.group.children.forEach((panel, i) => {
+    if (panel.open) {
+      const minSize = getPanelMinSize(panel.minSize, containerSize);
+      panel.size = Math.max(sizeRatios[i] * allSize, minSize);
+    }
+  });
+}
+
 watch(() => props.group.children, () => {
   initAllPanelSizes();
 });
 
+//更改大小后重新布局
+
+const {
+  startResizeChecker,
+  stopResizeChecker
+} = useResizeChecker(container, 
+  props.horizontal ? relayoutAllWhenSizeChange : undefined,
+  props.horizontal ? undefined : relayoutAllWhenSizeChange
+);
+
+const instance : CodeLayoutGroupInstance = {
+  notifyRelayout() {
+    initAllPanelSizes();
+  },
+};
+
 onMounted(() => {
   nextTick(() => {
     initAllPanelSizes();
-  })
+    startResizeChecker();
+    codeLayoutContext.addGroup(instance);
+  });
 });
-
-
+onBeforeUnmount(() => {
+  stopResizeChecker();
+  codeLayoutContext.removeGroup(instance);
+});
 
 </script>
 

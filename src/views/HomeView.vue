@@ -11,7 +11,7 @@
       :statusBar="statusBar"
     >
       <template #panelRender="{ panel }">
-        <h1>Panel {{ panel.name }}</h1>
+        <span>{{ panel.size }} / {{ panel.name }}</span>
       </template>
     </CodeLayout>
   </div>

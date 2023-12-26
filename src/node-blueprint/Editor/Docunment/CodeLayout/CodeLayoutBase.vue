@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <div class="code-layout-root">
+  <div ref="container" class="code-layout-root">
     <!--root-->
     <div class="code-layout-activity">
       <!--activity bar-->
@@ -181,10 +181,16 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { ref, type PropType } from 'vue';
 import SplitThird from './SplitLayout/SplitThird.vue';
 import SplitBase from './SplitLayout/SplitBase.vue';
 import type { CodeLayoutConfig } from './CodeLayout';
+
+export interface CodeLayoutBaseInstance {
+  getRef: () => HTMLElement | undefined;
+}
+
+const container = ref<HTMLElement>();
 
 defineEmits([ 
   'update:secondarySideBar',
@@ -217,6 +223,10 @@ defineProps({
     type: Boolean,
     default: true,
   },
+});
+
+defineExpose({
+  getRef: () => container.value,
 });
 
 </script>
