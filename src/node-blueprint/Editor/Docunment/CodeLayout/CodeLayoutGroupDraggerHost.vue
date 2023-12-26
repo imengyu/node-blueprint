@@ -10,6 +10,7 @@
       :dragResizeStartHandler="panelResizeDragStartHandler"
       :dragResizeHandler="panelResizeDraggingHandler"
       :alone="(group.children?.length === 1)"
+      :collapsedSize="headerSizePrecent"
       @toggleHandler="panelHandleOpenClose"
     >
       <template #default="data">
@@ -47,6 +48,7 @@ const props = defineProps({
     default: true,
   },
 });
+const headerSizePrecent = ref(0);
 
 interface PanelResizeDragData {
   startToPrevPanelSize: number,
@@ -69,6 +71,7 @@ function getPanelMinSize(minSize: number|undefined, contanterSizePx: number) {
     return minSize * 100;
   return (minSize / contanterSizePx) * 100;
 }
+
 
 function panelAdjustAndReturnAdjustedSize(panel: CodeLayoutPanelInternal, newSize: number) {
   const oldSize = panel.size;
@@ -294,10 +297,21 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
     }
 
   } else {
-    const freeSize = panel.size - headerSize;
-    const adjustPanel = index < groupArray.length - 1 && groupArray[index + 1].open ? groupArray[index + 1] : groupArray[index - 1];
-    if (adjustPanel)
-      adjustPanel.size += freeSize;
+    let freeSize = panel.size - headerSize;
+    for (let i = index + 1; i < groupArray.length; i++) {
+      const adjustPanel = groupArray[i];
+      if (adjustPanel.open) {
+        adjustPanel.size += freeSize;
+        return;
+      }
+    }
+    for (let i = index - 1; i >= 0; i--) {
+      const adjustPanel = groupArray[i];
+      if (adjustPanel.open) {
+        adjustPanel.size += freeSize;
+        return;
+      }
+    }
   }
 
 }
@@ -346,6 +360,9 @@ function initAllPanelSizes() {
 function relayoutAllWhenSizeChange() {
   if (!container.value)
     return;
+
+  reCalcHeaderSize();
+
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
   const sizeRatios = [] as number[];
  
@@ -365,6 +382,14 @@ function relayoutAllWhenSizeChange() {
       panel.size = Math.max(sizeRatios[i] * allSize, minSize);
     }
   });
+}
+
+//重新计算头部大小
+function reCalcHeaderSize() {
+  if (!container.value)
+    return headerSizePrecent.value = 0;
+  const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+  return headerSizePrecent.value = (layoutConfig.panelHeaderHeight / containerSize) * 100;
 }
 
 watch(() => props.group.children, () => {
@@ -391,6 +416,7 @@ onMounted(() => {
   nextTick(() => {
     initAllPanelSizes();
     startResizeChecker();
+    reCalcHeaderSize();
     codeLayoutContext.addGroup(instance);
   });
 });

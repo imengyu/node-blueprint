@@ -92,6 +92,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  collapsedSize: {
+    type: Number,
+    default: 0,
+  },
   resizeDragging: {
     type: Boolean,
     default: false,
@@ -100,7 +104,7 @@ const props = defineProps({
 
 const panelHeight = computed(() => {
   if (!props.open)
-    return undefined;
+    return props.collapsedSize;
   return props.panel.size;
 });
 
