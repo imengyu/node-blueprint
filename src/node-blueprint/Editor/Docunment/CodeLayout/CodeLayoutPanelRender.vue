@@ -10,7 +10,7 @@
       horizontal ? 'horizontal' : '',
     ]"
     :style="{
-      height: panelHeight ? `${panelHeight}%` : undefined,
+      height: panelHeight ? `${panelHeight}px` : undefined,
     }"
     tabindex="0"
   > 
