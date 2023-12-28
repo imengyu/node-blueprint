@@ -1,5 +1,6 @@
 <template>
   <div 
+    ref="element"
     :class="[
       'code-layout-panel',
       open ? 'open' : 'closed',
@@ -8,12 +9,18 @@
       resizeDraggingSelf ? 'resizing-self' : '',
       resizeDragging ? 'resizing' : '',
       horizontal ? 'horizontal' : '',
+      dragEnterState ? 'drag-enter' : '',
+      dragOverState,
     ]"
     :style="{
       width: horizontal && panelHeight ? `${panelHeight}px` : undefined,
       height: !horizontal && panelHeight ? `${panelHeight}px` : undefined,
     }"
     tabindex="0"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @dragenter="handleDragEnter"
+    @drop="handleDrop"
   > 
     <div 
       v-if="dragResizeable"
@@ -52,11 +59,14 @@ import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
+import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
 const emit = defineEmits([ 
   'update:open', 'update:resizeDragging',
   'toggleHandler',
 ])
+
+const element = ref<HTMLElement>();
 
 const props = defineProps({
   panel: {
@@ -114,15 +124,58 @@ watch(() => props.open, (v) => {
   emit('toggleHandler', props.panel, v);
 });
 
+//拖放面板处理函数
+
+const dragEnterState = ref(false);
+const dragOverState = ref<''|'drag-over-prev'|'drag-over-next'>('');
+let currentDropBaseScreenPos = 0;
+let currentDragEnterEle : any = null;
+
 function handleDragStart(ev: DragEvent) {
   (ev.target as HTMLElement).classList.add("dragging");
 
-  if (ev.dataTransfer)
+  if (ev.dataTransfer) 
     ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${props.panel.name}`);
 }
 function handleDragEnd(ev: DragEvent) {
   (ev.target as HTMLElement).classList.remove("dragging");
 }
+function handleDragOver(event: DragEvent) {
+  event.preventDefault();
+  const pos = (props.horizontal ? event.x : event.y) - currentDropBaseScreenPos;
+  dragOverState.value = (pos > (props.horizontal ? 
+    element.value!.offsetWidth : 
+    element.value!.offsetHeight) / 2
+  ) ? 'drag-over-next' : 'drag-over-prev';
+}
+function handleDragEnter(e: DragEvent) {
+  console.log('handleDragEnter', props.panel.name);
+  
+  currentDropBaseScreenPos = props.horizontal ? 
+      HtmlUtils.getLeft(element.value!) : 
+      HtmlUtils.getTop(element.value!);
+  dragEnterState.value = true;
+  currentDragEnterEle = e.target;
+}
+function handleDragLeave(e: DragEvent) {
+  console.log('handleDragLeave', props.panel.name);
+
+  if(currentDragEnterEle === e.target){ 
+    dragEnterState.value = false;
+    dragOverState.value = '';
+    e.preventDefault();
+  }
+}
+function handleDrop(event: DragEvent) {
+  dragEnterState.value = false;
+  dragOverState.value = '';
+  const data = event.dataTransfer?.getData('text/plain');
+  if (data && data.startsWith('CodeLayoutPanel:')) {
+  }
+}
+
+
+//拖拽调整大小
 
 let resizeDraggerData : any = null;
 const resizeDragger = ref<HTMLElement>();
@@ -166,6 +219,8 @@ const resizeDragHandler = createMouseDragHandler({
 .code-layout-panel {
   position: relative;
   transition: all ease-in-out 0.15s;
+  flex-shrink: 0;
+  flex-grow: 0;
 
   //状态控制
   &.open {
@@ -208,6 +263,103 @@ const resizeDragHandler = createMouseDragHandler({
   }
   &:first-child > .collapse {
     border-top: none;
+  }
+
+  &::after, &::before {
+    pointer-events: none;
+  }
+
+  //拖放状态处理
+  &.drag-over-prev {
+    //高亮框
+    &.closed {
+      background-color: var(--code-layout-color-background-mask-light);
+    }
+    &.open::after {
+      background-color: var(--code-layout-color-background-mask-light);
+      position: absolute;
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      z-index: 1;
+    }
+    &.horizontal.open::after {
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: unset;
+      height: unset;
+      width: 50%;
+    }
+    //高亮线条
+    &.closed::before {
+      position: absolute;
+      content: '';
+      z-index: 2;
+      background-color: var(--code-layout-color-border-light);
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    } 
+    &.horizontal.closed::before {
+      left: unset;
+      height: unset;
+      width: 1px;
+      bottom: 0;
+    }
+  }
+  &.drag-over-next {
+    //高亮框
+    &.closed {
+      background-color: var(--code-layout-color-background-mask-light);
+    }
+    &.open::after {
+      position: absolute;
+      background-color: var(--code-layout-color-background-mask-light);
+      content: '';
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 50%;
+      z-index: 1;
+    }
+    &.horizontal.open::after {
+      top: 0;
+      left: 50%;
+      bottom: 0;
+      right: unset;
+      height: unset;
+      width: 50%;
+    }
+    //高亮线条
+    &.closed::before {
+      position: absolute;
+      content: '';
+      background-color: var(--code-layout-color-border-light);
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      z-index: 2;
+    } 
+    &.horizontal.closed::before {
+      left: unset;
+      height: unset;
+      width: 1px;
+      top: 0;
+    }
+  }
+  &.drag-enter  {
+    * {
+      pointer-events: none;
+    }
+    > .drag-line {
+      pointer-events: none;
+      display: none;
+    }
   }
 
   //水平状态特殊处理

@@ -6,6 +6,7 @@
       primary ? 'primary' : '',
     ]"
   > 
+    <!-- TAB栏 -->
     <div 
       v-if="group.tabStyle && group.tabStyle != 'none'"
       :class="'tab ' + group.tabStyle"
@@ -17,7 +18,10 @@
           'tab-item',
           group.activePanel === panel ? 'active' : '',
         ]"
-        @click="onTabClick(panel)"
+        :draggable="true"
+        @dragstart="handleDragStart(panel, $event)"
+        @dragend="handleDragEnd"
+        @click="handleTabClick(panel)"
       >
         <span v-if="group.tabStyle == 'text'" class="title">{{ panel.title }}</span>
         <span v-if="group.tabStyle == 'icon'" class="icon">
@@ -29,6 +33,7 @@
       </div>
     </div>
     <div :class="[ 'content', horizontal ? 'horizontal' : 'vertical' ]">
+      <!-- 未有TAB栏情况下多个条目，支持拖拽分割 -->
       <CodeLayoutGroupDraggerHost 
         v-if="group.children.length > 0 && (!group.tabStyle || group.tabStyle === 'none')"
         :group="group"
@@ -38,6 +43,7 @@
           <slot name="panelRender" v-bind="data" />
         </template>
       </CodeLayoutGroupDraggerHost>
+      <!-- 有TAB栏情况下多个条目，支持拖拽分割 -->
       <CodeLayoutGroupDraggerHost 
         v-else-if="group.activePanel && group.activePanel.children.length > 0"
         :group="group.activePanel"
@@ -47,6 +53,7 @@
           <slot name="panelRender" v-bind="data" />
         </template>
       </CodeLayoutGroupDraggerHost>
+      <!-- 有TAB栏情况下单个条目 -->
       <CodeLayoutPanelRender
         v-else-if="group.activePanel"
         :open="true"
@@ -58,6 +65,7 @@
           <slot name="panelRender" v-bind="data" />
         </template>
       </CodeLayoutPanelRender>
+      <!-- 未有TAB栏情况下单个条目 -->
       <CodeLayoutPanelRender
         v-else
         :open="true"
@@ -100,9 +108,22 @@ const props = defineProps({
   },
 });
 
-function onTabClick(panel: CodeLayoutPanelInternal) {
+//标签点击函数
+
+function handleTabClick(panel: CodeLayoutPanelInternal) {
   const parent = props.group;
   parent.activePanel = panel;
+}
+
+//拖放面板处理函数
+
+function handleDragStart(panel: CodeLayoutPanelInternal, ev: DragEvent) {
+  (ev.target as HTMLElement).classList.add("dragging");
+  if (ev.dataTransfer)
+    ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
+}
+function handleDragEnd(ev: DragEvent) {
+  (ev.target as HTMLElement).classList.remove("dragging");
 }
 
 </script>
@@ -123,6 +144,7 @@ function onTabClick(panel: CodeLayoutPanelInternal) {
   //Content area
   > .tab {
     --tab-padding: 10px;
+    --tab-font-size: 12px;
 
     display: flex;
     flex-direction: row;
@@ -131,12 +153,11 @@ function onTabClick(panel: CodeLayoutPanelInternal) {
     padding: 0 var(--tab-padding);
     margin-bottom: 2px;
 
-
     .tab-item {
       position: relative;
       padding: 4px var(--tab-padding);
-      font-size: 13px;
-      line-height: 27px;
+      font-size: var(--tab-font-size);
+      line-height: calc(var(--tab-font-size) * 2);
       color: var(--code-layout-color-text);
       cursor: pointer;
 
@@ -145,10 +166,10 @@ function onTabClick(panel: CodeLayoutPanelInternal) {
         display: inline-block;
         margin-left: 8px;
         padding: 3px 5px;
-        border-radius: 12px;
-        font-size: 12px;
-        min-width: 12px;
-        line-height: 12px;
+        border-radius: var(--tab-font-size);
+        font-size: var(--tab-font-size);
+        min-width: var(--tab-font-size);
+        line-height: var(--tab-font-size);
         font-weight: 400;
         text-align: center;
         background-color: var(--code-layout-color-background-light);
@@ -166,6 +187,10 @@ function onTabClick(panel: CodeLayoutPanelInternal) {
         height: 1px;
         background-color: var(--code-layout-color-text-highlight);
       }
+      &.dragging {
+        background-color: var(--code-layout-color-background);
+        opacity: 0.7;
+      }
     }
   }
 
@@ -174,7 +199,6 @@ function onTabClick(panel: CodeLayoutPanelInternal) {
     position: relative;
     width: 100%;
     height: 100%;
-
 
     &.vertical {
       .code-layout-panel {
