@@ -129,7 +129,7 @@ function panelResizeDraggingHandler(_: CodeLayoutPanelInternal, data: unknown, m
 
   const {
     prevPanelsSize,
-    nextPanelsSize,
+    //nextPanelsSize,
     prevOpenedPanels,
     nextOpenedPanels,
     firstPanelAbsolutePosScreen,
@@ -349,30 +349,34 @@ let lastRelayoutSize = 0;
  * 2. 按顺序依次减小/放大到最小值
  */
 function relayoutAllWithResizedSize(resizedContainerSize: number) {
+  if (!container.value)
+    return;
 
   let allPanelsSize = 0;
   const openedPanels = props.group.children.filter(p => {
     allPanelsSize += p.open ? p.size : layoutConfig.panelHeaderHeight;
     return p.open;
   }).sort((a, b) => a.size > b.size ? 1 : -1);
-  const scaleDown = (resizedContainerSize > 0);
+
+  const resizeLarge = (resizedContainerSize < 0);
+  const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
 
   //放大情况，所有面板大小已大于容器对象，不再向其分配大小
-  if (!scaleDown) {
-    if (!container.value)
-      return;
-    const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+  if (resizeLarge) {
     if (allPanelsSize >= containerSize)
       return;
+    const overflow = allPanelsSize + (-resizedContainerSize) - containerSize;
+    if (overflow > 0)
+      resizedContainerSize -= (-overflow);
   }
 
   //向打开的面板分配大小
   for (let i = 0; i < openedPanels.length; i++) {
     const panel = openedPanels[i];
     resizedContainerSize += adjustAndReturnAdjustedSize(panel, panel.size, -resizedContainerSize);
-    if (scaleDown && resizedContainerSize <= 0)
+    if (!resizeLarge && resizedContainerSize <= 0)
       break;
-    if (!scaleDown && resizedContainerSize >= 0)
+    if (resizeLarge && resizedContainerSize >= 0)
       break;
   }
 }
