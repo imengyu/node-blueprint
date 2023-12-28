@@ -438,6 +438,7 @@ onBeforeUnmount(() => {
 <style lang="scss">
 .code-layout-group-dragger-host {
   position: absolute;
+  display: flex;
   left: 0;
   right: 0;
   bottom: 0;

@@ -6,17 +6,31 @@
       primary ? 'primary' : '',
     ]"
   > 
-    <div v-if="tabStyle != 'none'" class="tab">
-      <div v-for="(panel, key) in group.children" :key="key" class="tab">
-        <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
-        <span v-if="tabStyle == 'icon'" class="icon">
+    <div 
+      v-if="group.tabStyle && group.tabStyle != 'none'"
+      :class="'tab ' + group.tabStyle"
+    >
+      <div 
+        v-for="(panel, key) in group.children"
+        :key="key" 
+        :class="[
+          'tab-item',
+          group.activePanel === panel ? 'active' : '',
+        ]"
+        @click="onTabClick(panel)"
+      >
+        <span v-if="group.tabStyle == 'text'" class="title">{{ panel.title }}</span>
+        <span v-if="group.tabStyle == 'icon'" class="icon">
           <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
+        </span>
+        <span v-if="panel.badge" class="badge">
+          <CodeLayoutVNodeStringRender :content="panel.badge" />
         </span>
       </div>
     </div>
     <div :class="[ 'content', horizontal ? 'horizontal' : 'vertical' ]">
       <CodeLayoutGroupDraggerHost 
-        v-if="group.children.length > 0"
+        v-if="group.children.length > 0 && (!group.tabStyle || group.tabStyle === 'none')"
         :group="group"
         :horizontal="horizontal"
       >
@@ -24,6 +38,26 @@
           <slot name="panelRender" v-bind="data" />
         </template>
       </CodeLayoutGroupDraggerHost>
+      <CodeLayoutGroupDraggerHost 
+        v-else-if="group.activePanel && group.activePanel.children.length > 0"
+        :group="group.activePanel"
+        :horizontal="horizontal"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+      </CodeLayoutGroupDraggerHost>
+      <CodeLayoutPanelRender
+        v-else-if="group.activePanel"
+        :open="true"
+        :panel="group.activePanel"
+        :alone="true"
+        :horizontal="horizontal"
+      >
+        <template #default="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+      </CodeLayoutPanelRender>
       <CodeLayoutPanelRender
         v-else
         :open="true"
@@ -46,7 +80,7 @@ import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutGroupDraggerHost from './CodeLayoutGroupDraggerHost.vue';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 
-defineProps({
+const props = defineProps({
   group: {
     type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
@@ -60,24 +94,16 @@ defineProps({
     type: Boolean,
     default: true,
   },
-  /**
-   * Set group tab style
-   * * none: no tab, use in primary side area
-   * * text: tab header only show text
-   * * icon: tab header only show icon
-   * 
-   * Default: 'none'
-   */
-  tabStyle: {
-    type: String as PropType<'none'|'text'|'icon'>,
-    default: 'none',
-  },
-
   primary: {
     type: Boolean,
     default: false,
   },
 });
+
+function onTabClick(panel: CodeLayoutPanelInternal) {
+  const parent = props.group;
+  parent.activePanel = panel;
+}
 
 </script>
 
@@ -88,15 +114,62 @@ defineProps({
   position: relative;
   width: 100%;
   height: 100%;
-  //overflow: hidden;
+  overflow: hidden;
 
   &.primary {
     background-color: var(--code-layout-color-background-second);
   }
 
+  //Content area
   > .tab {
+    --tab-padding: 10px;
 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 0 var(--tab-padding);
+    margin-bottom: 2px;
+
+
+    .tab-item {
+      position: relative;
+      padding: 4px var(--tab-padding);
+      font-size: 13px;
+      line-height: 27px;
+      color: var(--code-layout-color-text);
+      cursor: pointer;
+
+      .badge {
+        position: relative;
+        display: inline-block;
+        margin-left: 8px;
+        padding: 3px 5px;
+        border-radius: 12px;
+        font-size: 12px;
+        min-width: 12px;
+        line-height: 12px;
+        font-weight: 400;
+        text-align: center;
+        background-color: var(--code-layout-color-background-light);
+      }
+
+      &:hover, &:active, &.active {
+        color: var(--code-layout-color-text-highlight);
+      }
+      &.active::after {
+        position: absolute;
+        content: '';
+        left: var(--tab-padding);
+        right: var(--tab-padding);
+        bottom: 0px;
+        height: 1px;
+        background-color: var(--code-layout-color-text-highlight);
+      }
+    }
   }
+
+  //Content area
   > .content {
     position: relative;
     width: 100%;
@@ -106,12 +179,17 @@ defineProps({
     &.vertical {
       .code-layout-panel {
         width: 100%;
-        background-color: rgb(133, 0, 0);
+      }
+      .code-layout-group-dragger-host {
+        flex-direction: column;
       }
     }
     &.horizontal {
       .code-layout-panel {
         height: 100%;
+      }
+      .code-layout-group-dragger-host {
+        flex-direction: row;
       }
     }
   }

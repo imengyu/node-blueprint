@@ -7,10 +7,14 @@ export default defineComponent({
       type: null,
       required: true,
     },
+    class: {
+      type: String,
+      default: '',
+    }
   },
   render() {
     if (typeof this.content === 'string')
-      return [ h('span', this.content) ];
+      return [ h('span', { class: this.class }, this.content) ];
     if (typeof this.content === 'function')
       return [ this.content() ];
     return [];

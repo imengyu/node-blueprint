@@ -2,7 +2,7 @@
   <div 
     :class="[
       'code-layout-panel',
-      open ? 'open' : '',
+      open ? 'open' : 'closed',
       selected ? 'selected' : '',
       dragResizeable ? 'resizeable' : '',
       resizeDraggingSelf ? 'resizing-self' : '',
@@ -10,7 +10,8 @@
       horizontal ? 'horizontal' : '',
     ]"
     :style="{
-      height: panelHeight ? `${panelHeight}px` : undefined,
+      width: horizontal && panelHeight ? `${panelHeight}px` : undefined,
+      height: !horizontal && panelHeight ? `${panelHeight}px` : undefined,
     }"
     tabindex="0"
   > 
@@ -31,9 +32,10 @@
       @dragend="handleDragEnd"
       @click="$emit('update:open', !open)"
     >
-      <div>
+      <div class="collapse-title">
         <IconArrow class="arrow" />
         <CodeLayoutVNodeStringRender :content="panel.title" />
+        <CodeLayoutVNodeStringRender v-if="horizontal && !open" :content="panel.iconSmall" />
       </div>
       <CodeLayoutActionsRender class="actions" :actions="panel.actions" />
     </div>
@@ -163,8 +165,9 @@ const resizeDragHandler = createMouseDragHandler({
 
 .code-layout-panel {
   position: relative;
-  transition: all ease-in-out 0.2s;
+  transition: all ease-in-out 0.15s;
 
+  //状态控制
   &.open {
     > .collapse {
       border-bottom-color: transparent;
@@ -198,7 +201,6 @@ const resizeDragHandler = createMouseDragHandler({
       cursor: ew-resize;
     }
   }
-
   &:hover {
     > .collapse .actions {
       visibility: visible;
@@ -208,16 +210,54 @@ const resizeDragHandler = createMouseDragHandler({
     border-top: none;
   }
 
+  //水平状态特殊处理
   &.horizontal {
     > .drag-line {
       cursor: ew-resize;
-      top: unset;
+      top: 0;
       left: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+      right: unset;
+      bottom: 0;
       width: var(--code-layout-color-border-size-dragger);
       height: unset;
     }
+
+    &:not(:first-child) {
+      border-left: 1px solid var(--code-layout-color-border);
+    }
+
+    .collapse {
+      border-top: none;
+      background-color: var(--code-layout-color-background-light);
+    }
+
+    &.closed {
+      .collapse {
+        height: 100%;
+        width: var(--code-layout-header-height);
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 6px 0;
+
+        .actions {
+          display: none;
+        }
+        .arrow {
+          margin-bottom: 5px;
+        }
+      }
+      .collapse-title {
+        flex-direction: column;
+        justify-content: flex-start;
+        
+        span {
+          display: none;
+        }
+      }
+    }
   }
 
+  //拖拽线条
   > .drag-line {
     position: absolute;
     left: 0;
@@ -233,13 +273,14 @@ const resizeDragHandler = createMouseDragHandler({
     }
   }
 
+  //面板折叠头部
   > .collapse {
     position: relative;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    height: 22px;
+    height: var(--code-layout-header-height);
     color: var(--code-layout-color-text);
     padding: 0 5px;
     border: 1px solid transparent;
@@ -278,6 +319,7 @@ const resizeDragHandler = createMouseDragHandler({
       opacity: 0.8;
     }
   }
+  //内容区
   > .content {
     position: relative;
     overflow: hidden;

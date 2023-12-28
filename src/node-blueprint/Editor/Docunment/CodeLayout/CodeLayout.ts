@@ -45,6 +45,15 @@ export interface CodeLayoutPanel {
   badge?: string|(() => VNode)|undefined,
   accept?: CodeLayoutGrid[],
   accsizeept?: CodeLayoutGrid[],
+  /**
+   * Set group tab style
+   * * none: no tab, use in primary side area
+   * * text: tab header only show text
+   * * icon: tab header only show icon
+   * 
+   * Default: 'none'
+   */
+  tabStyle?: 'none'|'text'|'icon',
   size?: number|undefined,
   minSize?: number|undefined,
   startOpen?: boolean|undefined,

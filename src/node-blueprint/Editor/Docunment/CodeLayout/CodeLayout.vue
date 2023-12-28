@@ -39,7 +39,7 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot name="emptyGroup" group="primarySideBar">
+      <slot v-else name="emptyGroup" group="primarySideBar">
         <div class="code-layout-empty">{{ emptyText }}</div>
       </slot>
     </template>
@@ -56,7 +56,7 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot name="emptyGroup" group="secondarySideBar">
+      <slot v-else name="emptyGroup" group="secondarySideBar">
         <div class="code-layout-empty">{{ emptyText }}</div>
       </slot>
     </template>
@@ -73,7 +73,7 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot name="emptyGroup" group="bottomPanel">
+      <slot v-else name="emptyGroup" group="bottomPanel">
         <div class="code-layout-empty">{{ emptyText }}</div>
       </slot>
     </template>
@@ -262,7 +262,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
 
   const groupResult : CodeLayoutPanelInternal = { 
     ...panel,
-    open: false,
+    open: panel.startOpen ?? false,
     resizeable: false,
     size: panel.size ?? 0,
     children: [],
