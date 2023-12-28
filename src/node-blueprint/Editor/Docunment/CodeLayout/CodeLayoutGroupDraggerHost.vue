@@ -145,13 +145,14 @@ function panelResizeDraggingHandler(_: CodeLayoutPanelInternal, data: unknown, m
   let movedSize = newPrevPanelsSize - prevPanelsSize; 
   if (movedSize === 0) 
     return;
+  const moveDown = movedSize > 0;
 
   const resizeDown = (overflow: number) => {
     let needResizeSize = movedSize - overflow;
     for (let i = 0; i < nextOpenedPanels.length; i++) {
       const p = nextOpenedPanels[i];
       needResizeSize += adjustAndReturnAdjustedSize(p.panel, p.size, -needResizeSize);
-      if (needResizeSize <= 0)
+      if (moveDown ? needResizeSize <= 0 : needResizeSize >= 0)
         break;
     }
     return needResizeSize;
@@ -161,13 +162,13 @@ function panelResizeDraggingHandler(_: CodeLayoutPanelInternal, data: unknown, m
     for (let i = 0; i < prevOpenedPanels.length; i++) {
       const p = prevOpenedPanels[i];
       needResizeSize -= adjustAndReturnAdjustedSize(p.panel, p.size, needResizeSize);
-      if (needResizeSize <= 0)
+      if (moveDown ? needResizeSize <= 0 : needResizeSize >= 0)
         break;
     }
     return needResizeSize;
   }
 
-  if (movedSize > 0) {
+  if (moveDown) {
     //向下，下方减少大小，上方增加大小
     const overflow = resizeDown(0);
     resizeUp(overflow);
