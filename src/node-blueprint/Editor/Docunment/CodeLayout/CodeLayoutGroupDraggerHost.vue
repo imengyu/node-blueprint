@@ -49,39 +49,39 @@ const props = defineProps({
   },
 });
 
-interface PanelResizeDragData {
-  startToPrevPanelSize: number,
-  prevPanelToSelfSize: number,
-  contanterSizePx: number,
-  index: number,
-  baseLeft: number,
-  startSizePx: number,
-  spaceSize: number,
-  headerSizePx: number,
-  panelSizes: number[],
-  selfSize: number,
-  prevPanelAndSelfSize: number,
-  prevPanel: CodeLayoutPanelInternal,
-}
 
 function getPanelMinSize(minSize: number|undefined) {
   if (!minSize)
     return layoutConfig.panelMinHeight;
   return minSize;
 }
-
-
-function panelAdjustAndReturnAdjustedSize(panel: CodeLayoutPanelInternal, newSize: number) {
-  const oldSize = panel.size;
-  panel.size = newSize;
-  return newSize - oldSize;
+function adjustAndReturnAdjustedSize(panel: CodeLayoutPanelInternal, intitalSize: number, increaseSize: number) {
+  const targetSize = intitalSize + increaseSize;
+  panel.size = Math.max(getPanelMinSize(panel.minSize), targetSize);
+  return panel.size - intitalSize;
 }
-function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: number) {
+
+
+interface PanelResizePanelData {
+  panel: CodeLayoutPanelInternal, 
+  size: number;
+}
+interface PanelResizeDragData {
+  prevPanelsSize: number; 
+  nextPanelsSize: number; 
+  nextOpenedPanels: PanelResizePanelData[];
+  prevOpenedPanels: PanelResizePanelData[]; 
+  firstPanelAbsolutePosScreen: number;
+}
+
+//拖拽处理函数: 拖拽开始
+function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal) {
 
   /**
    * 鼠标按下，做如下操作
-   * 1. 获取当前面板上方
-   * 
+   * 1. 获取第一个面板的顶部坐标（相对于屏幕），用于计算鼠标移动大小
+   * 2. 获取当前拖拽线上方与下方打开的面板列表
+   * 3. 获取当前拖拽线上/下方所有的面板列表大小
    */
 
   if (!container.value)
@@ -90,16 +90,96 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal, mousePx: nu
   const index = groupArray.indexOf(panel);
   if (index < 1)
     return false;
+  const headerSize = layoutConfig.panelHeaderHeight;
+  
+  const firstPanelAbsolutePosScreen = (props.horizontal ? 
+    (HtmlUtils.getLeft(container.value) - container.value.scrollLeft) : 
+    (HtmlUtils.getTop(container.value) - container.value.scrollTop)
+  );
 
-  const contanterSizePx = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
- 
+  let prevPanelsSize = 0;
+  let nextPanelsSize = 0;
+
+  const prevOpenedPanels = [] as PanelResizePanelData[];
+  const nextOpenedPanels = [] as PanelResizePanelData[];
+
+  for (let i = index - 1; i >= 0; i--) {
+    const p = groupArray[i];
+    prevPanelsSize += p.open ? p.size : headerSize;
+    if (p.open)
+      prevOpenedPanels.push({ panel: p, size: p.size });
+  }
+  for (let i = index; i < groupArray.length; i++) {
+    const p = groupArray[i];
+    nextPanelsSize += p.open ? p.size : headerSize;
+    if (p.open)
+      nextOpenedPanels.push({ panel: p, size: p.size });
+  }
+
   return {
-
+    prevPanelsSize,
+    nextPanelsSize,
+    prevOpenedPanels,
+    nextOpenedPanels,
+    firstPanelAbsolutePosScreen,
   } as PanelResizeDragData
 }
-function panelResizeDraggingHandler(panel: CodeLayoutPanelInternal, data: unknown, mousePx: number) {
+//拖拽处理函数: 拖拽中
+function panelResizeDraggingHandler(_: CodeLayoutPanelInternal, data: unknown, mousePx: number) {
+
+  const {
+    prevPanelsSize,
+    nextPanelsSize,
+    prevOpenedPanels,
+    nextOpenedPanels,
+    firstPanelAbsolutePosScreen,
+  } = data as PanelResizeDragData 
+
+  /**
+   * 拖拽步骤：
+   * 1. 通过鼠标坐标算出当前向上/下，以及移了多少
+   * 2. 向上/下数组按顺序分配移动的距离
+   */
+
+  const newPrevPanelsSize = mousePx - firstPanelAbsolutePosScreen;
+  let movedSize = newPrevPanelsSize - prevPanelsSize; 
+  if (movedSize === 0) 
+    return;
+
+  const resizeDown = (overflow: number) => {
+    let needResizeSize = movedSize - overflow;
+    for (let i = 0; i < nextOpenedPanels.length; i++) {
+      const p = nextOpenedPanels[i];
+      needResizeSize += adjustAndReturnAdjustedSize(p.panel, p.size, -needResizeSize);
+      if (needResizeSize <= 0)
+        break;
+    }
+    return needResizeSize;
+  }
+  const resizeUp = (overflow: number) => {
+    let needResizeSize = movedSize - overflow;
+    for (let i = 0; i < prevOpenedPanels.length; i++) {
+      const p = prevOpenedPanels[i];
+      needResizeSize -= adjustAndReturnAdjustedSize(p.panel, p.size, needResizeSize);
+      if (needResizeSize <= 0)
+        break;
+    }
+    return needResizeSize;
+  }
+
+  if (movedSize > 0) {
+    //向下，下方减少大小，上方增加大小
+    const overflow = resizeDown(0);
+    resizeUp(overflow);
+  } else {
+    //向上
+    const overflow = resizeUp(0);
+    resizeDown(overflow);
+  }
 
 }
+
+//面板打开和关闭时重新布局
 function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
   if (!container.value)
     return;
@@ -235,23 +315,25 @@ function initAllPanelSizes() {
     return;
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
   const headerSize = layoutConfig.panelHeaderHeight;
-  let allSize = containerSize, notAllocSpaceAndOpenCount = 0;
+  
+  let canAllocSize = containerSize, notAllocSpaceAndOpenCount = 0;
 
   props.group.children.forEach((panel) => {
-    if (panel.open && panel.size === 0) 
-      notAllocSpaceAndOpenCount++;
+    if (panel.open && panel.size > 0)
+      canAllocSize -= panel.size;
+    else if (panel.open)
+      notAllocSpaceAndOpenCount ++
+    else
+      canAllocSize -= headerSize;
   });
 
-  const allocSize = allSize / notAllocSpaceAndOpenCount;
+  const allocSize = canAllocSize / notAllocSpaceAndOpenCount;
 
   props.group.children.forEach((panel) => {
-    if (panel.open) {
-      if (panel.size > 0)
-        allSize -= panel.size;
-      else
-        panel.size = Math.max(allocSize, getPanelMinSize(panel.minSize));
-    } else
-      allSize -= headerSize;
+    if (panel.size === 0)
+      panel.size = panel.open ? 
+        Math.max(allocSize, getPanelMinSize(panel.minSize)) : 
+        getPanelMinSize(panel.minSize);
   });
 
   flushDraggable();
@@ -259,6 +341,40 @@ function initAllPanelSizes() {
 
 let lastRelayoutSize = 0;
 
+/**
+ * 当容器大小或者容器添加/删除时，重新布局已存在面板
+ * 0. 计算容器大小变化了多少，是缩小还是放大
+ * 1. 获取打开的面板列表，按他们的的大小降序排列
+ * 2. 按顺序依次减小/放大到最小值
+ */
+function relayoutAllWithResizedSize(resizedContainerSize: number) {
+
+  let allPanelsSize = 0;
+  const openedPanels = props.group.children.filter(p => {
+    allPanelsSize += p.open ? p.size : layoutConfig.panelHeaderHeight;
+    return p.open;
+  }).sort((a, b) => a.size > b.size ? 1 : -1);
+  const scaleDown = (resizedContainerSize > 0);
+
+  //放大情况，所有面板大小已大于容器对象，不再向其分配大小
+  if (!scaleDown) {
+    if (!container.value)
+      return;
+    const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+    if (allPanelsSize >= containerSize)
+      return;
+  }
+
+  //向打开的面板分配大小
+  for (let i = 0; i < openedPanels.length; i++) {
+    const panel = openedPanels[i];
+    resizedContainerSize += adjustAndReturnAdjustedSize(panel, panel.size, -resizedContainerSize);
+    if (scaleDown && resizedContainerSize <= 0)
+      break;
+    if (!scaleDown && resizedContainerSize >= 0)
+      break;
+  }
+}
 //当容器的大小更改后，重新布局
 function relayoutAllWhenSizeChange() {
   if (!container.value)
@@ -270,36 +386,12 @@ function relayoutAllWhenSizeChange() {
     return;
   }
 
-  /**
-   * 0. 计算容器大小变化了多少，是缩小还是放大
-   * 1. 获取打开的面板列表，按他们的的大小降序排列
-   * 2. 按顺序依次减小/放大到最小值
-   */
-
   let resizedContainerSize = lastRelayoutSize - containerSize; 
   if (resizedContainerSize === 0)
     return;
 
-  const openedPanels = props.group.children.filter(p => p.open).sort((a, b) => a.size > b.size ? 1 : -1);
-
-  if (resizedContainerSize > 0) {
-    //缩小
-    openedPanels.forEach((panel) => 
-      resizedContainerSize -= panelAdjustAndReturnAdjustedSize(
-        panel, 
-        Math.max(getPanelMinSize(panel.minSize), panel.size - resizedContainerSize)
-      )
-    );
-  } else {
-    //放大
-    openedPanels.forEach((panel) => 
-      resizedContainerSize += panelAdjustAndReturnAdjustedSize(
-        panel, 
-        Math.max(getPanelMinSize(panel.minSize), panel.size - resizedContainerSize)
-      )
-    );
-  }
-
+  relayoutAllWithResizedSize(resizedContainerSize);
+  
   lastRelayoutSize = containerSize;
 }
 

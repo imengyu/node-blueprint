@@ -81,7 +81,6 @@ onMounted(() => {
       title: 'Panel2',
       tooltip: 'Panel2',
       name: 'group1.panel2',
-      startOpen: true,
       iconSmall: () => h(IconSearch),
       actions: [
         { 
