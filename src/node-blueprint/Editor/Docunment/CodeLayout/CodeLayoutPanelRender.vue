@@ -129,7 +129,6 @@ watch(() => props.open, (v) => {
 const dragEnterState = ref(false);
 const dragOverState = ref<''|'drag-over-prev'|'drag-over-next'>('');
 let currentDropBaseScreenPos = 0;
-let currentDragEnterEle : any = null;
 
 function handleDragStart(ev: DragEvent) {
   (ev.target as HTMLElement).classList.add("dragging");
@@ -140,30 +139,36 @@ function handleDragStart(ev: DragEvent) {
 function handleDragEnd(ev: DragEvent) {
   (ev.target as HTMLElement).classList.remove("dragging");
 }
-function handleDragOver(event: DragEvent) {
-  event.preventDefault();
-  const pos = (props.horizontal ? event.x : event.y) - currentDropBaseScreenPos;
+function handleDragOver(e: DragEvent) {
+  e.preventDefault();
+
+  const pos = (props.horizontal ? e.x : e.y) - currentDropBaseScreenPos;
   dragOverState.value = (pos > (props.horizontal ? 
     element.value!.offsetWidth : 
     element.value!.offsetHeight) / 2
   ) ? 'drag-over-next' : 'drag-over-prev';
 }
 function handleDragEnter(e: DragEvent) {
-  console.log('handleDragEnter', props.panel.name);
+  e.preventDefault();
+  e.stopPropagation();
   
   currentDropBaseScreenPos = props.horizontal ? 
       HtmlUtils.getLeft(element.value!) : 
       HtmlUtils.getTop(element.value!);
   dragEnterState.value = true;
-  currentDragEnterEle = e.target;
 }
 function handleDragLeave(e: DragEvent) {
-  console.log('handleDragLeave', props.panel.name);
+  e.preventDefault();
+  e.stopPropagation();
 
-  if(currentDragEnterEle === e.target){ 
-    dragEnterState.value = false;
-    dragOverState.value = '';
-    e.preventDefault();
+  let node = e.target;
+  while(node) {
+    if (node === element.value) {
+      dragEnterState.value = false;
+      dragOverState.value = '';
+      return;
+    }
+    node = (node as HTMLElement).parentNode;
   }
 }
 function handleDrop(event: DragEvent) {
