@@ -39,9 +39,9 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot v-else name="emptyGroup" group="primarySideBar">
-        <div class="code-layout-empty">{{ emptyText }}</div>
-      </slot>
+      <CodeLayoutEmpty v-else grid="primarySideBar">
+        <slot name="emptyGroup" group="primarySideBar">{{ emptyText }}</slot>
+      </CodeLayoutEmpty>
     </template>
     <template #secondarySideBar>
       <template v-if="panels.secondary.length > 0">
@@ -56,9 +56,9 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot v-else name="emptyGroup" group="secondarySideBar">
-        <div class="code-layout-empty">{{ emptyText }}</div>
-      </slot>
+      <CodeLayoutEmpty v-else grid="secondarySideBar">
+        <slot name="emptyGroup" group="secondarySideBar">{{ emptyText }}</slot>
+      </CodeLayoutEmpty>
     </template>
     <template #bottomPanel>
       <template v-if="panels.bottom.length > 0">
@@ -73,9 +73,9 @@
           </template>
         </CodeLayoutGroupRender>
       </template>
-      <slot v-else name="emptyGroup" group="bottomPanel">
-        <div class="code-layout-empty">{{ emptyText }}</div>
-      </slot>
+      <CodeLayoutEmpty v-else grid="bottomPanel">
+        <slot name="emptyGroup" group="bottomPanel">{{ emptyText }}</slot>
+      </CodeLayoutEmpty>
     </template>
     <template #centerArea>
       <h1>center area</h1>
@@ -92,6 +92,7 @@ import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutGrid, CodeLayoutGro
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
+import CodeLayoutEmpty from './CodeLayoutEmpty.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 
 const panels = ref<{
@@ -147,18 +148,9 @@ const props = defineProps({
   },
 });
 
-const groupInstances = [] as CodeLayoutGroupInstance[];
+const groupInstances = new Map<string, CodeLayoutGroupInstance>();
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 
-const codeLayoutContext : CodeLayoutContext = {
-  addGroup(instance) {
-    groupInstances.push(instance);
-  },
-  removeGroup(instance) {
-    ArrayUtils.remove(groupInstances, instance);
-  },
-
-};
 const codeLayoutInstance : CodeLayoutInstance = {
   activeGroup,
   closePanel,
@@ -169,8 +161,113 @@ const codeLayoutInstance : CodeLayoutInstance = {
   addPanel,
   removePanel,
   relayoutAll,
+  relayoutGroup,
   getPanelByName,
 };
+const codeLayoutContext : CodeLayoutContext = {
+  addGroup(instance) {
+    groupInstances.set(instance.name, instance);
+  },
+  removeGroup(instance) {
+    groupInstances.delete(instance.name);
+  },
+  dragDropToGrid(grid, panel) {
+    /*
+    拖放至基础网格根节点
+    0. 如果目标网格已存在当前面板，则无需再处理
+    1. 从旧的父级移除面板，刷新旧父级
+    2. 向目标网格添加面板
+    */
+
+    const arr = getPanelArray(grid);
+    if (arr.includes(panel))
+      return;
+
+    const parent = panel.parentGroup;
+    if (parent) {
+      ArrayUtils.remove(parent.children, panel);
+      panel.parentGroup = null;
+      relayoutGroup(parent.name);
+    }
+
+    arr.push(panel);
+    panel.parentGrid = grid;
+  },
+  dragDropToGroup(group, panel) {
+    this.dragDropToPanelNear(group, 'drag-over-next', panel);
+  },
+  dragDropToPanelNear(reference, referencePosition, panel) {
+    if (reference === panel)
+      throw new Error("Reference panel can not be same with dropping panel!");
+
+    //拖放至面板参考位置
+    const parentGroup = reference.parentGroup;
+      
+    //顶级面板，并且未指定方向，等同于直接插入面板到顶级
+    if (!parentGroup && referencePosition === '') {
+      this.dragDropToGrid(reference.parentGrid, panel);
+      return;
+    }
+
+    //顶级面板, 有方向，这意味着需要分割当前面板并且插入
+    if (!parentGroup) {
+      
+
+    }
+    //非顶级面板, 直接插入即可
+    else {
+
+      //仅面板不在当前子级时才从旧面板删除，否则是暂时移开不触发布局
+      if (!parentGroup.children.includes(panel)) {
+        removePanelInternal(panel);
+      } else {
+        ArrayUtils.remove(parentGroup.children, panel);
+      }
+
+      //插入至指定位置并且重新布局
+      const insetIndex = parentGroup.children.indexOf(reference);
+      switch (referencePosition) {
+        case 'drag-over-prev':
+          ArrayUtils.insert(parentGroup.children, insetIndex, panel);
+          break;
+        case 'drag-over-next':
+          ArrayUtils.insert(parentGroup.children, insetIndex + 1, panel);
+          break;
+      }
+
+      panel.parentGroup = parentGroup;
+      panel.parentGrid = parentGroup.parentGrid;
+      relayoutGroup(parentGroup.name);
+    }
+      
+  },
+  instance: codeLayoutInstance,
+};
+
+//移除面板后进行布局
+function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal) {
+  if (!group.parentGroup && group.children.length <= 1 && !group.noAutoShink) {
+    //当前面板是顶级并且数量少于1个，删除子级，自己变成子级
+    group
+  } else {
+    //当前面板不是顶级，或者数量多余1，只需要直接布局
+    relayoutGroup(group.name);
+  }
+}
+//移除面板
+function removePanelInternal(panel: CodeLayoutPanelInternal) {
+
+  if (!panel.parentGroup)
+    throw new Error(`Panel ${panel.name} already removed from any group !`);
+
+  ArrayUtils.remove(panel.parentGroup.children, panel);
+
+  //删除面板后将会进行布局
+  relayoutAfterRemovePanel(panel.parentGroup);
+
+  panel.parentGrid = 'none';
+  panel.parentGroup = null;
+}
 
 provide('layoutConfig', props.layoutConfig);
 provide('codeLayoutContext', codeLayoutContext);
@@ -342,20 +439,15 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
 }
 function removePanel(panel: CodeLayoutPanel) {
   const panelInternal = panel as CodeLayoutPanelInternal;
-
-  if (!panelInternal.parentGroup)
-    throw new Error(`Panel ${panel.name} already removed from any group !`);
-
-  ArrayUtils.remove(panelInternal.parentGroup.children, panelInternal);
-
-  panelInternal.parentGrid = 'none';
-  panelInternal.parentGroup = null;
-
+  removePanelInternal(panelInternal);
   panelInstances.delete(panelInternal.name);
   return panel;
 }
 function relayoutAll() {
   groupInstances.forEach(p => p.notifyRelayout());
+}
+function relayoutGroup(name: string) {
+  groupInstances.get(name)?.notifyRelayout();
 }
 
 defineExpose(codeLayoutInstance);
@@ -366,3 +458,117 @@ onBeforeUnmount(() => {
 });
 
 </script>
+
+<style lang="scss">
+:root {
+  --code-layout-color-background: #1e1e1e;
+  --code-layout-color-background-second: #252526;
+  --code-layout-color-background-light: #333333;
+  --code-layout-color-background-hover: #363737;
+  --code-layout-color-background-mask-light: rgba(255,255,255,0.2);
+  --code-layout-color-highlight: #0078d4;
+  --code-layout-color-text: #ccc;
+  --code-layout-color-text-highlight: #fff;
+  --code-layout-color-text-gray: #818181;
+  --code-layout-color-border: #474747;
+  --code-layout-color-border-light: #cccccc;
+  --code-layout-color-border-background: #2a2a2a;
+  --code-layout-color-border-white: #fff;
+  --code-layout-border-size: 1px;
+  --code-layout-border-size-larger: 2px;
+  --code-layout-border-size-dragger: 4px;
+  --code-layout-border-radius-small: 5px;
+  --code-layout-border-radius-large: 5px;
+  --code-layout-header-height: 22px;
+}
+
+.code-layout-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  color: var(--code-layout-color-text);
+  background-color: var(--code-layout-color-background);
+
+  > .code-layout-activity {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex: 1;
+
+    .code-layout-activity-bar {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--code-layout-color-background-light);
+      width: 45px;
+
+      .item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 45px;
+        height: 45px;
+        color: var(--code-layout-color-text-gray);
+        cursor: pointer;
+
+        svg {
+          fill: var(--code-layout-color-text-gray);
+        }
+
+        &.active, &:hover {
+          color: var(--code-layout-color-text-highlight);
+
+          svg {
+            fill: var(--code-layout-color-text-highlight);
+          }
+        }
+
+        &.active {
+
+          &::after {
+            content: '';
+            position: absolute;
+            display: block;
+            width: 2px;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            background-color: var(--code-layout-color-text-highlight);
+          }
+        }
+
+        &.drag-over-prev, &.drag-over-next {
+          &::before {
+            position: absolute;
+            content: '';
+            left: 0;
+            right: 0;
+            height: var(--code-layout-border-size-larger);
+            background-color: var(--code-layout-color-border-light);
+          }
+        }
+        &.drag-over-prev {
+          &::before {
+            top: calc(var(--code-layout-border-size-larger) / 2 * -1);
+          }
+        }
+        &.drag-over-next {
+          &::before {
+            bottom: calc(var(--code-layout-border-size-larger) / 2 * -1);
+          }
+        }
+      }
+    }
+  }
+  > .code-layout-status {
+    flex-grow: 0;
+    background-color: var(--code-layout-color-highlight);
+  }
+}
+</style>

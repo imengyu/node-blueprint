@@ -56,6 +56,7 @@ onMounted(() => {
       tooltip: 'Group1',
       name: 'group1',
       tabStyle: 'single',
+      badge: '2',
       iconLarge: () => h(IconFile),
     }, 'primarySideBar');
     codeLayout.value.addGroup({
@@ -73,6 +74,17 @@ onMounted(() => {
       tabStyle: 'text',
       iconLarge: () => h(IconFile),
     }, 'bottomPanel');
+
+    for (let i = 4; i < 8; i++) {
+      
+      codeLayout.value.addGroup({
+        title: 'Group' + i,
+        tooltip: 'Group' + i,
+        name: 'group1' + i,
+        tabStyle: 'single',
+        iconLarge: () => h(IconSearch),
+      }, 'primarySideBar');
+    }
 
     codeLayout.value.addPanel({
       title: 'Panel1',

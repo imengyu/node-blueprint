@@ -35,7 +35,7 @@
     <div 
       v-if="!alone" class="collapse"
       :draggable="!resizeDragging"
-      @dragstart="handleDragStart"
+      @dragstart="handleDragStart(panel, $event)"
       @dragend="handleDragEnd"
       @click="$emit('update:open', !open)"
     >
@@ -53,20 +53,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, watch } from 'vue';
-import type { CodeLayoutPanelInternal } from './CodeLayout';
+import { ref, computed, type PropType, watch, inject, toRefs } from 'vue';
+import type { CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
+import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
 const emit = defineEmits([ 
   'update:open', 'update:resizeDragging',
   'toggleHandler',
 ])
-
-const element = ref<HTMLElement>();
 
 const props = defineProps({
   panel: {
@@ -120,65 +118,41 @@ const panelHeight = computed(() => {
   return props.panel.size;
 });
 
+const { horizontal, panel } = toRefs(props);
+const element = ref<HTMLElement>();
+const context = inject('codeLayoutContext') as CodeLayoutContext;
+
 watch(() => props.open, (v) => {
   emit('toggleHandler', props.panel, v);
 });
 
 //拖放面板处理函数
 
-const dragEnterState = ref(false);
-const dragOverState = ref<''|'drag-over-prev'|'drag-over-next'>('');
-let currentDropBaseScreenPos = 0;
+const {
+  handleDragStart,
+  handleDragEnd,
+} = usePanelDragger();
 
-function handleDragStart(ev: DragEvent) {
-  (ev.target as HTMLElement).classList.add("dragging");
+const {
+  dragEnterState,
+  dragOverState,
+  handleDragOver,
+  handleDragEnter,
+  handleDragLeave,
+  resetDragOverState,
+} = usePanelDragOverDetector(
+  element, panel, horizontal, context, 
+  () => {},
+  (dragPanel) => checkDropPanelDefault(dragPanel, panel.value, dragOverState)
+);
 
-  if (ev.dataTransfer) 
-    ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${props.panel.name}`);
-}
-function handleDragEnd(ev: DragEvent) {
-  (ev.target as HTMLElement).classList.remove("dragging");
-}
-function handleDragOver(e: DragEvent) {
-  e.preventDefault();
 
-  const pos = (props.horizontal ? e.x : e.y) - currentDropBaseScreenPos;
-  dragOverState.value = (pos > (props.horizontal ? 
-    element.value!.offsetWidth : 
-    element.value!.offsetHeight) / 2
-  ) ? 'drag-over-next' : 'drag-over-prev';
+function handleDrop(e: DragEvent) {
+  const dropPanel = getDropPanel(e, context);
+  if (dropPanel && dragOverState.value)
+    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel);
+  resetDragOverState();
 }
-function handleDragEnter(e: DragEvent) {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  currentDropBaseScreenPos = props.horizontal ? 
-      HtmlUtils.getLeft(element.value!) : 
-      HtmlUtils.getTop(element.value!);
-  dragEnterState.value = true;
-}
-function handleDragLeave(e: DragEvent) {
-  e.preventDefault();
-  e.stopPropagation();
-
-  let node = e.target;
-  while(node) {
-    if (node === element.value) {
-      dragEnterState.value = false;
-      dragOverState.value = '';
-      return;
-    }
-    node = (node as HTMLElement).parentNode;
-  }
-}
-function handleDrop(event: DragEvent) {
-  dragEnterState.value = false;
-  dragOverState.value = '';
-  const data = event.dataTransfer?.getData('text/plain');
-  if (data && data.startsWith('CodeLayoutPanel:')) {
-  }
-}
-
 
 //拖拽调整大小
 
@@ -219,7 +193,6 @@ const resizeDragHandler = createMouseDragHandler({
 </script>
 
 <style lang="scss">
-@import "./Scss/Root.scss";
 
 .code-layout-panel {
   position: relative;
@@ -372,10 +345,10 @@ const resizeDragHandler = createMouseDragHandler({
     > .drag-line {
       cursor: ew-resize;
       top: 0;
-      left: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
+      left: calc(var(--code-layout-border-size-dragger) / 2 * -1);
       right: unset;
       bottom: 0;
-      width: var(--code-layout-color-border-size-dragger);
+      width: var(--code-layout-border-size-dragger);
       height: unset;
     }
 
@@ -419,8 +392,8 @@ const resizeDragHandler = createMouseDragHandler({
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(var(--code-layout-color-border-size-dragger) / 2 * -1);
-    height: var(--code-layout-color-border-size-dragger);
+    top: calc(var(--code-layout-border-size-dragger) / 2 * -1);
+    height: var(--code-layout-border-size-dragger);
     transition: background-color ease-in-out 0.4s;
     z-index: 10;
     cursor: ns-resize;

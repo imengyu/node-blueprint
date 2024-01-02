@@ -12,26 +12,15 @@
       :class="'tab ' + group.tabStyle"
     >
       <div class="tab-container">
-        <div 
+        <CodeLayoutTabItem 
           v-for="(panel, key) in group.children"
           :key="key" 
-          :class="[
-            'tab-item',
-            group.activePanel === panel ? 'active' : '',
-          ]"
-          :draggable="true"
-          @dragstart="handleDragStart(panel, $event)"
-          @dragend="handleDragEnd"
+          :tabStyle="group.tabStyle"
+          :active="group.activePanel === panel"
+          :panel="panel"
           @click="handleTabClick(panel)"
-        >
-          <span v-if="group.tabStyle == 'text'" class="title">{{ panel.title }}</span>
-          <span v-if="group.tabStyle == 'icon'" class="icon">
-            <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
-          </span>
-          <span v-if="panel.badge" class="badge">
-            <CodeLayoutVNodeStringRender :content="panel.badge" />
-          </span>
-        </div>
+          @focusSelf="handleTabClick(panel)"
+        />
       </div>
       <CodeLayoutActionsRender v-if="group.activePanel" class="actions" :actions="group.activePanel.actions" />
     </div>
@@ -99,10 +88,10 @@
 <script setup lang="ts">
 import type { PropType } from 'vue';
 import type { CodeLayoutPanelInternal } from './CodeLayout';
-import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutGroupDraggerHost from './CodeLayoutGroupDraggerHost.vue';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
+import CodeLayoutTabItem from './CodeLayoutTabItem.vue';
 import { usePanelDragger } from './Composeable/DragDrop';
 
 const props = defineProps({
@@ -110,11 +99,6 @@ const props = defineProps({
     type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
   },
-  /**
-   * Is horizontal?
-   * 
-   * Default: true
-   */
   horizontal: {
     type: Boolean,
     default: true,
@@ -142,7 +126,6 @@ const {
 </script>
 
 <style lang="scss">
-@import "./Scss/Root.scss";
 
 .code-layout-group {
   position: relative;
@@ -153,6 +136,7 @@ const {
   flex-direction: column;
 
   --tab-padding: 10px;
+  --tab-vertical-padding: 4px;
   --tab-font-size: 13px;
 
   &.primary {
@@ -178,7 +162,7 @@ const {
     }
     .tab-item {
       position: relative;
-      padding: 4px var(--tab-padding);
+      padding: var(--tab-vertical-padding) var(--tab-padding);
       font-size: var(--tab-font-size);
       line-height: calc(var(--tab-font-size) * 2);
       color: var(--code-layout-color-text);
@@ -213,6 +197,29 @@ const {
       &.dragging {
         background-color: var(--code-layout-color-background);
         opacity: 0.7;
+      }
+      /*&.drag-enter {
+        
+      }*/
+      &.drag-over-prev, &.drag-over-next {
+        &::before {
+          position: absolute;
+          content: '';
+          top: var(--tab-vertical-padding);
+          bottom: var(--tab-vertical-padding);
+          width: var(--code-layout-border-size-larger);
+          background-color: var(--code-layout-color-border-light);
+        }
+      }
+      &.drag-over-prev {
+        &::before {
+          left: calc(var(--code-layout-border-size-larger) / 2 * -1);
+        }
+      }
+      &.drag-over-next {
+        &::before {
+          right: calc(var(--code-layout-border-size-larger) / 2 * -1);
+        }
       }
     }
   }

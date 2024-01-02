@@ -1,10 +1,20 @@
 <template>
   <div 
+    ref="container"
     :class="[
       'item',
       active ? 'active' : '',
+      dragEnterState ? 'drag-enter' : '',
+      dragOverState,
     ]"
+    :draggable="true"
     @click="$emit('activeItem', item)"
+    @dragstart="handleDragStart(item, $event)"
+    @dragend="handleDragEnd"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @dragenter="handleDragEnter"
+    @drop="handleDrop"
   >
     <div class="icon">
       <CodeLayoutVNodeStringRender :content="item.iconLarge" />
@@ -16,13 +26,14 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import type { CodeLayoutPanelInternal } from './CodeLayout';
+import { inject, ref, toRefs, type PropType } from 'vue';
+import type { CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import { checkDropPanelDefault, getDropPanel, usePanelDragger, usePanelDragOverDetector } from './Composeable/DragDrop';
 
-defineEmits(['activeItem'])
+const emit = defineEmits(['activeItem'])
 
-defineProps({
+const props = defineProps({
   item: {
     type: Object as PropType<CodeLayoutPanelInternal>,
     required: true,
@@ -32,5 +43,36 @@ defineProps({
     default: false,
   },
 });
+
+const { item } = toRefs(props);
+const horizontal = ref(false);
+const container = ref<HTMLElement>();
+const context = inject('codeLayoutContext') as CodeLayoutContext;
+
+const {
+  handleDragStart,
+  handleDragEnd,
+} = usePanelDragger();
+
+const {
+  dragEnterState,
+  dragOverState,
+  handleDragOver,
+  handleDragEnter,
+  handleDragLeave,
+  resetDragOverState,
+} = usePanelDragOverDetector(
+  container, item, horizontal, context, 
+  () => emit('activeItem'),
+  (dragPanel) => checkDropPanelDefault(dragPanel, item.value, dragOverState)
+);
+
+function handleDrop(e: DragEvent) {
+  const dropPanel = getDropPanel(e, context);
+  if (dropPanel && dragOverState.value)
+    context.dragDropToPanelNear(item.value, dragOverState.value, dropPanel);
+  resetDragOverState();
+}
+
 
 </script>

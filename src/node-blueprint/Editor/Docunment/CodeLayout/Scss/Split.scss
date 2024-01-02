@@ -1,5 +1,3 @@
-@import "./Root.scss";
-
 .code-layout-split-base {
   position: relative;
   display: flex;
@@ -13,14 +11,14 @@
 
     > .code-layout-split-dragger {
       width:100% ;
-      height: var(--code-layout-color-border-size);
+      height: var(--code-layout-border-size);
       cursor: ns-resize;
 
       &::after {
         left: 0;
         right: 0;
-        top: calc(var(--code-layout-color-border-size-dragger) / -2);
-        height: var(--code-layout-color-border-size-dragger);
+        top: calc(var(--code-layout-border-size-dragger) / -2);
+        height: var(--code-layout-border-size-dragger);
         bottom: unset;
         width: unset;
       }
@@ -32,15 +30,15 @@
     align-items: stretch;
 
     > .code-layout-split-dragger {
-      width: var(--code-layout-color-border-size);
+      width: var(--code-layout-border-size);
       height: 100%;
       cursor: ew-resize;
 
       &::after {
         top: 0;
         bottom: 0;
-        left: calc(var(--code-layout-color-border-size-dragger) / -2);
-        width: var(--code-layout-color-border-size-dragger);
+        left: calc(var(--code-layout-border-size-dragger) / -2);
+        width: var(--code-layout-border-size-dragger);
       }
     }
   }
@@ -48,7 +46,7 @@
   > .code-layout-split-dragger {
     position: relative;
     height: 100%;
-    width: var(--code-layout-color-border-size);
+    width: var(--code-layout-border-size);
     background-color: var(--code-layout-color-border-background);
     cursor: ns-resize;
     user-select: none;

@@ -230,7 +230,3 @@ defineExpose({
 });
 
 </script>
-
-<style lang="scss">
-@import "./Scss/Root.scss";
-</style>

@@ -414,6 +414,7 @@ const {
 );
 
 const instance : CodeLayoutGroupInstance = {
+  name: props.group.name,
   notifyRelayout() {
     initAllPanelSizes();
   },

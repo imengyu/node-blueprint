@@ -41,8 +41,6 @@ const actionsShow = computed(() => {
 </script>
 
 <style lang="scss">
-@import "./Scss/Root.scss";
-
 .code-layout-actions {
   display: flex;
   flex-direction: row;
@@ -50,9 +48,10 @@ const actionsShow = computed(() => {
   flex-shrink: 0;
 
   button {
+    position: relative;
     padding: 2px 4px;
     color: var(--code-layout-color-text);
-    border-radius: var(--code-layout-color-border-radius-small);
+    border-radius: var(--code-layout-border-radius-small);
     background-color: transparent;
     appearance: none;
     border: none;
