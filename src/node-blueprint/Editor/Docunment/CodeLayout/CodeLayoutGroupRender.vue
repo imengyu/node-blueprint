@@ -57,6 +57,10 @@
           <slot name="panelRender" v-bind="data" />
         </template>
       </CodeLayoutGroupDraggerHost>
+      <slot 
+        v-else-if="(group.tabStyle === 'text' || group.tabStyle === 'icon') && group.children.length == 0"
+        name="emptyTabRender" 
+      />
       <!-- 有TAB栏情况下单个条目 -->
       <CodeLayoutPanelRender
         v-else-if="group.activePanel"

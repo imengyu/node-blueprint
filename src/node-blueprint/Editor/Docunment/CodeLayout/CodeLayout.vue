@@ -37,6 +37,11 @@
           <template #panelRender="data">
             <slot name="panelRender" v-bind="data" />
           </template>
+          <template #emptyTabRender>
+            <CodeLayoutEmpty grid="primarySideBar">
+              <slot name="emptyGroup" group="primarySideBar">{{ emptyText }}</slot>
+            </CodeLayoutEmpty>
+          </template>
         </CodeLayoutGroupRender>
       </template>
       <CodeLayoutEmpty v-else grid="primarySideBar">
@@ -54,6 +59,11 @@
           <template #panelRender="data">
             <slot name="panelRender" v-bind="data" />
           </template>
+          <template #emptyTabRender>
+            <CodeLayoutEmpty grid="secondarySideBar">
+              <slot name="emptyGroup" group="secondarySideBar">{{ emptyText }}</slot>
+            </CodeLayoutEmpty>
+          </template>
         </CodeLayoutGroupRender>
       </template>
       <CodeLayoutEmpty v-else grid="secondarySideBar">
@@ -70,6 +80,11 @@
         >
           <template #panelRender="data">
             <slot name="panelRender" v-bind="data" />
+          </template>
+          <template #emptyTabRender>
+            <CodeLayoutEmpty grid="bottomPanel">
+              <slot name="emptyGroup" group="bottomPanel">{{ emptyText }}</slot>
+            </CodeLayoutEmpty>
           </template>
         </CodeLayoutGroupRender>
       </template>
@@ -183,14 +198,12 @@ const codeLayoutContext : CodeLayoutContext = {
       return;
 
     const parent = panel.parentGroup;
-    if (parent) {
-      ArrayUtils.remove(parent.children, panel);
-      panel.parentGroup = null;
-      relayoutGroup(parent.name);
-    }
+    if (parent)
+      removePanelInternal(panel);
 
-    arr.push(panel);
     panel.parentGrid = grid;
+
+    arr.push(props.layoutConfig.onGridFirstDrop?.(grid, panel) ?? panel);
   },
   dragDropToGroup(group, panel) {
     this.dragDropToPanelNear(group, 'drag-over-next', panel);
@@ -200,6 +213,14 @@ const codeLayoutContext : CodeLayoutContext = {
       throw new Error("Reference panel can not be same with dropping panel!");
 
     //拖放至面板参考位置
+    /**
+     * 1. 参考面板是顶级面板，或者参考面板的上一级是不可合并的面板(自己相当于顶级)
+     *    1.1 分割自己，把自己和拖放面板合并为新的组，并且替代自己
+     * 2. 不是顶级面板
+     *    2.1 从源父级删除
+     *    2.2 插入至指定位置并且重新布局
+     * 
+     */
     const parentGroup = reference.parentGroup;
       
     //当前是顶级面板，并且未指定方向，等同于直接插入面板到顶级
@@ -409,7 +430,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
     activePanel: null,
   };
 
-  panelInstances.set(panelInternal.name, panelInternal);
+  panelInstances.set(panelInternal.name, groupResult);
   getPanelArray(target).push(groupResult);
 
   return groupResult;
@@ -467,7 +488,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   if (startOpen || panel.startOpen)
     openPanel(panelResult);
 
-  panelInstances.set(panelInternal.name, panelInternal);
+  panelInstances.set(panelInternal.name, panelResult);
 
   return panelResult;
 }

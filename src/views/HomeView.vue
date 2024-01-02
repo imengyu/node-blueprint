@@ -66,14 +66,22 @@ onMounted(() => {
       tabStyle: 'single',
       iconLarge: () => h(IconSearch),
     }, 'primarySideBar');
-    const group3 = codeLayout.value.addGroup({
-      title: 'Group3',
-      tooltip: 'Group3',
-      name: 'group3',
-      startOpen: true,
+
+
+    const bottomGroup = codeLayout.value.addGroup({
+      title: '',
+      name: 'bottomGroup',
       tabStyle: 'text',
-      iconLarge: () => h(IconFile),
+      noAutoShink: true,
+      startOpen: true,
     }, 'bottomPanel');
+    const secondaryGroup = codeLayout.value.addGroup({
+      title: '',
+      name: 'secondaryGroup',
+      tabStyle: 'icon',
+      noAutoShink: true,
+      startOpen: true,
+    }, 'secondarySideBar');
 
     for (let i = 4; i < 8; i++) {
       
@@ -141,13 +149,13 @@ onMounted(() => {
           onClick() {},
         },
       ]
-    }, group3);
+    }, bottomGroup);
     const panel5 = codeLayout.value.addPanel({
       title: 'Panel5',
       tooltip: 'Panel5',
       name: 'group3.panel5',
       iconSmall: () => h(IconSearch),
-    }, group3);
+    }, bottomGroup);
 
     codeLayout.value.addPanel({
       title: 'Panel51',

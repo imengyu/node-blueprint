@@ -12,6 +12,8 @@ export interface CodeLayoutConfig {
   statusBarHeight: number|string,
   panelHeaderHeight: number,
   panelMinHeight: number,
+
+  onGridFirstDrop?: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => CodeLayoutPanelInternal;
   onGridEmpty?: (grid: CodeLayoutGrid) => void;
   onNoAutoShinkGroupEmpty?: (group: CodeLayoutPanelInternal) => void,
 }
