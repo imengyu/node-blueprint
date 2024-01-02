@@ -8,34 +8,49 @@
   > 
     <!-- TAB栏 -->
     <div 
-      v-if="group.tabStyle && group.tabStyle != 'none'"
+      v-if="group.tabStyle && group.tabStyle != 'none' && group.tabStyle != 'single'"
       :class="'tab ' + group.tabStyle"
     >
-      <div 
-        v-for="(panel, key) in group.children"
-        :key="key" 
-        :class="[
-          'tab-item',
-          group.activePanel === panel ? 'active' : '',
-        ]"
-        :draggable="true"
-        @dragstart="handleDragStart(panel, $event)"
-        @dragend="handleDragEnd"
-        @click="handleTabClick(panel)"
-      >
-        <span v-if="group.tabStyle == 'text'" class="title">{{ panel.title }}</span>
-        <span v-if="group.tabStyle == 'icon'" class="icon">
-          <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
-        </span>
-        <span v-if="panel.badge" class="badge">
-          <CodeLayoutVNodeStringRender :content="panel.badge" />
-        </span>
+      <div class="tab-container">
+        <div 
+          v-for="(panel, key) in group.children"
+          :key="key" 
+          :class="[
+            'tab-item',
+            group.activePanel === panel ? 'active' : '',
+          ]"
+          :draggable="true"
+          @dragstart="handleDragStart(panel, $event)"
+          @dragend="handleDragEnd"
+          @click="handleTabClick(panel)"
+        >
+          <span v-if="group.tabStyle == 'text'" class="title">{{ panel.title }}</span>
+          <span v-if="group.tabStyle == 'icon'" class="icon">
+            <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
+          </span>
+          <span v-if="panel.badge" class="badge">
+            <CodeLayoutVNodeStringRender :content="panel.badge" />
+          </span>
+        </div>
       </div>
+      <CodeLayoutActionsRender v-if="group.activePanel" class="actions" :actions="group.activePanel.actions" />
     </div>
+    <!-- 标题栏 -->
+    <div 
+      v-else-if="group.tabStyle === 'single'"
+      class="title-bar"
+      :draggable="true"
+      @dragstart="handleDragStart(group, $event)"
+      @dragend="handleDragEnd"
+    >
+      <span class="title">{{ group.title }}</span>
+      <CodeLayoutActionsRender v-if="group.activePanel" class="actions" :actions="group.actions" />
+    </div>
+    <!-- 内容区 -->
     <div :class="[ 'content', horizontal ? 'horizontal' : 'vertical' ]">
       <!-- 未有TAB栏情况下多个条目，支持拖拽分割 -->
       <CodeLayoutGroupDraggerHost 
-        v-if="group.children.length > 0 && (!group.tabStyle || group.tabStyle === 'none')"
+        v-if="group.children.length > 0 && (!group.tabStyle || group.tabStyle === 'none' || group.tabStyle === 'single')"
         :group="group"
         :horizontal="horizontal"
       >
@@ -87,6 +102,8 @@ import type { CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
 import CodeLayoutGroupDraggerHost from './CodeLayoutGroupDraggerHost.vue';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
+import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
+import { usePanelDragger } from './Composeable/DragDrop';
 
 const props = defineProps({
   group: {
@@ -117,14 +134,10 @@ function handleTabClick(panel: CodeLayoutPanelInternal) {
 
 //拖放面板处理函数
 
-function handleDragStart(panel: CodeLayoutPanelInternal, ev: DragEvent) {
-  (ev.target as HTMLElement).classList.add("dragging");
-  if (ev.dataTransfer)
-    ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
-}
-function handleDragEnd(ev: DragEvent) {
-  (ev.target as HTMLElement).classList.remove("dragging");
-}
+const {
+  handleDragStart,
+  handleDragEnd,
+} = usePanelDragger();
 
 </script>
 
@@ -136,6 +149,11 @@ function handleDragEnd(ev: DragEvent) {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  --tab-padding: 10px;
+  --tab-font-size: 13px;
 
   &.primary {
     background-color: var(--code-layout-color-background-second);
@@ -143,16 +161,21 @@ function handleDragEnd(ev: DragEvent) {
 
   //Content area
   > .tab {
-    --tab-padding: 10px;
-    --tab-font-size: 12px;
-
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: nowrap;
     padding: 0 var(--tab-padding);
     margin-bottom: 2px;
 
+    .tab-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    }
     .tab-item {
       position: relative;
       padding: 4px var(--tab-padding);
@@ -194,11 +217,24 @@ function handleDragEnd(ev: DragEvent) {
     }
   }
 
+  //Single title bat
+  > .title-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    height: 35px;
+    overflow: hidden;
+    padding: 0 var(--tab-padding);
+    font-size: var(--tab-font-size);
+    user-select: none;
+  }
+
   //Content area
   > .content {
     position: relative;
-    width: 100%;
-    height: 100%;
+    flex: 1;
 
     &.vertical {
       .code-layout-panel {

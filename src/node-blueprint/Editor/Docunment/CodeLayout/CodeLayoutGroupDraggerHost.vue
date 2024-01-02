@@ -22,11 +22,10 @@
 
 <script setup lang="ts">
 import { ref, type PropType, onMounted, nextTick, inject, watch, onBeforeUnmount } from 'vue';
-import type { CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout';
+import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutGroupInstance, CodeLayoutPanelInternal } from './CodeLayout';
 import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import type { CodeLayoutContext, CodeLayoutGroupInstance } from './CodeLayout.vue';
 
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
@@ -441,7 +440,7 @@ onBeforeUnmount(() => {
   display: flex;
   left: 0;
   right: 0;
-  bottom: 0;
   top: 0;
+  bottom: 0;
 }
 </style>

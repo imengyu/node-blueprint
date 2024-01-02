@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref , type PropType, onMounted, provide, onBeforeUnmount } from 'vue';
-import type { CodeLayoutConfig, CodeLayoutGrid, CodeLayoutPanel, CodeLayoutPanelInternal } from './CodeLayout';
+import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutGrid, CodeLayoutGroupInstance, CodeLayoutInstance, CodeLayoutPanel, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
@@ -106,13 +106,6 @@ const panels = ref<{
   center: [],
 });
 
-export interface CodeLayoutGroupInstance {
-  notifyRelayout: () => void,
-}
-export interface CodeLayoutContext {
-  addGroup: (instance: CodeLayoutGroupInstance) => void,
-  removeGroup: (instance: CodeLayoutGroupInstance) => void,
-}
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 const activityBarActive = ref<CodeLayoutPanelInternal>();
@@ -155,16 +148,32 @@ const props = defineProps({
 });
 
 const groupInstances = [] as CodeLayoutGroupInstance[];
+const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 
-provide('layoutConfig', props.layoutConfig);
-provide<CodeLayoutContext>('codeLayoutContext', {
+const codeLayoutContext : CodeLayoutContext = {
   addGroup(instance) {
     groupInstances.push(instance);
   },
   removeGroup(instance) {
     ArrayUtils.remove(groupInstances, instance);
   },
-});
+
+};
+const codeLayoutInstance : CodeLayoutInstance = {
+  activeGroup,
+  closePanel,
+  togglePanel,
+  openPanel,
+  addGroup,
+  removeGroup,
+  addPanel,
+  removePanel,
+  relayoutAll,
+  getPanelByName,
+};
+
+provide('layoutConfig', props.layoutConfig);
+provide('codeLayoutContext', codeLayoutContext);
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
   if (activityBarActive.value === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
@@ -190,6 +199,9 @@ function onPrimarySideBarSwitch(on: boolean) {
   emit('update:primarySideBar', on);
 }
 
+
+//公开控制接口
+
 function getPanelArray(target: CodeLayoutGrid) {
   switch (target) {
     case 'primarySideBar': return panels.value.primary;
@@ -199,9 +211,9 @@ function getPanelArray(target: CodeLayoutGrid) {
   }
   throw new Error(`Grid can not insert panel`);
 }
-
-//公开控制接口
-
+function getPanelByName(name: string) {
+  return panelInstances.get(name);
+}
 function closePanel(panel: CodeLayoutPanel) {
   const panelInternal = panel as CodeLayoutPanelInternal;
   if (panelInternal.parentGroup) {
@@ -259,6 +271,8 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
 
   if (panelInternal.parentGrid && panelInternal.parentGrid !== 'none')
     throw new Error(`Group ${panel.name} already added to ${panelInternal.parentGrid} !`);
+  if (panelInstances.has(panelInternal.name))
+    throw new Error(`A panel named ${panel.name} already exists`);
 
   const groupResult : CodeLayoutPanelInternal = { 
     ...panel,
@@ -271,7 +285,9 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
     activePanel: null,
   };
 
+  panelInstances.set(panelInternal.name, panelInternal);
   getPanelArray(target).push(groupResult);
+
   return groupResult;
 }
 function removeGroup(panel: CodeLayoutPanel) {
@@ -291,6 +307,8 @@ function removeGroup(panel: CodeLayoutPanel) {
       activityBarActive.value = undefined;
   }
 
+  panelInstances.delete(panelInternal.name);
+
   return panel;
 }
 function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpen = false) {
@@ -299,6 +317,8 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   
   if (panelInternal.parentGroup)
     throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
+  if (panelInstances.has(panelInternal.name))
+    throw new Error(`A panel named ${panel.name} already exists`);
 
   const panelResult : CodeLayoutPanelInternal = {
     ...panel,
@@ -316,6 +336,8 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   if (startOpen || panel.startOpen)
     openPanel(panelResult);
 
+  panelInstances.set(panelInternal.name, panelInternal);
+
   return panelResult;
 }
 function removePanel(panel: CodeLayoutPanel) {
@@ -329,25 +351,14 @@ function removePanel(panel: CodeLayoutPanel) {
   panelInternal.parentGrid = 'none';
   panelInternal.parentGroup = null;
 
+  panelInstances.delete(panelInternal.name);
   return panel;
 }
 function relayoutAll() {
   groupInstances.forEach(p => p.notifyRelayout());
 }
 
-
-defineExpose({
-  getPanelArray,
-  activeGroup,
-  closePanel,
-  togglePanel,
-  openPanel,
-  addGroup,
-  removeGroup,
-  addPanel,
-  removePanel,
-  relayoutAll,
-});
+defineExpose(codeLayoutInstance);
 
 onMounted(() => {
 });

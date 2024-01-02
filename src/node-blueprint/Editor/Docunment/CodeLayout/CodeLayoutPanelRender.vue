@@ -266,8 +266,8 @@ const resizeDragHandler = createMouseDragHandler({
       visibility: visible;
     }
   }
-  &:first-child > .collapse {
-    border-top: none;
+  &:first-child:not(:focus) > .collapse {
+    border-top-color: transparent;
   }
 
   &::after, &::before {

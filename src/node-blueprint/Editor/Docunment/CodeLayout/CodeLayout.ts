@@ -18,6 +18,7 @@ export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'
 
 
 export interface CodeLayoutInstance {
+  getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
   addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanel;
   removeGroup(panel: CodeLayoutPanel): CodeLayoutPanel;
   activeGroup: (panel: CodeLayoutPanel) => void;
@@ -26,6 +27,7 @@ export interface CodeLayoutInstance {
   openPanel: (panel: CodeLayoutPanel, closeOthers?: boolean) => void,
   addPanel: (panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active?: boolean) => CodeLayoutPanel;
   removePanel: (panel: CodeLayoutPanel) => CodeLayoutPanel;
+  relayoutAll: () => void;
 }
 
 export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
@@ -53,7 +55,7 @@ export interface CodeLayoutPanel {
    * 
    * Default: 'none'
    */
-  tabStyle?: 'none'|'text'|'icon',
+  tabStyle?: 'none'|'single'|'text'|'icon',
   size?: number|undefined,
   minSize?: number|undefined,
   startOpen?: boolean|undefined,
@@ -62,6 +64,13 @@ export interface CodeLayoutPanel {
   actions?: CodeLayoutActionButton[]|undefined,
 }
 
+export interface CodeLayoutGroupInstance {
+  notifyRelayout: () => void,
+}
+export interface CodeLayoutContext {
+  addGroup: (instance: CodeLayoutGroupInstance) => void,
+  removeGroup: (instance: CodeLayoutGroupInstance) => void,
+}
 
 export interface CodeLayoutActionButton {
   name: string,

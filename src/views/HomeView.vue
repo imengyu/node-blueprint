@@ -55,12 +55,14 @@ onMounted(() => {
       title: 'Group1',
       tooltip: 'Group1',
       name: 'group1',
+      tabStyle: 'single',
       iconLarge: () => h(IconFile),
     }, 'primarySideBar');
     codeLayout.value.addGroup({
       title: 'Group2',
       tooltip: 'Group2',
       name: 'group2',
+      tabStyle: 'single',
       iconLarge: () => h(IconSearch),
     }, 'primarySideBar');
     const group3 = codeLayout.value.addGroup({
