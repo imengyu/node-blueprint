@@ -12,6 +12,8 @@ export interface CodeLayoutConfig {
   statusBarHeight: number|string,
   panelHeaderHeight: number,
   panelMinHeight: number,
+  onGridEmpty?: (grid: CodeLayoutGrid) => void;
+  onNoAutoShinkGroupEmpty?: (group: CodeLayoutPanelInternal) => void,
 }
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea'|'none';

@@ -107,7 +107,6 @@ const panels = ref<{
   center: [],
 });
 
-
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 const activityBarActive = ref<CodeLayoutPanelInternal>();
 
@@ -203,15 +202,35 @@ const codeLayoutContext : CodeLayoutContext = {
     //拖放至面板参考位置
     const parentGroup = reference.parentGroup;
       
-    //顶级面板，并且未指定方向，等同于直接插入面板到顶级
+    //当前是顶级面板，并且未指定方向，等同于直接插入面板到顶级
     if (!parentGroup && referencePosition === '') {
       this.dragDropToGrid(reference.parentGrid, panel);
       return;
     }
 
-    //顶级面板, 有方向，这意味着需要分割当前面板并且插入
-    if (!parentGroup) {
-      
+    //当前是顶级面板，或者父级是不可合并的面板(自己相当于顶级)。
+    //有方向，这意味着需要分割当前面板并且插入
+    if (!parentGroup || parentGroup.noAutoShink) {
+
+      groupInstances.delete(reference.name);
+
+      const newGroup : CodeLayoutPanelInternal = {
+        ...panel,
+        children: [ reference ],
+        parentGroup: null,
+      };
+
+      switch (referencePosition) {
+        case 'drag-over-prev':
+          newGroup.children.unshift(panel);
+          break;
+        case 'drag-over-next':
+          newGroup.children.push(panel);
+          break;
+      }
+
+      const array = getPanelArray(reference.parentGrid);
+      array.splice(array.indexOf(reference), 1, newGroup);
 
     }
     //非顶级面板, 直接插入即可
@@ -246,9 +265,15 @@ const codeLayoutContext : CodeLayoutContext = {
 
 //移除面板后进行布局
 function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal) {
-  if (!group.parentGroup && group.children.length <= 1 && !group.noAutoShink) {
-    //当前面板是顶级并且数量少于1个，删除子级，自己变成子级
-    group
+  if (!group.parentGroup && group.children.length <= 1) {
+    if (!group.noAutoShink) {
+      //当前面板是顶级并且数量少于1个，删除自己，子级替代自己
+      const array = getPanelArray(group.parentGrid);
+      array.splice(array.indexOf(group), 1, group.children[0]);
+    } else {
+      //否则发出通知，由用户自己处理
+      props.layoutConfig.onNoAutoShinkGroupEmpty?.(group);
+    }
   } else {
     //当前面板不是顶级，或者数量多余1，只需要直接布局
     relayoutGroup(group.name);
@@ -268,6 +293,8 @@ function removePanelInternal(panel: CodeLayoutPanelInternal) {
   panel.parentGrid = 'none';
   panel.parentGroup = null;
 }
+
+//处理函数
 
 provide('layoutConfig', props.layoutConfig);
 provide('codeLayoutContext', codeLayoutContext);
@@ -389,10 +416,13 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
 }
 function removeGroup(panel: CodeLayoutPanel) {
   const panelInternal = panel as CodeLayoutPanelInternal;
-  if (!panelInternal.parentGrid || panelInternal.parentGrid === 'none')
+  const grid = panelInternal.parentGrid;
+  if (!grid || grid === 'none')
     throw new Error(`Group ${panel.name} already removed from any grid !`);
 
-  ArrayUtils.remove(getPanelArray(panelInternal.parentGrid), panel);
+  const array = getPanelArray(grid);
+
+  ArrayUtils.remove(array, panel);
   panelInternal.parentGrid = 'none';
   panelInternal.parentGroup = null;
 
@@ -403,6 +433,10 @@ function removeGroup(panel: CodeLayoutPanel) {
     else 
       activityBarActive.value = undefined;
   }
+
+  //当目标网格已经没有面板了，发出通知
+  if (array.length === 0) 
+    props.layoutConfig.onGridEmpty?.(grid);
 
   panelInstances.delete(panelInternal.name);
 
