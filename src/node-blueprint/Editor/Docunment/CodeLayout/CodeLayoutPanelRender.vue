@@ -37,7 +37,7 @@
       :draggable="!resizeDragging"
       @dragstart="handleDragStart(panel, $event)"
       @dragend="handleDragEnd"
-      @click="$emit('update:open', !open)"
+      @click="emit('toggleHandler', props.panel, !open)"
     >
       <div class="collapse-title">
         <IconArrow class="arrow" />
@@ -46,7 +46,15 @@
       </div>
       <CodeLayoutActionsRender class="actions" :actions="panel.actions" />
     </div>
-    <div v-if="open" class="content" :draggable="false">
+    <div 
+      v-if="open"
+      class="content"
+      :draggable="false"
+      :style="{ 
+        width: !open && horizontal ? `calc(100% - ${layoutConfig.panelHeaderHeight}px)` : '',
+        height: open || !horizontal ? `calc(100% - ${layoutConfig.panelHeaderHeight}px)` : '',
+      }"
+    >
       <slot :panel="panel" :open="open" />
     </div>
   </div>
@@ -54,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref, computed, type PropType, watch, inject, toRefs } from 'vue';
-import type { CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
+import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
 import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
@@ -120,11 +128,8 @@ const panelHeight = computed(() => {
 
 const { horizontal, panel } = toRefs(props);
 const element = ref<HTMLElement>();
+const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
 const context = inject('codeLayoutContext') as CodeLayoutContext;
-
-watch(() => props.open, (v) => {
-  emit('toggleHandler', props.panel, v);
-});
 
 //拖放面板处理函数
 

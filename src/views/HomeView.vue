@@ -11,7 +11,14 @@
       :statusBar="statusBar"
     >
       <template #panelRender="{ panel }">
-        <span>{{ panel.size }} / {{ panel.name }}</span>
+        <template v-if="panel.name === 'group1.panel1'">
+          <CodeLayoutScrollbar>
+            <p>体错致转兄鸭例收各匪扒今宾忠纠常河渣满布广遣住远卷疫偿宙继廉棚梯剃据墓壶斩损划星甲径逝诗辩侵宜否暴架嘉装赴忆吸尺趴它枯修箭统拜皱阔难艺脖耽遭谷子易道隙蚊绘谜首型失酒也个声入弦谱显榜度蔬诉宿康蹦馋恶抛坏</p>
+            <p>体错致转兄鸭例收各匪扒今宾忠纠常河渣满布广遣住远卷疫偿宙继廉棚梯剃据墓壶斩损划星甲径逝诗辩侵宜否暴架嘉装赴忆吸尺趴它枯修箭统拜皱阔难艺脖耽遭谷子易道隙蚊绘谜首型失酒也个声入弦谱显榜度蔬诉宿康蹦馋恶抛坏</p>
+            <p>体错致转兄鸭例收各匪扒今宾忠纠常河渣满布广遣住远卷疫偿宙继廉棚梯剃据墓壶斩损划星甲径逝诗辩侵宜否暴架嘉装赴忆吸尺趴它枯修箭统拜皱阔难艺脖耽遭谷子易道隙蚊绘谜首型失酒也个声入弦谱显榜度蔬诉宿康蹦馋恶抛坏</p>
+          </CodeLayoutScrollbar>
+        </template>
+        <span v-else>{{ panel.size }} / {{ panel.name }}</span>
       </template>
     </CodeLayout>
   </div>
@@ -22,6 +29,7 @@ import IconFile from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconFile.vu
 import IconSearch from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconSearch.vue';
 import type { CodeLayoutConfig, CodeLayoutInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
 import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
+import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 
 const config = reactive<CodeLayoutConfig>({

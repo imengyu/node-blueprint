@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, onMounted, provide, onBeforeUnmount } from 'vue';
+import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutGrid, CodeLayoutGroupInstance, CodeLayoutInstance, CodeLayoutPanel, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
@@ -205,20 +205,18 @@ const codeLayoutContext : CodeLayoutContext = {
 
     arr.push(props.layoutConfig.onGridFirstDrop?.(grid, panel) ?? panel);
   },
-  dragDropToGroup(group, panel) {
-    this.dragDropToPanelNear(group, 'drag-over-next', panel);
-  },
   dragDropToPanelNear(reference, referencePosition, panel) {
     if (reference === panel)
       throw new Error("Reference panel can not be same with dropping panel!");
 
     //拖放至面板参考位置
     /**
+     * 0. 从源父级删除
      * 1. 参考面板是顶级面板，或者参考面板的上一级是不可合并的面板(自己相当于顶级)
-     *    1.1 分割自己，把自己和拖放面板合并为新的组，并且替代自己
+     *    1.1 分割自己
+     *    1.2 把自己和拖放面板合并为新的组，并且替代自己
      * 2. 不是顶级面板
-     *    2.1 从源父级删除
-     *    2.2 插入至指定位置并且重新布局
+     *    2.1 插入至指定位置并且重新布局
      * 
      */
     const parentGroup = reference.parentGroup;
@@ -277,7 +275,9 @@ const codeLayoutContext : CodeLayoutContext = {
 
       panel.parentGroup = parentGroup;
       panel.parentGrid = parentGroup.parentGrid;
-      relayoutGroup(parentGroup.name);
+
+      //新插入一个面板，现在要重新调整其中的大小
+      groupInstances.get(parentGroup.name)?.relayoutAllWithNewPanel(panel);
     }
       
   },
@@ -302,14 +302,20 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal) {
 }
 //移除面板
 function removePanelInternal(panel: CodeLayoutPanelInternal) {
+    
+  const parent = panel.parentGroup;
 
-  if (!panel.parentGroup)
+  if (!parent)
     throw new Error(`Panel ${panel.name} already removed from any group !`);
 
-  ArrayUtils.remove(panel.parentGroup.children, panel);
+  ArrayUtils.remove(parent.children, panel);
+  
+  //如果被删除面板是激活面板，则选另外一个面板激活
+  if (parent.activePanel === panel)
+    parent.activePanel = parent.children[0];
 
   //删除面板后将会进行布局
-  relayoutAfterRemovePanel(panel.parentGroup);
+  relayoutAfterRemovePanel(parent);
 
   panel.parentGrid = 'none';
   panel.parentGroup = null;
@@ -419,7 +425,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const groupResult : CodeLayoutPanelInternal = { 
+  const groupResult = reactive<CodeLayoutPanelInternal>({ 
     ...panel,
     open: panel.startOpen ?? false,
     resizeable: false,
@@ -428,7 +434,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
     parentGrid: target,
     parentGroup: null,
     activePanel: null,
-  };
+  });
 
   panelInstances.set(panelInternal.name, groupResult);
   getPanelArray(target).push(groupResult);
@@ -472,7 +478,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const panelResult : CodeLayoutPanelInternal = {
+  const panelResult = reactive<CodeLayoutPanelInternal>({
     ...panel,
     open: false,
     resizeable: false,
@@ -481,7 +487,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
     parentGrid: parentGroupInternal.parentGrid,
     parentGroup: parentGroupInternal,
     activePanel: null,
-  };
+  });
 
   parentGroupInternal.children.push(panelResult);
 
@@ -529,6 +535,8 @@ onBeforeUnmount(() => {
   --code-layout-color-border-light: #cccccc;
   --code-layout-color-border-background: #2a2a2a;
   --code-layout-color-border-white: #fff;
+  --code-layout-color-scrollbar-thumb: rgba(204, 204, 204, 0.4);
+  --code-layout-color-scrollbar-thumb-light: rgba(204, 204, 204, 0.6);
   --code-layout-border-size: 1px;
   --code-layout-border-size-larger: 2px;
   --code-layout-border-size-dragger: 4px;

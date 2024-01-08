@@ -93,6 +93,10 @@ export interface CodeLayoutPanel {
 export interface CodeLayoutGroupInstance {
   name: string,
   notifyRelayout: () => void,
+  getContainerSize: () => number,
+  relayoutAllWithNewPanel: (panel: CodeLayoutPanelInternal) => void,
+  relayoutAllWithRemovePanel: (panel: CodeLayoutPanelInternal) => void,
+  relayoutAllWithResizedSize: (resizedContainerSize: number) => void,
 }
 
 export type CodeLayoutDragDropReferencePosition = ''|'drag-over-prev'|'drag-over-next';
@@ -101,7 +105,6 @@ export interface CodeLayoutContext {
   addGroup: (instance: CodeLayoutGroupInstance) => void,
   removeGroup: (instance: CodeLayoutGroupInstance) => void,
   dragDropToGrid: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => void,
-  dragDropToGroup: (group: CodeLayoutPanelInternal, panel: CodeLayoutPanelInternal) => void,
   dragDropToPanelNear: (reference: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal) => void,
   instance: CodeLayoutInstance;
 }

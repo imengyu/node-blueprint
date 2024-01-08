@@ -181,6 +181,8 @@ function panelResizeDraggingHandler(_: CodeLayoutPanelInternal, data: unknown, m
 
 //面板打开和关闭时重新布局
 function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
+  panel.open = open;
+
   if (!container.value)
     return;
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
@@ -309,13 +311,12 @@ function flushDraggable() {
   }
 }
 
-//初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
-function initAllPanelSizes() {
+function getAvgAllocSize() {
   if (!container.value)
-    return;
+    return 0;
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
   const headerSize = layoutConfig.panelHeaderHeight;
-  
+
   let canAllocSize = containerSize, notAllocSpaceAndOpenCount = 0;
 
   props.group.children.forEach((panel) => {
@@ -327,7 +328,11 @@ function initAllPanelSizes() {
       canAllocSize -= headerSize;
   });
 
-  const allocSize = canAllocSize / notAllocSpaceAndOpenCount;
+  return canAllocSize / notAllocSpaceAndOpenCount;
+}
+//初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
+function initAllPanelSizes() {
+  const allocSize = getAvgAllocSize();
 
   props.group.children.forEach((panel) => {
     if (panel.size === 0)
@@ -346,6 +351,8 @@ let lastRelayoutSize = 0;
  * 0. 计算容器大小变化了多少，是缩小还是放大
  * 1. 获取打开的面板列表，按他们的的大小降序排列
  * 2. 按顺序依次减小/放大到最小值
+ * 
+ * @param resizedContainerSize 变化的大小，负数为放大，正数为缩小
  */
 function relayoutAllWithResizedSize(resizedContainerSize: number) {
   if (!container.value)
@@ -398,6 +405,22 @@ function relayoutAllWhenSizeChange() {
   
   lastRelayoutSize = containerSize;
 }
+//当容器添加时，重新布局已存在面板
+function relayoutAllWithNewPanel(panel: CodeLayoutPanelInternal) {
+  if (panel.size <= 0) {
+    const allocSize = getAvgAllocSize();
+    panel.size = panel.open ? 
+      Math.max(allocSize, getPanelMinSize(panel.minSize)) : 
+      getPanelMinSize(panel.minSize);
+  }
+
+  relayoutAllWithResizedSize(panel.open ? panel.size: layoutConfig.panelHeaderHeight);
+  flushDraggable();
+} 
+//当容器移除时，重新布局已存在面板
+function relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
+
+} 
 
 watch(() => props.group.children, () => {
   initAllPanelSizes();
@@ -415,9 +438,11 @@ const {
 
 const instance : CodeLayoutGroupInstance = {
   name: props.group.name,
-  notifyRelayout() {
-    initAllPanelSizes();
-  },
+  notifyRelayout: () => initAllPanelSizes(),
+  getContainerSize: () => lastRelayoutSize,
+  relayoutAllWithNewPanel,
+  relayoutAllWithRemovePanel,
+  relayoutAllWithResizedSize,
 };
 
 onMounted(() => {
