@@ -15,6 +15,7 @@
       <div
         class="thumb"
         :style="{ left: `${scrollBarX.pos}%`, width: `${scrollBarX.size}%` }"
+
       />
     </div>
     <div 
@@ -31,7 +32,9 @@
 </template>
 
 <script setup lang="ts">
+import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { ref, onMounted, onBeforeUnmount, nextTick, type PropType, reactive } from "vue";
+import { createMouseDragHandler } from "../../Graph/Editor/MouseHandler";
 
 const props = defineProps({	
   scroll: {
@@ -129,7 +132,22 @@ function calcScroll(force = false) {
   lastCalcScrollScrollHeight = container.value.scrollHeight;
 }
 
-
+//滚动条滚动处理
+let mouseDragDownX = 0;
+const thumbDrageHandler = createMouseDragHandler({
+  onDown() { 
+    if (propItem.value)
+      mouseDragDownX = HtmlUtils.getLeft(propItem.value);
+    return true;
+  },
+  onMove(downPos, movedPos, e) {
+    if (propItem.value) {
+      const size = (e.x - mouseDragDownX) / propItem.value.offsetWidth;
+      updateGridSize(size)
+    }
+  },
+  onUp() {},
+})
 
 onMounted(() => {
   nextTick(() => {
