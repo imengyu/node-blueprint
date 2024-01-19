@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { ref, type PropType, onMounted, nextTick, inject, watch, onBeforeUnmount } from 'vue';
-import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutGroupInstance, CodeLayoutPanelInternal } from './CodeLayout';
+import type { CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout';
 import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
@@ -30,7 +30,6 @@ import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
 const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
-const codeLayoutContext = inject('codeLayoutContext') as CodeLayoutContext;
 
 const props = defineProps({
   group: {
@@ -436,26 +435,35 @@ const {
   props.horizontal ? undefined : relayoutAllWhenSizeChange
 );
 
-const instance : CodeLayoutGroupInstance = {
-  name: props.group.name,
-  notifyRelayout: () => initAllPanelSizes(),
-  getContainerSize: () => lastRelayoutSize,
-  relayoutAllWithNewPanel,
-  relayoutAllWithRemovePanel,
-  relayoutAllWithResizedSize,
-};
+//钩子函数
+function loadPanelFunctions() {
+  const group = props.group;
+  group.listenLateAction('notifyRelayout', () => initAllPanelSizes());
+  group.listenLateAction('getContainerSize', () => lastRelayoutSize);
+  group.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
+  group.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
+  group.listenLateAction('relayoutAllWithRemovePanel', relayoutAllWithRemovePanel);
+}
+function unloadPanelFunctions(group: CodeLayoutPanelInternal) {
+  group.unlistenAllLateAction();
+}
+
+watch(() => props.group, (newValue, oldValue) => {
+  unloadPanelFunctions(oldValue);
+  loadPanelFunctions()
+});
 
 onMounted(() => {
+  loadPanelFunctions();
   nextTick(() => {
     initAllPanelSizes();
     startResizeChecker();
     relayoutAllWhenSizeChange();
-    codeLayoutContext.addGroup(instance);
   });
 });
 onBeforeUnmount(() => {
   stopResizeChecker();
-  codeLayoutContext.removeGroup(instance);
+  unloadPanelFunctions(props.group);
 });
 
 </script>

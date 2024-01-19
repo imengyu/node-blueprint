@@ -1,4 +1,5 @@
 import type { VNode } from "vue";
+import { LateClass } from "./Composeable/LateClass";
 
 export interface CodeLayoutConfig {
   primarySideBarSwitchWithActivityBar: boolean,
@@ -35,24 +36,105 @@ export interface CodeLayoutInstance {
   relayoutGroup(name: string): void;
 }
 
-export interface CodeLayoutPanelInternal extends CodeLayoutPanel {
-  open: boolean,
-  resizeable: boolean,
-  size: number,
-  children: CodeLayoutPanelInternal[],
-  activePanel: CodeLayoutPanelInternal|null;
-  parentGroup: CodeLayoutPanelInternal|null;
-  parentGrid: CodeLayoutGrid;
+export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPanel {
+  title = '';
+  name = '';
+  open = false;
+  resizeable = false;
+  size = 0;
+  children : CodeLayoutPanelInternal[] = [];
+  activePanel: CodeLayoutPanelInternal|null = null;
+  parentGroup: CodeLayoutPanelInternal|null = null;
+  parentGrid: CodeLayoutGrid = 'none';
+
+  tooltip?: string;
+  badge?: string|(() => VNode)|undefined;
+  accept?: CodeLayoutGrid[];
+  preDropCheck?: (
+    dropPanel: CodeLayoutPanel, 
+    targetGrid: CodeLayoutGrid,
+    referencePanel?: CodeLayoutPanel|undefined,
+    referencePosition?: CodeLayoutDragDropReferencePosition|undefined,
+  ) => boolean;
+  tabStyle?: CodeLayoutPanelTabStyle;
+  noAutoShink = false;
+  minSize?: number|undefined;
+  startOpen?: boolean|undefined;
+  iconLarge?: string|(() => VNode)|undefined;
+  iconSmall?: string|(() => VNode)|undefined;
+  actions?: CodeLayoutActionButton[]|undefined;
+
+  addChild(child: CodeLayoutPanelInternal, index?: number) {
+    if (this.name === child.name)
+      throw new Error('Try add self');
+    if (typeof index === 'number')
+      this.children.splice(index, 0, child);
+    else
+      this.children.push(child);
+  }
+  removeChild(child: CodeLayoutPanelInternal) {
+    this.children.splice(this.children.indexOf(child), 1);
+    if (child === this.activePanel)
+      this.activePanel = null;
+  }
+  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
+    this.children.splice(
+      this.children.indexOf(oldChild), 
+      1, 
+      child);
+  }
+
+  getIsTabContainer() {
+    return this.tabStyle === 'text' || this.tabStyle === 'icon';
+  }
+  getContainerSize() {
+    return this.pushLateAction('getContainerSize') as Promise<number>;
+  }
+  notifyRelayout() {
+    this.pushLateAction('notifyRelayout');
+  }
+  relayoutAllWithNewPanel(panel: CodeLayoutPanelInternal) {
+    this.pushLateAction('relayoutAllWithNewPanel', panel);
+  }
+  relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
+    this.pushLateAction('notifyRelayout', panel);
+  }
+  relayoutAllWithResizedSize(resizedContainerSize: number) {
+    this.pushLateAction('notifyRelayout', resizedContainerSize);
+  }
+}
+export class CodeLayoutGridInternal {
+  children : CodeLayoutPanelInternal[] = [];
+  
+  addChild(child: CodeLayoutPanelInternal, index?: number) {
+    if (typeof index === 'number')
+      this.children.splice(index, 0, child);
+    else
+      this.children.push(child);
+  }
+  removeChild(child: CodeLayoutPanelInternal) {
+    if (this.hasChild(child))
+      this.children.splice(this.children.indexOf(child), 1);
+  }
+  hasChild(child: CodeLayoutPanelInternal) {
+    return this.children.includes(child);
+  }
+  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
+    this.children.splice(
+      this.children.indexOf(oldChild), 
+      1, 
+      child);
+  }
 }
 
 export type CodeLayoutPanelTabStyle = 'none'|'single'|'text'|'icon';
 
 export interface CodeLayoutPanel {
-  title: string,
-  tooltip?: string,
-  name: string,
-  badge?: string|(() => VNode)|undefined,
-  accept?: CodeLayoutGrid[],
+  title: string;
+  tooltip?: string;
+  name: string;
+  badge?: string|(() => VNode)|undefined;
+  accept?: CodeLayoutGrid[];
 
   /**
    * Custom check callback before this panel drop.
@@ -67,7 +149,7 @@ export interface CodeLayoutPanel {
     targetGrid: CodeLayoutGrid,
     referencePanel?: CodeLayoutPanel|undefined,
     referencePosition?: CodeLayoutDragDropReferencePosition|undefined,
-  ) => boolean,
+  ) => boolean;
 
   /**
    * Set group tab style
@@ -77,35 +159,24 @@ export interface CodeLayoutPanel {
    * 
    * Default: 'none'
    */
-  tabStyle?: CodeLayoutPanelTabStyle,
+  tabStyle?: CodeLayoutPanelTabStyle;
   /**
    * Default: false
    */
   noAutoShink?: boolean;
-  size?: number|undefined,
-  minSize?: number|undefined,
-  startOpen?: boolean|undefined,
-  iconLarge?: string|(() => VNode)|undefined,
-  iconSmall?: string|(() => VNode)|undefined,
-  actions?: CodeLayoutActionButton[]|undefined,
-}
-
-export interface CodeLayoutGroupInstance {
-  name: string,
-  notifyRelayout: () => void,
-  getContainerSize: () => number,
-  relayoutAllWithNewPanel: (panel: CodeLayoutPanelInternal) => void,
-  relayoutAllWithRemovePanel: (panel: CodeLayoutPanelInternal) => void,
-  relayoutAllWithResizedSize: (resizedContainerSize: number) => void,
+  size?: number|undefined;
+  minSize?: number|undefined;
+  startOpen?: boolean|undefined;
+  iconLarge?: string|(() => VNode)|undefined;
+  iconSmall?: string|(() => VNode)|undefined;
+  actions?: CodeLayoutActionButton[]|undefined;
 }
 
 export type CodeLayoutDragDropReferencePosition = ''|'drag-over-prev'|'drag-over-next';
 
 export interface CodeLayoutContext {
-  addGroup: (instance: CodeLayoutGroupInstance) => void,
-  removeGroup: (instance: CodeLayoutGroupInstance) => void,
   dragDropToGrid: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => void,
-  dragDropToPanelNear: (reference: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal) => void,
+  dragDropToPanelNear: (reference: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal, dropToTabHeader: boolean) => void,
   instance: CodeLayoutInstance;
 }
 

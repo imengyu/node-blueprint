@@ -16,11 +16,15 @@
 
 <script setup lang="ts">
 import { inject, ref, type PropType } from 'vue';
-import type { CodeLayoutContext, CodeLayoutGrid } from './CodeLayout';
+import type { CodeLayoutContext, CodeLayoutGrid, CodeLayoutPanelInternal } from './CodeLayout';
 import { usePanelDragOverDetector } from './Composeable/DragDrop';
 import { getDropPanel } from './Composeable/DragDrop';
 
 const props = defineProps({
+  panel: {
+    type: Object as PropType<CodeLayoutPanelInternal>,
+    default: null,
+  },
   grid: {
     type: String as PropType<CodeLayoutGrid>,
     required: true,
@@ -48,8 +52,13 @@ const {
 
 function handleDrop(e: DragEvent) {
   const panel = getDropPanel(e, context);
-  if (panel)
-    context.dragDropToGrid(props.grid, panel);
+  if (panel) {
+    e.preventDefault();
+    if (props.panel)
+      context.dragDropToPanelNear(props.panel, 'drag-over-next', panel, false);
+    else
+      context.dragDropToGrid(props.grid, panel);
+  }
   resetDragOverState();
 }
 

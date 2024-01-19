@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, watch, inject, toRefs } from 'vue';
+import { ref, computed, type PropType, inject, toRefs } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
@@ -154,8 +154,10 @@ const {
 
 function handleDrop(e: DragEvent) {
   const dropPanel = getDropPanel(e, context);
-  if (dropPanel && dragOverState.value)
-    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel);
+  if (dropPanel && dragOverState.value) {
+    e.preventDefault();
+    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel, false);
+  }
   resetDragOverState();
 }
 

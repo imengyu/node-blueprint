@@ -4,6 +4,7 @@
     :class="[
       'code-layout-group',
       primary ? 'primary' : '',
+      'tab-' + group.tabStyle,
     ]"
   > 
     <!-- TAB栏 -->
@@ -147,7 +148,7 @@ const {
     background-color: var(--code-layout-color-background-second);
   }
 
-  //Content area
+  //Tab header
   > .tab {
     display: flex;
     flex-direction: row;
@@ -225,6 +226,14 @@ const {
           right: calc(var(--code-layout-border-size-larger) / 2 * -1);
         }
       }
+    }
+  }
+
+  //Resize Tab content
+  &.tab-icon, &.tab-text {
+    .code-layout-panel {
+      width: 100%;
+      height: 100%;
     }
   }
 

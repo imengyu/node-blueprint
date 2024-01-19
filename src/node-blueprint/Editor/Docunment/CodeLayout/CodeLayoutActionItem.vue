@@ -69,8 +69,10 @@ const {
 
 function handleDrop(e: DragEvent) {
   const dropPanel = getDropPanel(e, context);
-  if (dropPanel && dragOverState.value)
-    context.dragDropToPanelNear(item.value, dragOverState.value, dropPanel);
+  if (dropPanel && dragOverState.value) {
+    e.preventDefault();
+    context.dragDropToPanelNear(item.value, dragOverState.value, dropPanel, false);
+  }
   resetDragOverState();
 }
 
