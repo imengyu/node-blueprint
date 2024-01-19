@@ -9,23 +9,26 @@
     </div>
     <div 
       v-if="scrollBarX.show"
+      ref="scrollBarRefX"
       class="scrollbar horizontal"
       :style="{ height: `${scrollBarSize}px` }"
     >
       <div
         class="thumb"
         :style="{ left: `${scrollBarX.pos}%`, width: `${scrollBarX.size}%` }"
-
+        @mousedown="thumbDrageHandlerX"
       />
     </div>
     <div 
       v-if="scrollBarY.show"
+      ref="scrollBarRefY"
       class="scrollbar vertical"
       :style="{ width: `${scrollBarSize}px` }"
     >
       <div 
         class="thumb"
         :style="{ top: `${scrollBarY.pos}%`, height: `${scrollBarY.size}%` }"
+        @mousedown="thumbDrageHandlerY"
       />
     </div>
   </div>
@@ -35,6 +38,7 @@
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { ref, onMounted, onBeforeUnmount, nextTick, type PropType, reactive } from "vue";
 import { createMouseDragHandler } from "../../Graph/Editor/MouseHandler";
+import { useResizeChecker } from "./Composeable/ResizeChecker";
 
 const props = defineProps({	
   scroll: {
@@ -48,15 +52,19 @@ const props = defineProps({
 })
 
 const container = ref<HTMLElement>();
-
+const scrollBarRefX = ref<HTMLElement>();
+const scrollBarRefY = ref<HTMLElement>();
+  
 const scrollBarX = reactive({
   show: false,
   size: 0,
+  sizeRaw: 0,
   pos: 0,
 });
 const scrollBarY = reactive({
   show: false,
   size: 0,
+  sizeRaw: 0,
   pos: 0,
 });
 
@@ -65,17 +73,7 @@ let lastCalcScrollScrollHeight = 0;
 let lastCalcScrollWidth = 0;
 let lastCalcScrollHeight = 0;
 
-const observer = new MutationObserver((mutationsList) => {
-  for (let mutation of mutationsList) {
-    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-      // 当样式属性发生改变时进行处理
-      calcScroll();
-    } else if (mutation.type === 'childList') {
-      // 当子节点列表发生改变时进行处理
-      calcScroll();
-    }
-  }
-});
+const observer = new MutationObserver(() => calcScroll());
  
 // 配置观察选项
 const config = { attributes: true, childList: true };
@@ -85,6 +83,7 @@ function calcScrollBarPosition() {
     return;
   if (scrollBarX.show) {
     const sizePrecent = (container.value.offsetWidth / container.value.scrollWidth);
+    scrollBarX.sizeRaw = sizePrecent * container.value.offsetWidth;
     scrollBarX.size = sizePrecent * 100;
     scrollBarX.pos = (container.value.scrollLeft / container.value.scrollWidth) * 100;
     if (sizePrecent >= 1)
@@ -92,6 +91,7 @@ function calcScrollBarPosition() {
   }
   if (scrollBarY.show) {
     const sizePrecent = (container.value.offsetHeight / container.value.scrollHeight);
+    scrollBarX.sizeRaw = sizePrecent * container.value.offsetHeight;
     scrollBarY.size = sizePrecent * 100;
     scrollBarY.pos = (container.value.scrollTop / container.value.scrollWidth) * 100;
     if (sizePrecent >= 1)
@@ -133,29 +133,65 @@ function calcScroll(force = false) {
 }
 
 //滚动条滚动处理
-let mouseDragDownX = 0;
-const thumbDrageHandler = createMouseDragHandler({
-  onDown() { 
-    if (propItem.value)
-      mouseDragDownX = HtmlUtils.getLeft(propItem.value);
+let mouseDragDownThumbX = 0, mouseDragDownX = 0;
+let mouseDragDownThumbY = 0, mouseDragDownY = 0;
+const thumbDrageHandlerX = createMouseDragHandler({
+  onDown(e) { 
+    mouseDragDownThumbX = e.offsetX;
+    if (scrollBarRefX.value) 
+      mouseDragDownX= HtmlUtils.getLeft(scrollBarRefX.value);
     return true;
   },
   onMove(downPos, movedPos, e) {
-    if (propItem.value) {
-      const size = (e.x - mouseDragDownX) / propItem.value.offsetWidth;
-      updateGridSize(size)
+    if (container.value && scrollBarRefX.value) {
+      container.value.scrollLeft = (e.x - mouseDragDownThumbX - mouseDragDownX) 
+        / (container.value.offsetWidth - scrollBarX.sizeRaw)
+        * container.value.scrollWidth;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  },
+  onUp() {},
+})
+const thumbDrageHandlerY = createMouseDragHandler({
+  onDown(e) { 
+    mouseDragDownThumbY = e.offsetY;
+    if (scrollBarRefY.value) 
+      mouseDragDownY = HtmlUtils.getTop(scrollBarRefY.value);
+    return true;
+  },
+  onMove(downPos, movedPos, e) {
+    if (container.value && scrollBarRefY.value) {
+      container.value.scrollTop = (e.y - mouseDragDownThumbY - mouseDragDownY) 
+        / (container.value.offsetHeight - scrollBarY.sizeRaw)
+        * container.value.scrollHeight;
+      e.preventDefault();
+      e.stopPropagation();
     }
   },
   onUp() {},
 })
 
+//大小更改事件
+const {
+  startResizeChecker,
+  stopResizeChecker,
+} = useResizeChecker(
+  container, 
+  () => calcScroll(), 
+  () => calcScroll()
+);
+
 onMounted(() => {
   nextTick(() => {
+    setTimeout(() => calcScroll(true), 200);
     calcScroll(true);
+    startResizeChecker();
     observer.observe(container.value!, config);
   });
 });
 onBeforeUnmount(() => {
+  stopResizeChecker();
   observer.disconnect();
 });
 
