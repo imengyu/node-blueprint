@@ -220,15 +220,13 @@ const codeLayoutContext : CodeLayoutContext = {
     const parentGroup = reference.parentGroup;
     const noParentGroup = !parentGroup;
       
-    //拖拽到一个不可合并的面板，则直接加入这个面板的子集
+    //拖拽到一个不可合并的面板(TAB)，则直接加入这个面板的子集
     if (noParentGroup && reference.noAutoShink) {
 
       removePanelInternal(panel);
       reference.addChild(panel);
       reference.activePanel = panel;
-
-      panel.parentGroup = reference;
-      panel.parentGrid = reference.parentGrid;
+      panel.size = 0;
 
       //新插入一个面板，现在要重新调整其中的大小
       reference.notifyRelayout();
@@ -259,7 +257,7 @@ const codeLayoutContext : CodeLayoutContext = {
 
       switch (referencePosition) {
         case 'drag-over-prev':
-          newGroup.addChild(panel);
+          newGroup.addChild(panel, 0);
           break;
         case 'drag-over-next':
           newGroup.addChild(panel);
@@ -276,7 +274,6 @@ const codeLayoutContext : CodeLayoutContext = {
 
       //新插入一个面板，现在要重新调整其中的大小
       newGroup.notifyRelayout();
-      newGroup.relayoutAllWithNewPanel(panel);
     }
     //非顶级面板, 直接插入即可
     else {
@@ -299,11 +296,13 @@ const codeLayoutContext : CodeLayoutContext = {
           break;
       }
 
-      panel.parentGroup = parentGroup;
-      panel.parentGrid = parentGroup.parentGrid;
-
-      //新插入一个面板，现在要重新调整其中的大小
-      parentGroup.relayoutAllWithNewPanel(panel);
+      if (dropToTabHeader) {
+        //拖拽到TAB上，强制将当前面板大小归零
+        panel.size = 0;
+      } else {
+        //新插入一个面板，现在要重新调整其中的大小
+        parentGroup.relayoutAllWithNewPanel(panel);
+      }
       parentGroup.activePanel = panel;
     }
       
@@ -312,21 +311,31 @@ const codeLayoutContext : CodeLayoutContext = {
 };
 
 //移除面板后进行布局
-function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal) {
-  if (!group.parentGroup && group.children.length <= 1) {
-    if (!group.noAutoShink && group.children.length === 1) {
-      //当前面板是顶级并且数量少于1个，删除自己，子级替代自己
-      const gridInstance = getRootGrid(group.parentGrid);
-      const firstChildren = group.children[0];
-      firstChildren.open = true;
-      gridInstance.replaceChild(group, firstChildren);
+function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, panel: CodeLayoutPanelInternal) {
+  if (group.children.length <= 1) {
+    if (group.children.length === 1) {
+      if (group.parentGroup && group.parentGroup.getIsTabContainer()) {
+        //当前面板是TAB下一级分组，并且子级数量少于1个，删除自己，子级替代自己
+        const firstChildren = group.children[0];
+        firstChildren.open = true;
+        group.parentGroup.replaceChild(group, firstChildren);
+      } else if (!group.noAutoShink) {
+        //当前面板是顶级并且数量少于1个，删除自己，子级替代自己
+        const gridInstance = getRootGrid(group.parentGrid);
+        const firstChildren = group.children[0];
+        firstChildren.open = true;
+        gridInstance.replaceChild(group, firstChildren);
+      } else {
+      //否则发出通知，由用户自己处理
+      props.layoutConfig.onNoAutoShinkGroupEmpty?.(group);
+      }
     } else {
       //否则发出通知，由用户自己处理
       props.layoutConfig.onNoAutoShinkGroupEmpty?.(group);
     }
   } else {
-    //当前面板不是顶级，或者数量多余1，只需要直接布局
-    relayoutGroup(group.name);
+    //当前面板者数量多余1，只需要直接布局
+    panelInstances.get(group.name)?.relayoutAllWithRemovePanel(panel);
   }
 }
 //移除面板
@@ -338,18 +347,12 @@ function removePanelInternal(panel: CodeLayoutPanelInternal) {
     throw new Error(`Panel ${panel.name} already removed from any group !`);
 
   parent.removeChild(panel);
-  
-  //如果被删除面板是激活面板，则选另外一个面板激活
-  if (parent.activePanel === panel)
-    parent.activePanel = parent.children[0];
-
-  panel.size = 0;
 
   //删除面板后将会进行布局
-  relayoutAfterRemovePanel(parent);
+  relayoutAfterRemovePanel(parent, panel);
 
+  panel.size = 0;
   panel.parentGrid = 'none';
-  panel.parentGroup = null;
 }
 
 //处理函数
@@ -477,7 +480,6 @@ function removeGroup(panel: CodeLayoutPanel) {
 
   gridInstance.removeChild(panelInternal);
   panelInternal.parentGrid = 'none';
-  panelInternal.parentGroup = null;
 
   //当删除的面板是侧边栏当前激活的面板，则重置并激活其他面板
   if (panelInternal === activityBarActive.value) {
@@ -508,9 +510,6 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   Object.assign(panelResult, panel);
   panelResult.open = panel.startOpen ?? false;
   panelResult.size = panel.size ?? 0;
-  panelResult.parentGroup = parentGroupInternal;
-  panelResult.parentGrid = parentGroupInternal.parentGrid;
-
   parentGroupInternal.addChild(panelResult as CodeLayoutPanelInternal);
 
   if (startOpen || panel.startOpen)

@@ -329,10 +329,11 @@ function getAvgAllocSize() {
 
   return canAllocSize / notAllocSpaceAndOpenCount;
 }
-//初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
-function initAllPanelSizes() {
-  const allocSize = getAvgAllocSize();
+//强制重新布局
+function relayoutAll() {
 
+  //初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
+  const allocSize = getAvgAllocSize();
   props.group.children.forEach((panel) => {
     if (panel.size === 0)
       panel.size = panel.open ? 
@@ -418,11 +419,11 @@ function relayoutAllWithNewPanel(panel: CodeLayoutPanelInternal) {
 } 
 //当容器移除时，重新布局已存在面板
 function relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
-
+  relayoutAllWithResizedSize(-(panel.open ? panel.size : layoutConfig.panelHeaderHeight));
 } 
 
 watch(() => props.group.children, () => {
-  initAllPanelSizes();
+  relayoutAll();
 });
 
 //更改大小后重新布局
@@ -438,7 +439,7 @@ const {
 //钩子函数
 function loadPanelFunctions() {
   const group = props.group;
-  group.listenLateAction('notifyRelayout', () => initAllPanelSizes());
+  group.listenLateAction('notifyRelayout', () => relayoutAll());
   group.listenLateAction('getContainerSize', () => lastRelayoutSize);
   group.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
   group.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
@@ -456,7 +457,7 @@ watch(() => props.group, (newValue, oldValue) => {
 onMounted(() => {
   loadPanelFunctions();
   nextTick(() => {
-    initAllPanelSizes();
+    relayoutAll();
     startResizeChecker();
     relayoutAllWhenSizeChange();
   });

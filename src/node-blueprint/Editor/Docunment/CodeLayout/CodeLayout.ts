@@ -71,9 +71,13 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       this.children.splice(index, 0, child);
     else
       this.children.push(child);
+    child.parentGroup = this;
+    child.parentGrid = this.parentGrid;
   }
   removeChild(child: CodeLayoutPanelInternal) {
     this.children.splice(this.children.indexOf(child), 1);
+    child.parentGroup = null;
+    //如果被删除面板是激活面板，则选另外一个面板激活
     if (child === this.activePanel)
       this.activePanel = null;
   }
@@ -81,12 +85,22 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     this.children.splice(
       this.children.indexOf(oldChild), 
       1, 
-      child);
+      child);   
+    oldChild.parentGroup = null;
+    //如果被删除面板是激活面板，则选另外一个面板激活
+    if (this.activePanel === oldChild)
+      this.activePanel = child;
+    child.parentGroup = this;
+    child.parentGrid = this.parentGrid;
   }
 
   getIsTabContainer() {
     return this.tabStyle === 'text' || this.tabStyle === 'icon';
   }
+  getIsTopGroup() {
+    return !this.parentGroup
+  }
+
   getContainerSize() {
     return this.pushLateAction('getContainerSize') as Promise<number>;
   }
@@ -97,10 +111,10 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     this.pushLateAction('relayoutAllWithNewPanel', panel);
   }
   relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
-    this.pushLateAction('notifyRelayout', panel);
+    this.pushLateAction('relayoutAllWithRemovePanel', panel);
   }
   relayoutAllWithResizedSize(resizedContainerSize: number) {
-    this.pushLateAction('notifyRelayout', resizedContainerSize);
+    this.pushLateAction('relayoutAllWithResizedSize', resizedContainerSize);
   }
 }
 export class CodeLayoutGridInternal {
