@@ -79,7 +79,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     child.parentGroup = null;
     //如果被删除面板是激活面板，则选另外一个面板激活
     if (child === this.activePanel)
-      this.activePanel = null;
+      this.activePanel = this.children[0] || null;
   }
   replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
     this.children.splice(
@@ -94,6 +94,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     child.parentGrid = this.parentGrid;
   }
 
+  lastRelayoutSize = 0;
+
   getIsTabContainer() {
     return this.tabStyle === 'text' || this.tabStyle === 'icon';
   }
@@ -102,7 +104,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   }
 
   getContainerSize() {
-    return this.pushLateAction('getContainerSize') as Promise<number>;
+    return this.lastRelayoutSize;
   }
   notifyRelayout() {
     this.pushLateAction('notifyRelayout');

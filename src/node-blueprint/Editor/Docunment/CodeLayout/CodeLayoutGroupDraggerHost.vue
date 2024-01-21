@@ -344,8 +344,6 @@ function relayoutAll() {
   flushDraggable();
 }
 
-let lastRelayoutSize = 0;
-
 /**
  * 当容器大小或者容器添加/删除时，重新布局已存在面板
  * 0. 计算容器大小变化了多少，是缩小还是放大
@@ -390,20 +388,21 @@ function relayoutAllWithResizedSize(resizedContainerSize: number) {
 function relayoutAllWhenSizeChange() {
   if (!container.value)
     return;
+  const group = props.group;
 
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
-  if (lastRelayoutSize === 0) {
-    lastRelayoutSize = containerSize;
+  if (group.lastRelayoutSize === 0) {
+    group.lastRelayoutSize = containerSize;
     return;
   }
 
-  let resizedContainerSize = lastRelayoutSize - containerSize; 
+  let resizedContainerSize = props.group.lastRelayoutSize - containerSize; 
   if (resizedContainerSize === 0)
     return;
 
   relayoutAllWithResizedSize(resizedContainerSize);
   
-  lastRelayoutSize = containerSize;
+  group.lastRelayoutSize = containerSize;
 }
 //当容器添加时，重新布局已存在面板
 function relayoutAllWithNewPanel(panel: CodeLayoutPanelInternal) {
@@ -440,7 +439,6 @@ const {
 function loadPanelFunctions() {
   const group = props.group;
   group.listenLateAction('notifyRelayout', () => relayoutAll());
-  group.listenLateAction('getContainerSize', () => lastRelayoutSize);
   group.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
   group.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
   group.listenLateAction('relayoutAllWithRemovePanel', relayoutAllWithRemovePanel);
@@ -460,6 +458,9 @@ onMounted(() => {
     relayoutAll();
     startResizeChecker();
     relayoutAllWhenSizeChange();
+    setTimeout(() => {
+      relayoutAllWhenSizeChange();
+    }, 200);
   });
 });
 onBeforeUnmount(() => {

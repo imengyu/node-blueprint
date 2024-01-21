@@ -187,6 +187,10 @@ const {
         background-color: var(--code-layout-color-background-light);
       }
 
+      span {
+        pointer-events: none;
+      }
+
       &:hover, &:active, &.active {
         color: var(--code-layout-color-text-highlight);
       }

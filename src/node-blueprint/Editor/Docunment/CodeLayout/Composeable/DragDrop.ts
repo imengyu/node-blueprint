@@ -58,7 +58,7 @@ export function usePanelDragOverDetector(
   
   const dragEnterState = ref(false);
   const dragOverState = ref<CodeLayoutDragDropReferencePosition>('');
-  const focusTimer = createMiniTimeOut(800, focusPanel);
+  const focusTimer = createMiniTimeOut(600, focusPanel);
   const delayLeaveTimer = createMiniTimeOut(200, () => {
     dragOverState.value = '';
   });
@@ -125,6 +125,7 @@ export function usePanelDragOverDetector(
     }
   }
   function resetDragOverState() {
+    focusTimer.stop();
     dragEnterState.value = false;
     dragOverState.value = '';
   }
