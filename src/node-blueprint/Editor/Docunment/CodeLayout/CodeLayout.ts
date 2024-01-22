@@ -16,7 +16,8 @@ export interface CodeLayoutConfig {
 
   onGridFirstDrop?: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => CodeLayoutPanelInternal;
   onGridEmpty?: (grid: CodeLayoutGrid) => void;
-  onNoAutoShinkGroupEmpty?: (group: CodeLayoutPanelInternal) => void,
+  onNoAutoShinkTabGroup?: (group: CodeLayoutPanelInternal) => void,
+  onNoAutoShinkNormalGroup?: (group: CodeLayoutPanelInternal) => void,
 }
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'activityBar'|'bottomPanel'|'centerArea'|'none';
@@ -102,6 +103,12 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   getIsTopGroup() {
     return !this.parentGroup
   }
+  getIsInTab() {
+    return this.parentGroup?.getIsTabContainer() ?? false;
+  }
+  getIndexInParent() {
+    return this.parentGroup?.children.indexOf(this) ?? 0;
+  }
 
   getContainerSize() {
     return this.lastRelayoutSize;
@@ -120,6 +127,12 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   }
 }
 export class CodeLayoutGridInternal {
+
+  public constructor(onSwitchCollapse: (open: boolean) => void) {
+    this.onSwitchCollapse = onSwitchCollapse;
+  }
+
+  private onSwitchCollapse: (open: boolean) => void;
   children : CodeLayoutPanelInternal[] = [];
   
   addChild(child: CodeLayoutPanelInternal, index?: number) {
@@ -140,6 +153,12 @@ export class CodeLayoutGridInternal {
       this.children.indexOf(oldChild), 
       1, 
       child);
+  }
+  collapse() {
+    this.onSwitchCollapse(false);
+  }
+  open() {
+    this.onSwitchCollapse(true);
   }
 }
 

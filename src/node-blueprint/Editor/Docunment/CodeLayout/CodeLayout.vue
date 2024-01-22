@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive } from 'vue';
-import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal } from './CodeLayout';
+import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
@@ -115,10 +115,16 @@ const panels = ref<{
   bottom: CodeLayoutGridInternal,
   center: CodeLayoutGridInternal,
 }>({
-  primary: new CodeLayoutGridInternal(),
-  secondary: new CodeLayoutGridInternal(),
-  bottom: new CodeLayoutGridInternal(),
-  center: new CodeLayoutGridInternal(),
+  primary: new CodeLayoutGridInternal((open) => {
+    emit('update:primarySideBar', open);
+  }),
+  secondary: new CodeLayoutGridInternal((open) => {
+    emit('update:secondarySideBar', open);
+  }),
+  bottom: new CodeLayoutGridInternal((open) => {
+    emit('update:bottomPanel', open);
+  }),
+  center: new CodeLayoutGridInternal(() => {}),
 });
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
@@ -206,6 +212,8 @@ const codeLayoutContext : CodeLayoutContext = {
   dragDropToPanelNear(reference, referencePosition, panel, dropToTabHeader) {
     if (reference === panel)
       throw new Error("Reference panel can not be same with dropping panel!");
+
+
 
     //拖放至面板参考位置
     /**
@@ -310,49 +318,166 @@ const codeLayoutContext : CodeLayoutContext = {
   instance: codeLayoutInstance,
 };
 
-//移除面板后进行布局
-function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, panel: CodeLayoutPanelInternal) {
-  if (group.children.length <= 1) {
-    if (group.children.length === 1) {
-      if (group.parentGroup && group.parentGroup.getIsTabContainer()) {
-        //当前面板是TAB下一级分组，并且子级数量少于1个，删除自己，子级替代自己
-        const firstChildren = group.children[0];
-        firstChildren.open = true;
-        group.parentGroup.replaceChild(group, firstChildren);
-      } else if (!group.noAutoShink) {
-        //当前面板是顶级并且数量少于1个，删除自己，子级替代自己
-        const gridInstance = getRootGrid(group.parentGrid);
-        const firstChildren = group.children[0];
-        firstChildren.open = true;
-        gridInstance.replaceChild(group, firstChildren);
-      } else {
-      //否则发出通知，由用户自己处理
-      props.layoutConfig.onNoAutoShinkGroupEmpty?.(group);
-      }
-    } else {
-      //否则发出通知，由用户自己处理
-      props.layoutConfig.onNoAutoShinkGroupEmpty?.(group);
-    }
-  } else {
-    //当前面板者数量多余1，只需要直接布局
-    panelInstances.get(group.name)?.relayoutAllWithRemovePanel(panel);
+/**
+ * 拖放处理主函数: 拖放至基础网格根节点
+ * @param grid 目标网格
+ * @param panel 拖拽面板
+ * 
+  0. 如果目标网格已存在当前面板，则无需再处理
+  1. 从旧的父级移除面板，刷新旧父级
+  2. 向目标网格添加面板
+ */
+function dragDropToGrid(grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) {
+
+  const gridInstance = getRootGrid(grid);
+  if (gridInstance.hasChild(panel))
+    return;
+
+  const parent = panel.parentGroup;
+  if (parent)
+    removePanelInternal(panel);
+
+  panel.parentGrid = grid;
+
+  if (!props.layoutConfig.onGridFirstDrop) {
+    gridInstance.addChild(panel);
+    return;
   }
+
+  const presolve = props.layoutConfig.onGridFirstDrop(grid, panel);
+  if (presolve)
+    gridInstance.addChild(presolve ?? panel);
 }
-//移除面板
+
+/**
+ * 拖放处理主函数: 拖拽至面板上
+ * @param reference 参考面板
+ * @param referencePosition 拖放面板相对于参考面板的位置
+ * @param panel 拖放面板
+ * @param dropToTabHeader 是否是拖放至TAB头上
+ * 
+ * 0. 原父级和目标父级一致 》不移除/调整顺序 》直接返回
+ * 1. 原父级目标父级不一致 》移除
+ * 2. 放置面板 》
+ *    2.1 侧边栏(顶级) 》在侧边栏中添加子页
+ *    2.2 TAB头 》在TAB中添加子页
+ *    2.3 组内
+ *      2.3.1 》单一 》分隔当前组：
+ *          新加一个空容器（拷贝自原组）
+ *          当前组和新页作为此组的子级，
+ *          新组替换当前组
+ *      2.3.2 》多个 》在组中添加子页
+ *    2.4 空板 》成为空板的子级
+ */
+function dragDropToPanelNear(reference: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal, dropToTabHeader: boolean) {
+
+  const oldParent = panel.parentGroup;
+
+  //0. 原父级和目标父级一致 》不移除/调整顺序 》直接返回
+  if (oldParent && oldParent === reference.parentGroup) {
+    oldParent.removeChild(panel);
+    oldParent.addChild(panel, reference.getIndexInParent() + (referencePosition === 'drag-over-next' ? 1 : 0))
+    return;
+  }
+
+  //1. 原父级目标父级不一致 》移除
+  if (oldParent)
+    removePanelInternal(panel);
+
+  //2. 放置面板
+  
+}
+
+/**
+ * 移除面板处理函数
+ * @param panel 
+ * 
+ * 移除类型 》
+    0. 顶级：直接移除
+    1. 侧边栏/标题栏：从侧边栏子级移除
+    2. TAB头：从TAB子级移除，触发TAB组【移除重构】
+    3. 组：从组中移除，触发普通组【移除重构】
+      移除重构 》
+        普通组 》
+          当前面板是顶级 》
+            并且子级数量0个 》
+              如果设置不收缩，则保持，通知客户；
+              如果设置收缩，则自动收缩顶级；
+            并且子级数量等于1个 》
+              删除自己，子级替代自己
+          当前面板非顶级 》
+            普通组子级如果只剩一个，则子级替换自己的位置
+        TAB组 》
+          如果设置不收缩，则保持TAB，通知客户；
+          如果设置收缩且TAB子级数量为0，且处于顶级，则自动收缩顶级；
+        其他情况不处理
+ */
 function removePanelInternal(panel: CodeLayoutPanelInternal) {
     
-  const parent = panel.parentGroup;
-
-  if (!parent)
+  if (panel.parentGrid === 'none')
     throw new Error(`Panel ${panel.name} already removed from any group !`);
 
-  parent.removeChild(panel);
-
-  //删除面板后将会进行布局
-  relayoutAfterRemovePanel(parent, panel);
+  const parent = panel.parentGroup;
+  if (parent) {
+    const isInTab = panel.getIsInTab();
+    parent.removeChild(panel);
+    //删除面板后将会进行布局
+    relayoutAfterRemovePanel(parent, isInTab, panel);
+  } else {
+    //没有父级，直接从顶级移除
+    const parentGrid = getRootGrid(panel.parentGrid);
+    parentGrid.removeChild(panel);
+  }
 
   panel.size = 0;
   panel.parentGrid = 'none';
+}
+//移除重构: 移除面板后进行布局
+function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boolean, panel: CodeLayoutPanelInternal) {
+    
+  //TAB组
+  if (isInTab) {
+    if (group.noAutoShink) {
+      //如果设置不收缩，则保持TAB，通知客户
+      props.layoutConfig.onNoAutoShinkTabGroup?.(group);
+    } else if (group.children.length === 0 && group.getIsTopGroup()) {
+      //如果TAB子级数量为0，且处于顶级，则自动收缩顶级
+      getRootGrid(group.parentGrid).collapse();
+    }
+    return;
+  }
+
+  //普通组
+  if (group.getIsTopGroup()) {
+    if (group.children.length === 0) {
+      if (group.noAutoShink) {
+        //如果设置不收缩，则保持，通知客户
+        props.layoutConfig.onNoAutoShinkNormalGroup?.(group);
+      } else {
+        //如果子级数量为0，则自动收缩顶级
+        getRootGrid(group.parentGrid).collapse();
+      }
+      return;
+    }
+    else if (group.children.length === 1) {
+      //当前面板子级数量1个，删除自己，子级替代自己
+      const gridInstance = getRootGrid(group.parentGrid);
+      const firstChildren = group.children[0];
+      firstChildren.open = true;
+      gridInstance.replaceChild(group, firstChildren);
+      return;
+    }
+  }
+  else if (group.children.length === 1) {
+    //当前面板子级数量少于1个，删除自己，子级替代自己
+    const firstChildren = group.children[0];
+    firstChildren.open = true;
+    group.parentGroup!.replaceChild(group, firstChildren);
+    return;
+  }
+
+  //普通组移除状态下，无需其他操作，通知面板进行布局
+  panelInstances.get(group.name)?.relayoutAllWithRemovePanel(panel);
 }
 
 //处理函数
