@@ -30,10 +30,16 @@ Codelayout
 🆗 子面板组拖拽调整大小 
 🆗 面板移动拖
 🆗 面板滚动条容器
-面板拖放
-每个TAB的收缩隐藏
+🆗 面板拖放
 基础框架拖拽细节
-ActionItem tooltip
+每个区域的自动收缩隐藏
+顶部区域
+快速调节大布局四个按钮
+调节大布局弹出区域
+面板的右键菜单和隐藏控制
+ActivityBar位置
+primarySideBar位置切换
+TAB和ActionItem的tooltip
 主区域TAB
 主区域拖拽切分
 
