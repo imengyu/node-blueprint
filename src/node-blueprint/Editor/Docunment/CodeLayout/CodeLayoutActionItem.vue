@@ -71,7 +71,8 @@ function handleDrop(e: DragEvent) {
   const dropPanel = getDropPanel(e, context);
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
-    context.dragDropToPanelNear(item.value, dragOverState.value, dropPanel, false);
+    e.stopPropagation();
+    context.dragDropToPanelNear(item.value, dragOverState.value, dropPanel, 'activiy-bar');
   }
   resetDragOverState();
 }

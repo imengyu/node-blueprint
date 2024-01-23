@@ -1,5 +1,15 @@
 <template>
-  <div ref="container" class="code-layout-group-dragger-host">
+  <div 
+    ref="container" 
+    :class="[
+      'code-layout-group-dragger-host', 
+      dragEnterState ? 'drag-enter' : '',
+    ]"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @dragenter="handleDragEnter"
+    @drop="handleDrop"
+  >
     <CodeLayoutPanelRender
       v-for="(panel, key) in group.children" :key="key"
       v-model:open="panel.open"
@@ -21,15 +31,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType, onMounted, nextTick, inject, watch, onBeforeUnmount } from 'vue';
-import type { CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout';
+import { ref, type PropType, onMounted, nextTick, inject, watch, toRefs, onBeforeUnmount } from 'vue';
+import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector } from './Composeable/DragDrop';
 
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
 const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
+const context = inject('codeLayoutContext') as CodeLayoutContext;
 
 const props = defineProps({
   group: {
@@ -46,7 +58,7 @@ const props = defineProps({
     default: true,
   },
 });
-
+const { group, horizontal } = toRefs(props);
 
 function getPanelMinSize(minSize: number|undefined) {
   if (!minSize)
@@ -309,10 +321,22 @@ function flushDraggable() {
       break;
   }
 }
-
-function getAvgAllocSize() {
+function flushLayoutSizeCounter() {
   if (!container.value)
     return 0;
+  const headerSize = layoutConfig.panelHeaderHeight;
+  let counter = 0;
+  for (let i = 0; i < props.group.children.length; i++) {
+    const panel = props.group.children[i];
+    counter += panel.open ? panel.size : headerSize;
+  }
+  group.value.lastLayoutSizeCounter = counter;
+}
+
+//获取当前容器可分配的大小
+function getCanAllocSize() {
+  if (!container.value)
+    throw new Error('No container');
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
   const headerSize = layoutConfig.panelHeaderHeight;
 
@@ -326,8 +350,17 @@ function getAvgAllocSize() {
     else
       canAllocSize -= headerSize;
   });
-
-  return canAllocSize / notAllocSpaceAndOpenCount;
+  return { 
+    canAllocSize: Math.max(canAllocSize, 0), 
+    notAllocSpaceAndOpenCount,
+  };
+}
+//获取面板平均分配大小，用于初始化
+function getAvgAllocSize() {
+  const { canAllocSize, notAllocSpaceAndOpenCount } = getCanAllocSize();
+  return notAllocSpaceAndOpenCount > 0 ?
+    canAllocSize / notAllocSpaceAndOpenCount
+    : 0;
 }
 //强制重新布局
 function relayoutAll() {
@@ -341,6 +374,10 @@ function relayoutAll() {
         getPanelMinSize(panel.minSize);
   });
 
+  //调用大小更改重新布局方法
+  relayoutAllWhenSizeChange();
+
+  flushLayoutSizeCounter();
   flushDraggable();
 }
 
@@ -383,16 +420,17 @@ function relayoutAllWithResizedSize(resizedContainerSize: number) {
     if (resizeLarge && resizedContainerSize >= 0)
       break;
   }
+
+  flushLayoutSizeCounter();
 }
 //当容器的大小更改后，重新布局
 function relayoutAllWhenSizeChange() {
   if (!container.value)
     return;
-  const group = props.group;
 
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
-  if (group.lastRelayoutSize === 0) {
-    group.lastRelayoutSize = containerSize;
+  if (group.value.lastRelayoutSize === 0) {
+    group.value.lastRelayoutSize = containerSize;
     return;
   }
 
@@ -402,19 +440,38 @@ function relayoutAllWhenSizeChange() {
 
   relayoutAllWithResizedSize(resizedContainerSize);
   
-  group.lastRelayoutSize = containerSize;
+  group.value.lastRelayoutSize = containerSize;
 }
 //当容器添加时，重新布局已存在面板
-function relayoutAllWithNewPanel(panel: CodeLayoutPanelInternal) {
-  if (panel.size <= 0) {
-    const allocSize = getAvgAllocSize();
-    panel.size = panel.open ? 
-      Math.max(allocSize, getPanelMinSize(panel.minSize)) : 
-      getPanelMinSize(panel.minSize);
+function relayoutAllWithNewPanel(panels: CodeLayoutPanelInternal[]) {
+  const headerHeight = layoutConfig.panelHeaderHeight;
+  let resizedSize = 0;
+
+  for (const panel of panels) {  
+    //如果面板没有分配大小，则为其分配大小
+    const avgAllocSize = getAvgAllocSize();
+    if (panel.size <= 0) {
+      const { canAllocSize } = getCanAllocSize();
+      panel.size = panel.open ? 
+        Math.max(Math.min(canAllocSize, avgAllocSize), getPanelMinSize(panel.minSize)) : 
+        getPanelMinSize(panel.minSize);
+
+      //分配大小后计算超出部分大小
+      if (panel.open && panel.size > canAllocSize)
+        resizedSize += panel.size - canAllocSize;
+      else if (!panel.open && headerHeight > canAllocSize)
+        resizedSize += headerHeight - canAllocSize;
+    }
+    else {
+      //否则增加要调整的大小
+      resizedSize += panel.open ? panel.size: headerHeight;
+    }
   }
 
-  relayoutAllWithResizedSize(panel.open ? panel.size: layoutConfig.panelHeaderHeight);
+  //进行其他面板的收缩操作
+  relayoutAllWithResizedSize(resizedSize);
   flushDraggable();
+  flushLayoutSizeCounter();
 } 
 //当容器移除时，重新布局已存在面板
 function relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
@@ -437,20 +494,54 @@ const {
 
 //钩子函数
 function loadPanelFunctions() {
-  const group = props.group;
-  group.listenLateAction('notifyRelayout', () => relayoutAll());
-  group.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
-  group.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
-  group.listenLateAction('relayoutAllWithRemovePanel', relayoutAllWithRemovePanel);
+  group.value.listenLateAction('notifyRelayout', () => relayoutAll());
+  group.value.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
+  group.value.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
+  group.value.listenLateAction('relayoutAllWithRemovePanel', relayoutAllWithRemovePanel);
 }
-function unloadPanelFunctions(group: CodeLayoutPanelInternal) {
-  group.unlistenAllLateAction();
+function unloadPanelFunctions(oldValue: CodeLayoutPanelInternal) {
+  oldValue.unlistenAllLateAction();
 }
 
 watch(() => props.group, (newValue, oldValue) => {
   unloadPanelFunctions(oldValue);
   loadPanelFunctions()
 });
+
+//当前面板组空白区域的拖拽函数
+
+const {
+  dragEnterState,
+  dragOverState,
+  handleDragOver,
+  handleDragEnter,
+  handleDragLeave,
+  resetDragOverState,
+} = usePanelDragOverDetector(
+  container, group, horizontal, context, 
+  () => {},
+  (dragPanel) => {
+    return (
+      group.value.lastLayoutSizeCounter < group.value.lastRelayoutSize //仅容器有空白区域时才有效
+      && checkDropPanelDefault(dragPanel, group.value, dragOverState)
+    );
+  }
+);
+
+function handleDrop(e: DragEvent) {
+  const dropPanel = getDropPanel(e, context);
+  if (dropPanel && dragOverState.value) {
+    e.preventDefault();
+    e.stopPropagation();
+    context.dragDropToPanelNear(
+      group.value.getLastChildOrSelf(), 
+      'drag-over-next', 
+      dropPanel, 
+      'empty'
+    );
+  }
+  resetDragOverState();
+}
 
 onMounted(() => {
   loadPanelFunctions();
@@ -478,5 +569,12 @@ onBeforeUnmount(() => {
   right: 0;
   top: 0;
   bottom: 0;
+
+  &.drag-enter {
+    * {
+      pointer-events: none;
+    }
+    background-color: var(--code-layout-color-background-mask-light);
+  }
 }
 </style>

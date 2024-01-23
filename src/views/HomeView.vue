@@ -169,7 +169,6 @@ onMounted(() => {
       title: 'Panel51',
       tooltip: 'Panel51',
       name: 'group3.panel5.panel1',
-      startOpen: true,
       iconSmall: () => h(IconSearch),
       actions: [
         { 
@@ -183,7 +182,6 @@ onMounted(() => {
       title: 'Panel5.2',
       tooltip: 'Panel5.2',
       name: 'group3.panel5.panel2',
-      startOpen: true,
       iconSmall: () => h(IconFile),
     }, panel5);
 

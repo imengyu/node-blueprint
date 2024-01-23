@@ -13,8 +13,8 @@
       dragOverState,
     ]"
     :style="{
-      width: horizontal && panelHeight ? `${panelHeight}px` : undefined,
-      height: !horizontal && panelHeight ? `${panelHeight}px` : undefined,
+      width: horizontal && panelHeight ? `${panelHeight}px` : '100%',
+      height: !horizontal && panelHeight ? `${panelHeight}px` : '100%',
     }"
     tabindex="0"
     @dragover="handleDragOver"
@@ -51,8 +51,8 @@
       class="content"
       :draggable="false"
       :style="{ 
-        width: !open && horizontal ? `calc(100% - ${layoutConfig.panelHeaderHeight}px)` : '',
-        height: open || !horizontal ? `calc(100% - ${layoutConfig.panelHeaderHeight}px)` : '',
+        width: !open && horizontal ? contentHeight : '',
+        height: open || !horizontal ? contentHeight : '',
       }"
     >
       <slot :panel="panel" :open="open" />
@@ -72,7 +72,7 @@ import IconArrow from './Icons/IconArrow.vue';
 const emit = defineEmits([ 
   'update:open', 'update:resizeDragging',
   'toggleHandler',
-])
+]);
 
 const props = defineProps({
   panel: {
@@ -126,6 +126,12 @@ const panelHeight = computed(() => {
   return props.panel.size;
 });
 
+const contentHeight = computed(() => {
+  if (!props.alone)
+    return `calc(100% - ${layoutConfig.panelHeaderHeight}px)`;
+  return `100%`;
+}); 
+
 const { horizontal, panel } = toRefs(props);
 const element = ref<HTMLElement>();
 const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
@@ -156,7 +162,8 @@ function handleDrop(e: DragEvent) {
   const dropPanel = getDropPanel(e, context);
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
-    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel, false);
+    e.stopPropagation();
+    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel, 'normal');
   }
   resetDragOverState();
 }
@@ -290,7 +297,7 @@ const resizeDragHandler = createMouseDragHandler({
       height: 2px;
     } 
     &.horizontal.closed::before {
-      left: unset;
+      right: unset;
       height: unset;
       width: 1px;
       bottom: 0;

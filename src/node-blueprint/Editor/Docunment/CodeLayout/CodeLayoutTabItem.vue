@@ -17,7 +17,7 @@
   >
     <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
     <span v-if="tabStyle == 'icon'" class="icon">
-      <CodeLayoutVNodeStringRender :content="panel.iconSmall" />
+      <CodeLayoutVNodeStringRender :content="panel.iconSmall || panel.title" />
     </span>
     <span v-if="panel.badge" class="badge">
       <CodeLayoutVNodeStringRender :content="panel.badge" />
@@ -76,7 +76,8 @@ function handleDrop(e: DragEvent) {
   const dropPanel = getDropPanel(e, context);
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
-    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel, true);
+    e.stopPropagation();
+    context.dragDropToPanelNear(panel.value, dragOverState.value, dropPanel, 'tab-header');
   }
   resetDragOverState();
 }

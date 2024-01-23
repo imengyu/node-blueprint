@@ -17,7 +17,7 @@
           v-for="(panelGroup, key) in panels.primary.children"
           :key="key"
           :item="(panelGroup as CodeLayoutPanelInternal)"
-          :active="panelGroup === activityBarActive && primarySideBar"
+          :active="panelGroup === panels.primary.activePanel && primarySideBar"
           @active-item="onActivityBarAcitve(panelGroup as CodeLayoutPanelInternal)"
         />
       </div>
@@ -31,6 +31,7 @@
           v-for="(panelGroup, key) in panels.primary.children"
           :key="key"
           :group="(panelGroup as CodeLayoutPanelInternal)"
+          :show="panelGroup === panels.primary.activePanel && primarySideBar"
           :horizontal="false"
           :primary="true"
         >
@@ -115,20 +116,19 @@ const panels = ref<{
   bottom: CodeLayoutGridInternal,
   center: CodeLayoutGridInternal,
 }>({
-  primary: new CodeLayoutGridInternal((open) => {
+  primary: new CodeLayoutGridInternal('primarySideBar', (open) => {
     emit('update:primarySideBar', open);
   }),
-  secondary: new CodeLayoutGridInternal((open) => {
+  secondary: new CodeLayoutGridInternal('secondarySideBar', (open) => {
     emit('update:secondarySideBar', open);
   }),
-  bottom: new CodeLayoutGridInternal((open) => {
+  bottom: new CodeLayoutGridInternal('bottomPanel', (open) => {
     emit('update:bottomPanel', open);
   }),
-  center: new CodeLayoutGridInternal(() => {}),
+  center: new CodeLayoutGridInternal('centerArea', () => {}),
 });
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
-const activityBarActive = ref<CodeLayoutPanelInternal>();
 
 const emit = defineEmits([
   'update:primarySideBar',
@@ -182,139 +182,8 @@ const codeLayoutInstance : CodeLayoutInstance = {
   getPanelByName,
 };
 const codeLayoutContext : CodeLayoutContext = {
-  dragDropToGrid(grid, panel) {
-    /*
-    拖放至基础网格根节点
-    0. 如果目标网格已存在当前面板，则无需再处理
-    1. 从旧的父级移除面板，刷新旧父级
-    2. 向目标网格添加面板
-    */
-
-    const gridInstance = getRootGrid(grid);
-    if (gridInstance.hasChild(panel))
-      return;
-
-    const parent = panel.parentGroup;
-    if (parent)
-      removePanelInternal(panel);
-
-    panel.parentGrid = grid;
-
-    if (!props.layoutConfig.onGridFirstDrop) {
-      gridInstance.addChild(panel);
-      return;
-    }
-
-    const presolve = props.layoutConfig.onGridFirstDrop(grid, panel);
-    if (presolve)
-      gridInstance.addChild(presolve ?? panel);
-  },
-  dragDropToPanelNear(reference, referencePosition, panel, dropToTabHeader) {
-    if (reference === panel)
-      throw new Error("Reference panel can not be same with dropping panel!");
-
-
-
-    //拖放至面板参考位置
-    /**
-     * 0. 从源父级删除
-     * 1. 参考面板是顶级面板，或者参考面板的上一级是不可合并的面板(自己相当于顶级)
-     *    1.1 分割自己
-     *    1.2 把自己和拖放面板合并为新的组，并且替代自己
-     * 2. 不是顶级面板
-     *    2.1 插入至指定位置并且重新布局
-     * 
-     */
-    const parentGroup = reference.parentGroup;
-    const noParentGroup = !parentGroup;
-      
-    //拖拽到一个不可合并的面板(TAB)，则直接加入这个面板的子集
-    if (noParentGroup && reference.noAutoShink) {
-
-      removePanelInternal(panel);
-      reference.addChild(panel);
-      reference.activePanel = panel;
-      panel.size = 0;
-
-      //新插入一个面板，现在要重新调整其中的大小
-      reference.notifyRelayout();
-      return;
-    }
-
-    //当前是顶级面板，并且未指定方向，等同于直接插入面板到顶级
-    if (noParentGroup) {
-      this.dragDropToGrid(reference.parentGrid, panel);
-      return;
-    }
-
-    //当前是顶级面板，或者父级是不可合并的面板(相当于顶级)。
-    //有方向，这意味着需要分割当前面板并且插入
-    //拖拽到TAB上时不分割
-    if (parentGroup.noAutoShink && !dropToTabHeader) {
-
-      //从源数组删掉
-      removePanelInternal(panel);
-
-      const newGroup = new CodeLayoutPanelInternal();
-      Object.assign(newGroup, {
-        ...reference,
-        name: reference.name + '.clone' + Math.floor(Math.random() * 10),
-        children: []
-      });
-      newGroup.addChild(reference);
-
-      switch (referencePosition) {
-        case 'drag-over-prev':
-          newGroup.addChild(panel, 0);
-          break;
-        case 'drag-over-next':
-          newGroup.addChild(panel);
-          break;
-      }
-      if (parentGroup?.getIsTabContainer()) {
-        //替换至当前级
-        parentGroup.replaceChild(reference, newGroup);
-        parentGroup.activePanel =  newGroup;
-      }
-      else
-        //替换至顶级
-        getRootGrid(reference.parentGrid).replaceChild(reference, newGroup);
-
-      //新插入一个面板，现在要重新调整其中的大小
-      newGroup.notifyRelayout();
-    }
-    //非顶级面板, 直接插入即可
-    else {
-
-      //仅面板不在当前子级时才从旧面板删除，否则是暂时移开不触发布局
-      if (!parentGroup.children.includes(panel)) {
-        removePanelInternal(panel);
-      } else {
-        parentGroup.removeChild(panel);
-      }
-
-      //插入至指定位置并且重新布局
-      const insetIndex = parentGroup.children.indexOf(reference);
-      switch (referencePosition) {
-        case 'drag-over-prev':
-          parentGroup.addChild(panel, insetIndex);
-          break;
-        case 'drag-over-next':
-          parentGroup.addChild(panel, insetIndex + 1);
-          break;
-      }
-
-      if (dropToTabHeader) {
-        //拖拽到TAB上，强制将当前面板大小归零
-        panel.size = 0;
-      } else {
-        //新插入一个面板，现在要重新调整其中的大小
-        parentGroup.relayoutAllWithNewPanel(panel);
-      }
-      parentGroup.activePanel = panel;
-    }
-      
-  },
+  dragDropToGrid,
+  dragDropToPanelNear,
   instance: codeLayoutInstance,
 };
 
@@ -356,36 +225,171 @@ function dragDropToGrid(grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) {
  * @param panel 拖放面板
  * @param dropToTabHeader 是否是拖放至TAB头上
  * 
- * 0. 原父级和目标父级一致 》不移除/调整顺序 》直接返回
+ * 0. 原父级和目标父级一致 且 两个的父级容器都不是tab 
+ *    》不移除/调整顺序 
+ *    》直接返回
  * 1. 原父级目标父级不一致 》移除
  * 2. 放置面板 》
- *    2.1 侧边栏(顶级) 》在侧边栏中添加子页
- *    2.2 TAB头 》在TAB中添加子页
+ *    2.1 TAB头 》在TAB中添加子页
+ *      2.1.1 TAB页自己 》在TAB中添加子页
+ *    2.2 侧边栏(顶级) 》在侧边栏中添加子页
  *    2.3 组内
  *      2.3.1 》单一 》分隔当前组：
  *          新加一个空容器（拷贝自原组）
  *          当前组和新页作为此组的子级，
  *          新组替换当前组
  *      2.3.2 》多个 》在组中添加子页
- *    2.4 空板 》成为空板的子级
+ *    2.4 空板 》成为空板的子级 (dragDropToGrid)
  */
-function dragDropToPanelNear(reference: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal, dropToTabHeader: boolean) {
+function dragDropToPanelNear(
+  reference: CodeLayoutPanelInternal,
+  referencePosition: CodeLayoutDragDropReferencePosition, 
+  panel: CodeLayoutPanelInternal, 
+  dropTo: 'normal'|'empty'|'tab-header'|'activiy-bar'
+) {
 
+  const dropToTabHeader = dropTo === 'tab-header';
+  const dropToActiviyBar = dropTo === 'activiy-bar';
+  const dropToEmpty = dropTo === 'empty';
   const oldParent = panel.parentGroup;
 
-  //0. 原父级和目标父级一致 》不移除/调整顺序 》直接返回
-  if (oldParent && oldParent === reference.parentGroup) {
+  if (reference === panel)
+    throw new Error('Can not drop to self, panel : ' + panel.name);
+
+  console.log('dragDropToPanelNear');
+
+  //0.1 原父级和目标父级一致(普通容器)
+  if (
+    oldParent && oldParent === reference.parentGroup
+    && !(oldParent.getIsTabContainer() && reference.parentGroup.getIsTabContainer())
+  ) {
     oldParent.removeChild(panel);
     oldParent.addChild(panel, reference.getIndexInParent() + (referencePosition === 'drag-over-next' ? 1 : 0))
+    oldParent.activePanel = panel;
+    return;
+  }
+  //0.2 原父级和目标父级一致(顶级容器)
+  if (!oldParent && !reference.parentGroup && reference.parentGrid === panel.parentGrid && dropToTabHeader) {
+    const parentGrid = getRootGrid(panel.parentGrid);
+    parentGrid.removeChild(panel);
+    parentGrid.addChild(panel, reference.getIndexInParent() + (referencePosition === 'drag-over-next' ? 1 : 0))
+    parentGrid.activePanel = panel;
     return;
   }
 
   //1. 原父级目标父级不一致 》移除
-  if (oldParent)
-    removePanelInternal(panel);
+  removePanelInternal(panel);
 
   //2. 放置面板
-  
+
+  //2.1 TAB头 》在TAB中添加子页
+  if (reference.parentGroup?.getIsTabContainer() && dropToActiviyBar) {
+    reference.parentGroup.addChild(panel);
+    reference.parentGroup.notifyRelayout();
+    reference.parentGroup.activePanel = panel;
+    panel.size = 0;
+    panel.notifyRelayout();
+    return;
+  }
+  //2.1.1 TAB页自己 》在TAB中添加子页
+  if (reference.getIsTabContainer()) {
+    reference.addChild(panel);
+    reference.notifyRelayout();
+    reference.activePanel = panel;
+    panel.size = 0;
+    panel.notifyRelayout();
+    return;
+  }
+
+  //2.2 侧边栏(顶级) 》在侧边栏中添加子页
+  if (reference.getIsTopGroup() && dropToEmpty) {
+    const grid = getRootGrid(reference.parentGrid);
+    grid.addChild(panel);
+    panel.notifyRelayout();
+
+    //侧边栏拖拽后自动激活
+    if (reference.parentGrid === 'primarySideBar')
+      grid.activePanel = panel;
+    return;
+  }
+
+  const newParent = reference.getParent();
+  if (!newParent) {
+    //2.4 空板 》成为空板的子级 (dragDropToGrid)
+    return dragDropToGrid(reference.parentGrid, panel);
+  }
+
+  const flatChildren = panel.getFlatternChildOrSelf();
+
+  //2.3 组内
+  if (
+    newParent.children.length === 1
+    //当拖拽至只有一个子级的TAB页上时，reference 就是需要分割的面板
+    || (!dropToTabHeader && newParent instanceof CodeLayoutPanelInternal && newParent.getIsTabContainer())
+    //当拖拽至只有一个子级的顶级页上时，reference 就是需要分割的面板
+    || (!dropToActiviyBar && newParent instanceof CodeLayoutGridInternal)  
+  ) {
+    //2.3.1
+
+    const newGroup = new CodeLayoutPanelInternal(getRootGrid);
+    Object.assign(newGroup, {
+      ...reference,
+      name: reference.name + '.clone' + Math.floor(Math.random() * 10),
+      children: []
+    });
+    reference.open = true;
+    newGroup.addChild(reference);
+    panelInstances.set(newGroup.name, newGroup);
+
+    switch (referencePosition) {
+      case 'drag-over-prev':
+        newGroup.addChilds(flatChildren, 0);
+        break;
+      case 'drag-over-next':
+        newGroup.addChilds(flatChildren);
+        break;
+    }
+
+    //替换至当前级
+    newParent.replaceChild(reference, newGroup);
+    newParent.activePanel = newGroup;
+
+    for (const child of newGroup.children) {
+      child.size = 0;
+      child.open = true;
+      child.notifyRelayout();
+    }
+
+    //重新布局面板
+    newGroup.notifyRelayout();
+  }
+  else {
+    //2.3.2
+
+    //插入至指定位置并且重新布局
+    const insetIndex = newParent.children.indexOf(reference);
+    switch (referencePosition) {
+      case 'drag-over-prev':
+        newParent.addChilds(flatChildren, insetIndex);
+        break;
+      case 'drag-over-next':
+        newParent.addChilds(flatChildren, insetIndex + 1);
+        break;
+    }
+
+    //强制将当前面板大小归零，以让容器重新分配大小
+    for (const flatPanel of flatChildren)
+      flatPanel.size = 0;
+
+    if (!dropToTabHeader) {
+      //不是拖拽到TAB上，新插入面板，现在要重新调整其中的大小
+      if (newParent instanceof CodeLayoutPanelInternal)
+        newParent.relayoutAllWithNewPanel(flatChildren);
+    }
+      
+    panel.notifyRelayout();
+    newParent.activePanel = panel;
+  }
 }
 
 /**
@@ -464,7 +468,9 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
       const gridInstance = getRootGrid(group.parentGrid);
       const firstChildren = group.children[0];
       firstChildren.open = true;
+      firstChildren.size = 0;//只有一个容器后直接占满容器
       gridInstance.replaceChild(group, firstChildren);
+      panelInstances.delete(group.name);
       return;
     }
   }
@@ -472,7 +478,9 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
     //当前面板子级数量少于1个，删除自己，子级替代自己
     const firstChildren = group.children[0];
     firstChildren.open = true;
+    firstChildren.size = 0;//只有一个容器后直接占满容器
     group.parentGroup!.replaceChild(group, firstChildren);
+    panelInstances.delete(group.name);
     return;
   }
 
@@ -486,7 +494,7 @@ provide('layoutConfig', props.layoutConfig);
 provide('codeLayoutContext', codeLayoutContext);
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
-  if (activityBarActive.value === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
+  if (panels.value.primary.activePanel === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
     //如果点击当前条目，则切换侧边栏
     emit('update:primarySideBar', !props.primarySideBar);
   } else {
@@ -496,7 +504,7 @@ function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
     //取消激活其他的面板
     panels.value.primary.children.forEach((p) => p.open = false);
     panelGroup.open = true;
-    activityBarActive.value = panelGroup;
+    panels.value.primary.activePanel = panelGroup;
   }
 }
 function onPrimarySideBarSwitch(on: boolean) {
@@ -504,20 +512,20 @@ function onPrimarySideBarSwitch(on: boolean) {
   if (!on) 
     panels.value.primary.children.forEach((p) => p.open = false);
   //当侧边栏重新打开时，需要重新显示激活面板
-  if (on &&  activityBarActive.value && !panels.value.primary.children.find((p) => p.open))
-    activityBarActive.value.open = true;
+  if (on && panels.value.primary.activePanel && !panels.value.primary.children.find((p) => p.open))
+    panels.value.primary.activePanel.open = true;
   emit('update:primarySideBar', on);
 }
 
 
 //公开控制接口
 
-function getRootGrid(target: CodeLayoutGrid) {
+function getRootGrid(target: CodeLayoutGrid) : CodeLayoutGridInternal {
   switch (target) {
-    case 'primarySideBar': return panels.value.primary;
-    case 'secondarySideBar': return panels.value.secondary;
-    case 'bottomPanel': return panels.value.bottom;
-    case 'centerArea': return panels.value.center;
+    case 'primarySideBar': return panels.value.primary as CodeLayoutGridInternal;
+    case 'secondarySideBar': return panels.value.secondary as CodeLayoutGridInternal;
+    case 'bottomPanel': return panels.value.bottom as CodeLayoutGridInternal;
+    case 'centerArea': return panels.value.center as CodeLayoutGridInternal;
   }
   throw new Error(`Unknown grid ${target}`);
 }
@@ -565,7 +573,7 @@ function activeGroup(panel: CodeLayoutPanel) {
     switch (panelInternal.parentGrid) {
       case 'primarySideBar': {
         panels.value.primary.children.forEach((p) => p.open = false); 
-        activityBarActive.value = panelInternal;
+        panels.value.primary.activePanel = panelInternal;
         break;
       }
       case 'secondarySideBar': panels.value.secondary.children.forEach((p) => p.open = false); break;
@@ -584,7 +592,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const groupResult = reactive(new CodeLayoutPanelInternal());
+  const groupResult = reactive(new CodeLayoutPanelInternal(getRootGrid));
   Object.assign(groupResult, panel);
   groupResult.open = panel.startOpen ?? false;
   groupResult.size = panel.size ?? 0;
@@ -606,14 +614,6 @@ function removeGroup(panel: CodeLayoutPanel) {
   gridInstance.removeChild(panelInternal);
   panelInternal.parentGrid = 'none';
 
-  //当删除的面板是侧边栏当前激活的面板，则重置并激活其他面板
-  if (panelInternal === activityBarActive.value) {
-    if (panels.value.primary.children.length > 0)
-      activeGroup(panels.value.primary.children[0]);
-    else 
-      activityBarActive.value = undefined;
-  }
-
   //当目标网格已经没有面板了，发出通知
   if (gridInstance.children.length === 0) 
     props.layoutConfig.onGridEmpty?.(grid);
@@ -631,7 +631,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const panelResult = reactive(new CodeLayoutPanelInternal());
+  const panelResult = reactive(new CodeLayoutPanelInternal(getRootGrid));
   Object.assign(panelResult, panel);
   panelResult.open = panel.startOpen ?? false;
   panelResult.size = panel.size ?? 0;
@@ -726,7 +726,11 @@ onBeforeUnmount(() => {
         color: var(--code-layout-color-text-gray);
         cursor: pointer;
 
+        span {
+          pointer-events: none;
+        }
         svg {
+          pointer-events: none;
           fill: var(--code-layout-color-text-gray);
         }
 
@@ -752,6 +756,9 @@ onBeforeUnmount(() => {
           }
         }
 
+        &.drag-enter * {
+          pointer-events: none;
+        }
         &.drag-over-prev, &.drag-over-next {
           &::before {
             position: absolute;

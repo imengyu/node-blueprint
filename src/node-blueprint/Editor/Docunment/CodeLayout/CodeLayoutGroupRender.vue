@@ -1,6 +1,6 @@
 <template>
   <div 
-    v-if="group.open" 
+    v-if="show" 
     :class="[
       'code-layout-group',
       primary ? 'primary' : '',
@@ -105,6 +105,10 @@ const props = defineProps({
     required: true,
   },
   horizontal: {
+    type: Boolean,
+    default: true,
+  },
+  show: {
     type: Boolean,
     default: true,
   },

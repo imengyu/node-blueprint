@@ -16,7 +16,8 @@ export function checkDropPanelDefault(
   dragOverState: Ref<CodeLayoutDragDropReferencePosition>,
 ) {
   return (
-    (!dragPanel.accept || dragPanel.accept.includes(referencePanel.parentGrid))
+    dragPanel !== referencePanel
+    && (!dragPanel.accept || dragPanel.accept.includes(referencePanel.parentGrid))
     && (!dragPanel.preDropCheck || dragPanel.preDropCheck(dragPanel, referencePanel.parentGrid, referencePanel, dragOverState.value))
   );
 }
@@ -69,16 +70,19 @@ export function usePanelDragOverDetector(
       return;
 
     delayLeaveTimer.stop();
+      
 
     //检查面板，必须存在面板，并且不能是自己或者自己的父级
     const panel = getCurrentDragPanel();
     if (
-      panel && selfPanel 
-      && horizontal && panel !== selfPanel.value 
+      panel
+      && horizontal
+      && selfPanel && panel !== selfPanel.value 
       && !panel.children.includes(selfPanel.value)
       && (!dragoverChecking || dragoverChecking(panel))
     ) {
       e.preventDefault();
+      e.stopPropagation();
       e.dataTransfer.dropEffect = 'copy';
   
       const pos = (horizontal.value ? e.x : e.y) - currentDropBaseScreenPos;
@@ -86,11 +90,9 @@ export function usePanelDragOverDetector(
         container.value!.offsetWidth : 
         container.value!.offsetHeight) / 2
       ) ? 'drag-over-next' : 'drag-over-prev';
-    } else if (panel) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
     } else {
       dragOverState.value = '';
+      e.stopPropagation();
       e.dataTransfer.dropEffect = 'none';
     }
   }
