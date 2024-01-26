@@ -1,6 +1,18 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div ref="container" class="code-layout-root">
+    <div v-if="config.titleBar" class="code-layout-title-bar">
+      <div>
+        <slot name="titleBarIcon" />
+        <slot name="titleBarMenu" />
+      </div>
+      <div>
+        <slot name="titleBarCenter" />
+      </div>
+      <div>
+        <slot name="titleBarRight" />
+      </div>
+    </div>
     <!--root-->
     <div class="code-layout-activity">
       <!--activity bar-->

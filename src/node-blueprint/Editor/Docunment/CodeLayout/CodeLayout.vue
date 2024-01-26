@@ -11,6 +11,19 @@
     @update:primary-side-bar="onPrimarySideBarSwitch"
     @update:secondary-side-bar="(v) => $emit('update:secondarySideBar', v)"
   >
+    <template #titleBarIcon>
+      <slot name="titleBarIcon" />
+    </template>
+    <template #titleBarMenu>
+      <slot name="titleBarMenu" />
+    </template>
+    <template #titleBarCenter>
+      <slot name="titleBarCenter" />
+    </template>
+    <template #titleBarRight>
+
+      <slot name="titleBarRight" />
+    </template>
     <template #activityBar>
       <div class="top">
         <CodeLayoutActionItem
@@ -689,6 +702,8 @@ onBeforeUnmount(() => {
   --code-layout-border-radius-small: 5px;
   --code-layout-border-radius-large: 5px;
   --code-layout-header-height: 22px;
+  --code-layout-titlebar-background: #3c3c3c;
+  --code-layout-titlebar-height: 35px;
 }
 
 .code-layout-root {
@@ -700,6 +715,14 @@ onBeforeUnmount(() => {
   color: var(--code-layout-color-text);
   background-color: var(--code-layout-color-background);
 
+  > .code-layout-title-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    height: var(--code-layout-titlebar-height);
+    background-color: var(--code-layout-titlebar-background);
+  }
   > .code-layout-activity {
     display: flex;
     flex-direction: row;
