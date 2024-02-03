@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref, type PropType, toRefs, inject } from 'vue';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
-import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import type { CodeLayoutContext, CodeLayoutPanelInternal, CodeLayoutPanelTabStyle } from './CodeLayout';
 
 const emit = defineEmits([

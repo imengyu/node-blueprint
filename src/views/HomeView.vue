@@ -29,7 +29,7 @@ import IconFile from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconFile.vu
 import IconSearch from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconSearch.vue';
 import type { CodeLayoutConfig, CodeLayoutInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
 import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
-import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayoutScrollbar.vue';
+import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 
 const config = reactive<CodeLayoutConfig>({

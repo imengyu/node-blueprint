@@ -65,7 +65,7 @@ import { ref, computed, type PropType, inject, toRefs } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
-import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
 

@@ -37,8 +37,8 @@
 <script setup lang="ts">
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { ref, onMounted, onBeforeUnmount, nextTick, type PropType, reactive } from "vue";
-import { createMouseDragHandler } from "../../Graph/Editor/MouseHandler";
-import { useResizeChecker } from "./Composeable/ResizeChecker";
+import { createMouseDragHandler } from "../../../Graph/Editor/MouseHandler";
+import { useResizeChecker } from "../Composeable/ResizeChecker";
 
 const props = defineProps({	
   scroll: {

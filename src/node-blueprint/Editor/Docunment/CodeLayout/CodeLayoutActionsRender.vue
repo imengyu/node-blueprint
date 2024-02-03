@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
 import type { CodeLayoutActionButton } from './CodeLayout';
-import CodeLayoutVNodeStringRender from './CodeLayoutVNodeStringRender.vue';
+import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 
 defineEmits([ 'update:open' ])
 
