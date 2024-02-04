@@ -228,6 +228,7 @@ const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
   return {
     theme: 'code-layout',
     mini: !props.menuBar,
+    barPopDirection: props.menuBar ? 'bl' : 'tr',
     ...props.mainMenuConfig,
   }
 })

@@ -1,14 +1,11 @@
-.code-layout-root {
-  .mx-menu-bar {
-    --mx-menu-backgroud: transparent;
-    --mx-menu-text: var(--code-layout-color-text);
-    --mx-menu-hover-backgroud: var(--code-layout-color-background-highlight);
-    --mx-menu-hover-text: var(--code-layout-color-text);
-    --mx-menu-active-backgroud: var(--code-layout-color-background-highlight);
-    --mx-menu-active-text: var(--code-layout-color-text);
-  }
+.mx-menu-bar.code-layout {
+  --mx-menu-backgroud: transparent;
+  --mx-menu-text: var(--code-layout-color-text);
+  --mx-menu-hover-backgroud: var(--code-layout-color-background-highlight);
+  --mx-menu-hover-text: var(--code-layout-color-text);
+  --mx-menu-active-backgroud: var(--code-layout-color-background-highlight);
+  --mx-menu-active-text: var(--code-layout-color-text);
 }
-
 .mx-context-menu.code-layout {
 
   & {
