@@ -3,7 +3,13 @@
   <CodeLayoutActionsRender class="code-layout-customize-layout-actions" :actions="actions" />
   <!--Customize Layout popup-->
   <Teleport to="body">
-    <div v-if="showCustomizeLayout" class="code-layout-customize-layout">
+    <div 
+      v-if="showCustomizeLayout"
+      ref="customizeLayoutPopup"
+      tabindex="0"
+      class="code-layout-customize-layout"
+      @keydown="handleCustomizeLayoutControlItemKeyDown"
+    >
       <div class="header">
         {{ t('customizeLayout') }}
         <CodeLayoutActionsRender :actions="customizeLayoutControlActions" />
@@ -11,14 +17,16 @@
       <div class="list">
         <div 
           v-for="(item, key) in customizeLayoutControlItems"
+          :ref="(v) => (customizeLayoutControlItemRefs[key] = v as HTMLElement)"
           :key="key"
           :class="[
             'item',
             item.splited ? 'splited' : '',
             item.visibility ? 'visibility' : '',
+            customizeLayoutControlActive === key ? 'active' : '',
           ]"
           tabindex="0"
-          @click="item.click"
+          @click="handleCustomizeLayoutControlItemClick(key)"
         >
           <div>
             <CodeLayoutVNodeStringRender :content="item.icon" />
@@ -37,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, inject, computed, ref, type Ref, type VNode } from 'vue';
+import { h, inject, computed, ref, type Ref, type VNode, nextTick } from 'vue';
 import { useCodeLayoutLang } from '../Language';
 import type { CodeLayoutActionButton, CodeLayoutConfig } from '../CodeLayout';
 import CodeLayoutActionsRender from '../CodeLayoutActionsRender.vue';
@@ -102,6 +110,9 @@ const emit = defineEmits([
 ]) ;
 
 const showCustomizeLayout = ref(false);
+const customizeLayoutPopup = ref<HTMLElement>();
+const customizeLayoutControlActive = ref(0);
+const customizeLayoutControlItemRefs = ref<HTMLElement[]>([]);
 const customizeLayoutControlItems = computed<{
   title: string,
   rightText?: string,
@@ -212,6 +223,32 @@ const customizeLayoutControlActions : CodeLayoutActionButton[] = [
     },
   }
 ]
+
+function handleCustomizeLayoutControlItemClick(index: number) {
+  customizeLayoutControlActive.value = index;
+  customizeLayoutControlItemRefs.value[customizeLayoutControlActive.value].focus();
+  customizeLayoutControlItems.value[customizeLayoutControlActive.value].click();
+}
+function handleCustomizeLayoutControlItemKeyDown(e: KeyboardEvent) {
+  switch (e.key) {
+    case 'ArrowUp':
+      customizeLayoutControlActive.value = Math.max(customizeLayoutControlActive.value - 1, 0);
+      customizeLayoutControlItemRefs.value[customizeLayoutControlActive.value].focus();
+      break;
+    case 'ArrowDown':
+      customizeLayoutControlActive.value = Math.min(
+        customizeLayoutControlActive.value + 1, 
+        customizeLayoutControlItems.value.length - 1
+      );
+      customizeLayoutControlItemRefs.value[customizeLayoutControlActive.value].focus();
+      break;
+    case ' ':
+    case 'Enter':
+      customizeLayoutControlItems.value[customizeLayoutControlActive.value].click();
+      break;
+  } 
+}
+
 const actions = computed<CodeLayoutActionButton[]>(() => ([
   {
     name: t('togglePrimarySideBar'),
@@ -239,6 +276,8 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
     icon: () => h(LayoutCodicon),
     onClick: () => {
       showCustomizeLayout.value = !showCustomizeLayout.value;
+      if (showCustomizeLayout.value)
+        nextTick(() => customizeLayoutPopup.value?.focus());
     },
   },
 ]));
@@ -271,7 +310,7 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
   background-color: var(--code-layout-color-background-second);
   box-shadow: 0 0 5px 1px var(--code-layout-color-shadow);
   color: var(--code-layout-color-text);
-  font-size: 13px;
+  font-size: var(--code-layout-font-size);
   overflow: hidden;
 
   .header {
@@ -355,7 +394,7 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
       &:hover {
         background-color: var(--code-layout-color-background-light);
       }
-      &:active, &.active  {
+      &:active, &.active, &:focus {
         background-color: var(--code-layout-color-background-highlight);
 
         .right {

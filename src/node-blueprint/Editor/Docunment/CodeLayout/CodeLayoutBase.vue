@@ -4,7 +4,7 @@
     <div v-if="config.titleBar" class="code-layout-title-bar">
       <div>
         <slot name="titleBarIcon" />
-        <slot name="titleBarMenu" />
+        <slot v-if="menuBar" name="titleBarMenu" />
       </div>
       <div>
         <slot name="titleBarCenter" />
@@ -16,7 +16,7 @@
     <!--root-->
     <div class="code-layout-activity">
       <!--activity bar-->
-      <div class="code-layout-activity-bar">
+      <div v-if="activityBar" class="code-layout-activity-bar">
         <slot name="activityBar" />
       </div>
       <!--
@@ -214,6 +214,10 @@ defineProps({
   config: {
     type: Object as PropType<CodeLayoutConfig>,
     required: true,
+  },
+  menuBar: {
+    type: Boolean,
+    default: true,
   },
   activityBar: {
     type: Boolean,

@@ -7,6 +7,7 @@
     :secondarySideBar="secondarySideBar"
     :bottomPanel="bottomPanel"
     :statusBar="statusBar"
+    :menuBar="menuBar"
     @update:bottom-panel="(v) => $emit('update:bottomPanel', v)"
     @update:primary-side-bar="onPrimarySideBarSwitch"
     @update:secondary-side-bar="(v) => $emit('update:secondarySideBar', v)"
@@ -15,7 +16,9 @@
       <slot name="titleBarIcon" />
     </template>
     <template #titleBarMenu>
-      <slot name="titleBarMenu" />
+      <slot name="titleBarMenu">
+        <MenuBar :options="mainMenuConfigWithCollapseState" />
+      </slot>
     </template>
     <template #titleBarCenter>
       <slot name="titleBarCenter" />
@@ -28,6 +31,8 @@
         :secondarySideBar="secondarySideBar"
         :bottomPanel="bottomPanel"
         :statusBar="statusBar"
+        :menuBar="menuBar"
+        @update:menuBar="(a) => emit('update:menuBar', a)"
         @update:activityBar="(a) => emit('update:activityBar', a)"
         @update:primarySideBar="(a) => emit('update:primarySideBar', a)"
         @update:secondarySideBar="(a) => emit('update:secondarySideBar', a)"
@@ -38,6 +43,11 @@
     </template>
     <template #activityBar>
       <div class="top">
+        <!--no menu bar here show collapsed menu button-->
+        <slot v-if="!menuBar" name="activityBarTopBar">
+          <MenuBar :options="mainMenuConfigWithCollapseState" />
+        </slot>
+        <!--main activityBar items-->
         <CodeLayoutActionItem
           v-for="(panelGroup, key) in panels.primary.children"
           :key="key"
@@ -128,13 +138,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs } from 'vue';
+import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs, computed } from 'vue';
 import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition, type CodeLayoutLangConfig, defaultCodeLayoutConfig } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
 import CodeLayoutEmpty from './CodeLayoutEmpty.vue';
 import CodeLayoutCustomizeLayout from './Components/CodeLayoutCustomizeLayout.vue';
+import { MenuBar, type MenuOptions } from '@imengyu/vue3-context-menu';
+import type { MenuBarOptions } from '@imengyu/vue3-context-menu/lib/MenuBar';
 
 const panels = ref<{
   primary: CodeLayoutGridInternal,
@@ -157,6 +169,7 @@ const panels = ref<{
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 
 const emit = defineEmits([
+  'update:menuBar',
   'update:activityBar',
   'update:primarySideBar',
   'update:secondarySideBar',
@@ -174,6 +187,10 @@ const props = defineProps({
     default: () => ({
       lang: 'en',
     }),
+  },
+  mainMenuConfig: {
+    type: Object as PropType<MenuOptions>,
+    default: null,
   },
   activityBar: {
     type: Boolean,
@@ -195,6 +212,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  menuBar: {
+    type: Boolean,
+    default: true,
+  },
   emptyText: {
     type: String,
     default: "Drag a view here to display",
@@ -202,6 +223,14 @@ const props = defineProps({
 });
 const { layoutConfig } = toRefs(props);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
+
+const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
+  return {
+    theme: 'code-layout',
+    mini: !props.menuBar,
+    ...props.mainMenuConfig,
+  }
+})
 
 const codeLayoutInstance : CodeLayoutInstance = {
   activeGroup,
@@ -711,4 +740,5 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 @import './Scss/Base.scss';
+@import './Scss/Menu.scss';
 </style>

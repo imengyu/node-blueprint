@@ -5,6 +5,7 @@
     <button 
       v-for="action in actionsShow"
       :key="action.name"
+      tabindex="0"
       @click="action.onClick"
     >
       <CodeLayoutVNodeStringRender :content="action.icon" />

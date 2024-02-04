@@ -27,6 +27,7 @@
   --code-layout-header-height: 22px;
   --code-layout-titlebar-background: #3c3c3c;
   --code-layout-titlebar-height: 35px;
+  --code-layout-font-size: 13px;
 }
 
 .code-layout-root {
@@ -37,6 +38,7 @@
   align-items: stretch;
   color: var(--code-layout-color-text);
   background-color: var(--code-layout-color-background);
+  font-size: var(--code-layout-font-size);
 
   > .code-layout-title-bar {
     display: flex;
@@ -45,6 +47,13 @@
     align-items: stretch;
     height: var(--code-layout-titlebar-height);
     background-color: var(--code-layout-titlebar-background);
+
+    > div {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
   }
   > .code-layout-activity {
     display: flex;
@@ -60,6 +69,10 @@
       align-items: center;
       background-color: var(--code-layout-color-background-light);
       width: 45px;
+
+      .mx-menu-bar.mini {
+        justify-content: center;
+      }
 
       .item {
         position: relative;

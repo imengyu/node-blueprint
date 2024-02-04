@@ -1,0 +1,84 @@
+.code-layout-root {
+  .mx-menu-bar {
+    --mx-menu-backgroud: transparent;
+    --mx-menu-text: var(--code-layout-color-text);
+    --mx-menu-hover-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-hover-text: var(--code-layout-color-text);
+    --mx-menu-active-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-active-text: var(--code-layout-color-text);
+  }
+}
+
+.mx-context-menu.code-layout {
+
+  & {
+
+    //Backgroud
+    --mx-menu-backgroud: var(--code-layout-color-background-second);
+    --mx-menu-hover-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-active-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-open-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-open-hover-backgroud: var(--code-layout-color-background-highlight);
+    --mx-menu-divider: var(--code-layout-color-border);
+
+    //Text
+    --mx-menu-text: var(--code-layout-color-text);
+    --mx-menu-hover-text: var(--code-layout-color-text);
+    --mx-menu-active-text: var(--code-layout-color-text);
+    --mx-menu-open-text: var(--code-layout-color-text);
+    --mx-menu-open-hover-text: var(--code-layout-color-text);
+    --mx-menu-disabled-text: var(--code-layout-color-text-gray)
+
+    //Shadow
+    --mx-menu-shadow-color: rgba(0, 0, 0, 0.1);
+    --mx-menu-backgroud-radius: var(--code-layout-border-radius-small);
+
+    //Shortcut badge
+    --mx-menu-shortcut-backgroud: transparent;
+    --mx-menu-shortcut-backgroud-hover:transparent;
+    --mx-menu-shortcut-backgroud-active:transparent;
+    --mx-menu-shortcut-backgroud-open:transparent;
+    --mx-menu-shortcut-backgroud-disabled:transparent;
+    --mx-menu-shortcut-text: #424242;
+    --mx-menu-shortcut-text-hover: #fff;
+    --mx-menu-shortcut-text-active: #fff;
+    --mx-menu-shortcut-text-open: #fff;
+    --mx-menu-shortcut-text-disabled: #a5a5a5;
+
+    //Focus border color
+    --mx-menu-focus-color: transparent;
+    --mx-menu-border-color: var(--code-layout-color-border);
+  }
+  
+  padding: 8px 0;
+  box-shadow: 0px 5px 7px 1px var(--mx-menu-shadow-color);
+  border: 1px solid var(--mx-menu-border-color);
+
+  .mx-context-menu-item {
+    border-radius: 5px;
+    margin: 0 6px;
+    padding: 3px 6px;
+
+    .label {
+      font-size: var(--code-layout-font-size);
+    }
+    
+    //Focus by keyboard
+    &.keyboard-focus {
+      background-color: var(--mx-menu-active-backgroud);
+      color: var(--mx-menu-active-text);
+      outline: none;
+
+      .mx-right-arrow, .mx-checked-mark {
+        fill: var(--mx-menu-active-text);
+      }
+      .mx-shortcut {
+        background-color: var(--mx-menu-shortcut-backgroud-active);
+        color: var(--mx-menu-shortcut-text-active);
+      }
+    }
+  }
+  .mx-context-menu-item-sperator {
+    margin: 0 12px;
+  }
+}

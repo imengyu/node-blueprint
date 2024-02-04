@@ -6,10 +6,15 @@
       v-model:primarySideBar="primarySideBar"
       v-model:secondarySideBar="secondarySideBar"
       v-model:bottomPanel="bottomPanel"
+      v-model:activityBar="activityBar"
+      v-model:statusBar="statusBar"
+      v-model:menuBar="menuBar"
       :layout-config="config"
-      :activityBar="activityBar"
-      :statusBar="statusBar"
+      :main-menu-config="menuData"
     >
+      <template #titleBarIcon>
+        <img src="../node-blueprint/Editor/Images/Logo/logo.svg" style="width:18px;height:18px;margin:0 15px;">
+      </template>
       <template #panelRender="{ panel }">
         <template v-if="panel.name === 'group1.panel1'">
           <CodeLayoutScrollbar>
@@ -31,9 +36,11 @@ import type { CodeLayoutConfig, CodeLayoutInstance } from '@/node-blueprint/Edit
 import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
+import type { MenuOptions } from '@imengyu/vue3-context-menu';
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
+  primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
   primarySideBarMinWidth: 170,
   secondarySideBarWidth: 20,
@@ -48,11 +55,70 @@ const config = reactive<CodeLayoutConfig>({
   titleBarShowCustomizeLayout: true,
 });
 
+const menuData : MenuOptions = {
+  x: 0,
+  y: 0,
+  items: [
+    {
+      label: "File",
+      children: [
+        { label: "New" },
+        { label: "Open" },
+        { 
+          label: "Open recent",
+          children: [
+            { label: "File 1...." },
+            { label: "File 2...." },
+            { label: "File 3...." },
+            { label: "File 4...." },
+            { label: "File 5...." },
+          ],
+        },
+        { label: "Save", divided: true },
+        { label: "Save as..." },
+        { label: "Close" },
+        { label: "Exit" },
+      ],
+    },
+    {
+      label: "Edit",
+      children: [
+        { label: "Undo" },
+        { label: "Redo" },
+        { label: "Cut", divided: true },
+        { label: "Copy" },
+        { label: "Find", divided: true },
+        { label: "Replace" },
+      ],
+    },
+    {
+      label: "View",
+      children: [
+        { label: "Zoom in" },
+        { label: "Zoom out" },
+        { label: "Reset zoom" },
+        { label: "Full screent", divided: true },
+        { label: "Find", divided: true },
+        { label: "Replace" },
+      ],
+    },
+    {
+      label: "Help",
+      children: [
+        { label: "About" },
+      ],
+    },
+  ],
+  zIndex: 3,
+  minWidth: 230,
+};
+
 const activityBar = ref(true);
 const primarySideBar = ref(true);
 const secondarySideBar = ref(true);
 const bottomPanel = ref(true);
 const statusBar = ref(true);
+const menuBar = ref(true);
 
 const codeLayout = ref<CodeLayoutInstance>();
 
