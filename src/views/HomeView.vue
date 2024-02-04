@@ -1,6 +1,8 @@
 <template>
+  
+  <NodeIde />
+  <!--
   <div class="full-container">
-    <!-- <NodeIde /> -->
     <CodeLayout 
       ref="codeLayout" 
       v-model:primarySideBar="primarySideBar"
@@ -12,6 +14,8 @@
       :layout-config="config"
       :main-menu-config="menuData"
     >
+      <template #centerArea>
+      </template>
       <template #titleBarIcon>
         <img src="../node-blueprint/Editor/Images/Logo/logo.svg" style="width:18px;height:18px;margin:0 15px;">
       </template>
@@ -26,7 +30,7 @@
         <span v-else>{{ panel.size }} / {{ panel.name }}</span>
       </template>
     </CodeLayout>
-  </div>
+  </div>-->
 </template>
 
 <script setup lang="ts">
@@ -37,6 +41,7 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import NodeIde from '@/node-blueprint/Editor/Docunment/NodeIde.vue';
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
