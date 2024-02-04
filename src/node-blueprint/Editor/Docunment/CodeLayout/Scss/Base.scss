@@ -139,6 +139,13 @@
           }
         }
       }
+
+      &.right .item.active {
+        &::after {
+          left: unset;
+          right: 0;
+        }
+      }
     }
   }
   > .code-layout-status {

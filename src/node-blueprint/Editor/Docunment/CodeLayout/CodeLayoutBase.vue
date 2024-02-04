@@ -16,9 +16,13 @@
     <!--root-->
     <div class="code-layout-activity">
       <!--activity bar-->
-      <div v-if="activityBar" class="code-layout-activity-bar">
+      <div 
+        v-if="activityBar && config.primarySideBarPosition === 'left'" 
+        :class="['code-layout-activity-bar',config.primarySideBarPosition]"
+      >
         <slot name="activityBar" />
       </div>
+
       <!--
         base area
       
@@ -58,7 +62,8 @@
             @closeRight="(v) => $emit('update:secondarySideBar', v)"
           >
             <template #left>
-              <slot name="primarySideBar" />
+              <slot v-if="config.primarySideBarPosition === 'left'" name="primarySideBar" />
+              <slot v-else name="secondarySideBar" />
             </template>
             <template #center>
               <SplitBase
@@ -78,7 +83,8 @@
               </SplitBase>
             </template>
             <template #right>
-              <slot name="secondarySideBar" />
+              <slot v-if="config.primarySideBarPosition === 'right'" name="primarySideBar" />
+              <slot v-else name="secondarySideBar" />
             </template>
           </SplitThird>
           <!--
@@ -114,7 +120,8 @@
                     @closeFirst="(v) => $emit('update:primarySideBar', v)"
                   >
                     <template #first>
-                      <slot name="primarySideBar" />
+                      <slot v-if="config.primarySideBarPosition === 'left'" name="primarySideBar" />
+                      <slot v-else name="secondarySideBar" />
                     </template>
                     <template #second>
                       <slot name="centerArea" />
@@ -127,7 +134,8 @@
               </SplitBase>
             </template>
             <template #second>
-              <slot name="secondarySideBar" />
+              <slot v-if="config.primarySideBarPosition === 'right'" name="primarySideBar" />
+              <slot v-else name="secondarySideBar" />
             </template>
           </SplitBase>
           <!--
@@ -147,7 +155,8 @@
             @closeFirst="(v) => $emit('update:primarySideBar', v)"
           >
             <template #first>
-              <slot name="primarySideBar" />
+              <slot v-if="config.primarySideBarPosition === 'left'" name="primarySideBar" />
+              <slot v-else name="secondarySideBar" />
             </template>
             <template #second>
               <SplitBase
@@ -169,7 +178,8 @@
                       <slot name="centerArea" />
                     </template>
                     <template #second>
-                      <slot name="secondarySideBar" />
+                      <slot v-if="config.primarySideBarPosition === 'right'" name="primarySideBar" />
+                      <slot v-else name="secondarySideBar" />
                     </template>
                   </SplitBase>
                 </template>
@@ -184,6 +194,13 @@
           <slot name="bottomPanel" />
         </template>
       </SplitBase>
+      <!--activity bar-->
+      <div 
+        v-if="activityBar && config.primarySideBarPosition === 'right'" 
+        :class="['code-layout-activity-bar',config.primarySideBarPosition]"
+      >
+        <slot name="activityBar" />
+      </div>
     </div>
     <!--status bar-->
     <div v-if="statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
