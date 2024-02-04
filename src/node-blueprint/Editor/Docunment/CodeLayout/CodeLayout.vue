@@ -21,7 +21,19 @@
       <slot name="titleBarCenter" />
     </template>
     <template #titleBarRight>
-
+      <CodeLayoutCustomizeLayout 
+        v-if="layoutConfig.titleBarShowCustomizeLayout"
+        :activityBar="activityBar"
+        :primarySideBar="primarySideBar"
+        :secondarySideBar="secondarySideBar"
+        :bottomPanel="bottomPanel"
+        :statusBar="statusBar"
+        @update:activityBar="(a) => emit('update:activityBar', a)"
+        @update:primarySideBar="(a) => emit('update:primarySideBar', a)"
+        @update:secondarySideBar="(a) => emit('update:secondarySideBar', a)"
+        @update:bottomPanel="(a) => emit('update:bottomPanel', a)"
+        @update:statusBar="(a) => emit('update:statusBar', a)"
+      />
       <slot name="titleBarRight" />
     </template>
     <template #activityBar>
@@ -116,12 +128,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive } from 'vue';
-import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition } from './CodeLayout';
+import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs } from 'vue';
+import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition, type CodeLayoutLangConfig, defaultCodeLayoutConfig } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
 import CodeLayoutGroupRender from './CodeLayoutGroupRender.vue';
 import CodeLayoutEmpty from './CodeLayoutEmpty.vue';
+import CodeLayoutCustomizeLayout from './Components/CodeLayoutCustomizeLayout.vue';
 
 const panels = ref<{
   primary: CodeLayoutGridInternal,
@@ -144,15 +157,23 @@ const panels = ref<{
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 
 const emit = defineEmits([
+  'update:activityBar',
   'update:primarySideBar',
   'update:secondarySideBar',
   'update:bottomPanel',
+  'update:statusBar',
 ]) ;
 
 const props = defineProps({
   layoutConfig: {
     type: Object as PropType<CodeLayoutConfig>,
-    required: true,
+    default: () => defaultCodeLayoutConfig
+  },
+  langConfig: {
+    type: Object as PropType<CodeLayoutLangConfig>,
+    default: () => ({
+      lang: 'en',
+    }),
   },
   activityBar: {
     type: Boolean,
@@ -179,6 +200,7 @@ const props = defineProps({
     default: "Drag a view here to display",
   },
 });
+const { layoutConfig } = toRefs(props);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 
 const codeLayoutInstance : CodeLayoutInstance = {
@@ -503,7 +525,8 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
 
 //处理函数
 
-provide('layoutConfig', props.layoutConfig);
+provide('codeLayoutConfig', layoutConfig);
+provide('codeLayoutLangConfig', props.langConfig);
 provide('codeLayoutContext', codeLayoutContext);
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {

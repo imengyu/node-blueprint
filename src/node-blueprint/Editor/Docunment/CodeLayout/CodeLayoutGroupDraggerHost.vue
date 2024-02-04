@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType, onMounted, nextTick, inject, watch, toRefs, onBeforeUnmount } from 'vue';
+import { ref, type Ref, type PropType, onMounted, nextTick, inject, watch, toRefs, onBeforeUnmount } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
@@ -40,7 +40,7 @@ import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector } from '.
 
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
-const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
+const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
 const context = inject('codeLayoutContext') as CodeLayoutContext;
 
 const props = defineProps({
@@ -62,7 +62,7 @@ const { group, horizontal } = toRefs(props);
 
 function getPanelMinSize(minSize: number|undefined) {
   if (!minSize)
-    return layoutConfig.panelMinHeight;
+    return layoutConfig.value.panelMinHeight;
   return minSize;
 }
 function adjustAndReturnAdjustedSize(panel: CodeLayoutPanelInternal, intitalSize: number, increaseSize: number) {
@@ -100,7 +100,7 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal) {
   const index = groupArray.indexOf(panel);
   if (index < 1)
     return false;
-  const headerSize = layoutConfig.panelHeaderHeight;
+  const headerSize = layoutConfig.value.panelHeaderHeight;
   
   const firstPanelAbsolutePosScreen = (props.horizontal ? 
     (HtmlUtils.getLeft(container.value) - container.value.scrollLeft) : 
@@ -205,7 +205,7 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
   }
 
   //计算大小
-  const headerSize = layoutConfig.panelHeaderHeight;
+  const headerSize = layoutConfig.value.panelHeaderHeight;
   const index = groupArray.indexOf(panel);
 
   flushDraggable();
@@ -324,7 +324,7 @@ function flushDraggable() {
 function flushLayoutSizeCounter() {
   if (!container.value)
     return 0;
-  const headerSize = layoutConfig.panelHeaderHeight;
+  const headerSize = layoutConfig.value.panelHeaderHeight;
   let counter = 0;
   for (let i = 0; i < props.group.children.length; i++) {
     const panel = props.group.children[i];
@@ -338,7 +338,7 @@ function getCanAllocSize() {
   if (!container.value)
     throw new Error('No container');
   const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
-  const headerSize = layoutConfig.panelHeaderHeight;
+  const headerSize = layoutConfig.value.panelHeaderHeight;
 
   let canAllocSize = containerSize, notAllocSpaceAndOpenCount = 0;
 
@@ -395,7 +395,7 @@ function relayoutAllWithResizedSize(resizedContainerSize: number) {
 
   let allPanelsSize = 0;
   const openedPanels = props.group.children.filter(p => {
-    allPanelsSize += p.open ? p.size : layoutConfig.panelHeaderHeight;
+    allPanelsSize += p.open ? p.size : layoutConfig.value.panelHeaderHeight;
     return p.open;
   }).sort((a, b) => a.size > b.size ? 1 : -1);
 
@@ -444,7 +444,7 @@ function relayoutAllWhenSizeChange() {
 }
 //当容器添加时，重新布局已存在面板
 function relayoutAllWithNewPanel(panels: CodeLayoutPanelInternal[]) {
-  const headerHeight = layoutConfig.panelHeaderHeight;
+  const headerHeight = layoutConfig.value.panelHeaderHeight;
   let resizedSize = 0;
 
   for (const panel of panels) {  
@@ -475,7 +475,7 @@ function relayoutAllWithNewPanel(panels: CodeLayoutPanelInternal[]) {
 } 
 //当容器移除时，重新布局已存在面板
 function relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
-  relayoutAllWithResizedSize(-(panel.open ? panel.size : layoutConfig.panelHeaderHeight));
+  relayoutAllWithResizedSize(-(panel.open ? panel.size : layoutConfig.value.panelHeaderHeight));
 } 
 
 watch(() => props.group.children, () => {

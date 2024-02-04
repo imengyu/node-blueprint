@@ -1,5 +1,6 @@
 import type { VNode } from "vue";
 import { LateClass } from "./Composeable/LateClass";
+import type { CodeLayoutLangDefine } from "./Language";
 
 //布局类型定义
 export interface CodeLayoutConfig {
@@ -15,14 +16,36 @@ export interface CodeLayoutConfig {
   panelHeaderHeight: number,
   panelMinHeight: number,
   titleBar: boolean,
+  titleBarShowCustomizeLayout: boolean,
 
   onGridFirstDrop?: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => CodeLayoutPanelInternal;
   onGridEmpty?: (grid: CodeLayoutGrid) => void;
   onNoAutoShinkTabGroup?: (group: CodeLayoutPanelInternal) => void,
   onNoAutoShinkNormalGroup?: (group: CodeLayoutPanelInternal) => void,
 }
+//语言布局定义
+export interface CodeLayoutLangConfig {
+  lang: string,
+  stringsOverride?: Partial<CodeLayoutLangDefine>,
+}
 
-//
+export const defaultCodeLayoutConfig = {
+  primarySideBarSwitchWithActivityBar: true,
+  primarySideBarWidth: 20,
+  primarySideBarMinWidth: 170,
+  secondarySideBarWidth: 20,
+  secondarySideBarMinWidth: 170,
+  bottomPanelHeight: 30,
+  bottomPanelMinHeight: 40,
+  bottomAlignment: 'center',
+  statusBarHeight: '20px',
+  panelHeaderHeight: 24,
+  panelMinHeight: 150,
+  titleBar: true,
+  titleBarShowCustomizeLayout: true,
+}
+
+//用户接口定义
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'bottomPanel'|'centerArea'|'none';
 

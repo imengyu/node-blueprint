@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType, inject, toRefs } from 'vue';
+import { ref, computed, type PropType, inject, toRefs, type Ref } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
@@ -128,13 +128,13 @@ const panelHeight = computed(() => {
 
 const contentHeight = computed(() => {
   if (!props.alone)
-    return `calc(100% - ${layoutConfig.panelHeaderHeight}px)`;
+    return `calc(100% - ${layoutConfig.value.panelHeaderHeight}px)`;
   return `100%`;
 }); 
 
 const { horizontal, panel } = toRefs(props);
 const element = ref<HTMLElement>();
-const layoutConfig = inject('layoutConfig') as CodeLayoutConfig;
+const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
 const context = inject('codeLayoutContext') as CodeLayoutContext;
 
 //拖放面板处理函数

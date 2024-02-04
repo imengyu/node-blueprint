@@ -45,6 +45,7 @@ const config = reactive<CodeLayoutConfig>({
   panelHeaderHeight: 24,
   panelMinHeight: 150,
   titleBar: true,
+  titleBarShowCustomizeLayout: true,
 });
 
 const activityBar = ref(true);
