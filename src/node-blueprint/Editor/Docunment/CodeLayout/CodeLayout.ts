@@ -14,6 +14,7 @@ export interface CodeLayoutConfig {
   bottomPanelMinHeight: number,
   bottomAlignment: 'left'|'center'|'right'|'justify',
   statusBarHeight: number|string,
+  activityBarPosition: 'side'|'top'|'hidden',
   panelHeaderHeight: number,
   panelMinHeight: number,
   titleBar: boolean,
@@ -40,10 +41,12 @@ export interface CodeLayoutLangConfig {
   stringsOverride?: Partial<CodeLayoutLangDefine>,
 }
 
-export const defaultCodeLayoutConfig = {
+export const defaultCodeLayoutConfig : CodeLayoutConfig = {
   primarySideBarSwitchWithActivityBar: true,
+  primarySideBarPosition: "left",
   primarySideBarWidth: 20,
   primarySideBarMinWidth: 170,
+  activityBarPosition: "side",
   secondarySideBarWidth: 20,
   secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
@@ -81,6 +84,7 @@ export interface CodeLayoutPanelParent {
   addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) : void;
   removeChild(child: CodeLayoutPanelInternal) : void;
   hasChild(child: CodeLayoutPanelInternal) : boolean;
+  reselectActiveChild() : void;
   replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal): void;
 }
 
@@ -99,12 +103,15 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   name = '';
   open = false;
   resizeable = false;
+  visible = true;
+  showBadge = true;
   size = 0;
   children : CodeLayoutPanelInternal[] = [];
   activePanel: CodeLayoutPanelInternal|null = null;
   parentGroup: CodeLayoutPanelInternal|null = null;
   parentGrid: CodeLayoutGrid = 'none';
 
+  
   tooltip?: string;
   badge?: string|(() => VNode)|undefined;
   accept?: CodeLayoutGrid[];
@@ -116,6 +123,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   ) => boolean;
   tabStyle?: CodeLayoutPanelTabStyle;
   noAutoShink = false;
+  noHide = false;
   minSize?: number|undefined;
   startOpen?: boolean|undefined;
   iconLarge?: string|(() => VNode)|undefined;
@@ -144,12 +152,15 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       child.parentGrid = this.parentGrid;
     }
   }
+  reselectActiveChild() {
+    this.activePanel = this.children.find((p) => p.visible) || null;
+  }
   removeChild(child: CodeLayoutPanelInternal) {
     this.children.splice(this.children.indexOf(child), 1);
     child.parentGroup = null;
     //如果被删除面板是激活面板，则选另外一个面板激活
     if (child.name === this.activePanel?.name)
-      this.activePanel = this.children[0] || null;
+      this.reselectActiveChild();
   }
   replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
     this.children.splice(
@@ -250,12 +261,15 @@ export class CodeLayoutGridInternal implements CodeLayoutPanelParent {
     for (const child of childs) 
       child.parentGrid = this.name;
   }
+  reselectActiveChild() {
+    this.activePanel = this.children.find((p) => p.visible) || null;
+  }
   removeChild(child: CodeLayoutPanelInternal) {
     if (this.hasChild(child))
       this.children.splice(this.children.indexOf(child), 1);
     //如果被删除面板是激活面板，则选另外一个面板激活
     if (child.name === this.activePanel?.name)
-      this.activePanel = this.children[0] ?? null;
+      this.reselectActiveChild();
   }
   hasChild(child: CodeLayoutPanelInternal) {
     return this.children.includes(child);
@@ -286,6 +300,8 @@ export interface CodeLayoutPanel {
   name: string;
   badge?: string|(() => VNode)|undefined;
   accept?: CodeLayoutGrid[];
+  visible?: boolean;
+  showBadge?: boolean;
 
   /**
    * Custom check callback before this panel drop.
@@ -315,6 +331,10 @@ export interface CodeLayoutPanel {
    * Default: false
    */
   noAutoShink?: boolean;
+  /**
+   * Default: false
+   */
+  noHide?: boolean;
   size?: number|undefined;
   minSize?: number|undefined;
   startOpen?: boolean|undefined;
@@ -334,6 +354,8 @@ export interface CodeLayoutContext {
     panel: CodeLayoutPanelInternal, 
     dropTo: 'normal'|'empty'|'tab-header'|'activiy-bar',
   ) => void,
+  relayoutAfterToggleVisible: (panel: CodeLayoutPanelInternal) => void,
+  relayoutTopGridProp: (grid: CodeLayoutGrid, visible: boolean) => void,
   instance: CodeLayoutInstance;
 }
 

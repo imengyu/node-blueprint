@@ -14,6 +14,7 @@
     @dragleave="handleDragLeave"
     @dragenter="handleDragEnter"
     @drop="handleDrop"
+    @contextmenu="onContextMenu(panel, $event)"
   >
     <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
     <span v-if="tabStyle == 'icon'" class="icon">
@@ -30,6 +31,7 @@ import { ref, type PropType, toRefs, inject } from 'vue';
 import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import type { CodeLayoutContext, CodeLayoutPanelInternal, CodeLayoutPanelTabStyle } from './CodeLayout';
+import { usePanelMenuControl } from './Composeable/PanelMenu';
 
 const emit = defineEmits([
   'focusSelf'
@@ -82,4 +84,8 @@ function handleDrop(e: DragEvent) {
   resetDragOverState();
 }
 
+//菜单处理
+const {
+  onContextMenu
+} = usePanelMenuControl();
 </script>

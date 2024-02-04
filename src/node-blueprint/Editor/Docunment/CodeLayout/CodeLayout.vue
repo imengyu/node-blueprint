@@ -50,6 +50,7 @@
         <!--main activityBar items-->
         <CodeLayoutActionItem
           v-for="(panelGroup, key) in panels.primary.children"
+          v-show="panelGroup.visible"
           :key="key"
           :item="(panelGroup as CodeLayoutPanelInternal)"
           :active="panelGroup === panels.primary.activePanel && primarySideBar"
@@ -64,6 +65,7 @@
       <template v-if="panels.primary.children.length > 0">
         <CodeLayoutGroupRender
           v-for="(panelGroup, key) in panels.primary.children"
+          v-show="panelGroup.visible"
           :key="key"
           :group="(panelGroup as CodeLayoutPanelInternal)"
           :show="panelGroup === panels.primary.activePanel && primarySideBar"
@@ -88,6 +90,7 @@
       <template v-if="panels.secondary.children.length > 0">
         <CodeLayoutGroupRender
           v-for="(panelGroup, key) in panels.secondary.children"
+          v-show="panelGroup.visible"
           :key="key"
           :group="(panelGroup as CodeLayoutPanelInternal)"
           :horizontal="false"
@@ -110,6 +113,7 @@
       <template v-if="panels.bottom.children.length > 0">
         <CodeLayoutGroupRender
           v-for="(panelGroup, key) in panels.bottom.children"
+          v-show="panelGroup.visible"
           :key="key"
           :group="(panelGroup as CodeLayoutPanelInternal)"
           :horizontal="true"
@@ -129,7 +133,7 @@
       </CodeLayoutEmpty>
     </template>
     <template #centerArea>
-      <h1>center area</h1>
+      <slot name="centerArea" />
     </template>
     <template #statusBar>
       <slot name="statusBar" />
@@ -249,6 +253,27 @@ const codeLayoutInstance : CodeLayoutInstance = {
 const codeLayoutContext : CodeLayoutContext = {
   dragDropToGrid,
   dragDropToPanelNear,
+  relayoutAfterToggleVisible(panel) {
+    const parent = panel.getParent();
+    if (!parent)
+      return;
+    if (panel.visible) {
+      if (parent instanceof CodeLayoutPanelInternal)
+        parent.relayoutAllWithNewPanel([ panel ]);
+      parent.activePanel = panel;
+    } else {
+      if (parent instanceof CodeLayoutPanelInternal)
+        parent.relayoutAllWithRemovePanel(panel);
+      parent.reselectActiveChild();
+    }
+  },
+  relayoutTopGridProp(grid, visible) {
+    switch (grid) {
+      case 'primarySideBar':  emit('update:primarySideBar', visible); break;
+      case 'secondarySideBar':  emit('update:secondarySideBar', visible); break;
+      case 'bottomPanel':  emit('update:bottomPanel', visible); break;
+    }
+  },
   instance: codeLayoutInstance,
 };
 

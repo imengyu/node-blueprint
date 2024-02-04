@@ -1,5 +1,6 @@
 <template>
   <div 
+    v-if="panel.visible"
     ref="element"
     :class="[
       'code-layout-panel',
@@ -38,6 +39,7 @@
       @dragstart="handleDragStart(panel, $event)"
       @dragend="handleDragEnd"
       @click="emit('toggleHandler', props.panel, !open)"
+      @contextmenu="onContextMenu(props.panel, $event)"
     >
       <div class="collapse-title">
         <IconArrow class="arrow" />
@@ -68,6 +70,7 @@ import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanel
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
+import { usePanelMenuControl } from './Composeable/PanelMenu';
 
 const emit = defineEmits([ 
   'update:open', 'update:resizeDragging',
@@ -203,6 +206,11 @@ const resizeDragHandler = createMouseDragHandler({
     resizeDraggingSelf.value = false;
   },
 });
+
+//菜单处理
+const {
+  onContextMenu
+} = usePanelMenuControl();
 
 </script>
 

@@ -15,6 +15,7 @@
       <div class="tab-container">
         <CodeLayoutTabItem 
           v-for="(panel, key) in group.children"
+          v-show="panel.visible"
           :key="key" 
           :tabStyle="group.tabStyle"
           :active="group.activePanel === panel"
@@ -32,6 +33,7 @@
       :draggable="true"
       @dragstart="handleDragStart(group, $event)"
       @dragend="handleDragEnd"
+      @contextmenu="onContextMenu(group, $event)"
     >
       <span class="title">{{ group.title }}</span>
       <CodeLayoutActionsRender v-if="group.activePanel" class="actions" :actions="group.actions" />
@@ -98,6 +100,7 @@ import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import CodeLayoutTabItem from './CodeLayoutTabItem.vue';
 import { usePanelDragger } from './Composeable/DragDrop';
+import { usePanelMenuControl } from './Composeable/PanelMenu';
 
 const props = defineProps({
   group: {
@@ -132,6 +135,10 @@ const {
   handleDragEnd,
 } = usePanelDragger();
 
+//菜单处理
+const {
+  onContextMenu
+} = usePanelMenuControl();
 </script>
 
 <style lang="scss">

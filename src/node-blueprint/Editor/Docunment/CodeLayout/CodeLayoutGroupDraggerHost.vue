@@ -115,12 +115,16 @@ function panelResizeDragStartHandler(panel: CodeLayoutPanelInternal) {
 
   for (let i = index - 1; i >= 0; i--) {
     const p = groupArray[i];
+    if (!p.visible)
+      continue;
     prevPanelsSize += p.open ? p.size : headerSize;
     if (p.open)
       prevOpenedPanels.push({ panel: p, size: p.size });
   }
   for (let i = index; i < groupArray.length; i++) {
     const p = groupArray[i];
+    if (!p.visible)
+      continue;
     nextPanelsSize += p.open ? p.size : headerSize;
     if (p.open)
       nextOpenedPanels.push({ panel: p, size: p.size });
@@ -220,6 +224,8 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
 
     let onlyMeOpen = true;
     for (let i = 0; i < groupArray.length; i++) {
+      if (!groupArray[i].visible)
+        continue;
       if (groupArray[i].open && groupArray[i] !== panel) {
         onlyMeOpen = false;
         break;
@@ -230,7 +236,10 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
     //调整大小，只需要把自己占满整个容器即可
     if (onlyMeOpen) {
       let spaceSize = 0;
-      groupArray.forEach((p) => spaceSize += (p !== panel ? headerSize : 0));//减去其他关闭的面板头部
+      groupArray.forEach((p) => {
+        if (p.visible)
+          spaceSize += (p !== panel ? headerSize : 0)
+      });//减去其他关闭的面板头部
       panel.size = Math.max(getPanelMinSize(panel.minSize), containerSize - spaceSize);
       return;
     }
@@ -255,6 +264,8 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
 
     for (let i = index + 1; i < groupArray.length; i++) {
       const adjustPanel = groupArray[i];
+      if (!adjustPanel.visible)
+        continue;
       if (adjustPanel.open)
         adjustPanelSize(adjustPanel);
 
@@ -266,6 +277,8 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
     //继续向上调整
     for (let i = index - 1; i >= 0; i--) {
       const adjustPanel = groupArray[i];
+      if (!adjustPanel.visible)
+        continue;
       if (adjustPanel.open)
         adjustPanelSize(adjustPanel);
     }
@@ -282,6 +295,8 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
     let freeSize = panel.size - headerSize;
     for (let i = index + 1; i < groupArray.length; i++) {
       const adjustPanel = groupArray[i];
+      if (!adjustPanel.visible)
+        continue;
       if (adjustPanel.open) {
         adjustPanel.size += freeSize;
         return;
@@ -289,6 +304,8 @@ function panelHandleOpenClose(panel: CodeLayoutPanelInternal, open: boolean) {
     }
     for (let i = index - 1; i >= 0; i--) {
       const adjustPanel = groupArray[i];
+      if (!adjustPanel.visible)
+        continue;
       if (adjustPanel.open) {
         adjustPanel.size += freeSize;
         return;
@@ -328,6 +345,8 @@ function flushLayoutSizeCounter() {
   let counter = 0;
   for (let i = 0; i < props.group.children.length; i++) {
     const panel = props.group.children[i];
+    if (!panel.visible)
+      continue;
     counter += panel.open ? panel.size : headerSize;
   }
   group.value.lastLayoutSizeCounter = counter;
@@ -343,6 +362,8 @@ function getCanAllocSize() {
   let canAllocSize = containerSize, notAllocSpaceAndOpenCount = 0;
 
   props.group.children.forEach((panel) => {
+    if (!panel.visible)
+      return
     if (panel.open && panel.size > 0)
       canAllocSize -= panel.size;
     else if (panel.open)
@@ -368,6 +389,8 @@ function relayoutAll() {
   //初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
   const allocSize = getAvgAllocSize();
   props.group.children.forEach((panel) => {
+    if (!panel.visible)
+      return
     if (panel.size === 0)
       panel.size = panel.open ? 
         Math.max(allocSize, getPanelMinSize(panel.minSize)) : 
@@ -395,6 +418,8 @@ function relayoutAllWithResizedSize(resizedContainerSize: number) {
 
   let allPanelsSize = 0;
   const openedPanels = props.group.children.filter(p => {
+    if (!p.visible)
+      return false;
     allPanelsSize += p.open ? p.size : layoutConfig.value.panelHeaderHeight;
     return p.open;
   }).sort((a, b) => a.size > b.size ? 1 : -1);

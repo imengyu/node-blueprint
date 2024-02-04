@@ -194,7 +194,7 @@
           <slot name="bottomPanel" />
         </template>
       </SplitBase>
-      <!--activity bar-->
+      <!--activity bar (right)-->
       <div 
         v-if="activityBar && config.primarySideBarPosition === 'right'" 
         :class="['code-layout-activity-bar',config.primarySideBarPosition]"

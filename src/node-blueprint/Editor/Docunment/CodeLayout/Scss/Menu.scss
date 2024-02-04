@@ -5,6 +5,7 @@
   --mx-menu-hover-text: var(--code-layout-color-text);
   --mx-menu-active-backgroud: var(--code-layout-color-background-highlight);
   --mx-menu-active-text: var(--code-layout-color-text);
+  --mx-menu-disabled-text: var(--code-layout-color-text-disabled);
 }
 .mx-context-menu.code-layout {
 
@@ -24,7 +25,7 @@
     --mx-menu-active-text: var(--code-layout-color-text);
     --mx-menu-open-text: var(--code-layout-color-text);
     --mx-menu-open-hover-text: var(--code-layout-color-text);
-    --mx-menu-disabled-text: var(--code-layout-color-text-gray)
+    --mx-menu-disabled-text: var(--code-layout-color-text-disabled);
 
     //Shadow
     --mx-menu-shadow-color: rgba(0, 0, 0, 0.1);

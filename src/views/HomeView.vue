@@ -43,6 +43,7 @@ const config = reactive<CodeLayoutConfig>({
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
   primarySideBarMinWidth: 170,
+  activityBarPosition: 'side',
   secondarySideBarWidth: 20,
   secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
@@ -174,6 +175,7 @@ onMounted(() => {
       title: 'Panel1',
       tooltip: 'Panel1',
       name: 'group1.panel1',
+      noHide: true,
       startOpen: true,
       iconSmall: () => h(IconSearch),
     }, group1);

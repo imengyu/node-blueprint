@@ -15,6 +15,7 @@
     @dragleave="handleDragLeave"
     @dragenter="handleDragEnter"
     @drop="handleDrop"
+    @contextmenu="onContextMenu(item, $event)"
   >
     <div class="icon">
       <CodeLayoutVNodeStringRender :content="item.iconLarge" />
@@ -30,6 +31,7 @@ import { inject, ref, toRefs, type PropType } from 'vue';
 import type { CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import { checkDropPanelDefault, getDropPanel, usePanelDragger, usePanelDragOverDetector } from './Composeable/DragDrop';
+import { usePanelMenuControl } from './Composeable/PanelMenu';
 
 const emit = defineEmits(['activeItem'])
 
@@ -48,6 +50,10 @@ const { item } = toRefs(props);
 const horizontal = ref(false);
 const container = ref<HTMLElement>();
 const context = inject('codeLayoutContext') as CodeLayoutContext;
+
+const {
+  onContextMenu
+} = usePanelMenuControl();
 
 const {
   handleDragStart,
