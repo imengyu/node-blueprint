@@ -1,5 +1,5 @@
-import { ref, type Ref } from "vue";
-import type { CodeLayoutContext, CodeLayoutDragDropReferencePosition, CodeLayoutPanelInternal } from "../CodeLayout";
+import { inject, ref, type Ref } from "vue";
+import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutDragDropReferencePosition, CodeLayoutPanelInternal } from "../CodeLayout";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { createMiniTimeOut } from "./MiniTimeout";
 
@@ -31,14 +31,24 @@ export function getCurrentDragPanel() {
 
 //拖拽开始函数封装
 export function usePanelDragger() {
+  const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
+
   function handleDragStart(panel: CodeLayoutPanelInternal, ev: DragEvent) {
+  
+    const userCancel = layoutConfig.value.onStartDrag?.(panel) ?? false;
+    if (userCancel)
+      return;
+
     currentDragPanel = panel;
     (ev.target as HTMLElement).classList.add("dragging");
     if (ev.dataTransfer)
       ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
   }
   function handleDragEnd(ev: DragEvent) {
-    currentDragPanel = null;
+    if (currentDragPanel) {
+      layoutConfig.value.onEndDrag?.(currentDragPanel);
+      currentDragPanel = null;
+    }
     (ev.target as HTMLElement).classList.remove("dragging");
   }
   return {

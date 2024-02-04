@@ -3,17 +3,20 @@
   --code-layout-color-background: #1e1e1e;
   --code-layout-color-background-second: #252526;
   --code-layout-color-background-light: #333333;
+  --code-layout-color-background-highlight: #04395e;
   --code-layout-color-background-hover: #363737;
   --code-layout-color-background-hover-light: #464646;
   --code-layout-color-background-mask-light: rgba(255,255,255,0.2);
   --code-layout-color-highlight: #0078d4;
   --code-layout-color-text: #ccc;
-  --code-layout-color-text-highlight: #fff;
+  --code-layout-color-text-light: #fff;
+  --code-layout-color-text-highlight: #2f94f1;
   --code-layout-color-text-gray: #818181;
   --code-layout-color-border: #474747;
   --code-layout-color-border-light: #cccccc;
   --code-layout-color-border-background: #2a2a2a;
   --code-layout-color-border-white: #fff;
+  --code-layout-color-shadow: rgba(0,0,0,0.15);
   --code-layout-color-scrollbar-thumb: rgba(204, 204, 204, 0.4);
   --code-layout-color-scrollbar-thumb-light: rgba(204, 204, 204, 0.6);
   --code-layout-border-size: 1px;
@@ -78,10 +81,10 @@
         }
 
         &.active, &:hover {
-          color: var(--code-layout-color-text-highlight);
+          color: var(--code-layout-color-text-light);
 
           svg {
-            fill: var(--code-layout-color-text-highlight);
+            fill: var(--code-layout-color-text-light);
           }
         }
 
@@ -95,7 +98,7 @@
             top: 0;
             bottom: 0;
             left: 0;
-            background-color: var(--code-layout-color-text-highlight);
+            background-color: var(--code-layout-color-text-light);
           }
         }
 

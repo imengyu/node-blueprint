@@ -196,7 +196,7 @@ const {
       }
 
       &:hover, &:active, &.active {
-        color: var(--code-layout-color-text-highlight);
+        color: var(--code-layout-color-text-light);
       }
       &.active::after {
         position: absolute;
@@ -205,7 +205,7 @@ const {
         right: var(--tab-padding);
         bottom: 0px;
         height: 1px;
-        background-color: var(--code-layout-color-text-highlight);
+        background-color: var(--code-layout-color-text-light);
       }
       &.dragging {
         background-color: var(--code-layout-color-background);

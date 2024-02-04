@@ -237,6 +237,10 @@ function dragDropToGrid(grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) {
   if (gridInstance.hasChild(panel))
     return;
 
+  const userCancel = layoutConfig.value.onDropToGrid?.(panel, grid) ?? false;
+  if (userCancel)
+    return;
+
   const parent = panel.parentGroup;
   if (parent)
     removePanelInternal(panel);
@@ -282,6 +286,9 @@ function dragDropToPanelNear(
   panel: CodeLayoutPanelInternal, 
   dropTo: 'normal'|'empty'|'tab-header'|'activiy-bar'
 ) {
+  const userCancel = layoutConfig.value.onDropToPanel?.(reference, referencePosition, panel, dropTo) ?? false;
+  if (userCancel)
+    return;
 
   const dropToTabHeader = dropTo === 'tab-header';
   const dropToActiviyBar = dropTo === 'activiy-bar';

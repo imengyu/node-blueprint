@@ -5,6 +5,7 @@ import type { CodeLayoutLangDefine } from "./Language";
 //布局类型定义
 export interface CodeLayoutConfig {
   primarySideBarSwitchWithActivityBar: boolean,
+  primarySideBarPosition: 'left'|'right',
   primarySideBarWidth: number,
   primarySideBarMinWidth: number,
   secondarySideBarWidth: number,
@@ -18,6 +19,16 @@ export interface CodeLayoutConfig {
   titleBar: boolean,
   titleBarShowCustomizeLayout: boolean,
 
+  onResetDefault?: () => void;
+  onStartDrag?: (panel: CodeLayoutPanelInternal) => boolean;
+  onEndDrag?: (panel: CodeLayoutPanelInternal) => void;
+  onDropToGrid?: (panel: CodeLayoutPanelInternal, grid: CodeLayoutGrid) => boolean;
+  onDropToPanel?: (
+    reference: CodeLayoutPanelInternal,
+    referencePosition: CodeLayoutDragDropReferencePosition, 
+    panel: CodeLayoutPanelInternal, 
+    dropTo: 'normal'|'empty'|'tab-header'|'activiy-bar'
+  ) => boolean;
   onGridFirstDrop?: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => CodeLayoutPanelInternal;
   onGridEmpty?: (grid: CodeLayoutGrid) => void;
   onNoAutoShinkTabGroup?: (group: CodeLayoutPanelInternal) => void,

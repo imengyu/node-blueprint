@@ -16,4 +16,6 @@ export const LangString = {
   primarySideBarPosition: 'Primary Side Bar Position',
   panelAlignment: 'Panel Alignment',
   visibility: 'Visibility',
+  restoreDefault: 'Restore Default',
+  close: 'Close',
 };
