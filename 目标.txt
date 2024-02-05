@@ -48,7 +48,7 @@ Codelayout
 🆗 面板的右键菜单和隐藏控制
 🆗 顶层网格逻辑内置
 🆗 ActivityBar位置
-TAB的超出隐藏
+🆗 TAB的超出隐藏
 TAB和ActionItem的tooltip
 文档整理
 打包模块后测试

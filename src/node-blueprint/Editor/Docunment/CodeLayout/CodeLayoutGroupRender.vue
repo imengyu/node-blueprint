@@ -33,18 +33,24 @@
       v-if="group.tabStyle && group.tabStyle != 'none' && group.tabStyle != 'single'"
       :class="'tab ' + group.tabStyle"
     >
-      <div class="tab-container">
-        <CodeLayoutTabItem 
-          v-for="(panel, key) in group.children"
-          v-show="panel.visible"
-          :key="key" 
-          :tabStyle="group.tabStyle"
-          :active="group.activePanel === panel"
-          :panel="panel"
-          @click="handleTabClick(panel)"
-          @focusSelf="handleTabClick(panel)"
-        />
-      </div>
+      <OverflowCollapseList 
+        class="tab-container"
+        :items="group.children"
+        :activeItem="group.activePanel"
+        :itemMenuLabel="(p) => (p as CodeLayoutPanelInternal).title"
+        @overflowItemClicked="(p) => group.setActiveChild(p as CodeLayoutPanelInternal)"
+      >
+        <template #item="{ item: panel }">
+          <CodeLayoutTabItem 
+            v-show="panel.visible"
+            :tabStyle="group.tabStyle"
+            :active="group.activePanel === panel"
+            :panel="panel"
+            @click="handleTabClick(panel)"
+            @focusSelf="handleTabClick(panel)"
+          />
+        </template>
+      </OverflowCollapseList>
       <CodeLayoutActionsRender v-if="group.activePanel" class="actions" :actions="group.activePanel.actions" />
     </div>
     <!-- 标题栏 -->
@@ -120,6 +126,7 @@ import CodeLayoutGroupDraggerHost from './CodeLayoutGroupDraggerHost.vue';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import CodeLayoutTabItem from './CodeLayoutTabItem.vue';
+import OverflowCollapseList from './Components/OverflowCollapseList.vue';
 import { usePanelDragger } from './Composeable/DragDrop';
 import { usePanelMenuControl } from './Composeable/PanelMenu';
 

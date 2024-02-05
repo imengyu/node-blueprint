@@ -117,8 +117,8 @@ const menuData : MenuOptions = {
 
 const activityBar = ref(true);
 const primarySideBar = ref(true);
-const secondarySideBar = ref(true);
-const bottomPanel = ref(true);
+const secondarySideBar = ref(false);
+const bottomPanel = ref(false);
 const statusBar = ref(true);
 const menuBar = ref(true);
 
@@ -148,7 +148,7 @@ onMounted(() => {
     const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
     const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
 
-    for (let i = 4; i < 8; i++) {
+    for (let i = 4; i < 13; i++) {
       
       codeLayout.value.addGroup({
         title: 'Group' + i,

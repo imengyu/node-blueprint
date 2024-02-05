@@ -145,6 +145,9 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   reselectActiveChild() {
     this.activePanel = this.children.find((p) => p.visible) || null;
   }
+  setActiveChild(child: CodeLayoutPanelInternal) {
+    this.activePanel = child;
+  }
   removeChild(child: CodeLayoutPanelInternal) {
     this.children.splice(this.children.indexOf(child), 1);
     child.parentGroup = null;
