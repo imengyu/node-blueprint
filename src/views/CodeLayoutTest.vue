@@ -1,7 +1,4 @@
 <template>
-  
-  <NodeIde />
-  <!--
   <div class="full-container">
     <CodeLayout 
       ref="codeLayout" 
@@ -30,7 +27,7 @@
         <span v-else>{{ panel.size }} / {{ panel.name }}</span>
       </template>
     </CodeLayout>
-  </div>-->
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -41,7 +38,6 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import NodeIde from '@/node-blueprint/Editor/Docunment/NodeIde.vue';
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
@@ -150,20 +146,8 @@ onMounted(() => {
     }, 'primarySideBar');
 
 
-    const bottomGroup = codeLayout.value.addGroup({
-      title: '',
-      name: 'bottomGroup',
-      tabStyle: 'text',
-      noAutoShink: true,
-      startOpen: true,
-    }, 'bottomPanel');
-    const secondaryGroup = codeLayout.value.addGroup({
-      title: '',
-      name: 'secondaryGroup',
-      tabStyle: 'icon',
-      noAutoShink: true,
-      startOpen: true,
-    }, 'secondarySideBar');
+    const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
+    const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
 
     for (let i = 4; i < 8; i++) {
       
@@ -216,8 +200,7 @@ onMounted(() => {
         },
       ]
     }, group1);
-
-    
+  
     codeLayout.value.addPanel({
       title: 'Panel4',
       tooltip: 'Panel4',
@@ -259,7 +242,6 @@ onMounted(() => {
       name: 'group3.panel5.panel2',
       iconSmall: () => h(IconFile),
     }, panel5);
-
 
     codeLayout.value.activeGroup(group1)
   });

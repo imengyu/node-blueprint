@@ -52,9 +52,9 @@
           v-for="(panelGroup, key) in panels.primary.children"
           v-show="panelGroup.visible"
           :key="key"
-          :item="(panelGroup as CodeLayoutPanelInternal)"
+          :item="panelGroup"
           :active="panelGroup === panels.primary.activePanel && primarySideBar"
-          @active-item="onActivityBarAcitve(panelGroup as CodeLayoutPanelInternal)"
+          @active-item="onActivityBarAcitve(panelGroup)"
         />
       </div>
       <div class="bottom">
@@ -62,75 +62,50 @@
       </div>
     </template>
     <template #primarySideBar>
-      <template v-if="panels.primary.children.length > 0">
-        <CodeLayoutGroupRender
-          v-for="(panelGroup, key) in panels.primary.children"
-          v-show="panelGroup.visible"
-          :key="key"
-          :group="(panelGroup as CodeLayoutPanelInternal)"
-          :show="panelGroup === panels.primary.activePanel && primarySideBar"
-          :horizontal="false"
-          :primary="true"
-        >
-          <template #panelRender="data">
-            <slot name="panelRender" v-bind="data" />
-          </template>
-          <template #emptyTabRender>
-            <CodeLayoutEmpty :panel="(panelGroup as CodeLayoutPanelInternal)" grid="primarySideBar">
-              <slot name="emptyGroup" :panel="panelGroup" drid="primarySideBar">{{ emptyText }}</slot>
-            </CodeLayoutEmpty>
-          </template>
-        </CodeLayoutGroupRender>
-      </template>
-      <CodeLayoutEmpty v-else grid="primarySideBar">
-        <slot name="emptyGroup" group="primarySideBar">{{ emptyText }}</slot>
-      </CodeLayoutEmpty>
+      <CodeLayoutGroupRender
+        :group="panels.primary"
+        :horizontal="false"
+        :primary="true"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+        <template #emptyTabRender>
+          <CodeLayoutEmpty :panel="panels.primary" grid="primarySideBar">
+            <slot name="emptyGroup" :panel="panels.primary" drid="primarySideBar">{{ emptyText }}</slot>
+          </CodeLayoutEmpty>
+        </template>
+      </CodeLayoutGroupRender>
     </template>
     <template #secondarySideBar>
-      <template v-if="panels.secondary.children.length > 0">
-        <CodeLayoutGroupRender
-          v-for="(panelGroup, key) in panels.secondary.children"
-          v-show="panelGroup.visible"
-          :key="key"
-          :group="(panelGroup as CodeLayoutPanelInternal)"
-          :horizontal="false"
-        >
-          <template #panelRender="data">
-            <slot name="panelRender" v-bind="data" />
-          </template>
-          <template #emptyTabRender>
-            <CodeLayoutEmpty :panel="(panelGroup as CodeLayoutPanelInternal)" grid="secondarySideBar">
-              <slot name="emptyGroup" :panel="panelGroup" grid="secondarySideBar">{{ emptyText }}</slot>
-            </CodeLayoutEmpty>
-          </template>
-        </CodeLayoutGroupRender>
-      </template>
-      <CodeLayoutEmpty v-else grid="secondarySideBar">
-        <slot name="emptyGroup" group="secondarySideBar">{{ emptyText }}</slot>
-      </CodeLayoutEmpty>
+      <CodeLayoutGroupRender
+        :group="panels.secondary"
+        :horizontal="false"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+        <template #emptyTabRender>
+          <CodeLayoutEmpty :panel="panels.secondary" grid="secondarySideBar">
+            <slot name="emptyGroup" :panel="panels.secondary" grid="secondarySideBar">{{ emptyText }}</slot>
+          </CodeLayoutEmpty>
+        </template>
+      </CodeLayoutGroupRender>
     </template>
     <template #bottomPanel>
-      <template v-if="panels.bottom.children.length > 0">
-        <CodeLayoutGroupRender
-          v-for="(panelGroup, key) in panels.bottom.children"
-          v-show="panelGroup.visible"
-          :key="key"
-          :group="(panelGroup as CodeLayoutPanelInternal)"
-          :horizontal="true"
-        >
-          <template #panelRender="data">
-            <slot name="panelRender" v-bind="data" />
-          </template>
-          <template #emptyTabRender>
-            <CodeLayoutEmpty grid="bottomPanel">
-              <slot name="emptyGroup" :panel="panelGroup" grid="bottomPanel">{{ emptyText }}</slot>
-            </CodeLayoutEmpty>
-          </template>
-        </CodeLayoutGroupRender>
-      </template>
-      <CodeLayoutEmpty v-else grid="bottomPanel">
-        <slot name="emptyGroup" grid="bottomPanel">{{ emptyText }}</slot>
-      </CodeLayoutEmpty>
+      <CodeLayoutGroupRender
+        :group="panels.bottom"
+        :horizontal="true"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+        <template #emptyTabRender>
+          <CodeLayoutEmpty grid="bottomPanel">
+            <slot name="emptyGroup" :panel="panels.bottom" grid="bottomPanel">{{ emptyText }}</slot>
+          </CodeLayoutEmpty>
+        </template>
+      </CodeLayoutGroupRender>
     </template>
     <template #centerArea>
       <slot name="centerArea" />
@@ -142,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref , type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs, computed } from 'vue';
+import { ref, type Ref, type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs, computed } from 'vue';
 import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition, type CodeLayoutLangConfig, defaultCodeLayoutConfig } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
@@ -152,23 +127,21 @@ import CodeLayoutCustomizeLayout from './Components/CodeLayoutCustomizeLayout.vu
 import { MenuBar, type MenuOptions } from '@imengyu/vue3-context-menu';
 import type { MenuBarOptions } from '@imengyu/vue3-context-menu/lib/MenuBar';
 
-const panels = ref<{
+const panels = ref({
+  primary: new CodeLayoutGridInternal('primarySideBar', 'hidden', (open) => {
+    emit('update:primarySideBar', open);
+  }),
+  secondary: new CodeLayoutGridInternal('secondarySideBar', 'icon', (open) => {
+    emit('update:secondarySideBar', open);
+  }),
+  bottom: new CodeLayoutGridInternal('bottomPanel', 'text', (open) => {
+    emit('update:bottomPanel', open);
+  }),
+}) as Ref<{
   primary: CodeLayoutGridInternal,
   secondary: CodeLayoutGridInternal,
   bottom: CodeLayoutGridInternal,
-  center: CodeLayoutGridInternal,
-}>({
-  primary: new CodeLayoutGridInternal('primarySideBar', (open) => {
-    emit('update:primarySideBar', open);
-  }),
-  secondary: new CodeLayoutGridInternal('secondarySideBar', (open) => {
-    emit('update:secondarySideBar', open);
-  }),
-  bottom: new CodeLayoutGridInternal('bottomPanel', (open) => {
-    emit('update:bottomPanel', open);
-  }),
-  center: new CodeLayoutGridInternal('centerArea', () => {}),
-});
+}>;
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 
@@ -248,6 +221,7 @@ const codeLayoutInstance : CodeLayoutInstance = {
   removePanel,
   relayoutAll,
   relayoutGroup,
+  getRootGrid,
   getPanelByName,
 };
 const codeLayoutContext : CodeLayoutContext = {
@@ -428,7 +402,7 @@ function dragDropToPanelNear(
   ) {
     //2.3.1
 
-    const newGroup = new CodeLayoutPanelInternal(getRootGrid);
+    const newGroup = new CodeLayoutPanelInternal();
     Object.assign(newGroup, {
       ...reference,
       name: reference.name + '.clone' + Math.floor(Math.random() * 10),
@@ -543,7 +517,7 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
       props.layoutConfig.onNoAutoShinkTabGroup?.(group);
     } else if (group.children.length === 0 && group.getIsTopGroup()) {
       //如果TAB子级数量为0，且处于顶级，则自动收缩顶级
-      getRootGrid(group.parentGrid).collapse();
+      getRootGrid(group.parentGrid).collapse(false);
     }
     return;
   }
@@ -556,7 +530,7 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
         props.layoutConfig.onNoAutoShinkNormalGroup?.(group);
       } else {
         //如果子级数量为0，则自动收缩顶级
-        getRootGrid(group.parentGrid).collapse();
+        getRootGrid(group.parentGrid).collapse(false);
       }
       return;
     }
@@ -623,7 +597,6 @@ function getRootGrid(target: CodeLayoutGrid) : CodeLayoutGridInternal {
     case 'primarySideBar': return panels.value.primary as CodeLayoutGridInternal;
     case 'secondarySideBar': return panels.value.secondary as CodeLayoutGridInternal;
     case 'bottomPanel': return panels.value.bottom as CodeLayoutGridInternal;
-    case 'centerArea': return panels.value.center as CodeLayoutGridInternal;
   }
   throw new Error(`Unknown grid ${target}`);
 }
@@ -690,7 +663,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const groupResult = reactive(new CodeLayoutPanelInternal(getRootGrid));
+  const groupResult = reactive(new CodeLayoutPanelInternal());
   Object.assign(groupResult, panel);
   groupResult.open = panel.startOpen ?? false;
   groupResult.size = panel.size ?? 0;
@@ -729,7 +702,7 @@ function addPanel(panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, startOpe
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const panelResult = reactive(new CodeLayoutPanelInternal(getRootGrid));
+  const panelResult = reactive(new CodeLayoutPanelInternal());
   Object.assign(panelResult, panel);
   panelResult.open = panel.startOpen ?? false;
   panelResult.size = panel.size ?? 0;

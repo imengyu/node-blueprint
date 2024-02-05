@@ -73,31 +73,18 @@ export interface CodeLayoutInstance {
   openPanel: (panel: CodeLayoutPanel, closeOthers?: boolean) => void,
   addPanel: (panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active?: boolean) => CodeLayoutPanel;
   removePanel: (panel: CodeLayoutPanel) => CodeLayoutPanel;
+  getRootGrid(target: CodeLayoutGrid): CodeLayoutGridInternal,
   relayoutAll: () => void;
   relayoutGroup(name: string): void;
-}
-export interface CodeLayoutPanelParent {
-  children : CodeLayoutPanelInternal[];
-  activePanel : CodeLayoutPanelInternal|null;
-
-  addChild(child: CodeLayoutPanelInternal, index?: number) : void;
-  addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) : void;
-  removeChild(child: CodeLayoutPanelInternal) : void;
-  hasChild(child: CodeLayoutPanelInternal) : boolean;
-  reselectActiveChild() : void;
-  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal): void;
 }
 
 //内部类定义
 
-export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPanel, CodeLayoutPanelParent {
+export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPanel {
 
-  public constructor(getGrid: (name: CodeLayoutGrid) => CodeLayoutGridInternal) {
+  public constructor() {
     super();
-    this.callbackGetGrid = getGrid;
   }
-
-  private callbackGetGrid: (name: CodeLayoutGrid) => CodeLayoutGridInternal;
 
   title = '';
   name = '';
@@ -110,8 +97,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   activePanel: CodeLayoutPanelInternal|null = null;
   parentGroup: CodeLayoutPanelInternal|null = null;
   parentGrid: CodeLayoutGrid = 'none';
-
-  
+ 
   tooltip?: string;
   badge?: string|(() => VNode)|undefined;
   accept?: CodeLayoutGrid[];
@@ -139,6 +125,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       this.children.push(child);
     child.parentGroup = this;
     child.parentGrid = this.parentGrid;
+    if (!this.activePanel)
+      this.activePanel = child;
   }
   addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) {
     if (typeof startIndex === 'number')
@@ -151,6 +139,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       child.parentGroup = this;
       child.parentGrid = this.parentGrid;
     }
+    if (!this.activePanel)
+      this.activePanel = this.children[0];
   }
   reselectActiveChild() {
     this.activePanel = this.children.find((p) => p.visible) || null;
@@ -190,18 +180,13 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   getIsInTab() {
     return this.parentGroup?.getIsTabContainer() ?? false;
   }
-  getParentGrid() {
-    if (this.parentGrid !== 'none')
-      return this.callbackGetGrid(this.parentGrid);
-    return null;
-  }
-  getParent() : CodeLayoutPanelParent|null {
-    return this.parentGroup as CodeLayoutPanelParent ?? this.getParentGrid();
+  getParent() : CodeLayoutPanelInternal|null {
+    return this.parentGroup;
   }
   getIndexInParent() {
     if (this.parentGroup)
       return this.parentGroup.children.indexOf(this) ?? 0;
-    return this.getParentGrid()?.children.indexOf(this) ?? 0;
+    return this.getParent()?.children.indexOf(this) ?? 0;
   }
   getLastChildOrSelf() {
     return this.children.length > 0 ? 
@@ -227,71 +212,29 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   relayoutAllWithResizedSize(resizedContainerSize: number) {
     this.pushLateAction('relayoutAllWithResizedSize', resizedContainerSize);
   }
-
-
 }
-export class CodeLayoutGridInternal implements CodeLayoutPanelParent {
+export class CodeLayoutGridInternal extends CodeLayoutPanelInternal {
 
   public constructor(
     name: CodeLayoutGrid,
+    tabStyle: CodeLayoutPanelTabStyle,
     onSwitchCollapse: (open: boolean) => void
   ) {
+    super();
     this.name = name;
+    this.tabStyle = tabStyle;
+    this.parentGrid = name;
     this.onSwitchCollapse = onSwitchCollapse;
   }
 
-  private onSwitchCollapse: (open: boolean) => void;
+  private onSwitchCollapse?: (open: boolean) => void;
 
-  name: CodeLayoutGrid;
-  children : CodeLayoutPanelInternal[] = [];
-  activePanel : CodeLayoutPanelInternal|null = null;
-
-  addChild(child: CodeLayoutPanelInternal, index?: number) {
-    if (typeof index === 'number')
-      this.children.splice(index, 0, child);
-    else
-      this.children.push(child);
-    child.parentGrid = this.name;
-  }
-  addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) {
-    if (typeof startIndex === 'number')
-      this.children.splice(startIndex, 0, ...childs);
-    else
-      this.children.push(...childs);
-    for (const child of childs) 
-      child.parentGrid = this.name;
-  }
-  reselectActiveChild() {
-    this.activePanel = this.children.find((p) => p.visible) || null;
-  }
-  removeChild(child: CodeLayoutPanelInternal) {
-    if (this.hasChild(child))
-      this.children.splice(this.children.indexOf(child), 1);
-    //如果被删除面板是激活面板，则选另外一个面板激活
-    if (child.name === this.activePanel?.name)
-      this.reselectActiveChild();
-  }
-  hasChild(child: CodeLayoutPanelInternal) {
-    return this.children.includes(child);
-  }
-  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
-    this.children.splice(
-      this.children.indexOf(oldChild), 
-      1, 
-      child);
-    //如果被删除面板是激活面板，则选另外一个面板激活
-    if (this.activePanel?.name === oldChild.name)
-      this.activePanel = child;
-  }
-  collapse() {
-    this.onSwitchCollapse(false);
-  }
-  open() {
-    this.onSwitchCollapse(true);
+  collapse(open: boolean) {
+    this.onSwitchCollapse?.(open);
   }
 }
 
-export type CodeLayoutPanelTabStyle = 'none'|'single'|'text'|'icon';
+export type CodeLayoutPanelTabStyle = 'none'|'single'|'text'|'icon'|'hidden';
 
 //面板用户类型定义
 export interface CodeLayoutPanel {

@@ -1,6 +1,27 @@
 <template>
+  <!-- 扁平情况下多个条目只显示单页 -->
+  <template v-if="show && group.tabStyle === 'hidden'">
+    <template v-if="group.children.length > 0">
+      <CodeLayoutGroupRender
+        v-for="(panelGroup, key) in group.children"
+        :key="key"
+        :show="panelGroup.visible && panelGroup === group.activePanel"
+        :group="(panelGroup as CodeLayoutPanelInternal)"
+        :horizontal="false"
+      >
+        <template #panelRender="data">
+          <slot name="panelRender" v-bind="data" />
+        </template>
+        <template #emptyTabRender>
+          <slot name="emptyTabRender" />
+        </template>
+      </CodeLayoutGroupRender>
+    </template>
+    <slot v-else name="emptyTabRender" />
+  </template>
+  <!-- 正常页面 -->
   <div 
-    v-if="show" 
+    v-else-if="show" 
     :class="[
       'code-layout-group',
       primary ? 'primary' : '',
