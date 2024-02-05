@@ -18,7 +18,7 @@
   >
     <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
     <span v-if="tabStyle == 'icon'" class="icon">
-      <CodeLayoutVNodeStringRender :content="panel.iconSmall || panel.title" />
+      <CodeLayoutVNodeStringRender :content="panel.iconSmall || panel.iconLarge || panel.title" />
     </span>
     <span v-if="panel.badge" class="badge">
       <CodeLayoutVNodeStringRender :content="panel.badge" />

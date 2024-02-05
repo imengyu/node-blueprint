@@ -20,7 +20,7 @@
     <div class="icon">
       <CodeLayoutVNodeStringRender :content="item.iconLarge" />
     </div>
-    <span v-if="item.badge">
+    <span v-if="item.badge" class="badge">
       <CodeLayoutVNodeStringRender :content="item.badge" />
     </span>
   </div>

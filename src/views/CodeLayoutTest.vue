@@ -44,7 +44,7 @@ const config = reactive<CodeLayoutConfig>({
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
   primarySideBarMinWidth: 170,
-  activityBarPosition: 'side',
+  activityBarPosition: 'top',
   secondarySideBarWidth: 20,
   secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
@@ -144,7 +144,6 @@ onMounted(() => {
       tabStyle: 'single',
       iconLarge: () => h(IconSearch),
     }, 'primarySideBar');
-
 
     const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
     const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');

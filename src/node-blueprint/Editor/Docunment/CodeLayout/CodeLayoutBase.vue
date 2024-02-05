@@ -17,7 +17,7 @@
     <div class="code-layout-activity">
       <!--activity bar-->
       <div 
-        v-if="activityBar && config.primarySideBarPosition === 'left'" 
+        v-if="activityBar && config.primarySideBarPosition === 'left' && config.activityBarPosition === 'side'" 
         :class="['code-layout-activity-bar',config.primarySideBarPosition]"
       >
         <slot name="activityBar" />
@@ -196,7 +196,7 @@
       </SplitBase>
       <!--activity bar (right)-->
       <div 
-        v-if="activityBar && config.primarySideBarPosition === 'right'" 
+        v-if="activityBar && config.primarySideBarPosition === 'right' && config.activityBarPosition === 'side'" 
         :class="['code-layout-activity-bar',config.primarySideBarPosition]"
       >
         <slot name="activityBar" />

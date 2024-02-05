@@ -25,6 +25,7 @@ export const LangString = {
   side: 'Side',
   top: 'Top',
   badge: 'Badge',
+  additionalViews: 'Additional Views',
   activityBarPosition: 'Activity Bar Position',
   movePrimarySideBarRight: 'Move Primary Side Bar Right',
   movePrimarySideBarLeft: 'Move Primary Side Bar Left',

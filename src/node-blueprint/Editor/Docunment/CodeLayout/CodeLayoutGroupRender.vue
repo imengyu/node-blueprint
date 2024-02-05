@@ -175,6 +175,7 @@ const {
   --tab-padding: 10px;
   --tab-vertical-padding: 4px;
   --tab-font-size: 13px;
+  --tab-font-size-small: 11px;
 
   &.primary {
     background-color: var(--code-layout-color-background-second);
@@ -206,17 +207,18 @@ const {
       cursor: pointer;
 
       .badge {
-        position: relative;
+        position: absolute;
+        right: 0;
+        bottom: 0;
         display: inline-block;
-        margin-left: 8px;
-        padding: 3px 5px;
-        border-radius: var(--tab-font-size);
-        font-size: var(--tab-font-size);
-        min-width: var(--tab-font-size);
-        line-height: var(--tab-font-size);
-        font-weight: 400;
+        padding: 3px;
+        transform: scale(0.8);
+        border-radius: var(--tab-font-size-small);
+        font-size: var(--tab-font-size-small);
+        min-width: var(--tab-font-size-small);
+        line-height: var(--tab-font-size-small);
         text-align: center;
-        background-color: var(--code-layout-color-background-light);
+        background-color: var(--code-layout-color-highlight);
       }
 
       span {
@@ -261,6 +263,22 @@ const {
         &::before {
           right: calc(var(--code-layout-border-size-larger) / 2 * -1);
         }
+      }
+    }
+
+    &.text {
+      .badge {
+        position: relative;
+        right: unset;
+        bottom: unset;
+        display: inline-block;
+        margin-left: 8px;
+        padding: 3px 5px;
+        border-radius: var(--tab-font-size);
+        font-size: var(--tab-font-size);
+        min-width: var(--tab-font-size);
+        line-height: var(--tab-font-size);
+        background-color: var(--code-layout-color-background-light);
       }
     }
   }

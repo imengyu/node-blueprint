@@ -38,7 +38,7 @@ export function usePanelMenuControl() {
         },
         { 
           label: `${t(panel.showBadge ? 'hide' : 'show')} ${t('badge')}`,
-          hidden: !panel.badge,
+          hidden: !panel.parentGroup?.getIsTopGroup(),
           divided: 'down',
           onClick: () => {
             panel.showBadge = !panel.showBadge;

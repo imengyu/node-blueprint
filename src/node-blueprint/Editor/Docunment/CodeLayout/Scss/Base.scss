@@ -29,6 +29,7 @@
   --code-layout-titlebar-background: #3c3c3c;
   --code-layout-titlebar-height: 35px;
   --code-layout-font-size: 13px;
+  --code-layout-font-size-small: 11px;
 }
 
 .code-layout-root {
@@ -93,6 +94,20 @@
           pointer-events: none;
           fill: var(--code-layout-color-text-gray);
         }
+
+        .badge {
+          position: absolute;
+          right: 5px;
+          bottom: 2px;
+          display: inline-block;
+          padding: 3px;
+          border-radius: var(--code-layout-font-size-small);
+          font-size: var(--code-layout-font-size-small);
+          min-width: var(--code-layout-font-size-small);
+          line-height: var(--code-layout-font-size-small);
+          text-align: center;
+          background-color: var(--code-layout-color-highlight);
+        }  
 
         &.active, &:hover {
           color: var(--code-layout-color-text-light);

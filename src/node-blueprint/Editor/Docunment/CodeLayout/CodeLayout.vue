@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref, type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs, computed } from 'vue';
+import { ref, type Ref, type PropType, onMounted, provide, onBeforeUnmount, reactive, toRefs, computed, watch, nextTick } from 'vue';
 import { CodeLayoutPanelInternal, type CodeLayoutConfig, type CodeLayoutContext, type CodeLayoutGrid, type CodeLayoutInstance, type CodeLayoutPanel, CodeLayoutGridInternal, type CodeLayoutDragDropReferencePosition, type CodeLayoutLangConfig, defaultCodeLayoutConfig } from './CodeLayout';
 import CodeLayoutBase, { type CodeLayoutBaseInstance } from './CodeLayoutBase.vue';
 import CodeLayoutActionItem from './CodeLayoutActionItem.vue';
@@ -198,9 +198,26 @@ const props = defineProps({
     default: "Drag a view here to display",
   },
 });
-const { layoutConfig } = toRefs(props);
+const { layoutConfig, activityBar } = toRefs(props);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 
+//activity bar 位置根据设置进行切换
+function loadActivityBarPosition() {
+  switch (layoutConfig.value.activityBarPosition) {
+    case 'side':
+    case 'hidden':
+      panels.value.primary.tabStyle = 'hidden';
+      break;
+    case 'top':
+      panels.value.primary.tabStyle = activityBar.value ? 'icon' : 'hidden';
+      break;
+  }
+}
+
+watch(() => layoutConfig.value.activityBarPosition, loadActivityBarPosition);
+watch(activityBar, loadActivityBarPosition);
+
+//菜单配置
 const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
   return {
     theme: 'code-layout',
@@ -210,6 +227,7 @@ const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
   }
 })
 
+//示例接口和上下文接口
 const codeLayoutInstance : CodeLayoutInstance = {
   activeGroup,
   closePanel,
@@ -731,6 +749,9 @@ function relayoutGroup(name: string) {
 defineExpose(codeLayoutInstance);
 
 onMounted(() => {
+  nextTick(() => {
+    loadActivityBarPosition();
+  });
 });
 onBeforeUnmount(() => {
 });
