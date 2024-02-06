@@ -38,7 +38,7 @@ const config = reactive<CodeLayoutConfig>({
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
   primarySideBarMinWidth: 170,
-  activityBarPosition: 'top',
+  activityBarPosition: 'side',
   secondarySideBarWidth: 20,
   secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
@@ -52,7 +52,7 @@ const config = reactive<CodeLayoutConfig>({
   activityBar: true,
   primarySideBar: true,
   secondarySideBar: false,
-  bottomPanel: true,
+  bottomPanel: false,
   statusBar: true,
   menuBar: true,
 });

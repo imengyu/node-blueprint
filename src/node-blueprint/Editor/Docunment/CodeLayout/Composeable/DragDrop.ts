@@ -32,9 +32,18 @@ export function getCurrentDragPanel() {
 //拖拽开始函数封装
 export function usePanelDragger() {
   const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
+  const cornerSize = 40;
 
-  function draggingMouseMoveHandler(e: MouseEvent) {
-    
+  function draggingMouseMoveHandler(e: MouseEvent) {    
+    if (e.x < cornerSize) {
+      layoutConfig.value.primarySideBar = true;
+    } 
+    if (e.x >= window.innerWidth - cornerSize) {
+      layoutConfig.value.secondarySideBar = true;
+    }
+    if (e.y >= window.innerHeight - cornerSize) {
+      layoutConfig.value.bottomPanel = true;
+    }
   }
 
   function handleDragStart(panel: CodeLayoutPanelInternal, ev: DragEvent) {
@@ -48,7 +57,7 @@ export function usePanelDragger() {
     if (ev.dataTransfer)
       ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
 
-    window.addEventListener('mousemove', draggingMouseMoveHandler);
+    document.addEventListener('dragover', draggingMouseMoveHandler);
   }
   function handleDragEnd(ev: DragEvent) {
     if (currentDragPanel) {
@@ -57,7 +66,7 @@ export function usePanelDragger() {
     }
     (ev.target as HTMLElement).classList.remove("dragging");
 
-    window.removeEventListener('mousemove', draggingMouseMoveHandler);
+    document.removeEventListener('dragover', draggingMouseMoveHandler);
   }
   return {
     handleDragStart,

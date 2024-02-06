@@ -320,6 +320,7 @@ function dragDropToPanelNear(
   removePanelInternal(panel);
 
   //2. 放置面板
+  panel.open = true;
 
   //2.1 TAB头 》在TAB中添加子页
   if (reference.parentGroup?.getIsTabContainer() && dropToActiviyBar) {

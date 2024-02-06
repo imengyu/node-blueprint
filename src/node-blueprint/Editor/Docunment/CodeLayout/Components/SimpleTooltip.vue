@@ -137,6 +137,7 @@ function calcTooltipPosition() {
 }
 
 watch(() => slots.default, () => {
+  show.value = false;
   unmountChildEvents();
   nextTick(() => mountChildEvents());
 });
