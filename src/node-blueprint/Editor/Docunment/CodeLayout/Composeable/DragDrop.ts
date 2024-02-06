@@ -33,6 +33,10 @@ export function getCurrentDragPanel() {
 export function usePanelDragger() {
   const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
 
+  function draggingMouseMoveHandler(e: MouseEvent) {
+    
+  }
+
   function handleDragStart(panel: CodeLayoutPanelInternal, ev: DragEvent) {
   
     const userCancel = layoutConfig.value.onStartDrag?.(panel) ?? false;
@@ -43,6 +47,8 @@ export function usePanelDragger() {
     (ev.target as HTMLElement).classList.add("dragging");
     if (ev.dataTransfer)
       ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
+
+    window.addEventListener('mousemove', draggingMouseMoveHandler);
   }
   function handleDragEnd(ev: DragEvent) {
     if (currentDragPanel) {
@@ -50,6 +56,8 @@ export function usePanelDragger() {
       currentDragPanel = null;
     }
     (ev.target as HTMLElement).classList.remove("dragging");
+
+    window.removeEventListener('mousemove', draggingMouseMoveHandler);
   }
   return {
     handleDragStart,

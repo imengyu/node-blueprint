@@ -74,41 +74,6 @@ const { t } = useCodeLayoutLang();
 
 const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
 
-const props = defineProps({
-  menuBar: {
-    type: Boolean,
-    default: true,
-  },
-  activityBar: {
-    type: Boolean,
-    default: true,
-  },
-  primarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  secondarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  bottomPanel: {
-    type: Boolean,
-    default: true,
-  },
-  statusBar: {
-    type: Boolean,
-    default: true,
-  },
-})
-const emit = defineEmits([
-  'update:menuBar',
-  'update:activityBar',
-  'update:primarySideBar',
-  'update:secondarySideBar',
-  'update:bottomPanel',
-  'update:statusBar',
-]) ;
-
 const showCustomizeLayout = ref(false);
 const customizeLayoutPopup = ref<HTMLElement>();
 const customizeLayoutControlActive = ref(0);
@@ -126,44 +91,44 @@ const customizeLayoutControlItems = computed<{
   {
     title: t('menuBar'),
     icon: () => h(LayoutMenubarCodicon),
-    click: () => emit('update:menuBar', !props.menuBar),
+    click: () => layoutConfig.value.menuBar = !layoutConfig.value.menuBar,
     rightText: t('visibility'),
-    visibility: props.menuBar,
+    visibility: layoutConfig.value.menuBar,
     showVisibility: true,
   },
   {
     title: t('activityBar'),
     icon: () => h(LayoutActivitybarLeftCodicon),
-    click: () => emit('update:activityBar', !props.activityBar),
-    visibility: props.activityBar,
+    click: () => layoutConfig.value.activityBar = !layoutConfig.value.activityBar,
+    visibility: layoutConfig.value.activityBar,
     showVisibility: true,
   },
   {
     title: t('primarySideBar'),
     icon: () => h(LayoutSidebarLeftCodicon),
-    click: () => emit('update:primarySideBar', !props.primarySideBar),
-    visibility: props.primarySideBar,
+    click: () => layoutConfig.value.primarySideBar = !layoutConfig.value.primarySideBar,
+    visibility: layoutConfig.value.primarySideBar,
     showVisibility: true,
   },
   {
     title: t('secondarySideBar'),
     icon: () => h(LayoutSidebarRightCodicon),
-    click: () => emit('update:secondarySideBar', !props.secondarySideBar),
-    visibility: props.secondarySideBar,
+    click: () => layoutConfig.value.secondarySideBar = !layoutConfig.value.secondarySideBar,
+    visibility: layoutConfig.value.secondarySideBar,
     showVisibility: true,
   },
   {
     title: t('panel'),
     icon: () => h(LayoutPanelCodicon),
-    click: () => emit('update:bottomPanel', !props.bottomPanel),
-    visibility: props.bottomPanel,
+    click: () => layoutConfig.value.bottomPanel = !layoutConfig.value.bottomPanel,
+    visibility: layoutConfig.value.bottomPanel,
     showVisibility: true,
   },
   {
     title: t('statusBar'),
     icon: () => h(LayoutStatusbarCodicon),
-    click: () => emit('update:statusBar', !props.statusBar),
-    visibility: props.statusBar,
+    click: () => layoutConfig.value.statusBar = !layoutConfig.value.statusBar,
+    visibility: layoutConfig.value.statusBar,
     showVisibility: true,
   },
   {
@@ -253,25 +218,25 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
   {
     name: t('togglePrimarySideBar'),
     tooltip: t('togglePrimarySideBar'),
-    icon: () => props.primarySideBar ? h(LayoutSidebarLeftCodicon) : h(LayoutSidebarLeftOffCodicon),
+    icon: () => layoutConfig.value.primarySideBar ? h(LayoutSidebarLeftCodicon) : h(LayoutSidebarLeftOffCodicon),
     onClick: () => {
-      emit('update:primarySideBar', !props.primarySideBar);
+      layoutConfig.value.primarySideBar = !layoutConfig.value.primarySideBar;
     },
   },
   {
     name: t('togglePanel'),
     tooltip: t('togglePanel'),
-    icon: () => props.bottomPanel ? h(LayoutPanelCodicon) : h(LayoutPanelOffCodicon),
+    icon: () => layoutConfig.value.bottomPanel ? h(LayoutPanelCodicon) : h(LayoutPanelOffCodicon),
     onClick: () => {
-      emit('update:bottomPanel', !props.bottomPanel);
+      layoutConfig.value.bottomPanel = !layoutConfig.value.bottomPanel;
     },
   },
   {
     name: t('toggleSecondarySideBar'),
     tooltip: t('toggleSecondarySideBar'),
-    icon: () => props.secondarySideBar ? h(LayoutSidebarRightCodicon) : h(LayoutSidebarRightOffCodicon),
+    icon: () => layoutConfig.value.secondarySideBar ? h(LayoutSidebarRightCodicon) : h(LayoutSidebarRightOffCodicon),
     onClick: () => {
-      emit('update:secondarySideBar', !props.secondarySideBar);
+      layoutConfig.value.secondarySideBar = !layoutConfig.value.secondarySideBar;
     },
   },
   {

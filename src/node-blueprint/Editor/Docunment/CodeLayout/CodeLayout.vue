@@ -2,15 +2,6 @@
   <CodeLayoutBase 
     ref="codeLayoutBase"
     :config="layoutConfig"
-    :activityBar="activityBar"
-    :primarySideBar="primarySideBar"
-    :secondarySideBar="secondarySideBar"
-    :bottomPanel="bottomPanel"
-    :statusBar="statusBar"
-    :menuBar="menuBar"
-    @update:bottom-panel="(v) => $emit('update:bottomPanel', v)"
-    @update:primary-side-bar="onPrimarySideBarSwitch"
-    @update:secondary-side-bar="(v) => $emit('update:secondarySideBar', v)"
   >
     <template #titleBarIcon>
       <slot name="titleBarIcon" />
@@ -26,25 +17,13 @@
     <template #titleBarRight>
       <CodeLayoutCustomizeLayout 
         v-if="layoutConfig.titleBarShowCustomizeLayout"
-        :activityBar="activityBar"
-        :primarySideBar="primarySideBar"
-        :secondarySideBar="secondarySideBar"
-        :bottomPanel="bottomPanel"
-        :statusBar="statusBar"
-        :menuBar="menuBar"
-        @update:menuBar="(a) => emit('update:menuBar', a)"
-        @update:activityBar="(a) => emit('update:activityBar', a)"
-        @update:primarySideBar="(a) => emit('update:primarySideBar', a)"
-        @update:secondarySideBar="(a) => emit('update:secondarySideBar', a)"
-        @update:bottomPanel="(a) => emit('update:bottomPanel', a)"
-        @update:statusBar="(a) => emit('update:statusBar', a)"
       />
       <slot name="titleBarRight" />
     </template>
     <template #activityBar>
       <div class="top">
         <!--no menu bar here show collapsed menu button-->
-        <slot v-if="!menuBar" name="activityBarTopBar">
+        <slot v-if="!layoutConfig.menuBar" name="activityBarTopBar">
           <MenuBar :options="mainMenuConfigWithCollapseState" />
         </slot>
         <!--main activityBar items-->
@@ -53,7 +32,7 @@
           v-show="panelGroup.visible"
           :key="key"
           :item="panelGroup"
-          :active="panelGroup === panels.primary.activePanel && primarySideBar"
+          :active="panelGroup === panels.primary.activePanel && layoutConfig.primarySideBar"
           @active-item="onActivityBarAcitve(panelGroup)"
         />
       </div>
@@ -129,13 +108,16 @@ import type { MenuBarOptions } from '@imengyu/vue3-context-menu/lib/MenuBar';
 
 const panels = ref({
   primary: new CodeLayoutGridInternal('primarySideBar', 'hidden', (open) => {
-    emit('update:primarySideBar', open);
+    const _layoutConfig = props.layoutConfig;
+    _layoutConfig.primarySideBar = open;
   }),
   secondary: new CodeLayoutGridInternal('secondarySideBar', 'icon', (open) => {
-    emit('update:secondarySideBar', open);
+    const _layoutConfig = props.layoutConfig;
+    _layoutConfig.secondarySideBar = open;
   }),
   bottom: new CodeLayoutGridInternal('bottomPanel', 'text', (open) => {
-    emit('update:bottomPanel', open);
+    const _layoutConfig = props.layoutConfig;
+    _layoutConfig.bottomPanel = open;
   }),
 }) as Ref<{
   primary: CodeLayoutGridInternal,
@@ -144,15 +126,6 @@ const panels = ref({
 }>;
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
-
-const emit = defineEmits([
-  'update:menuBar',
-  'update:activityBar',
-  'update:primarySideBar',
-  'update:secondarySideBar',
-  'update:bottomPanel',
-  'update:statusBar',
-]) ;
 
 const props = defineProps({
   layoutConfig: {
@@ -169,36 +142,12 @@ const props = defineProps({
     type: Object as PropType<MenuOptions>,
     default: null,
   },
-  activityBar: {
-    type: Boolean,
-    default: true,
-  },
-  primarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  secondarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  bottomPanel: {
-    type: Boolean,
-    default: true,
-  },
-  statusBar: {
-    type: Boolean,
-    default: true,
-  },
-  menuBar: {
-    type: Boolean,
-    default: true,
-  },
   emptyText: {
     type: String,
     default: "Drag a view here to display",
   },
 });
-const { layoutConfig, activityBar } = toRefs(props);
+const { layoutConfig } = toRefs(props);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 
 //activity bar 位置根据设置进行切换
@@ -209,20 +158,20 @@ function loadActivityBarPosition() {
       panels.value.primary.tabStyle = 'hidden';
       break;
     case 'top':
-      panels.value.primary.tabStyle = activityBar.value ? 'icon' : 'hidden';
+      panels.value.primary.tabStyle = layoutConfig.value.activityBar ? 'icon' : 'hidden';
       break;
   }
 }
 
 watch(() => layoutConfig.value.activityBarPosition, loadActivityBarPosition);
-watch(activityBar, loadActivityBarPosition);
+watch(() => layoutConfig.value.activityBar, loadActivityBarPosition);
 
 //菜单配置
 const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
   return {
     theme: 'code-layout',
-    mini: !props.menuBar,
-    barPopDirection: props.menuBar ? 'bl' : 'tr',
+    mini: !props.layoutConfig.menuBar,
+    barPopDirection: props.layoutConfig.menuBar ? 'bl' : 'tr',
     ...props.mainMenuConfig,
   }
 })
@@ -260,10 +209,11 @@ const codeLayoutContext : CodeLayoutContext = {
     }
   },
   relayoutTopGridProp(grid, visible) {
+    const _layoutConfig = props.layoutConfig;
     switch (grid) {
-      case 'primarySideBar':  emit('update:primarySideBar', visible); break;
-      case 'secondarySideBar':  emit('update:secondarySideBar', visible); break;
-      case 'bottomPanel':  emit('update:bottomPanel', visible); break;
+      case 'primarySideBar': _layoutConfig.primarySideBar = visible; break;
+      case 'secondarySideBar': _layoutConfig.secondarySideBar = visible; break;
+      case 'bottomPanel': _layoutConfig.bottomPanel = visible; break;
     }
   },
   instance: codeLayoutInstance,
@@ -584,13 +534,14 @@ provide('codeLayoutLangConfig', props.langConfig);
 provide('codeLayoutContext', codeLayoutContext);
 
 function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
+  const _layoutConfig = props.layoutConfig;
   if (panels.value.primary.activePanel === panelGroup && props.layoutConfig.primarySideBarSwitchWithActivityBar) {
     //如果点击当前条目，则切换侧边栏
-    emit('update:primarySideBar', !props.primarySideBar);
+    _layoutConfig.primarySideBar = !_layoutConfig.primarySideBar;
   } else {
     //如果侧边栏关闭，则打开
-    if (!props.primarySideBar)
-      emit('update:primarySideBar', true);
+    if (!props.layoutConfig.primarySideBar)
+      _layoutConfig.primarySideBar = true;
     //取消激活其他的面板
     panels.value.primary.children.forEach((p) => p.open = false);
     panelGroup.open = true;
@@ -604,9 +555,9 @@ function onPrimarySideBarSwitch(on: boolean) {
   //当侧边栏重新打开时，需要重新显示激活面板
   if (on && panels.value.primary.activePanel && !panels.value.primary.children.find((p) => p.open))
     panels.value.primary.activePanel.open = true;
-  emit('update:primarySideBar', on);
 }
 
+watch(() => layoutConfig.value.primarySideBar, onPrimarySideBarSwitch);
 
 //公开控制接口
 

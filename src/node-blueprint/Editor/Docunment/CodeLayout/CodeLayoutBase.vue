@@ -4,7 +4,7 @@
     <div v-if="config.titleBar" class="code-layout-title-bar">
       <div>
         <slot name="titleBarIcon" />
-        <slot v-if="menuBar" name="titleBarMenu" />
+        <slot v-if="config.menuBar" name="titleBarMenu" />
       </div>
       <div>
         <slot name="titleBarCenter" />
@@ -17,7 +17,7 @@
     <div class="code-layout-activity">
       <!--activity bar-->
       <div 
-        v-if="activityBar && config.primarySideBarPosition === 'left' && config.activityBarPosition === 'side'" 
+        v-if="config.activityBar && config.primarySideBarPosition === 'left' && config.activityBarPosition === 'side'" 
         :class="['code-layout-activity-bar',config.primarySideBarPosition]"
       >
         <slot name="activityBar" />
@@ -37,9 +37,9 @@
       <SplitBase
         v-model:size="config.bottomPanelHeight"
         :horizontal="false"
-        :showSecond="bottomPanel && config.bottomAlignment === 'justify'"
+        :showSecond="config.bottomPanel && config.bottomAlignment === 'justify'"
         :secondMinSize="config.bottomPanelMinHeight"
-        @closeSecond="(v) => $emit('update:bottomPanel', v)"
+        @closeSecond="(v) => config.bottomPanel = v"
       >
         <template #first>
           <!--
@@ -55,12 +55,12 @@
               v-if="config.primarySideBarPosition === 'left'"
               v-model:sizeLeft="config.primarySideBarWidth"
               v-model:sizeRight="config.secondarySideBarWidth"
-              :showLeft="primarySideBar"
-              :showRight="secondarySideBar"
+              :showLeft="config.primarySideBar"
+              :showRight="config.secondarySideBar"
               :leftMinSize="config.primarySideBarMinWidth"
               :rightMinSize="config.secondarySideBarWidth"
-              @closeLeft="(v) => $emit('update:primarySideBar', v)"
-              @closeRight="(v) => $emit('update:secondarySideBar', v)"
+              @closeLeft="(v) => config.primarySideBar = v"
+              @closeRight="(v) => config.secondarySideBar = v"
             >
               <template #left>
                 <slot name="primarySideBar" />
@@ -69,10 +69,10 @@
                 <SplitBase
                   :size="100 - config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel && config.bottomAlignment === 'center'"
+                  :showSecond="config.bottomPanel && config.bottomAlignment === 'center'"
                   :secondMinSize="config.bottomPanelMinHeight"
                   @update:size="(s) => config.bottomPanelHeight = 100 - s"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <slot name="centerArea" />
@@ -90,12 +90,12 @@
               v-if="config.primarySideBarPosition === 'right'"
               v-model:sizeLeft="config.secondarySideBarWidth"
               v-model:sizeRight="config.primarySideBarWidth"
-              :showLeft="secondarySideBar"
-              :showRight="primarySideBar"
+              :showLeft="config.secondarySideBar"
+              :showRight="config.primarySideBar"
               :leftMinSize="config.secondarySideBarWidth"
               :rightMinSize="config.primarySideBarMinWidth"
-              @closeLeft="(v) => $emit('update:secondarySideBar', v)"
-              @closeRight="(v) => $emit('update:primarySideBar', v)"
+              @closeLeft="(v) => config.secondarySideBar = v"
+              @closeRight="(v) => config.primarySideBar = v"
             >
               <template #left>
                 <slot name="secondarySideBar" />
@@ -104,10 +104,10 @@
                 <SplitBase
                   :size="100 - config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel && config.bottomAlignment === 'center'"
+                  :showSecond="config.bottomPanel && config.bottomAlignment === 'center'"
                   :secondMinSize="config.bottomPanelMinHeight"
                   @update:size="(s) => config.bottomPanelHeight = 100 - s"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <slot name="centerArea" />
@@ -135,25 +135,25 @@
             <SplitBase
               v-if="config.primarySideBarPosition === 'left'"
               :size="100 - config.secondarySideBarWidth"
-              :showSecond="secondarySideBar"
+              :showSecond="config.secondarySideBar"
               :secondMinSize="config.secondarySideBarMinWidth"
-              @closeSecond="(v) => $emit('update:secondarySideBar', v)"
+              @closeSecond="(v) => config.secondarySideBar = v"
               @update:size="(s) => config.secondarySideBarWidth = 100 - s"
             >
               <template #first>
                 <SplitBase
                   v-model:size="config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel"
+                  :showSecond="config.bottomPanel"
                   :secondMinSize="config.bottomPanelMinHeight"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <SplitBase
                       v-model:size="config.primarySideBarWidth"
-                      :showFirst="primarySideBar"
+                      :showFirst="config.primarySideBar"
                       :firstMinSize="config.primarySideBarMinWidth"
-                      @closeFirst="(v) => $emit('update:primarySideBar', v)"
+                      @closeFirst="(v) => config.primarySideBar = v"
                     >
                       <template #first>
                         <slot v-if="config.primarySideBarPosition === 'left'" name="primarySideBar" />
@@ -176,25 +176,25 @@
             <SplitBase
               v-if="config.primarySideBarPosition === 'right'"
               :size="100 - config.primarySideBarWidth"
-              :showSecond="primarySideBar"
+              :showSecond="config.primarySideBar"
               :secondMinSize="config.primarySideBarMinWidth"
-              @closeSecond="(v) => $emit('update:primarySideBar', v)"
+              @closeSecond="(v) => config.primarySideBar = v"
               @update:size="(s) => config.primarySideBarWidth = 100 - s"
             >
               <template #first>
                 <SplitBase
                   v-model:size="config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel"
+                  :showSecond="config.bottomPanel"
                   :secondMinSize="config.bottomPanelMinHeight"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <SplitBase
                       v-model:size="config.secondarySideBarWidth"
-                      :showFirst="secondarySideBar"
+                      :showFirst="config.secondarySideBar"
                       :firstMinSize="config.secondarySideBarMinWidth"
-                      @closeFirst="(v) => $emit('update:secondarySideBar', v)"
+                      @closeFirst="(v) => config.secondarySideBar = v"
                     >
                       <template #first>
                         <slot name="secondarySideBar" />
@@ -227,9 +227,9 @@
             <SplitBase
               v-if="config.primarySideBarPosition === 'left'"
               v-model:size="config.primarySideBarWidth"
-              :showFirst="primarySideBar"
+              :showFirst="config.primarySideBar"
               :firstMinSize="config.primarySideBarMinWidth"
-              @closeFirst="(v) => $emit('update:primarySideBar', v)"
+              @closeFirst="(v) => config.primarySideBar = v"
             >
               <template #first>
                 <slot name="primarySideBar" />
@@ -238,18 +238,18 @@
                 <SplitBase
                   :size="100 - config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel"
+                  :showSecond="config.bottomPanel"
                   :secondMinSize="config.bottomPanelMinHeight"
                   @update:size="(v) => config.bottomPanelHeight = 100 - v"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <SplitBase
                       :size="100 - config.secondarySideBarWidth"
-                      :showFirst="secondarySideBar"
+                      :showFirst="config.secondarySideBar"
                       :secondMinSize="config.secondarySideBarMinWidth"
                       @update:size="(v) => config.secondarySideBarWidth = 100 - v"
-                      @closeFirst="(v) => $emit('update:secondarySideBar', v)"
+                      @closeFirst="(v) => config.secondarySideBar = v"
                     >
                       <template #first>
                         <slot name="centerArea" />
@@ -268,9 +268,9 @@
             <SplitBase
               v-if="config.primarySideBarPosition === 'right'"
               v-model:size="config.secondarySideBarWidth"
-              :showFirst="secondarySideBar"
+              :showFirst="config.secondarySideBar"
               :firstMinSize="config.secondarySideBarMinWidth"
-              @closeFirst="(v) => $emit('update:secondarySideBar', v)"
+              @closeFirst="(v) => config.secondarySideBar = v"
             >
               <template #first>
                 <slot name="secondarySideBar" />
@@ -279,18 +279,18 @@
                 <SplitBase
                   :size="100 - config.bottomPanelHeight"
                   :horizontal="false"
-                  :showSecond="bottomPanel"
+                  :showSecond="config.bottomPanel"
                   :secondMinSize="config.bottomPanelMinHeight"
                   @update:size="(v) => config.bottomPanelHeight = 100 - v"
-                  @closeSecond="(v) => $emit('update:bottomPanel', v)"
+                  @closeSecond="(v) => config.bottomPanel = v"
                 >
                   <template #first>
                     <SplitBase
                       :size="100 - config.primarySideBarWidth"
-                      :showFirst="primarySideBar"
+                      :showFirst="config.primarySideBar"
                       :secondMinSize="config.primarySideBarMinWidth"
                       @update:size="(v) => config.primarySideBarWidth = 100 - v"
-                      @closeFirst="(v) => $emit('update:primarySideBar', v)"
+                      @closeFirst="(v) => config.primarySideBar = v"
                     >
                       <template #first>
                         <slot name="centerArea" />
@@ -314,14 +314,14 @@
       </SplitBase>
       <!--activity bar (right)-->
       <div 
-        v-if="activityBar && config.primarySideBarPosition === 'right' && config.activityBarPosition === 'side'" 
+        v-if="config.activityBar && config.primarySideBarPosition === 'right' && config.activityBarPosition === 'side'" 
         :class="['code-layout-activity-bar',config.primarySideBarPosition]"
       >
         <slot name="activityBar" />
       </div>
     </div>
     <!--status bar-->
-    <div v-if="statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
+    <div v-if="config.statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
       <slot name="statusBar" />
     </div>
   </div>
@@ -339,40 +339,10 @@ export interface CodeLayoutBaseInstance {
 
 const container = ref<HTMLElement>();
 
-defineEmits([ 
-  'update:secondarySideBar',
-  'update:primarySideBar',
-  'update:bottomPanel'
-])
-
 defineProps({
   config: {
     type: Object as PropType<CodeLayoutConfig>,
     required: true,
-  },
-  menuBar: {
-    type: Boolean,
-    default: true,
-  },
-  activityBar: {
-    type: Boolean,
-    default: true,
-  },
-  primarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  secondarySideBar: {
-    type: Boolean,
-    default: true,
-  },
-  bottomPanel: {
-    type: Boolean,
-    default: true,
-  },
-  statusBar: {
-    type: Boolean,
-    default: true,
   },
 });
 

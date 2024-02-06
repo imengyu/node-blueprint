@@ -69,12 +69,14 @@ function mountChildEvents() {
 
   child.addEventListener('mouseenter', onChildEnter);
   child.addEventListener('mouseleave', onChildLeave);
+  child.addEventListener('click', onChildLeave);
 }
 function unmountChildEvents() {
   const child = getChildEle();
   if (!child) return;
   child.removeEventListener('mouseenter', onChildEnter);
   child.removeEventListener('mouseleave', onChildLeave);
+  child.removeEventListener('click', onChildLeave);
 }
 function onChildEnter() {
   if (props.enable && props.content) {
@@ -85,9 +87,8 @@ function onChildEnter() {
   }
 }
 function onChildLeave() {
-  onLeave(() => {
-    show.value = false;
-  });
+  show.value = false;
+  onLeave();
 }
 function calcTooltipPosition() {
   positionX.value = 0;
@@ -158,9 +159,6 @@ onBeforeUnmount(() => {
 <style lang="scss">
 @use 'sass:math';
 
-.code-layout-tooltip-ref {
-  position: inherit;
-}
 .code-layout-tooltip {
   overflow: visible;
   position: absolute;

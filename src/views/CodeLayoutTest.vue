@@ -1,13 +1,7 @@
 <template>
   <div class="full-container">
     <CodeLayout 
-      ref="codeLayout" 
-      v-model:primarySideBar="primarySideBar"
-      v-model:secondarySideBar="secondarySideBar"
-      v-model:bottomPanel="bottomPanel"
-      v-model:activityBar="activityBar"
-      v-model:statusBar="statusBar"
-      v-model:menuBar="menuBar"
+      ref="codeLayout"
       :layout-config="config"
       :main-menu-config="menuData"
     >
@@ -55,6 +49,12 @@ const config = reactive<CodeLayoutConfig>({
   panelMinHeight: 150,
   titleBar: true,
   titleBarShowCustomizeLayout: true,
+  activityBar: true,
+  primarySideBar: true,
+  secondarySideBar: false,
+  bottomPanel: true,
+  statusBar: true,
+  menuBar: true,
 });
 
 const menuData : MenuOptions = {
@@ -114,13 +114,6 @@ const menuData : MenuOptions = {
   zIndex: 3,
   minWidth: 230,
 };
-
-const activityBar = ref(true);
-const primarySideBar = ref(true);
-const secondarySideBar = ref(false);
-const bottomPanel = ref(true);
-const statusBar = ref(true);
-const menuBar = ref(true);
 
 const codeLayout = ref<CodeLayoutInstance>();
 

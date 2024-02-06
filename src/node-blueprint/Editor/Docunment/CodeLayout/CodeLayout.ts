@@ -19,6 +19,12 @@ export interface CodeLayoutConfig {
   panelMinHeight: number,
   titleBar: boolean,
   titleBarShowCustomizeLayout: boolean,
+  activityBar: boolean,
+  primarySideBar: boolean,
+  secondarySideBar: boolean,
+  bottomPanel: boolean,
+  statusBar: boolean,
+  menuBar: boolean,
 
   onResetDefault?: () => void;
   onStartDrag?: (panel: CodeLayoutPanelInternal) => boolean;
@@ -57,6 +63,12 @@ export const defaultCodeLayoutConfig : CodeLayoutConfig = {
   panelMinHeight: 150,
   titleBar: true,
   titleBarShowCustomizeLayout: true,
+  activityBar: true,
+  primarySideBar: true,
+  secondarySideBar: false,
+  bottomPanel: true,
+  statusBar: true,
+  menuBar: true,
 }
 
 //用户接口定义
