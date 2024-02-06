@@ -252,6 +252,7 @@ function handleCustomizeLayoutControlItemKeyDown(e: KeyboardEvent) {
 const actions = computed<CodeLayoutActionButton[]>(() => ([
   {
     name: t('togglePrimarySideBar'),
+    tooltip: t('togglePrimarySideBar'),
     icon: () => props.primarySideBar ? h(LayoutSidebarLeftCodicon) : h(LayoutSidebarLeftOffCodicon),
     onClick: () => {
       emit('update:primarySideBar', !props.primarySideBar);
@@ -259,6 +260,7 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
   },
   {
     name: t('togglePanel'),
+    tooltip: t('togglePanel'),
     icon: () => props.bottomPanel ? h(LayoutPanelCodicon) : h(LayoutPanelOffCodicon),
     onClick: () => {
       emit('update:bottomPanel', !props.bottomPanel);
@@ -266,6 +268,7 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
   },
   {
     name: t('toggleSecondarySideBar'),
+    tooltip: t('toggleSecondarySideBar'),
     icon: () => props.secondarySideBar ? h(LayoutSidebarRightCodicon) : h(LayoutSidebarRightOffCodicon),
     onClick: () => {
       emit('update:secondarySideBar', !props.secondarySideBar);
@@ -273,6 +276,7 @@ const actions = computed<CodeLayoutActionButton[]>(() => ([
   },
   {
     name: t('customizeLayout'),
+    tooltip: t('customizeLayout'),
     icon: () => h(LayoutCodicon),
     onClick: () => {
       showCustomizeLayout.value = !showCustomizeLayout.value;

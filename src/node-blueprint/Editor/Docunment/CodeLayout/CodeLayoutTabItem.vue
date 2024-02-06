@@ -1,29 +1,34 @@
 <template>
-  <div
-    ref="container"
-    :class="[
-      'tab-item',
-      active ? 'active' : '',
-      dragEnterState ? 'drag-enter' : '',
-      dragOverState,
-    ]"
-    :draggable="true"
-    @dragstart="handleDragStart(panel, $event)"
-    @dragend="handleDragEnd"
-    @dragover="handleDragOver"
-    @dragleave="handleDragLeave"
-    @dragenter="handleDragEnter"
-    @drop="handleDrop"
-    @contextmenu="onContextMenu(panel, $event)"
+  <SimpleTooltip
+    :content="panel.tooltip"
+    :direction="'top'"
   >
-    <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
-    <span v-if="tabStyle == 'icon'" class="icon">
-      <CodeLayoutVNodeStringRender :content="panel.iconSmall || panel.iconLarge || panel.title" />
-    </span>
-    <span v-if="panel.badge" class="badge">
-      <CodeLayoutVNodeStringRender :content="panel.badge" />
-    </span>
-  </div>
+    <div
+      ref="container"
+      :class="[
+        'tab-item',
+        active ? 'active' : '',
+        dragEnterState ? 'drag-enter' : '',
+        dragOverState,
+      ]"
+      :draggable="true"
+      @dragstart="handleDragStart(panel, $event)"
+      @dragend="handleDragEnd"
+      @dragover="handleDragOver"
+      @dragleave="handleDragLeave"
+      @dragenter="handleDragEnter"
+      @drop="handleDrop"
+      @contextmenu="onContextMenu(panel, $event)"
+    >
+      <span v-if="tabStyle == 'text'" class="title">{{ panel.title }}</span>
+      <span v-if="tabStyle == 'icon'" class="icon">
+        <CodeLayoutVNodeStringRender :content="panel.iconSmall || panel.iconLarge || panel.title" />
+      </span>
+      <span v-if="panel.badge" class="badge">
+        <CodeLayoutVNodeStringRender :content="panel.badge" />
+      </span>
+    </div>
+  </SimpleTooltip>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +37,7 @@ import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanel
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import type { CodeLayoutContext, CodeLayoutPanelInternal, CodeLayoutPanelTabStyle } from './CodeLayout';
 import { usePanelMenuControl } from './Composeable/PanelMenu';
+import SimpleTooltip from './Components/SimpleTooltip.vue';
 
 const emit = defineEmits([
   'focusSelf'

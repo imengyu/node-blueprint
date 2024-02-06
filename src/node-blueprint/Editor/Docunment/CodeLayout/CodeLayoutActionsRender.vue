@@ -2,14 +2,19 @@
   <div 
     :class="[ 'code-layout-actions' ]"
   > 
-    <button 
+    <SimpleTooltip
       v-for="action in actionsShow"
       :key="action.name"
-      tabindex="0"
-      @click="action.onClick"
+      :content="action.tooltip"
+      :direction="action.tooltipDirection ?? 'bottom'"
     >
-      <CodeLayoutVNodeStringRender :content="action.icon" />
-    </button>
+      <button 
+        tabindex="0"
+        @click="action.onClick"
+      >
+        <CodeLayoutVNodeStringRender :content="action.icon" />
+      </button>
+    </SimpleTooltip>
   </div>
 </template>
 
@@ -17,6 +22,7 @@
 import { computed, type PropType } from 'vue';
 import type { CodeLayoutActionButton } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
+import SimpleTooltip from './Components/SimpleTooltip.vue';
 
 defineEmits([ 'update:open' ])
 

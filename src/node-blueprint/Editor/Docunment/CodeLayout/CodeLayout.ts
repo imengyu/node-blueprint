@@ -308,5 +308,7 @@ export interface CodeLayoutContext {
 export interface CodeLayoutActionButton {
   name: string,
   icon: string|(() => VNode),
+  tooltip?: string,
+  tooltipDirection?: 'left'|'top'|'right'|'bottom',
   onClick: () => void,
 }

@@ -118,7 +118,7 @@ const menuData : MenuOptions = {
 const activityBar = ref(true);
 const primarySideBar = ref(true);
 const secondarySideBar = ref(false);
-const bottomPanel = ref(false);
+const bottomPanel = ref(true);
 const statusBar = ref(true);
 const menuBar = ref(true);
 
