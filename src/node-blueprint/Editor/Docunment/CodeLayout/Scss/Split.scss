@@ -10,7 +10,7 @@
     align-items: flex-start;
 
     > .code-layout-split-dragger {
-      width:100% ;
+      width: 100%;
       height: var(--code-layout-border-size);
       cursor: ns-resize;
 
@@ -21,6 +21,12 @@
         height: var(--code-layout-border-size-dragger);
         bottom: unset;
         width: unset;
+      }
+
+      &.inner {
+        position: absolute;
+        left: 0;
+        bottom: 0;
       }
     }
   }
@@ -39,6 +45,12 @@
         bottom: 0;
         left: calc(var(--code-layout-border-size-dragger) / -2);
         width: var(--code-layout-border-size-dragger);
+      }
+
+      &.inner {
+        position: absolute;
+        right: 0;
+        top: 0;
       }
     }
   }

@@ -72,12 +72,13 @@ Codelayout
 🆗 ActivityBar位置
 🆗 TAB的超出隐藏
 🆗 TAB和ActionItem的tooltip
+SplitN
+主区域TAB
+主区域拖拽切分
 文档整理
 打包模块后测试
 发布
 2期：基础框架根据配置自动生成
 2期：BottomPanel位置
 2期：面板显示隐藏快捷键
-2期：主区域TAB
-2期：主区域拖拽切分
 
