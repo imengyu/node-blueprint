@@ -1,5 +1,13 @@
 <template>
   <div class="full-container">
+    <SplitN
+      :grids="grids"
+    >
+      <template #grid="{ grid, index }">
+        <h2 :style="{ backgroundColor: colors[index] }">Grid {{ index }} : {{ grid.size }}</h2>
+      </template>
+    </SplitN>
+  <!--  
     <CodeLayout 
       ref="codeLayout"
       :layout-config="config"
@@ -20,7 +28,7 @@
         </template>
         <span v-else>{{ panel.size }} / {{ panel.name }}</span>
       </template>
-    </CodeLayout>
+    </CodeLayout>-->
   </div>
 </template>
 
@@ -32,6 +40,44 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import SplitN from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN.vue';
+import type { SplitNGird } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
+
+const colors = [
+  '#fb0',
+  '#f00',
+  '#090',
+  '#02a',
+  '#1ff',
+]
+const grids = reactive<SplitNGird[]>([
+  {
+    key: '1',
+    visible: true,
+    size: 525,
+    minSize: 100,
+    canMinClose: true,
+  },
+  {
+    key: '2',
+    visible: true,
+    size: 525,
+    minSize: 100,
+  },
+  {
+    key: '3',
+    visible: true,
+    size: 407,
+    minSize: 0,
+  },
+  {
+    key: '4',
+    visible: true,
+    size: 200,
+    minSize: 100,
+    canMinClose: true,
+  },
+]);
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,

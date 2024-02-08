@@ -72,7 +72,7 @@ Codelayout
 🆗 ActivityBar位置
 🆗 TAB的超出隐藏
 🆗 TAB和ActionItem的tooltip
-SplitN
+🆗 SplitN
 主区域TAB
 主区域拖拽切分
 文档整理
