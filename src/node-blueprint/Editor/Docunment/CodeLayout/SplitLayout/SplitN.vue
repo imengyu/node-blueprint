@@ -83,10 +83,11 @@ interface PanelResizePanelData {
 
 function adjustAndReturnAdjustedSize(panel: SplitNGird, intitalSize: number, increaseSize: number) {
   const targetSize = intitalSize + increaseSize;
+  const minSize = panel?.minSize || 0;
   let visibleChangedSize = 0;
-  panel.size = Math.max(panel.minSize, targetSize);
-  if (panel.canMinClose && panel.minSize > 0) {
-    panel.visible = targetSize > panel.minSize / 2;
+  panel.size = Math.max(minSize, targetSize);
+  if (panel.canMinClose && minSize > 0) {
+    panel.visible = targetSize > minSize / 2;
     if (!panel.visible)
       visibleChangedSize += panel.size;
   }

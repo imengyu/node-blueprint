@@ -9,6 +9,10 @@
     justify-content: stretch;
     align-items: flex-start;
 
+    > .split-n-container {
+      position: relative;
+      width: 100%;
+    }
     > .code-layout-split-dragger, > .split-n-container > .code-layout-split-dragger {
       width: 100%;
       height: var(--code-layout-border-size);
@@ -35,6 +39,10 @@
     justify-content: flex-start;
     align-items: stretch;
 
+    > .split-n-container {
+      position: relative;
+      height: 100%;
+    }
     > .code-layout-split-dragger, > .split-n-container > .code-layout-split-dragger {
       width: var(--code-layout-border-size);
       height: 100%;
@@ -55,9 +63,6 @@
     }
   }
 
-  > .split-n-container {
-    position: relative;
-  }
 
   > .code-layout-split-dragger, > .split-n-container > .code-layout-split-dragger {
     position: relative;
