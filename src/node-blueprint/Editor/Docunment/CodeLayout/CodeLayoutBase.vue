@@ -329,8 +329,8 @@
 
 <script setup lang="ts">
 import { ref, type PropType } from 'vue';
-import SplitThird from './SplitLayout/SplitThird.vue';
-import SplitBase from './SplitLayout/SplitBase.vue';
+import SplitThird from './SplitBase/SplitThird.vue';
+import SplitBase from './SplitBase/SplitBase.vue';
 import type { CodeLayoutConfig } from './CodeLayout';
 
 export interface CodeLayoutBaseInstance {

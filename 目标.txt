@@ -74,6 +74,7 @@ Codelayout
 🆗 TAB和ActionItem的tooltip
 🆗 SplitN
 🆗 Codelayoutvue部分函数迁移至类中
+🆗 SplitN对象整理合并
 主区域TAB
 主区域拖拽切分
 文档整理

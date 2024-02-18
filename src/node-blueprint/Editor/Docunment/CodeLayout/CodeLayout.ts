@@ -79,7 +79,6 @@ export interface CodeLayoutInstance {
   getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
   addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanelInternal;
   removeGroup(panel: CodeLayoutPanel): void;
-  activeGroup: (panel: CodeLayoutPanel) => void;
   getRootGrid(target: CodeLayoutGrid): CodeLayoutGridInternal,
   relayoutAll: () => void;
   relayoutGroup(name: string): void;
@@ -192,61 +191,11 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     } 
   }
 
-  //Internal
-
-  addChild(child: CodeLayoutPanelInternal, index?: number) {
-    if (this.name === child.name)
-      throw new Error('Try add self');
-    if (typeof index === 'number')
-      this.children.splice(index, 0, child);
-    else
-      this.children.push(child);
-    child.parentGroup = this;
-    child.parentGrid = this.parentGrid;
-    if (!this.activePanel)
-      this.activePanel = child;
-  }
-  addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) {
-    if (typeof startIndex === 'number')
-      this.children.splice(startIndex, 0, ...childs);
-    else
-      this.children.push(...childs);
-    for (const child of childs) {
-      if (this.name === child.name)
-        throw new Error('Try add self');
-      child.parentGroup = this;
-      child.parentGrid = this.parentGrid;
-    }
-    if (!this.activePanel)
-      this.activePanel = this.children[0];
-  }
   reselectActiveChild() {
     this.activePanel = this.children.find((p) => p.visible) || null;
   }
   setActiveChild(child: CodeLayoutPanelInternal) {
     this.activePanel = child;
-  }
-  removeChild(child: CodeLayoutPanelInternal) {
-    this.children.splice(this.children.indexOf(child), 1);
-    child.parentGroup = null;
-    //如果被删除面板是激活面板，则选另外一个面板激活
-    if (child.name === this.activePanel?.name)
-      this.reselectActiveChild();
-  }
-  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
-    this.children.splice(
-      this.children.indexOf(oldChild), 
-      1, 
-      child);   
-    oldChild.parentGroup = null;
-    //如果被删除面板是激活面板，则选另外一个面板激活
-    if (this.activePanel?.name === oldChild.name)
-      this.activePanel = child;
-    child.parentGroup = this;
-    child.parentGrid = this.parentGrid;
-  }
-  hasChild(child: CodeLayoutPanelInternal) {
-    return this.children.includes(child);
   }
 
   lastRelayoutSize = 0;
@@ -292,6 +241,57 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   }
   relayoutAllWithResizedSize(resizedContainerSize: number) {
     this.pushLateAction('relayoutAllWithResizedSize', resizedContainerSize);
+  }
+
+  //Internal
+
+  addChild(child: CodeLayoutPanelInternal, index?: number) {
+    if (this.name === child.name)
+      throw new Error('Try add self');
+    if (typeof index === 'number')
+      this.children.splice(index, 0, child);
+    else
+      this.children.push(child);
+    child.parentGroup = this;
+    child.parentGrid = this.parentGrid;
+    if (!this.activePanel)
+      this.activePanel = child;
+  }
+  addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) {
+    if (typeof startIndex === 'number')
+      this.children.splice(startIndex, 0, ...childs);
+    else
+      this.children.push(...childs);
+    for (const child of childs) {
+      if (this.name === child.name)
+        throw new Error('Try add self');
+      child.parentGroup = this;
+      child.parentGrid = this.parentGrid;
+    }
+    if (!this.activePanel)
+      this.activePanel = this.children[0];
+  }
+  removeChild(child: CodeLayoutPanelInternal) {
+    this.children.splice(this.children.indexOf(child), 1);
+    child.parentGroup = null;
+    //如果被删除面板是激活面板，则选另外一个面板激活
+    if (child.name === this.activePanel?.name)
+      this.reselectActiveChild();
+  }
+  replaceChild(oldChild: CodeLayoutPanelInternal, child: CodeLayoutPanelInternal) {
+    this.children.splice(
+      this.children.indexOf(oldChild), 
+      1, 
+      child);   
+    oldChild.parentGroup = null;
+    //如果被删除面板是激活面板，则选另外一个面板激活
+    if (this.activePanel?.name === oldChild.name)
+      this.activePanel = child;
+    child.parentGroup = this;
+    child.parentGrid = this.parentGrid;
+  }
+  hasChild(child: CodeLayoutPanelInternal) {
+    return this.children.includes(child);
   }
 }
 export class CodeLayoutGridInternal extends CodeLayoutPanelInternal {

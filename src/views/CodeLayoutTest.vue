@@ -6,13 +6,13 @@
       :main-menu-config="menuData"
     >
       <template #centerArea>
-        <!-- <SplitLayout
-          :grid="topGrid"
+        <SplitLayout
+          ref="splitLayout"
         >
           <template #grid="{ grid, index }">
-            <h2 :style="{ margin: 0, backgroundColor: colors[index] }">Grid {{ grid.key }} : {{ grid.size }}</h2>
+            <h2 :style="{ margin: 0, backgroundColor: colors[index] }">Grid {{ grid.name }} : {{ grid.size }}</h2>
           </template>
-        </SplitLayout> -->
+        </SplitLayout>
       </template>
       <template #titleBarIcon>
         <img src="../node-blueprint/Editor/Images/Logo/logo.svg" style="width:18px;height:18px;margin:0 15px;">
@@ -39,6 +39,8 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import type { CodeLayoutSplitNInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
+import SplitLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitLayout.vue';
 
 const colors = [
   '#fb0',
@@ -47,6 +49,9 @@ const colors = [
   '#02a',
   '#1ff',
 ]
+
+const splitLayout = ref<CodeLayoutSplitNInstance>();
+const codeLayout = ref<CodeLayoutInstance>();
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
@@ -129,8 +134,6 @@ const menuData : MenuOptions = {
   zIndex: 3,
   minWidth: 230,
 };
-
-const codeLayout = ref<CodeLayoutInstance>();
 
 onMounted(() => {
   nextTick(() => {
@@ -250,7 +253,34 @@ onMounted(() => {
       iconSmall: () => h(IconFile),
     });
 
-    codeLayout.value.activeGroup(group1)
+    if (splitLayout.value) {
+      const grid = splitLayout.value.getRootGrid();
+      const grid1 = grid.addGrid({
+        name: '0',
+        visible: true,
+        size: 0,
+        direction: 'horizontal',
+      });
+      grid.addGrid({
+        name: '2',
+        visible: true,
+        size: 0,
+        minSize: 100,
+      });
+      grid1.addGrid({
+        name: '3',
+        visible: true,
+        size: 0,
+        minSize: 0,
+      });
+      grid1.addGrid({
+        name: '4',
+        visible: true,
+        size: 0,
+        minSize: 100,
+        canMinClose: true,
+      });
+    }
   });
 });
 

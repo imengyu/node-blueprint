@@ -131,23 +131,23 @@ const props = defineProps({
 });
 const { layoutConfig } = toRefs(props);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
-const hostercontext : CodeLayoutPanelHosterContext = {
+const hosterContext : CodeLayoutPanelHosterContext = {
   panelInstances,
   removePanelInternal,
 }
 
 const panels = ref({
-  primary: new CodeLayoutGridInternal('primarySideBar', 'hidden', hostercontext, 
+  primary: new CodeLayoutGridInternal('primarySideBar', 'hidden', hosterContext, 
   (open) => {
     const _layoutConfig = props.layoutConfig;
     _layoutConfig.primarySideBar = open;
   }),
-  secondary: new CodeLayoutGridInternal('secondarySideBar', 'icon', hostercontext,
+  secondary: new CodeLayoutGridInternal('secondarySideBar', 'icon', hosterContext,
   (open) => {
     const _layoutConfig = props.layoutConfig;
     _layoutConfig.secondarySideBar = open;
   }),
-  bottom: new CodeLayoutGridInternal('bottomPanel', 'text', hostercontext,
+  bottom: new CodeLayoutGridInternal('bottomPanel', 'text', hosterContext,
   (open) => {
     const _layoutConfig = props.layoutConfig;
     _layoutConfig.bottomPanel = open;
@@ -188,7 +188,6 @@ const mainMenuConfigWithCollapseState = computed<MenuBarOptions>(() => {
 const codeLayoutInstance : CodeLayoutInstance = {
   addGroup,
   removeGroup,
-  activeGroup,
   relayoutAll,
   relayoutGroup,
   getRootGrid,
@@ -374,7 +373,7 @@ function dragDropToPanelNear(
   ) {
     //2.3.1
 
-    const newGroup = new CodeLayoutPanelInternal(hostercontext);
+    const newGroup = new CodeLayoutPanelInternal(hosterContext);
     Object.assign(newGroup, {
       ...reference,
       name: reference.name + '.clone' + Math.floor(Math.random() * 10),
@@ -584,7 +583,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   if (panelInstances.has(panelInternal.name))
     throw new Error(`A panel named ${panel.name} already exists`);
 
-  const groupResult = reactive(new CodeLayoutPanelInternal(hostercontext));
+  const groupResult = reactive(new CodeLayoutPanelInternal(hosterContext));
   Object.assign(groupResult, panel);
   groupResult.open = panel.startOpen ?? false;
   groupResult.size = panel.size ?? 0;
@@ -613,25 +612,6 @@ function removeGroup(panel: CodeLayoutPanel) {
   panelInstances.delete(panelInternal.name);
 
   return panel;
-}
-function activeGroup(panel: CodeLayoutPanel) {
-  const panelInternal = panel as CodeLayoutPanelInternal;
-  if (panelInternal.parentGroup) {
-    throw new Error(`Panel ${panel.name} is not a group, can not active it.`);
-  } else if (panelInternal.parentGrid) {
-    switch (panelInternal.parentGrid) {
-      case 'primarySideBar': {
-        panels.value.primary.children.forEach((p) => p.open = false); 
-        panels.value.primary.activePanel = panelInternal;
-        break;
-      }
-      case 'secondarySideBar': panels.value.secondary.children.forEach((p) => p.open = false); break;
-      case 'bottomPanel': panels.value.bottom.children.forEach((p) => p.open = false); break;
-    }
-    panelInternal.open = true;
-  } else {
-    throw new Error(`Group ${panel.name} has not in any container, can not active it.`);
-  } 
 }
 function relayoutAll() {
   panelInstances.forEach(p => p.notifyRelayout());

@@ -40,12 +40,12 @@
 <script setup lang="ts">
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import { createMouseDragHandler } from '@/node-blueprint/Editor/Graph/Editor/MouseHandler';
-import { ref, type PropType } from 'vue';
-import type { SplitNGird } from './SplitN';
+import { ref, type PropType, onMounted, nextTick, watch } from 'vue';
+import type { CodeLayoutSplitNGridInternal } from './SplitN';
 
 const props = defineProps({
   grids: {
-    type: Object as PropType<Array<SplitNGird>>,
+    type: Object as PropType<Array<CodeLayoutSplitNGridInternal>>,
     default: null,
   },
   /**
@@ -77,11 +77,11 @@ const prevOpenedPanels = [] as PanelResizePanelData[];
 const nextOpenedPanels = [] as PanelResizePanelData[];
 
 interface PanelResizePanelData {
-  panel: SplitNGird, 
+  panel: CodeLayoutSplitNGridInternal, 
   size: number;
 }
 
-function adjustAndReturnAdjustedSize(panel: SplitNGird, intitalSize: number, increaseSize: number) {
+function adjustAndReturnAdjustedSize(panel: CodeLayoutSplitNGridInternal, intitalSize: number, increaseSize: number) {
   const targetSize = intitalSize + increaseSize;
   const minSize = panel?.minSize || 0;
   let visibleChangedSize = 0;
@@ -186,6 +186,37 @@ const dragHandler = createMouseDragHandler<number>({
   onUp(e, index) {
     splitDragging.value[index!] = false;
   },
+});
+
+function allocZeroGridSize() {
+  if (!splitBase.value)
+    return;
+  const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
+  let zeroCount = 0;
+  let canAllocSize = containerSize;
+  for (const grid of props.grids) {
+    grid.lastRelayoutSize = containerSize;
+    if (grid.size > 0)
+      canAllocSize -= grid.size;
+    else
+      zeroCount++;
+  }
+
+  const allocSize = canAllocSize / zeroCount;
+  for (const grid of props.grids) {
+    if (grid.size <= 0)
+      grid.size = allocSize;
+  }
+}
+
+watch(() => props.grids.length, () => {
+  allocZeroGridSize();
+})
+
+onMounted(() => {
+  nextTick(() => {
+    allocZeroGridSize();
+  });
 });
 
 </script>
