@@ -1,19 +1,18 @@
 <template>
   <div class="full-container">
-    <SplitLayout
-      :grid="topGrid"
-    >
-      <template #grid="{ grid, index }">
-        <h2 :style="{ margin: 0, backgroundColor: colors[index] }">Grid {{ grid.key }} : {{ grid.size }}</h2>
-      </template>
-    </SplitLayout>
-  <!--  
     <CodeLayout 
       ref="codeLayout"
       :layout-config="config"
       :main-menu-config="menuData"
     >
       <template #centerArea>
+        <!-- <SplitLayout
+          :grid="topGrid"
+        >
+          <template #grid="{ grid, index }">
+            <h2 :style="{ margin: 0, backgroundColor: colors[index] }">Grid {{ grid.key }} : {{ grid.size }}</h2>
+          </template>
+        </SplitLayout> -->
       </template>
       <template #titleBarIcon>
         <img src="../node-blueprint/Editor/Images/Logo/logo.svg" style="width:18px;height:18px;margin:0 15px;">
@@ -28,7 +27,7 @@
         </template>
         <span v-else>{{ panel.size }} / {{ panel.name }}</span>
       </template>
-    </CodeLayout>-->
+    </CodeLayout>
   </div>
 </template>
 
@@ -40,8 +39,6 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import SplitLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitLayout.vue';
-import type { SplitGird, SplitNGird } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
 
 const colors = [
   '#fb0',
@@ -50,43 +47,6 @@ const colors = [
   '#02a',
   '#1ff',
 ]
-const topGrid = reactive<SplitGird>({
-  key: '0',
-  visible: true,
-  size: 0,
-  direction: 'horizontal',
-  children: [
-    {
-      key: '1',
-      visible: true,
-      size: 525,
-      minSize: 100,
-      canMinClose: true,
-      direction: 'vertical',
-      children: [
-        {
-          key: '3',
-          visible: true,
-          size: 407,
-          minSize: 0,
-        },
-        {
-          key: '4',
-          visible: true,
-          size: 200,
-          minSize: 100,
-          canMinClose: true,
-        },
-      ],
-    },
-    {
-      key: '2',
-      visible: true,
-      size: 525,
-      minSize: 100,
-    },
-  ]
-});
 
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
@@ -207,15 +167,15 @@ onMounted(() => {
       }, 'primarySideBar');
     }
 
-    codeLayout.value.addPanel({
+    group1.addPanel({
       title: 'Panel1',
       tooltip: 'Panel1',
       name: 'group1.panel1',
       noHide: true,
       startOpen: true,
       iconSmall: () => h(IconSearch),
-    }, group1);
-    codeLayout.value.addPanel({
+    });
+    group1.addPanel({
       title: 'Panel2',
       tooltip: 'Panel2',
       name: 'group1.panel2',
@@ -232,8 +192,8 @@ onMounted(() => {
           onClick() {},
         },
       ]
-    }, group1);
-    codeLayout.value.addPanel({
+    });
+    group1.addPanel({
       title: 'Panel3',
       tooltip: 'Panel3',
       name: 'group1.panel3',
@@ -246,9 +206,9 @@ onMounted(() => {
           onClick() {},
         },
       ]
-    }, group1);
+    });
   
-    codeLayout.value.addPanel({
+    bottomGroup.addPanel({
       title: 'Panel4',
       tooltip: 'Panel4',
       name: 'group3.panel4',
@@ -261,16 +221,16 @@ onMounted(() => {
           onClick() {},
         },
       ]
-    }, bottomGroup);
-    const panel5 = codeLayout.value.addPanel({
+    });
+    const panel5 = bottomGroup.addPanel({
       title: 'Panel5',
       tooltip: 'Panel5',
       name: 'group3.panel5',
       startOpen: true,
       iconSmall: () => h(IconSearch),
-    }, bottomGroup);
+    });
 
-    codeLayout.value.addPanel({
+    panel5.addPanel({
       title: 'Panel51',
       tooltip: 'Panel51',
       name: 'group3.panel5.panel1',
@@ -282,13 +242,13 @@ onMounted(() => {
           onClick() {},
         },
       ]
-    }, panel5);
-    codeLayout.value.addPanel({
+    });
+    panel5.addPanel({
       title: 'Panel5.2',
       tooltip: 'Panel5.2',
       name: 'group3.panel5.panel2',
       iconSmall: () => h(IconFile),
-    }, panel5);
+    });
 
     codeLayout.value.activeGroup(group1)
   });

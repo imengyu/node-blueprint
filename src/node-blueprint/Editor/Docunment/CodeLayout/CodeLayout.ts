@@ -1,4 +1,4 @@
-import type { VNode } from "vue";
+import { reactive, type VNode } from "vue";
 import { LateClass } from "./Composeable/LateClass";
 import type { CodeLayoutLangDefine } from "./Language";
 
@@ -77,14 +77,9 @@ export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'bottomPanel'|'
 
 export interface CodeLayoutInstance {
   getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
-  addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanel;
-  removeGroup(panel: CodeLayoutPanel): CodeLayoutPanel;
+  addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanelInternal;
+  removeGroup(panel: CodeLayoutPanel): void;
   activeGroup: (panel: CodeLayoutPanel) => void;
-  closePanel: (panel: CodeLayoutPanel) => void;
-  togglePanel: (panel: CodeLayoutPanel) => boolean;
-  openPanel: (panel: CodeLayoutPanel, closeOthers?: boolean) => void,
-  addPanel: (panel: CodeLayoutPanel, parentGroup: CodeLayoutPanel, active?: boolean) => CodeLayoutPanel;
-  removePanel: (panel: CodeLayoutPanel) => CodeLayoutPanel;
   getRootGrid(target: CodeLayoutGrid): CodeLayoutGridInternal,
   relayoutAll: () => void;
   relayoutGroup(name: string): void;
@@ -92,12 +87,19 @@ export interface CodeLayoutInstance {
 
 //内部类定义
 
+export interface CodeLayoutPanelHosterContext {
+  panelInstances: Map<string, CodeLayoutPanelInternal>;
+  removePanelInternal(panel: CodeLayoutPanelInternal): void;
+}
+
 export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPanel {
 
-  public constructor() {
+  public constructor(context: CodeLayoutPanelHosterContext) {
     super();
+    this.context = context;
   }
 
+  context: CodeLayoutPanelHosterContext;
   title = '';
   name = '';
   open = false;
@@ -127,6 +129,70 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   iconLarge?: string|(() => VNode)|undefined;
   iconSmall?: string|(() => VNode)|undefined;
   actions?: CodeLayoutActionButton[]|undefined;
+
+  //Public
+
+  addPanel(panel: CodeLayoutPanel, startOpen = false) {
+    const panelInternal = panel as CodeLayoutPanelInternal;
+    
+    if (panelInternal.parentGroup)
+      throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
+    if (this.context.panelInstances.has(panelInternal.name))
+      throw new Error(`A panel named ${panel.name} already exists`);
+  
+    const panelResult = reactive(new CodeLayoutPanelInternal(this.context));
+    Object.assign(panelResult, panel);
+    panelResult.open = panel.startOpen ?? false;
+    panelResult.size = panel.size ?? 0;
+    this.addChild(panelResult as CodeLayoutPanelInternal);
+  
+    if (startOpen || panel.startOpen)
+      panelResult.openPanel();
+  
+    this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutPanelInternal);
+  
+    return panelResult;
+  }
+  removePanel(panel: CodeLayoutPanel) {
+    const panelInternal = panel as CodeLayoutPanelInternal;
+    if (panelInternal.parentGroup !== this)
+      throw new Error(`Panel ${panel.name} is not child of this group !`);
+    this.context.removePanelInternal(panelInternal);
+    this.context.panelInstances.delete(panelInternal.name);
+    return panel;
+  }
+  openPanel(closeOthers = false) {
+    if (this.parentGroup) {
+      const group = this.parentGroup;
+      group.activePanel = this;
+      if (closeOthers)
+        group.children.forEach(p => p.open = false);
+        this.open = true;
+    } else {
+      throw new Error(`Panel ${this.name} has not in any container, can not active it.`);
+    } 
+  }
+  closePanel() {
+    if (this.parentGroup) {
+      const group = this.parentGroup;
+      this.parentGroup.activePanel = this;
+      group.open = true;
+    } else {
+      throw new Error(`Panel ${this.name} has not in any container, can not active it.`);
+    } 
+  }
+  togglePanel() {
+    if (this.parentGroup) {
+      const group = this.parentGroup;
+      this.parentGroup.activePanel = this;
+      group.open = !group.open;
+      return group.open;
+    } else {
+      throw new Error(`Panel ${this.name} has not in any container, can not active it.`);
+    } 
+  }
+
+  //Internal
 
   addChild(child: CodeLayoutPanelInternal, index?: number) {
     if (this.name === child.name)
@@ -233,9 +299,10 @@ export class CodeLayoutGridInternal extends CodeLayoutPanelInternal {
   public constructor(
     name: CodeLayoutGrid,
     tabStyle: CodeLayoutPanelTabStyle,
-    onSwitchCollapse: (open: boolean) => void
+    context: CodeLayoutPanelHosterContext,
+    onSwitchCollapse: (open: boolean) => void,
   ) {
-    super();
+    super(context);
     this.name = name;
     this.tabStyle = tabStyle;
     this.parentGrid = name;

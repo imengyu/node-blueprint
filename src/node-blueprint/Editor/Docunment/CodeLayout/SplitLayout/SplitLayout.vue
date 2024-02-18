@@ -20,13 +20,26 @@
 <script setup lang="ts">
 import type { PropType } from 'vue';
 import SplitN from './SplitN.vue';
-import type { SplitGird } from './SplitN';
+import { defaultCodeLayoutConfig, type CodeLayoutLangConfig, type CodeLayoutConfig } from '../CodeLayout';
+import type { CodeLayoutSplitNInstance } from './SplitN';
 
-defineProps({
-  grid: {
-    type: Object as PropType<SplitGird>,
-    default: null,
+const props = defineProps({
+  layoutConfig: {
+    type: Object as PropType<CodeLayoutConfig>,
+    default: () => defaultCodeLayoutConfig
+  },
+  langConfig: {
+    type: Object as PropType<CodeLayoutLangConfig>,
+    default: () => ({
+      lang: 'en',
+    }),
   },
 });
+
+const instance : CodeLayoutSplitNInstance = {
+
+};
+
+defineExpose(instance);
 
 </script>

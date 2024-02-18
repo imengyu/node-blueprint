@@ -5,7 +5,10 @@ let showState = false;
 
 export function useSimpleTooltipDelayLock() {
 
+  let leaveState = false;
+
   function onEnter(cb: () => void) {
+    leaveState = false;
     if (hideDelayTimer > 0) {
       clearTimeout(hideDelayTimer);
       hideDelayTimer = 0;
@@ -17,8 +20,10 @@ export function useSimpleTooltipDelayLock() {
     if (showDelayTimer > 0) 
       clearTimeout(showDelayTimer);
     showDelayTimer = setTimeout(() => {
-      cb();
-      showState = true;
+      if (!leaveState) {
+        cb();
+        showState = true;
+      }
     }, 650);
   }
   function onLeave() {
@@ -26,6 +31,7 @@ export function useSimpleTooltipDelayLock() {
       clearTimeout(hideDelayTimer);
     hideDelayTimer = setTimeout(() => {
       showState = false;
+      leaveState = true;
     }, 50);
   }
 
