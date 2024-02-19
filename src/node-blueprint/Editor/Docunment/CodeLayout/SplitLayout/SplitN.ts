@@ -39,7 +39,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     panelResult.size = panel.size ?? 0;
     this.addChildGrid(panelResult as CodeLayoutSplitNGridInternal);
     this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNGridInternal);
-    return panelResult;
+    return panelResult as CodeLayoutSplitNGridInternal;
   }
   removeGrid(panel: CodeLayoutSplitNGrid) {
     const panelInternal = panel as CodeLayoutSplitNGridInternal;

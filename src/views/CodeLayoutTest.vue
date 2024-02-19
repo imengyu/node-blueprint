@@ -9,8 +9,11 @@
         <SplitLayout
           ref="splitLayout"
         >
-          <template #grid="{ grid, index }">
-            <h2 :style="{ margin: 0, backgroundColor: colors[index] }">Grid {{ grid.name }} : {{ grid.size }}</h2>
+          <template #tabContentRender="{ panel }">
+            <h2 :style="{ margin: 0, backgroundColor: colors[panel.data] }">Grid {{ panel.name }}</h2>
+          </template>
+          <template #tabEmptyContentRender="{ grid }">
+            <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }}</h2>
           </template>
         </SplitLayout>
       </template>
@@ -267,7 +270,7 @@ onMounted(() => {
         size: 0,
         minSize: 100,
       });
-      grid1.addGrid({
+      const grid3 = grid1.addGrid({
         name: '3',
         visible: true,
         size: 0,
@@ -279,6 +282,41 @@ onMounted(() => {
         size: 0,
         minSize: 100,
         canMinClose: true,
+      });
+
+      grid3.addPanel({
+        title: 'Panel3-1',
+        tooltip: 'Panel3-1',
+        name: 'panel3.1',
+        startOpen: true,
+        iconSmall: () => h(IconSearch),
+        data: 2,
+      });
+      grid3.addPanel({
+        title: 'Panel3-2',
+        tooltip: 'Panel3-2',
+        name: 'panel3.2',
+        startOpen: true,
+        data: 1,
+        closeType: 'close',
+        iconSmall: () => h(IconSearch),
+      });
+      grid3.addPanel({
+        title: 'Panel3-3',
+        tooltip: 'Panel3-3',
+        name: 'panel3.3',
+        startOpen: true,
+        data: 3,
+        closeType: 'unSave',
+        iconSmall: () => h(IconSearch),
+      });
+      grid3.addPanel({
+        title: 'Panel3-4',
+        tooltip: 'Panel3-4',
+        name: 'panel3.4',
+        startOpen: true,
+        data: 4,
+        iconSmall: () => h(IconSearch),
       });
     }
   });

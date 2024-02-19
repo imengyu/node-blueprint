@@ -75,6 +75,8 @@ export const defaultCodeLayoutConfig : CodeLayoutConfig = {
 
 export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'bottomPanel'|'centerArea'|'none';
 
+export type CodeLayoutPanelCloseType = 'unSave'|'close'|'none';
+
 export interface CodeLayoutInstance {
   getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
   addGroup: (panel: CodeLayoutPanel, target: CodeLayoutGrid) => CodeLayoutPanelInternal;
@@ -127,7 +129,9 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   startOpen?: boolean|undefined;
   iconLarge?: string|(() => VNode)|undefined;
   iconSmall?: string|(() => VNode)|undefined;
+  closeType: CodeLayoutPanelCloseType = 'none';
   actions?: CodeLayoutActionButton[]|undefined;
+  data?: any = undefined;
 
   //Public
 
@@ -365,7 +369,19 @@ export interface CodeLayoutPanel {
   startOpen?: boolean|undefined;
   iconLarge?: string|(() => VNode)|undefined;
   iconSmall?: string|(() => VNode)|undefined;
+  /**
+   * Default: 'none'
+   */
+  closeType?: CodeLayoutPanelCloseType|undefined;
   actions?: CodeLayoutActionButton[]|undefined;
+  data?: any;
+}
+export interface CodeLayoutActionButton {
+  name: string,
+  icon: string|(() => VNode),
+  tooltip?: string,
+  tooltipDirection?: 'left'|'top'|'right'|'bottom',
+  onClick: () => void,
 }
 
 //运行时类型定义
@@ -382,12 +398,4 @@ export interface CodeLayoutContext {
   relayoutAfterToggleVisible: (panel: CodeLayoutPanelInternal) => void,
   relayoutTopGridProp: (grid: CodeLayoutGrid, visible: boolean) => void,
   instance: CodeLayoutInstance;
-}
-
-export interface CodeLayoutActionButton {
-  name: string,
-  icon: string|(() => VNode),
-  tooltip?: string,
-  tooltipDirection?: 'left'|'top'|'right'|'bottom',
-  onClick: () => void,
 }
