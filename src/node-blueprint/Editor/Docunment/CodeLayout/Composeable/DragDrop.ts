@@ -22,7 +22,7 @@ export function getCurrentDragPanel() {
   return currentDragPanel;
 }
 
-const dragState = ref(false);
+const dragPanelState = ref(false);
 
 //拖拽开始函数封装
 export function usePanelDragger() {
@@ -52,6 +52,7 @@ export function usePanelDragger() {
     if (ev.dataTransfer)
       ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
 
+    dragPanelState.value = true;
     document.addEventListener('dragover', draggingMouseMoveHandler);
   }
   function handleDragEnd(ev: DragEvent) {
@@ -61,6 +62,7 @@ export function usePanelDragger() {
     }
     (ev.target as HTMLElement).classList.remove("dragging");
 
+    dragPanelState.value = false;
     document.removeEventListener('dragover', draggingMouseMoveHandler);
   }
   return {
@@ -101,6 +103,9 @@ export function usePanelDragOverDetector(
       && !panel.children.includes(selfPanel.value)
       && (!dragoverChecking || dragoverChecking(panel))
     ) {
+      if (!container.value)
+        return;
+
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = 'copy';
@@ -111,15 +116,26 @@ export function usePanelDragOverDetector(
           (e.y - currentDropBaseScreenPosY)
         ) ;
         dragOverState.value = (pos > (horizontal.value ? 
-          container.value!.offsetWidth : 
-          container.value!.offsetHeight) / 2
+          container.value.offsetWidth : 
+          container.value.offsetHeight) / 2
         ) ? 
           (horizontal.value ? 'right' : 'down')
            : (horizontal.value ? 'left' : 'up');
       } else {
-        dragOverState.value = '';
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'none';
+        const posX = (e.x - currentDropBaseScreenPosX);
+        const posY = (e.y - currentDropBaseScreenPosY);
+
+        if (posX < container.value.offsetWidth / 4) {
+          dragOverState.value = 'left';
+        } else if (posX > container.value.offsetWidth - container.value.offsetWidth / 4) {
+          dragOverState.value = 'right';
+        } else if (posY < container.value.offsetHeight / 4) {
+          dragOverState.value = 'up';
+        } else if (posY > container.value.offsetHeight - container.value.offsetHeight / 4) {
+          dragOverState.value = 'down';
+        } else  {
+          dragOverState.value = 'center';
+        } 
       }
 
     } else {
@@ -139,15 +155,11 @@ export function usePanelDragOverDetector(
     currentDropBaseScreenPosY = HtmlUtils.getTop(container.value!);
     dragEnterState.value = true;
 
-    handleDragOver(e);
-
-    console.log('handleDragEnter', e.target);
-    
+    handleDragOver(e);    
   }
   function handleDragLeave(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('handleDragLeave', e.target);
   
     let node = e.target;
     while(node) {
@@ -168,6 +180,7 @@ export function usePanelDragOverDetector(
   }
 
   return {
+    dragPanelState,
     dragEnterState,
     dragOverState,
     handleDragOver,

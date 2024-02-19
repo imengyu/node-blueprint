@@ -38,6 +38,7 @@
       ref="tabContent"
       :class="[
         'code-layout-split-tab-content',
+        tabContentDragOverDetector.dragPanelState.value ? 'dragging' : '',
         tabContentDragOverDetector.dragEnterState.value ? 'drag-active' : '',
         `drag-over-${tabContentDragOverDetector.dragOverState.value}`,
       ]"
@@ -95,7 +96,7 @@ function handleTabHeaderDrop(e: DragEvent) {
 }
 
 const tabContentDragOverDetector = usePanelDragOverDetector(
-  tabContent, grid, horizontal,
+  tabContent, grid, undefined,
   () => {}, 
   (dragPanel) => {
     return (
@@ -106,7 +107,11 @@ const tabContentDragOverDetector = usePanelDragOverDetector(
 );
 
 function handleTabContentDrop(e: DragEvent) {
-
-
+  const dropPanel = getCurrentDragPanel();
+  if (dropPanel) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  tabContentDragOverDetector.resetDragOverState();
 }
 </script>

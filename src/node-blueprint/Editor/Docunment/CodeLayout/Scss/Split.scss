@@ -243,6 +243,9 @@
   right: 0;
   bottom: 0;
 
+  &.dragging * {
+    pointer-events: none;
+  }
   &.drag-active::before {
     position: absolute;
     content: '';
