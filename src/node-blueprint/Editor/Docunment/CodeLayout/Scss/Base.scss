@@ -28,6 +28,7 @@
   --code-layout-header-height: 22px;
   --code-layout-titlebar-background: #3c3c3c;
   --code-layout-titlebar-height: 35px;
+  --code-layout-status-height: 20px;
   --code-layout-font-size: 13px;
   --code-layout-font-size-small: 11px;
 }
@@ -62,6 +63,7 @@
     flex-direction: row;
     align-items: stretch;
     flex: 1;
+    height: calc(100% - var(--code-layout-titlebar-height) - var(--code-layout-status-height));
 
     .code-layout-activity-bar {
       position: relative;
@@ -169,6 +171,7 @@
   }
   > .code-layout-status {
     flex-grow: 0;
+    height: var(--code-layout-status-height);
     background-color: var(--code-layout-color-highlight);
   }
 }

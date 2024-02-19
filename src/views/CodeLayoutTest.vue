@@ -68,7 +68,6 @@ const config = reactive<CodeLayoutConfig>({
   bottomPanelHeight: 30,
   bottomPanelMinHeight: 40,
   bottomAlignment: 'center',
-  statusBarHeight: '20px',
   panelHeaderHeight: 24,
   panelMinHeight: 150,
   titleBar: true,

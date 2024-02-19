@@ -321,7 +321,7 @@
       </div>
     </div>
     <!--status bar-->
-    <div v-if="config.statusBar" class="code-layout-status" :style="{ height: config.statusBarHeight }">
+    <div v-if="config.statusBar" class="code-layout-status">
       <slot name="statusBar" />
     </div>
   </div>
