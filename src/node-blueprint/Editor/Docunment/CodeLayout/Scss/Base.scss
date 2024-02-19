@@ -134,7 +134,10 @@
         &.drag-enter * {
           pointer-events: none;
         }
-        &.drag-over-prev, &.drag-over-next {
+        &.drag-over-left, 
+        &.drag-over-right,
+        &.drag-over-up, 
+        &.drag-over-down {
           &::before {
             position: absolute;
             content: '';
@@ -144,12 +147,12 @@
             background-color: var(--code-layout-color-border-light);
           }
         }
-        &.drag-over-prev {
+        &.drag-over-left, &.drag-over-up {
           &::before {
             top: calc(var(--code-layout-border-size-larger) / 2 * -1);
           }
         }
-        &.drag-over-next {
+        &.drag-over-right, &.drag-over-down {
           &::before {
             bottom: calc(var(--code-layout-border-size-larger) / 2 * -1);
           }

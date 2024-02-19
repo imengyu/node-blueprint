@@ -17,8 +17,7 @@
 <script setup lang="ts">
 import { inject, ref, toRefs, type PropType } from 'vue';
 import type { CodeLayoutContext, CodeLayoutGrid, CodeLayoutPanelInternal } from './CodeLayout';
-import { usePanelDragOverDetector } from './Composeable/DragDrop';
-import { getDropPanel } from './Composeable/DragDrop';
+import { getCurrentDragPanel, usePanelDragOverDetector } from './Composeable/DragDrop';
 
 const props = defineProps({
   panel: {
@@ -42,7 +41,7 @@ const {
   handleDragLeave,
   resetDragOverState,
 } = usePanelDragOverDetector(
-  container, panel, horizontal, context, 
+  container, panel, horizontal,
   () => {}, 
   (dragPanel) => {
     return (
@@ -53,12 +52,12 @@ const {
 );
 
 function handleDrop(e: DragEvent) {
-  const dropPanel = getDropPanel(e, context);
+  const dropPanel = getCurrentDragPanel();
   if (dropPanel) {
     e.preventDefault();
     e.stopPropagation();
     if (props.panel)
-      context.dragDropToPanelNear(props.panel, 'drag-over-next', dropPanel, 'empty');
+      context.dragDropToPanelNear(props.panel, 'right', dropPanel, 'empty');
     else
       context.dragDropToGrid(props.grid, dropPanel);
   }

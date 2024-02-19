@@ -9,7 +9,7 @@
         'item',
         active ? 'active' : '',
         dragEnterState ? 'drag-enter' : '',
-        dragOverState,
+        `drag-over-${dragOverState}`,
       ]"
       :draggable="true"
       @click="$emit('activeItem', item)"
@@ -35,7 +35,7 @@
 import { inject, ref, toRefs, type PropType, type Ref } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
-import { checkDropPanelDefault, getDropPanel, usePanelDragger, usePanelDragOverDetector } from './Composeable/DragDrop';
+import { checkDropPanelDefault, getCurrentDragPanel, usePanelDragger, usePanelDragOverDetector } from './Composeable/DragDrop';
 import { usePanelMenuControl } from './Composeable/PanelMenu';
 import SimpleTooltip from './Components/SimpleTooltip.vue';
 
@@ -75,13 +75,13 @@ const {
   handleDragLeave,
   resetDragOverState,
 } = usePanelDragOverDetector(
-  container, item, horizontal, context, 
+  container, item, horizontal,
   () => emit('activeItem'),
   (dragPanel) => checkDropPanelDefault(dragPanel, item.value, dragOverState)
 );
 
 function handleDrop(e: DragEvent) {
-  const dropPanel = getDropPanel(e, context);
+  const dropPanel = getCurrentDragPanel();
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
     e.stopPropagation();

@@ -134,6 +134,7 @@ const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 const hosterContext : CodeLayoutPanelHosterContext = {
   panelInstances,
   removePanelInternal,
+  closePanelInternal() {}
 }
 
 const panels = ref({
@@ -305,7 +306,7 @@ function dragDropToPanelNear(
     && !(oldParent.getIsTabContainer() && reference.parentGroup.getIsTabContainer())
   ) {
     oldParent.removeChild(panel);
-    oldParent.addChild(panel, reference.getIndexInParent() + (referencePosition === 'drag-over-next' ? 1 : 0))
+    oldParent.addChild(panel, reference.getIndexInParent() + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0))
     oldParent.activePanel = panel;
     return;
   }
@@ -313,7 +314,7 @@ function dragDropToPanelNear(
   if (!oldParent && !reference.parentGroup && reference.parentGrid === panel.parentGrid && dropToTabHeader) {
     const parentGrid = getRootGrid(panel.parentGrid);
     parentGrid.removeChild(panel);
-    parentGrid.addChild(panel, reference.getIndexInParent() + (referencePosition === 'drag-over-next' ? 1 : 0))
+    parentGrid.addChild(panel, reference.getIndexInParent() + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0))
     parentGrid.activePanel = panel;
     return;
   }
@@ -384,10 +385,12 @@ function dragDropToPanelNear(
     panelInstances.set(newGroup.name, newGroup);
 
     switch (referencePosition) {
-      case 'drag-over-prev':
+      case 'left':
+      case 'up':
         newGroup.addChilds(flatChildren, 0);
         break;
-      case 'drag-over-next':
+      case 'right':
+      case 'down':
         newGroup.addChilds(flatChildren);
         break;
     }
@@ -411,10 +414,12 @@ function dragDropToPanelNear(
     //插入至指定位置并且重新布局
     const insetIndex = newParent.children.indexOf(reference);
     switch (referencePosition) {
-      case 'drag-over-prev':
+      case 'left':
+      case 'up':
         newParent.addChilds(flatChildren, insetIndex);
         break;
-      case 'drag-over-next':
+      case 'right':
+      case 'down':
         newParent.addChilds(flatChildren, insetIndex + 1);
         break;
     }

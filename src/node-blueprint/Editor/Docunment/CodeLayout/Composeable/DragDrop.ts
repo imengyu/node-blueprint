@@ -1,14 +1,7 @@
 import { inject, ref, type Ref } from "vue";
-import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutDragDropReferencePosition, CodeLayoutPanelInternal } from "../CodeLayout";
+import type { CodeLayoutConfig, CodeLayoutDragDropReferencePosition, CodeLayoutPanelInternal } from "../CodeLayout";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { createMiniTimeOut } from "./MiniTimeout";
-
-export function getDropPanel(event: DragEvent, context: CodeLayoutContext) {
-  const data = event.dataTransfer?.getData('text/plain');
-  if (data && data.startsWith('CodeLayoutPanel:'))
-    return context.instance.getPanelByName(data.substring(16));
-  return undefined;
-}
 
 export function checkDropPanelDefault(
   dragPanel: CodeLayoutPanelInternal,
@@ -28,6 +21,8 @@ let currentDragPanel : null|CodeLayoutPanelInternal = null;
 export function getCurrentDragPanel() {
   return currentDragPanel;
 }
+
+const dragState = ref(false);
 
 //拖拽开始函数封装
 export function usePanelDragger() {
@@ -79,7 +74,6 @@ export function usePanelDragOverDetector(
   container: Ref<HTMLElement|undefined>,
   selfPanel: Ref<CodeLayoutPanelInternal>|undefined,
   horizontal: Ref<boolean>|undefined,
-  context: CodeLayoutContext,
   focusPanel: () => void,
   dragoverChecking?: ((dragPanel: CodeLayoutPanelInternal) => boolean)|undefined,
 ) {
@@ -90,7 +84,8 @@ export function usePanelDragOverDetector(
   const delayLeaveTimer = createMiniTimeOut(200, () => {
     dragOverState.value = '';
   });
-  let currentDropBaseScreenPos = 0;
+  let currentDropBaseScreenPosX = 0;
+  let currentDropBaseScreenPosY = 0;
 
   function handleDragOver(e: DragEvent) {
     if (!e.dataTransfer)
@@ -98,12 +93,10 @@ export function usePanelDragOverDetector(
 
     delayLeaveTimer.stop();
       
-
     //检查面板，必须存在面板，并且不能是自己或者自己的父级
     const panel = getCurrentDragPanel();
     if (
       panel
-      && horizontal
       && selfPanel && panel !== selfPanel.value 
       && !panel.children.includes(selfPanel.value)
       && (!dragoverChecking || dragoverChecking(panel))
@@ -111,12 +104,24 @@ export function usePanelDragOverDetector(
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = 'copy';
-  
-      const pos = (horizontal.value ? e.x : e.y) - currentDropBaseScreenPos;
-      dragOverState.value = (pos > (horizontal.value ? 
-        container.value!.offsetWidth : 
-        container.value!.offsetHeight) / 2
-      ) ? 'drag-over-next' : 'drag-over-prev';
+
+      if (horizontal) {
+        const pos = (horizontal.value ? 
+          (e.x - currentDropBaseScreenPosX) : 
+          (e.y - currentDropBaseScreenPosY)
+        ) ;
+        dragOverState.value = (pos > (horizontal.value ? 
+          container.value!.offsetWidth : 
+          container.value!.offsetHeight) / 2
+        ) ? 
+          (horizontal.value ? 'right' : 'down')
+           : (horizontal.value ? 'left' : 'up');
+      } else {
+        dragOverState.value = '';
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'none';
+      }
+
     } else {
       dragOverState.value = '';
       e.stopPropagation();
@@ -126,26 +131,29 @@ export function usePanelDragOverDetector(
   function handleDragEnter(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     focusTimer.start();
     delayLeaveTimer.stop();
 
-    if (horizontal)
-      currentDropBaseScreenPos = horizontal.value ? 
-          HtmlUtils.getLeft(container.value!) : 
-          HtmlUtils.getTop(container.value!);
+    currentDropBaseScreenPosX = HtmlUtils.getLeft(container.value!);
+    currentDropBaseScreenPosY = HtmlUtils.getTop(container.value!);
     dragEnterState.value = true;
 
     handleDragOver(e);
+
+    console.log('handleDragEnter', e.target);
+    
   }
   function handleDragLeave(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
+    console.log('handleDragLeave', e.target);
   
     let node = e.target;
     while(node) {
       if (node === container.value) {
         dragEnterState.value = false;
+        dragOverState.value = '';
         focusTimer.stop();
         delayLeaveTimer.start();
         return;

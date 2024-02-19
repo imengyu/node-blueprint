@@ -36,7 +36,7 @@ import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } fro
 import { useResizeChecker } from './Composeable/ResizeChecker';
 import CodeLayoutPanelRender from './CodeLayoutPanelRender.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector } from './Composeable/DragDrop';
+import { checkDropPanelDefault, getCurrentDragPanel, usePanelDragOverDetector } from './Composeable/DragDrop';
 
 const container = ref<HTMLElement>();
 const resizeDragging = ref(false);
@@ -543,7 +543,7 @@ const {
   handleDragLeave,
   resetDragOverState,
 } = usePanelDragOverDetector(
-  container, group, horizontal, context, 
+  container, group, horizontal, 
   () => {},
   (dragPanel) => {
     return (
@@ -554,13 +554,13 @@ const {
 );
 
 function handleDrop(e: DragEvent) {
-  const dropPanel = getDropPanel(e, context);
+  const dropPanel = getCurrentDragPanel();
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
     e.stopPropagation();
     context.dragDropToPanelNear(
       group.value.getLastChildOrSelf(), 
-      'drag-over-next', 
+      'right', 
       dropPanel, 
       'empty'
     );

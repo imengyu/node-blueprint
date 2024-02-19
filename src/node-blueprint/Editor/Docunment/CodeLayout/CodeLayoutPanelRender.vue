@@ -11,7 +11,7 @@
       resizeDragging ? 'resizing' : '',
       horizontal ? 'horizontal' : '',
       dragEnterState ? 'drag-enter' : '',
-      dragOverState,
+      `drag-over-${dragOverState}`,
     ]"
     :style="{
       width: horizontal && panelHeight ? `${panelHeight}px` : '100%',
@@ -66,7 +66,7 @@
 import { ref, computed, type PropType, inject, toRefs, type Ref } from 'vue';
 import type { CodeLayoutConfig, CodeLayoutContext, CodeLayoutPanelInternal } from './CodeLayout';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
-import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
+import { checkDropPanelDefault, getCurrentDragPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import CodeLayoutActionsRender from './CodeLayoutActionsRender.vue';
 import IconArrow from './Icons/IconArrow.vue';
@@ -155,14 +155,14 @@ const {
   handleDragLeave,
   resetDragOverState,
 } = usePanelDragOverDetector(
-  element, panel, horizontal, context, 
+  element, panel, horizontal,
   () => {},
   (dragPanel) => checkDropPanelDefault(dragPanel, panel.value, dragOverState)
 );
 
 
 function handleDrop(e: DragEvent) {
-  const dropPanel = getDropPanel(e, context);
+  const dropPanel = getCurrentDragPanel();
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
     e.stopPropagation();
@@ -270,7 +270,7 @@ const {
   }
 
   //拖放状态处理
-  &.drag-over-prev {
+  &.drag-over-left, &.drag-over-up {
     //高亮框
     &.closed {
       background-color: var(--code-layout-color-background-mask-light);
@@ -311,7 +311,7 @@ const {
       bottom: 0;
     }
   }
-  &.drag-over-next {
+  &.drag-over-right, &.drag-over-down {
     //高亮框
     &.closed {
       background-color: var(--code-layout-color-background-mask-light);

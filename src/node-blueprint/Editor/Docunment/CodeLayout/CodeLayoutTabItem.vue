@@ -9,7 +9,7 @@
         'tab-item',
         active ? 'active' : '',
         dragEnterState ? 'drag-enter' : '',
-        dragOverState,
+        `drag-over-${dragOverState}`,
       ]"
       :draggable="true"
       @dragstart="handleDragStart(panel, $event)"
@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { ref, type PropType, toRefs, inject } from 'vue';
-import { checkDropPanelDefault, getDropPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
+import { checkDropPanelDefault, getCurrentDragPanel, usePanelDragOverDetector, usePanelDragger } from './Composeable/DragDrop';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import type { CodeLayoutContext, CodeLayoutPanelInternal, CodeLayoutPanelTabStyle } from './CodeLayout';
 import { usePanelMenuControl } from './Composeable/PanelMenu';
@@ -75,13 +75,13 @@ const {
   handleDragLeave,
   resetDragOverState,
 } = usePanelDragOverDetector(
-  container, panel, horizontal, context, 
+  container, panel, horizontal, 
   () => emit('focusSelf'),
   (dragPanel) => checkDropPanelDefault(dragPanel, panel.value, dragOverState)
 );
 
 function handleDrop(e: DragEvent) {
-  const dropPanel = getDropPanel(e, context);
+  const dropPanel = getCurrentDragPanel();
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
     e.stopPropagation();

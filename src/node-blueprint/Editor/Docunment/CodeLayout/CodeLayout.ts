@@ -91,6 +91,7 @@ export interface CodeLayoutInstance {
 export interface CodeLayoutPanelHosterContext {
   panelInstances: Map<string, CodeLayoutPanelInternal>;
   removePanelInternal(panel: CodeLayoutPanelInternal): void;
+  closePanelInternal(panel: CodeLayoutPanelInternal): void;
 }
 
 export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPanel {
@@ -170,7 +171,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       group.activePanel = this;
       if (closeOthers)
         group.children.forEach(p => p.open = false);
-        this.open = true;
+      this.open = true;
     } else {
       throw new Error(`Panel ${this.name} has not in any container, can not active it.`);
     } 
@@ -178,8 +179,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   closePanel() {
     if (this.parentGroup) {
       const group = this.parentGroup;
-      this.parentGroup.activePanel = this;
-      group.open = true;
+      this.parentGroup.reselectActiveChild();
+      group.open = false;
     } else {
       throw new Error(`Panel ${this.name} has not in any container, can not active it.`);
     } 
@@ -196,7 +197,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   }
 
   reselectActiveChild() {
-    this.activePanel = this.children.find((p) => p.visible) || null;
+    this.activePanel = this.children.find((p) => p.visible && p.open) || null;
   }
   setActiveChild(child: CodeLayoutPanelInternal) {
     this.activePanel = child;
@@ -385,7 +386,7 @@ export interface CodeLayoutActionButton {
 }
 
 //运行时类型定义
-export type CodeLayoutDragDropReferencePosition = ''|'drag-over-prev'|'drag-over-next';
+export type CodeLayoutDragDropReferencePosition = ''|'up'|'down'|'left'|'right'|'center'|'';
 
 export interface CodeLayoutContext {
   dragDropToGrid: (grid: CodeLayoutGrid, panel: CodeLayoutPanelInternal) => void,

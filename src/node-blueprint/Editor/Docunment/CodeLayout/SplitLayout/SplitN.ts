@@ -1,10 +1,18 @@
 import { reactive } from "vue";
-import { CodeLayoutGridInternal, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext, type CodeLayoutPanel } from "../CodeLayout";
+import { CodeLayoutGridInternal, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext, type CodeLayoutPanel, type CodeLayoutDragDropReferencePosition } from "../CodeLayout";
 
 export class CodeLayoutSplitNPanelInternal extends CodeLayoutPanelInternal {
 
   public constructor(context: CodeLayoutPanelHosterContext) {
     super(context);
+    this.open = true;
+  }
+
+  openPanel(): void {
+    throw new Error('SplitLayout panel can only close');
+  }
+  closePanel(): void {
+    this.context.closePanelInternal(this);
   }
 }
 
@@ -48,6 +56,22 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     this.removeChildGrid(panelInternal);
     this.context.panelInstances.delete(panelInternal.name);
     return panel;
+  }
+  addPanel(panel: CodeLayoutPanel) {
+    const panelInternal = panel as CodeLayoutPanelInternal;
+    
+    if (panelInternal.parentGroup)
+      throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
+    if (this.context.panelInstances.has(panelInternal.name))
+      throw new Error(`A panel named ${panel.name} already exists`);
+  
+    const panelResult = reactive(new CodeLayoutSplitNPanelInternal(this.context));
+    Object.assign(panelResult, panel);
+    panelResult.size = panel.size ?? 0;
+    this.addChild(panelResult as CodeLayoutSplitNPanelInternal);
+    this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNPanelInternal);
+  
+    return panelResult as CodeLayoutSplitNPanelInternal;
   }
 
   getContainerSize(): number {
@@ -100,4 +124,8 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
 
 export interface CodeLayoutSplitNInstance {
   getRootGrid() : CodeLayoutSplitNGridInternal;
+}
+
+export interface CodeLayoutSplitLayoutContext {
+  dragDropToPanel(referencePanel: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal) : void;
 }

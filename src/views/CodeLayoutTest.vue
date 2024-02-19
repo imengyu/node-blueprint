@@ -8,6 +8,7 @@
       <template #centerArea>
         <SplitLayout
           ref="splitLayout"
+          @panelClose="onPanelClose"
         >
           <template #tabContentRender="{ panel }">
             <h2 :style="{ margin: 0, backgroundColor: colors[panel.data] }">Grid {{ panel.name }}</h2>
@@ -37,7 +38,7 @@
 <script setup lang="ts">
 import IconFile from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconFile.vue';
 import IconSearch from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconSearch.vue';
-import type { CodeLayoutConfig, CodeLayoutInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
+import type { CodeLayoutConfig, CodeLayoutInstance, CodeLayoutPanelInternal } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
 import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
@@ -138,123 +139,127 @@ const menuData : MenuOptions = {
   minWidth: 230,
 };
 
+function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
+  resolve();
+}
+
 onMounted(() => {
   nextTick(() => {
-    if (!codeLayout.value)
-      return;
+    if (codeLayout.value) {
 
-    const group1 = codeLayout.value.addGroup({
-      title: 'Group1',
-      tooltip: 'Group1',
-      name: 'group1',
-      tabStyle: 'single',
-      badge: '2',
-      iconLarge: () => h(IconFile),
-    }, 'primarySideBar');
-    codeLayout.value.addGroup({
-      title: 'Group2',
-      tooltip: 'Group2',
-      name: 'group2',
-      tabStyle: 'single',
-      iconLarge: () => h(IconSearch),
-    }, 'primarySideBar');
-
-    const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
-    const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
-
-    for (let i = 4; i < 13; i++) {
-      
+      const group1 = codeLayout.value.addGroup({
+        title: 'Group1',
+        tooltip: 'Group1',
+        name: 'group1',
+        tabStyle: 'single',
+        badge: '2',
+        iconLarge: () => h(IconFile),
+      }, 'primarySideBar');
       codeLayout.value.addGroup({
-        title: 'Group' + i,
-        tooltip: 'Group' + i,
-        name: 'group1' + i,
+        title: 'Group2',
+        tooltip: 'Group2',
+        name: 'group2',
         tabStyle: 'single',
         iconLarge: () => h(IconSearch),
       }, 'primarySideBar');
+
+      const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
+      const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
+
+      for (let i = 4; i < 13; i++) {
+        
+        codeLayout.value.addGroup({
+          title: 'Group' + i,
+          tooltip: 'Group' + i,
+          name: 'group1' + i,
+          tabStyle: 'single',
+          iconLarge: () => h(IconSearch),
+        }, 'primarySideBar');
+      }
+
+      group1.addPanel({
+        title: 'Panel1',
+        tooltip: 'Panel1',
+        name: 'group1.panel1',
+        noHide: true,
+        startOpen: true,
+        iconSmall: () => h(IconSearch),
+      });
+      group1.addPanel({
+        title: 'Panel2',
+        tooltip: 'Panel2',
+        name: 'group1.panel2',
+        iconSmall: () => h(IconSearch),
+        actions: [
+          { 
+            name: 'test',
+            icon: () => h(IconSearch),
+            onClick() {},
+          },
+          { 
+            name: 'test2',
+            icon: () => h(IconFile),
+            onClick() {},
+          },
+        ]
+      });
+      group1.addPanel({
+        title: 'Panel3',
+        tooltip: 'Panel3',
+        name: 'group1.panel3',
+        startOpen: true,
+        iconSmall: () => h(IconSearch),
+        actions: [
+          { 
+            name: 'test',
+            icon: () => h(IconSearch),
+            onClick() {},
+          },
+        ]
+      });
+    
+      bottomGroup.addPanel({
+        title: 'Panel4',
+        tooltip: 'Panel4',
+        name: 'group3.panel4',
+        iconSmall: () => h(IconSearch),
+        badge: '2',
+        actions: [
+          { 
+            name: 'test',
+            icon: () => h(IconSearch),
+            onClick() {},
+          },
+        ]
+      });
+      const panel5 = bottomGroup.addPanel({
+        title: 'Panel5',
+        tooltip: 'Panel5',
+        name: 'group3.panel5',
+        startOpen: true,
+        iconSmall: () => h(IconSearch),
+      });
+
+      panel5.addPanel({
+        title: 'Panel51',
+        tooltip: 'Panel51',
+        name: 'group3.panel5.panel1',
+        iconSmall: () => h(IconSearch),
+        actions: [
+          { 
+            name: 'test',
+            icon: () => h(IconSearch),
+            onClick() {},
+          },
+        ]
+      });
+      panel5.addPanel({
+        title: 'Panel5.2',
+        tooltip: 'Panel5.2',
+        name: 'group3.panel5.panel2',
+        iconSmall: () => h(IconFile),
+      });
     }
-
-    group1.addPanel({
-      title: 'Panel1',
-      tooltip: 'Panel1',
-      name: 'group1.panel1',
-      noHide: true,
-      startOpen: true,
-      iconSmall: () => h(IconSearch),
-    });
-    group1.addPanel({
-      title: 'Panel2',
-      tooltip: 'Panel2',
-      name: 'group1.panel2',
-      iconSmall: () => h(IconSearch),
-      actions: [
-        { 
-          name: 'test',
-          icon: () => h(IconSearch),
-          onClick() {},
-        },
-        { 
-          name: 'test2',
-          icon: () => h(IconFile),
-          onClick() {},
-        },
-      ]
-    });
-    group1.addPanel({
-      title: 'Panel3',
-      tooltip: 'Panel3',
-      name: 'group1.panel3',
-      startOpen: true,
-      iconSmall: () => h(IconSearch),
-      actions: [
-        { 
-          name: 'test',
-          icon: () => h(IconSearch),
-          onClick() {},
-        },
-      ]
-    });
-  
-    bottomGroup.addPanel({
-      title: 'Panel4',
-      tooltip: 'Panel4',
-      name: 'group3.panel4',
-      iconSmall: () => h(IconSearch),
-      badge: '2',
-      actions: [
-        { 
-          name: 'test',
-          icon: () => h(IconSearch),
-          onClick() {},
-        },
-      ]
-    });
-    const panel5 = bottomGroup.addPanel({
-      title: 'Panel5',
-      tooltip: 'Panel5',
-      name: 'group3.panel5',
-      startOpen: true,
-      iconSmall: () => h(IconSearch),
-    });
-
-    panel5.addPanel({
-      title: 'Panel51',
-      tooltip: 'Panel51',
-      name: 'group3.panel5.panel1',
-      iconSmall: () => h(IconSearch),
-      actions: [
-        { 
-          name: 'test',
-          icon: () => h(IconSearch),
-          onClick() {},
-        },
-      ]
-    });
-    panel5.addPanel({
-      title: 'Panel5.2',
-      tooltip: 'Panel5.2',
-      name: 'group3.panel5.panel2',
-      iconSmall: () => h(IconFile),
-    });
 
     if (splitLayout.value) {
       const grid = splitLayout.value.getRootGrid();

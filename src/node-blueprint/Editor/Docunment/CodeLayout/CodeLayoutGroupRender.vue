@@ -251,7 +251,7 @@ const {
       /*&.drag-enter {
         
       }*/
-      &.drag-over-prev, &.drag-over-next {
+      &.drag-over-left, &.drag-over-up, &.drag-over-down, &.drag-over-right {
         &::before {
           position: absolute;
           content: '';
@@ -261,12 +261,12 @@ const {
           background-color: var(--code-layout-color-border-light);
         }
       }
-      &.drag-over-prev {
+      &.drag-over-left, &.drag-over-up {
         &::before {
           left: calc(var(--code-layout-border-size-larger) / 2 * -1);
         }
       }
-      &.drag-over-next {
+      &.drag-over-down, &.drag-over-right {
         &::before {
           right: calc(var(--code-layout-border-size-larger) / 2 * -1);
         }

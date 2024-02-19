@@ -125,8 +125,8 @@
     display: none;
   }
 
-  &.forbidden-childe-pointer-events .tabs .item * {
-    pointer-events: none;
+  &.drag-active {
+    background-color: var(--code-layout-color-background-hover);
   }
 
   .tabs {
@@ -153,8 +153,15 @@
       height: 100%;
       vertical-align: middle;
 
-      &.drag-drop-active {
-        background-color: var(--tab-button-drop-color);
+      &.drag-active::after {
+        background-color: var(--code-layout-color-background-mask-light);
+        position: absolute;
+        content: '';
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
       }
 
       .icon {
@@ -235,5 +242,52 @@
   left: 0;
   right: 0;
   bottom: 0;
+
+  &.drag-active::before {
+    position: absolute;
+    content: '';
+    background-color: var(--code-layout-color-background-mask-light);
+  }
+
+  &.drag-over-center {
+    &::before {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+  &.drag-over-left {
+    &::before {
+      top: 0;
+      bottom: 0;
+      left: calc(var(--code-layout-border-size-larger) / 2 * -1);
+      right: 50%;
+    }
+  }
+  &.drag-over-up {
+    &::before {
+      top: calc(var(--code-layout-border-size-larger) / 2 * -1);
+      bottom: 50%;
+      left: 0;
+      right: 0;
+    }
+  }
+  &.drag-over-right {
+    &::before {
+      top: 0;
+      bottom: 0;
+      right: calc(var(--code-layout-border-size-larger) / 2 * -1);
+      left: 50%;
+    }
+  }
+  &.drag-over-down {
+    &::before {
+      top: 50%;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--code-layout-border-size-larger) / 2 * -1);
+    }
+  }
 }
 
