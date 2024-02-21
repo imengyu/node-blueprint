@@ -46,6 +46,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     panelResult.open = panel.startOpen ?? false;
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
+    panelResult.parentGrid = this.parentGrid;
     this.addChildGrid(panelResult as CodeLayoutSplitNGridInternal);
     this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNGridInternal);
     return panelResult as CodeLayoutSplitNGridInternal;

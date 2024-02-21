@@ -16,6 +16,9 @@
           <template #tabEmptyContentRender="{ grid }">
             <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }}</h2>
           </template>
+          <template #tabHeaderExtraRender>
+            haha
+          </template>
         </SplitLayout>
       </template>
       <template #titleBarIcon>
@@ -163,7 +166,7 @@ onMounted(() => {
       }, 'primarySideBar');
 
       const bottomGroup = codeLayout.value.getRootGrid('bottomPanel');
-      const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
+      //const secondaryGroup = codeLayout.value.getRootGrid('secondarySideBar');
 
       for (let i = 4; i < 13; i++) {
         

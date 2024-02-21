@@ -159,6 +159,12 @@ const panels = ref({
   bottom: CodeLayoutGridInternal,
 }>;
 
+//设置默认的面板拖拽允许
+const defaultAccept : CodeLayoutGrid[] = [ 'bottomPanel', 'primarySideBar','secondarySideBar' ];
+panels.value.bottom.accept = defaultAccept;
+panels.value.primary.accept = defaultAccept;
+panels.value.secondary.accept = defaultAccept;
+
 //activity bar 位置根据设置进行切换
 function loadActivityBarPosition() {
   switch (layoutConfig.value.activityBarPosition) {
@@ -592,6 +598,7 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
   Object.assign(groupResult, panel);
   groupResult.open = panel.startOpen ?? false;
   groupResult.size = panel.size ?? 0;
+  groupResult.accept = panel.accept ?? defaultAccept;
   groupResult.parentGrid = target;
 
   panelInstances.set(panelInternal.name, groupResult as CodeLayoutPanelInternal);
@@ -626,6 +633,7 @@ function relayoutGroup(name: string) {
 }
 
 defineExpose(codeLayoutInstance);
+
 
 onMounted(() => {
   nextTick(() => {

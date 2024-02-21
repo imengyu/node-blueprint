@@ -26,9 +26,9 @@
 
 <script setup lang="ts">
 import { ref, type PropType, provide } from 'vue';
-import SplitNest from './SplitNest.vue';
-import { defaultCodeLayoutConfig, type CodeLayoutLangConfig, type CodeLayoutConfig, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext, type CodeLayoutContext, type CodeLayoutDragDropReferencePosition, type CodeLayoutGrid } from '../CodeLayout';
+import { defaultCodeLayoutConfig, type CodeLayoutLangConfig, type CodeLayoutConfig, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext } from '../CodeLayout';
 import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance } from './SplitN';
+import SplitNest from './SplitNest.vue';
 import SplitTab from './SplitTab.vue';
 
 const props = defineProps({
@@ -61,6 +61,7 @@ const hosterContext : CodeLayoutPanelHosterContext = {
 const rootGrid = ref(new CodeLayoutSplitNGridInternal(hosterContext));
 rootGrid.value.size = 100;
 rootGrid.value.accept = [ 'centerArea' ];
+rootGrid.value.parentGrid = 'centerArea';
 const instance : CodeLayoutSplitNInstance = {
   getRootGrid: () => rootGrid.value as CodeLayoutSplitNGridInternal,
 };

@@ -147,6 +147,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     panelResult.open = panel.startOpen ?? false;
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
+    panelResult.parentGrid = this.parentGrid;
     this.addChild(panelResult as CodeLayoutPanelInternal);
   
     if (startOpen || panel.startOpen)

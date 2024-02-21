@@ -75,7 +75,7 @@ export function usePanelDragger() {
 export function usePanelDragOverDetector(
   container: Ref<HTMLElement|undefined>,
   selfPanel: Ref<CodeLayoutPanelInternal>|undefined,
-  horizontal: Ref<boolean>|undefined,
+  horizontal: Ref<boolean>|'four'|'center',
   focusPanel: () => void,
   dragoverChecking?: ((dragPanel: CodeLayoutPanelInternal) => boolean)|undefined,
 ) {
@@ -110,18 +110,7 @@ export function usePanelDragOverDetector(
       e.stopPropagation();
       e.dataTransfer.dropEffect = 'copy';
 
-      if (horizontal) {
-        const pos = (horizontal.value ? 
-          (e.x - currentDropBaseScreenPosX) : 
-          (e.y - currentDropBaseScreenPosY)
-        ) ;
-        dragOverState.value = (pos > (horizontal.value ? 
-          container.value.offsetWidth : 
-          container.value.offsetHeight) / 2
-        ) ? 
-          (horizontal.value ? 'right' : 'down')
-           : (horizontal.value ? 'left' : 'up');
-      } else {
+      if (horizontal === 'four') {
         const posX = (e.x - currentDropBaseScreenPosX);
         const posY = (e.y - currentDropBaseScreenPosY);
 
@@ -136,6 +125,23 @@ export function usePanelDragOverDetector(
         } else  {
           dragOverState.value = 'center';
         } 
+      } else if (horizontal === 'center') {
+        dragOverState.value = 'center';
+      } else if (horizontal) {
+        const pos = (horizontal.value ? 
+          (e.x - currentDropBaseScreenPosX) : 
+          (e.y - currentDropBaseScreenPosY)
+        ) ;
+        dragOverState.value = (pos > (horizontal.value ? 
+          container.value.offsetWidth : 
+          container.value.offsetHeight) / 2
+        ) ? 
+          (horizontal.value ? 'right' : 'down')
+           : (horizontal.value ? 'left' : 'up');
+      } else {
+        dragOverState.value = '';
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'none';
       }
 
     } else {
