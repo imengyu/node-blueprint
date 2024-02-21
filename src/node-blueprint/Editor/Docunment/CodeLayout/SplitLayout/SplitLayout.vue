@@ -60,6 +60,7 @@ const hosterContext : CodeLayoutPanelHosterContext = {
 }
 const rootGrid = ref(new CodeLayoutSplitNGridInternal(hosterContext));
 rootGrid.value.size = 100;
+rootGrid.value.accept = [ 'centerArea' ];
 const instance : CodeLayoutSplitNInstance = {
   getRootGrid: () => rootGrid.value as CodeLayoutSplitNGridInternal,
 };

@@ -45,6 +45,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     Object.assign(panelResult, panel);
     panelResult.open = panel.startOpen ?? false;
     panelResult.size = panel.size ?? 0;
+    panelResult.accept = panel.accept ?? this.accept;
     this.addChildGrid(panelResult as CodeLayoutSplitNGridInternal);
     this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNGridInternal);
     return panelResult as CodeLayoutSplitNGridInternal;
@@ -68,6 +69,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     const panelResult = reactive(new CodeLayoutSplitNPanelInternal(this.context));
     Object.assign(panelResult, panel);
     panelResult.size = panel.size ?? 0;
+    panelResult.accept = panel.accept ?? this.accept;
     this.addChild(panelResult as CodeLayoutSplitNPanelInternal);
     this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNPanelInternal);
   
