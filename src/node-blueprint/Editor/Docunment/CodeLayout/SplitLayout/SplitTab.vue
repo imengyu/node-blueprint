@@ -1,7 +1,8 @@
 <template>
   <div class="code-layout-split-tab">
     <!--tab list-->
-    <div 
+    <div
+      v-if="grid.children.length > 0" 
       ref="tabScroll" 
       :class="[
         'code-layout-split-tab-list',
@@ -13,7 +14,7 @@
       @drop="handleTabHeaderDrop"
     >
       <slot name="tabHeaderRender">
-        <div v-if="grid.children.length > 0" class="tabs">
+        <div class="tabs">
           <slot
             v-for="(panel, index) in grid.children"
             :key="index"
@@ -38,6 +39,7 @@
       ref="tabContent"
       :class="[
         'code-layout-split-tab-content',
+        grid.children.length > 0 ? '' : 'empty',
         tabContentDragOverDetector.dragPanelState.value ? 'dragging' : '',
         tabContentDragOverDetector.dragEnterState.value ? 'drag-active' : '',
         `drag-over-${tabContentDragOverDetector.dragOverState.value}`,
@@ -96,7 +98,7 @@ function handleTabHeaderDrop(e: DragEvent) {
 }
 
 const tabContentDragOverDetector = usePanelDragOverDetector(
-  tabContent, grid, undefined,
+  tabContent, grid, 'four',
   () => {}, 
   (dragPanel) => {
     return (

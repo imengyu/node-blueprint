@@ -187,8 +187,10 @@
 
         .close-icon {
           visibility: hidden;
+          width: 18px;
+          height: 18px;
         }
-        .unsave-dot, .close-icon {
+        .unsave-dot {
           width: 14px;
           height: 14px;
         }
@@ -243,6 +245,9 @@
   right: 0;
   bottom: 0;
 
+  &.empty {
+    top: 0;
+  }
   &.dragging * {
     pointer-events: none;
   }
