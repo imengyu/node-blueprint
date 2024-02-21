@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { ref, type PropType, provide } from 'vue';
 import { defaultCodeLayoutConfig, type CodeLayoutLangConfig, type CodeLayoutConfig, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext } from '../CodeLayout';
-import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance } from './SplitN';
+import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance, CodeLayoutSplitNPanelInternal } from './SplitN';
 import SplitNest from './SplitNest.vue';
 import SplitTab from './SplitTab.vue';
 
@@ -49,9 +49,7 @@ const emit = defineEmits([ 'panelClose', 'panelContextMenu' ]);
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 const hosterContext : CodeLayoutPanelHosterContext = {
   panelInstances,
-  removePanelInternal(panel) {
-    panel.parentGroup?.removeChild(panel);
-  },
+  removePanelInternal,
   closePanelInternal(panel) {
     new Promise<void>((resolve, reject) => emit('panelClose', panel, resolve, reject))
       .then(() => panel.parentGroup?.removePanel(panel))
@@ -67,10 +65,76 @@ const instance : CodeLayoutSplitNInstance = {
 };
 
 const context : CodeLayoutSplitLayoutContext = {
+  /**
+   * 拖放面板操作流程
+   * 
+   * 1. 获取网格
+   * 2. 移除
+   *    2.1 目标网格和当前父级网格相同，直接移除而不触发移除收缩
+   *    2.2 目标网格和当前父级网格不同，调用 removePanelInternal 触发移除收缩
+   * 3. 判断方向
+   *    3.1 拖放切割方向与当前网格方向一致，则直接插入至指定位置
+   *    3.2 方向不一致，
+   *      3.2.1 新建一个网格，方向是相对方向
+   *      3.2.2 将面板和当前面板添加至新网格的子级
+   * 4. 重新布局计算面板大小
+   * 
+   * @param referencePanel 
+   * @param referencePosition 
+   * @param panel 
+   */
   dragDropToPanel: (referencePanel, referencePosition, panel) => {
+
+    //1
+    let targetGrid : null|CodeLayoutSplitNGridInternal = null;
+    if (referencePanel instanceof CodeLayoutSplitNGridInternal)
+      targetGrid = referencePanel;
+    else if (referencePanel instanceof CodeLayoutSplitNPanelInternal)
+      targetGrid = referencePanel.parentGroup as CodeLayoutSplitNGridInternal;
+    if (!targetGrid)
+      return;
+
+    //2
+    if (panel.parentGroup === targetGrid)
+      panel.parentGroup.removeChild(panel);
+    else
+      removePanelInternal(panel);
+
+    //3
+    if (
+      (
+        targetGrid.direction === 'horizontal'
+        && (referencePosition === 'left' || referencePosition === 'right')
+      )
+      || 
+      (
+        targetGrid.direction === 'vertical'
+        && (referencePosition === 'up' || referencePosition === 'down')
+      )
+    ) {
+      //3.1
+      targetGrid.addChild(
+        panel, 
+        targetGrid.children.indexOf(referencePanel)
+      );
+    } else {
+      //3.2
+    }
+
 
   }
 };
+
+/**
+ * 移除面板操作流程
+ * 
+ * 
+ * @param panel 
+ */
+function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
+
+  panel.parentGroup?.removeChild(panel);
+}
 
 
 provide('splitLayoutContext', context);

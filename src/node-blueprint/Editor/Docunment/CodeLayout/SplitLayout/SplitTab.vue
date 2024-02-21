@@ -113,6 +113,11 @@ function handleTabContentDrop(e: DragEvent) {
   if (dropPanel) {
     e.preventDefault();
     e.stopPropagation();
+    context.dragDropToPanel(
+      grid.value, 
+      tabContentDragOverDetector.dragOverState.value, 
+      dropPanel
+    );
   }
   tabContentDragOverDetector.resetDragOverState();
 }
