@@ -10,8 +10,8 @@
       v-for="(grid, index) in grids"
       :key="index"
       :style="{
-        width: horizontal && grid.visible ? `${grid.size - draggerSize}px` : undefined,
-        height: horizontal ? undefined : (grid.visible ? `${grid.size - draggerSize}px` : undefined),
+        width: horizontal && grid.visible ? `calc(${grid.size}% - ${draggerSize}px)` : undefined,
+        height: horizontal ? undefined : (grid.visible ? `calc(${grid.size}% - ${draggerSize}px)` : undefined),
       }"
       class="split-n-container"
     >
@@ -81,18 +81,30 @@ interface PanelResizePanelData {
   size: number;
 }
 
-function adjustAndReturnAdjustedSize(panel: CodeLayoutSplitNGridInternal, intitalSize: number, increaseSize: number) {
-  const targetSize = intitalSize + increaseSize;
-  const minSize = panel?.minSize || 0;
+function adjustAndReturnAdjustedSize(
+  containerSize: number, 
+  panel: CodeLayoutSplitNGridInternal, 
+  intitalSize: number, 
+  increaseSize: number
+) {
+  
   let visibleChangedSize = 0;
-  panel.size = Math.max(minSize, targetSize);
+
+  const intitalSizePx = intitalSize / 100 * containerSize; // to px
+  const targetSize = intitalSizePx + increaseSize;
+  const minSize = panel?.minSize || 0;
+  const panelSize = Math.max(minSize, targetSize);
+
   if (panel.canMinClose && minSize > 0) {
     panel.visible = targetSize > minSize / 2;
     if (!panel.visible)
-      visibleChangedSize += panel.size;
+      visibleChangedSize += panelSize;
   }
+
+  panel.size = panelSize / containerSize * 100; //to precent
+
   return { 
-    adjustedSize: panel.size - intitalSize,
+    adjustedSize: panelSize - intitalSizePx,
     visibleChangedSize,
   };
 }
@@ -130,8 +142,10 @@ const dragHandler = createMouseDragHandler<number>({
        * 2. 向上/下数组按顺序分配移动的距离
        */
 
+      const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
+
       let dragSize = ((props.horizontal ? e.x : e.y) - baseLeft);
-      let movedSize = dragSize - prevPanelsSize; 
+      let movedSize = dragSize - prevPanelsSize / 100 * containerSize; //to px
       if (movedSize === 0) 
         return;
       const moveDown = movedSize > 0;
@@ -140,7 +154,12 @@ const dragHandler = createMouseDragHandler<number>({
         let allVisibleChangedSize = 0;
         for (let i = 0; i < nextOpenedPanels.length; i++) {
           const p = nextOpenedPanels[i];
-          const { adjustedSize, visibleChangedSize } = adjustAndReturnAdjustedSize(p.panel, p.size, -needResizeSize);
+          const { adjustedSize, visibleChangedSize } = adjustAndReturnAdjustedSize(
+            containerSize, 
+            p.panel, 
+            p.size, 
+            -needResizeSize
+          );
           allVisibleChangedSize += visibleChangedSize;
           needResizeSize += adjustedSize;
           if (moveDown ? needResizeSize <= 0 : needResizeSize >= 0)
@@ -156,7 +175,12 @@ const dragHandler = createMouseDragHandler<number>({
         let allVisibleChangedSize = 0;
         for (let i = 0; i < prevOpenedPanels.length; i++) {
           const p = prevOpenedPanels[i];
-          const { adjustedSize, visibleChangedSize } = adjustAndReturnAdjustedSize(p.panel, p.size, needResizeSize);
+          const { adjustedSize, visibleChangedSize } = adjustAndReturnAdjustedSize(
+            containerSize,
+            p.panel, 
+            p.size, 
+            needResizeSize
+          );
           needResizeSize -= adjustedSize;
           allVisibleChangedSize += visibleChangedSize;
           if (moveDown ? needResizeSize <= 0 : needResizeSize >= 0)
@@ -193,7 +217,7 @@ function allocZeroGridSize() {
     return;
   const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
   let zeroCount = 0;
-  let canAllocSize = containerSize;
+  let canAllocSize = 100;
   for (const grid of props.grids) {
     grid.lastRelayoutSize = containerSize;
     if (grid.size > 0)

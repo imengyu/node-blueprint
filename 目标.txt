@@ -77,6 +77,7 @@ Codelayout
 🆗 SplitN对象整理合并
 🆗 TAB整理
 🆗 TAB拖拽高亮框
+🆗 SplitN大小控制转为百分比以实现大小自动调整
 主区域TAB
 主区域拖拽切分
 Codelayou拖拽高亮框优化
