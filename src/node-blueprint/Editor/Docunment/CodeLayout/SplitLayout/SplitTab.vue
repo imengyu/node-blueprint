@@ -92,7 +92,7 @@ function handleTabHeaderDrop(e: DragEvent) {
   if (dropPanel) {
     e.preventDefault();
     e.stopPropagation();
-    context.dragDropToPanel(props.grid, 'center', dropPanel);
+    context.dragDropToPanel(props.grid, 'center', dropPanel, true);
   }
   tabHeaderDragOverDetector.resetDragOverState();
 }

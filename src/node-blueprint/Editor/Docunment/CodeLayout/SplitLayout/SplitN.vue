@@ -7,16 +7,16 @@
     ]"
   >
     <div 
-      v-for="(grid, index) in grids"
+      v-for="(child, index) in grid.childGrid"
       :key="index"
       :style="{
-        width: horizontal && grid.visible ? `calc(${grid.size}% - ${draggerSize}px)` : undefined,
-        height: horizontal ? undefined : (grid.visible ? `calc(${grid.size}% - ${draggerSize}px)` : undefined),
+        width: horizontal && child.visible ? `calc(${child.size}% - ${draggerSize}px)` : undefined,
+        height: horizontal ? undefined : (child.visible ? `calc(${child.size}% - ${draggerSize}px)` : undefined),
       }"
       class="split-n-container"
     >
       <div 
-        v-if="grid.visible && index !== 0"
+        v-if="child.visible && index !== 0"
         :class="[
           'code-layout-split-dragger resize inner',
           splitDragging[index] ? 'active' : '',
@@ -28,9 +28,9 @@
         @mousedown="dragHandler($event, index)"
       />
       <slot 
-        v-if="grid.visible"
+        v-if="child.visible"
         name="grid"
-        :grid="grid"
+        :grid="child"
         :index="index"
       />
     </div>
@@ -40,12 +40,12 @@
 <script setup lang="ts">
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import { createMouseDragHandler } from '@/node-blueprint/Editor/Graph/Editor/MouseHandler';
-import { ref, type PropType, onMounted, nextTick, watch } from 'vue';
+import { ref, type PropType, onMounted, nextTick, watch, onBeforeUnmount } from 'vue';
 import type { CodeLayoutSplitNGridInternal } from './SplitN';
 
 const props = defineProps({
-  grids: {
-    type: Object as PropType<Array<CodeLayoutSplitNGridInternal>>,
+  grid: {
+    type: Object as PropType<CodeLayoutSplitNGridInternal>,
     default: null,
   },
   /**
@@ -108,6 +108,14 @@ function adjustAndReturnAdjustedSize(
     visibleChangedSize,
   };
 }
+function getGridMinSize(grid: CodeLayoutSplitNGridInternal) {
+  if (!splitBase.value)
+    throw new Error('!splitBase.value');
+  const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
+  if (!grid.minSize)
+    return 0;
+  return grid.minSize / containerSize * 100;
+}
 
 const dragHandler = createMouseDragHandler<number>({
   onDown(e, index) {
@@ -118,14 +126,14 @@ const dragHandler = createMouseDragHandler<number>({
       prevOpenedPanels.splice(0);
       nextOpenedPanels.splice(0);
       for (let i = index - 1; i >= 0; i--) {
-        const p = props.grids[i];
+        const p = props.grid.childGrid[i];
         if (!p.visible)
           continue;
         prevPanelsSize += p.size;
         prevOpenedPanels.push({ panel: p, size: p.size });
       }
-      for (let i = index; i < props.grids.length; i++) {
-        const p = props.grids[i];
+      for (let i = index; i < props.grid.childGrid.length; i++) {
+        const p = props.grid.childGrid[i];
         if (!p.visible)
           continue;
         nextOpenedPanels.push({ panel: p, size: p.size });
@@ -212,28 +220,142 @@ const dragHandler = createMouseDragHandler<number>({
   },
 });
 
-function allocZeroGridSize() {
+//获取当前容器可分配的大小
+function getCanAllocSize() {
   if (!splitBase.value)
-    return;
+    throw new Error('!splitBase.value');
+
   const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
-  let zeroCount = 0;
+  let notAllocSpaceAndOpenCount = 0;
   let canAllocSize = 100;
-  for (const grid of props.grids) {
+  for (const grid of props.grid.childGrid) {
     grid.lastRelayoutSize = containerSize;
     if (grid.size > 0)
       canAllocSize -= grid.size;
     else
-      zeroCount++;
+      notAllocSpaceAndOpenCount++;
   }
 
-  const allocSize = canAllocSize / zeroCount;
-  for (const grid of props.grids) {
+  return { 
+    canAllocSize: Math.max(canAllocSize, 0), 
+    notAllocSpaceAndOpenCount,
+  };
+}
+//获取面板平均分配大小，用于初始化
+function getAvgAllocSize() {
+  const { canAllocSize, notAllocSpaceAndOpenCount } = getCanAllocSize();
+  return notAllocSpaceAndOpenCount > 0 ?
+    canAllocSize / notAllocSpaceAndOpenCount
+    : 0;
+}
+//初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
+function allocZeroGridSize() {
+  const allocSize = getAvgAllocSize();
+  for (const grid of props.grid.childGrid) {
     if (grid.size <= 0)
       grid.size = allocSize;
   }
 }
 
-watch(() => props.grids.length, () => {
+
+/**
+ * 当容器大小或者容器添加/删除时，重新布局已存在面板
+ * 0. 计算容器大小变化了多少，是缩小还是放大
+ * 1. 获取面板列表，按他们的的大小降序排列
+ * 2. 按顺序依次减小/放大到最小值
+ * 
+ * @param resizedContainerSize 变化的大小，负数为放大，正数为缩小 (容器百分比)
+ */
+function relayoutAllWithResizedSize(resizedContainerSizePrecent: number) {
+
+  if (!splitBase.value)
+    throw new Error('!splitBase.value');
+
+  const containerSizePrecent = 100;
+  const containerSize = props.horizontal ? splitBase.value.offsetWidth : splitBase.value.offsetHeight;
+  const resizeLarge = (resizedContainerSizePrecent < 0);
+
+  let allPanelsSize = 0;
+  const openedPanels = props.grid.childGrid.filter(p => {
+    if (!p.visible)
+      return false;
+    allPanelsSize += p.size;
+    return true;
+  }).sort((a, b) => a.size > b.size ? 1 : -1);
+
+  //放大情况，所有面板大小已大于容器对象，不再向其分配大小
+  if (resizeLarge) {
+    if (allPanelsSize >= containerSizePrecent)
+      return;
+    const overflow = allPanelsSize + (-resizedContainerSizePrecent) - containerSizePrecent;
+    if (overflow > 0)
+      resizedContainerSizePrecent -= (-overflow);
+  }
+
+  //向打开的面板分配大小
+  for (let i = 0; i < openedPanels.length; i++) {
+    const panel = openedPanels[i];
+    const { adjustedSize } = adjustAndReturnAdjustedSize(containerSize, panel, panel.size, -resizedContainerSizePrecent);
+    resizedContainerSizePrecent += adjustedSize;
+    if (!resizeLarge && resizedContainerSizePrecent <= 0)
+      break;
+    if (resizeLarge && resizedContainerSizePrecent >= 0)
+      break;
+  }
+}
+//当容器添加时，重新布局已存在面板
+function relayoutAllWithNewPanel(panels: CodeLayoutSplitNGridInternal[]) {
+  let resizedSize = 0;
+
+  for (const panel of panels) {  
+    //如果面板没有分配大小，则为其分配大小
+    const avgAllocSize = getAvgAllocSize();
+    if (panel.size <= 0) {
+      const { canAllocSize } = getCanAllocSize();
+      panel.size = Math.max(Math.min(canAllocSize, avgAllocSize), getGridMinSize(panel));
+
+      //分配大小后计算超出部分大小
+      if (panel.size > canAllocSize)
+        resizedSize += panel.size - canAllocSize;
+    }
+    else {
+      //否则增加要调整的大小
+      resizedSize += panel.size;
+    }
+  }
+
+  //进行其他面板的收缩操作
+  relayoutAllWithResizedSize(resizedSize);
+} 
+//当容器移除时，重新布局已存在面板
+function relayoutAllWithRemovePanel(panel: CodeLayoutSplitNGridInternal) {
+  relayoutAllWithResizedSize(-panel.size);
+} 
+//重新布局
+function relayoutAll() {
+  allocZeroGridSize();
+}
+
+
+//钩子函数
+function loadPanelFunctions() {
+  props.grid.listenLateAction('notifyRelayout', () => relayoutAll());
+  props.grid.listenLateAction('relayoutAllWithNewPanel', relayoutAllWithNewPanel);
+  props.grid.listenLateAction('relayoutAllWithResizedSize', relayoutAllWithResizedSize);
+  props.grid.listenLateAction('relayoutAllWithRemovePanel', relayoutAllWithRemovePanel);
+}
+function unloadPanelFunctions(oldValue: CodeLayoutSplitNGridInternal) {
+  oldValue.unlistenAllLateAction();
+}
+
+watch(() => props.grid, (newValue, oldValue) => {
+  unloadPanelFunctions(oldValue);
+  loadPanelFunctions()
+});
+watch(() => props.grid, () => {
+  allocZeroGridSize();
+})
+watch(() => props.grid.childGrid.length, () => {
   allocZeroGridSize();
 })
 
@@ -241,6 +363,9 @@ onMounted(() => {
   nextTick(() => {
     allocZeroGridSize();
   });
+});
+onBeforeUnmount(() => {
+  unloadPanelFunctions(props.grid);
 });
 
 </script>

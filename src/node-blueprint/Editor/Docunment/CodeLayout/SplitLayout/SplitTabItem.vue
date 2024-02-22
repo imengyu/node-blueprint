@@ -88,7 +88,8 @@ function handleDrop(e: DragEvent) {
     context.dragDropToPanel(
       panel.value, 
       dragOverState.value, 
-      dropPanel
+      dropPanel,
+      true
     );
   }
   resetDragOverState();

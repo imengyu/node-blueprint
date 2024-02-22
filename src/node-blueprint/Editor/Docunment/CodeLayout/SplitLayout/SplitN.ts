@@ -25,6 +25,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
 
   public constructor(context: CodeLayoutPanelHosterContext) {
     super('centerArea', 'text', context, () => {});
+    this.open = true;
   }
 
   canMinClose = false;
@@ -130,5 +131,5 @@ export interface CodeLayoutSplitNInstance {
 }
 
 export interface CodeLayoutSplitLayoutContext {
-  dragDropToPanel(referencePanel: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal) : void;
+  dragDropToPanel(referencePanel: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal, toTab?: boolean) : void;
 }

@@ -196,6 +196,9 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     } 
   }
 
+  removeSelfWithShrink() {
+    this.context.removePanelInternal(this);
+  }
   reselectActiveChild() {
     this.activePanel = this.children.find((p) => p.visible && p.open) || null;
   }

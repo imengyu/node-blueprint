@@ -1,6 +1,6 @@
 <template>
   <SplitN
-    :grids="grid.childGrid"
+    :grid="grid"
     :horizontal="grid.direction === 'horizontal'"
   >
     <template #grid="{ grid: childGrid, index }">
