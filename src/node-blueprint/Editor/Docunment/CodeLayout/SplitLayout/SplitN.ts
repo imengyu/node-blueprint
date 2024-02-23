@@ -112,8 +112,8 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     child.parentGroup = null;
   }
   replaceChildGrid(oldChild: CodeLayoutSplitNGridInternal, child: CodeLayoutSplitNGridInternal) {
-    this.children.splice(
-      this.children.indexOf(oldChild), 
+    this.childGrid.splice(
+      this.childGrid.indexOf(oldChild), 
       1, 
       child);   
     oldChild.parentGroup = null;

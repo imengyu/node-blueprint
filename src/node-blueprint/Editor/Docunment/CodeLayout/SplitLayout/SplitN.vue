@@ -253,7 +253,7 @@ function allocZeroGridSize() {
   const allocSize = getAvgAllocSize();
   for (const grid of props.grid.childGrid) {
     if (grid.size <= 0)
-      grid.size = allocSize;
+    grid.size = Math.max(allocSize, getGridMinSize(grid));
   }
 }
 
@@ -304,28 +304,22 @@ function relayoutAllWithResizedSize(resizedContainerSizePrecent: number) {
   }
 }
 //当容器添加时，重新布局已存在面板
-function relayoutAllWithNewPanel(panels: CodeLayoutSplitNGridInternal[]) {
-  let resizedSize = 0;
+function relayoutAllWithNewPanel(panels: CodeLayoutSplitNGridInternal[], referencePanel?: CodeLayoutSplitNGridInternal) {
 
-  for (const panel of panels) {  
-    //如果面板没有分配大小，则为其分配大小
-    const avgAllocSize = getAvgAllocSize();
-    if (panel.size <= 0) {
-      const { canAllocSize } = getCanAllocSize();
-      panel.size = Math.max(Math.min(canAllocSize, avgAllocSize), getGridMinSize(panel));
-
-      //分配大小后计算超出部分大小
-      if (panel.size > canAllocSize)
-        resizedSize += panel.size - canAllocSize;
-    }
-    else {
-      //否则增加要调整的大小
-      resizedSize += panel.size;
-    }
+  if (
+    panels.length === 1 && referencePanel 
+    && referencePanel.size > getGridMinSize(referencePanel) + getGridMinSize(panels[0])
+  ) {
+    //如果只有一个新网格，且新网格和拖拽目标网格宽度足够，则从他们中间平均分配
+    const allocSize = referencePanel.size / 2;
+    referencePanel.size = allocSize;
+    panels[0].size = allocSize;
+  } else {
+    //否则平均重新分配全部网格
+    for (const grid of props.grid.childGrid)
+      grid.size = 0;
+    allocZeroGridSize();
   }
-
-  //进行其他面板的收缩操作
-  relayoutAllWithResizedSize(resizedSize);
 } 
 //当容器移除时，重新布局已存在面板
 function relayoutAllWithRemovePanel(panel: CodeLayoutSplitNGridInternal) {
@@ -362,6 +356,7 @@ watch(() => props.grid.childGrid.length, () => {
 onMounted(() => {
   nextTick(() => {
     allocZeroGridSize();
+    loadPanelFunctions();
   });
 });
 onBeforeUnmount(() => {

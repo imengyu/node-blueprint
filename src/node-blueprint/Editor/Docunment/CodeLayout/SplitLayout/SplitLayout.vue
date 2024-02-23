@@ -74,10 +74,13 @@ const context : CodeLayoutSplitLayoutContext = {
    *    2.1 目标网格和当前父级网格相同，直接移除而不触发移除收缩
    *    2.2 目标网格和当前父级网格不同，调用 removePanelInternal 触发移除收缩
    * 3. 判断方向
-   *    3.1 拖放切割方向与当前网格方向一致，则直接插入至指定位置
-   *    3.2 方向不一致，
-   *      3.2.1 新建一个网格，方向是相对方向
-   *      3.2.2 将面板和当前面板添加至新网格的子级
+   *    3.1 拖放到网格中或者TAB，则直接插入至网格中指定位置
+   *    3.2 拖放切割方向与当前网格方向一致
+   *      创建新网格包围当前面板
+   *      插入至指定位置
+   *    3.3 方向不一致，
+   *      3.3.1 新建一个网格，方向是相对方向
+   *      3.3.2 将面板和当前面板添加至新网格的子级
    * 4. 重新布局计算网格大小
    * 
    * @param referencePanel 
@@ -96,26 +99,17 @@ const context : CodeLayoutSplitLayoutContext = {
       return;
 
     //2
-    if (panel.parentGroup !== targetGrid)
+    if (panel.parentGroup !== targetGrid || referencePosition !== 'center' || !toTab)
       panel.removeSelfWithShrink();
 
     //上方面板移除后可能结构已发生变化，需要重新获取父级
     if (referencePanel instanceof CodeLayoutSplitNPanelInternal)
       targetGrid = referencePanel.parentGroup as CodeLayoutSplitNGridInternal;
 
+    const targetGridParent = targetGrid.parentGroup as CodeLayoutSplitNGridInternal;
+
     //3
-    if (
-      (referencePosition === 'center')
-      || toTab
-      || (
-        targetGrid.direction === 'horizontal'
-        && (referencePosition === 'left' || referencePosition === 'right')
-      )
-      || (
-        targetGrid.direction === 'vertical'
-        && (referencePosition === 'up' || referencePosition === 'down')
-      )
-    ) {
+    if (referencePosition === 'center' || toTab) {
       //3.1
       targetGrid.addChild(
         panel, 
@@ -123,24 +117,56 @@ const context : CodeLayoutSplitLayoutContext = {
           + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0)
       );
       targetGrid.setActiveChild(panel);
-    } else {
+    } else if (
+      targetGridParent && (
+      (
+        targetGridParent.direction === 'horizontal'
+        && (referencePosition === 'left' || referencePosition === 'right')
+      )
+      || (
+        targetGridParent.direction === 'vertical'
+        && (referencePosition === 'up' || referencePosition === 'down')
+      )
+      )
+    ) {
       //3.2
-      const oldParent = targetGrid.parentGroup as CodeLayoutSplitNGridInternal;
-      const newGridTop = new CodeLayoutSplitNGridInternal(targetGrid.context);//上级包围的网格
-      const newGrid = new CodeLayoutSplitNGridInternal(targetGrid.context);//新面板包围的网格
+      const newGrid = new CodeLayoutSplitNGridInternal(targetGridParent.context);//新面板包围的网格
       Object.assign(newGrid, {
         ...targetGrid,
         direction: targetGrid.direction,
         name: targetGrid.name + '.clonet' + Math.floor(Math.random() * 10),
         children: [],
+        childGrid: [],
         size: 0,
       });
-      Object.assign(newGridTop, {
+      panelInstances.set(newGrid.name, newGrid);
+      newGrid.addChild(panel);
+      newGrid.reselectActiveChild();
+      targetGridParent.addChildGrid(
+        newGrid, 
+        targetGridParent.childGrid.indexOf(targetGrid)
+          + (referencePosition === 'down' || referencePosition === 'right' ? 1 : 0)
+      );
+      targetGridParent.relayoutAllWithNewPanel([ newGrid ], targetGrid);
+    } else {
+      //3.3
+      const oldParent = targetGrid.parentGroup as CodeLayoutSplitNGridInternal;
+      const newGridTop = new CodeLayoutSplitNGridInternal(targetGrid.context);//上级包围的网格
+      const newGrid = new CodeLayoutSplitNGridInternal(targetGrid.context);//新面板包围的网格
+      Object.assign(newGrid, {
         ...targetGrid,
         direction: targetGrid.direction === 'vertical' ? 'horizontal' : 'vertical',//相对的方向
         name: targetGrid.name + '.clonea' + Math.floor(Math.random() * 10),
         children: [],
+        childGrid: [],
         size: 0,
+      });
+      Object.assign(newGridTop, {
+        ...targetGrid,
+        name: targetGrid.name + '.clonet' + Math.floor(Math.random() * 10),
+        direction: targetGrid.direction,
+        children: [],
+        childGrid: [],
       });
       targetGrid.size = 0; //设为0以让后续进行布局
       newGridTop.addChildGrid(targetGrid);

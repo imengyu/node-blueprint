@@ -241,8 +241,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   notifyRelayout() {
     this.pushLateAction('notifyRelayout');
   }
-  relayoutAllWithNewPanel(panels: CodeLayoutPanelInternal[]) {
-    this.pushLateAction('relayoutAllWithNewPanel', panels);
+  relayoutAllWithNewPanel(panels: CodeLayoutPanelInternal[], referencePanel?: CodeLayoutPanelInternal) {
+    this.pushLateAction('relayoutAllWithNewPanel', panels, referencePanel);
   }
   relayoutAllWithRemovePanel(panel: CodeLayoutPanelInternal) {
     this.pushLateAction('relayoutAllWithRemovePanel', panel);
