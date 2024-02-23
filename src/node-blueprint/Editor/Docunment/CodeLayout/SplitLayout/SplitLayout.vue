@@ -134,12 +134,11 @@ const context : CodeLayoutSplitLayoutContext = {
       Object.assign(newGrid, {
         ...targetGrid,
         direction: targetGrid.direction,
-        name: targetGrid.name + '.clonet' + Math.floor(Math.random() * 10),
+        name: targetGrid.name + Math.floor(Math.random() * 10),
         children: [],
         childGrid: [],
         size: 0,
       });
-      panelInstances.set(newGrid.name, newGrid);
       newGrid.addChild(panel);
       newGrid.reselectActiveChild();
       targetGridParent.addChildGrid(
@@ -156,14 +155,14 @@ const context : CodeLayoutSplitLayoutContext = {
       Object.assign(newGrid, {
         ...targetGrid,
         direction: targetGrid.direction === 'vertical' ? 'horizontal' : 'vertical',//相对的方向
-        name: targetGrid.name + '.clonea' + Math.floor(Math.random() * 10),
+        name: targetGrid.name + Math.floor(Math.random() * 10),
         children: [],
         childGrid: [],
         size: 0,
       });
       Object.assign(newGridTop, {
         ...targetGrid,
-        name: targetGrid.name + '.clonet' + Math.floor(Math.random() * 10),
+        name: targetGrid.name + Math.floor(Math.random() * 10),
         direction: targetGrid.direction,
         children: [],
         childGrid: [],
@@ -171,8 +170,6 @@ const context : CodeLayoutSplitLayoutContext = {
       targetGrid.size = 0; //设为0以让后续进行布局
       newGridTop.addChildGrid(targetGrid);
       newGridTop.addChildGrid(newGrid);
-      panelInstances.set(newGrid.name, newGrid);
-      panelInstances.set(newGridTop.name, newGridTop);
 
       switch (referencePosition) {
         case 'left':

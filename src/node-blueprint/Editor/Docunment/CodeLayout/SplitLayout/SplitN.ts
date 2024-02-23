@@ -39,8 +39,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     
     if (panelInternal.parentGroup)
       throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
-    if (this.context.panelInstances.has(panelInternal.name))
-      throw new Error(`A panel named ${panel.name} already exists`);
+
   
     const panelResult = reactive(new CodeLayoutSplitNGridInternal(this.context));
     Object.assign(panelResult, panel);
@@ -49,7 +48,6 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     panelResult.accept = panel.accept ?? this.accept;
     panelResult.parentGrid = this.parentGrid;
     this.addChildGrid(panelResult as CodeLayoutSplitNGridInternal);
-    this.context.panelInstances.set(panelInternal.name, panelResult as CodeLayoutSplitNGridInternal);
     return panelResult as CodeLayoutSplitNGridInternal;
   }
   removeGrid(panel: CodeLayoutSplitNGrid) {
@@ -57,7 +55,6 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     if (panelInternal.parentGroup !== this)
       throw new Error(`Panel ${panel.name} is not child of this group !`);
     this.removeChildGrid(panelInternal);
-    this.context.panelInstances.delete(panelInternal.name);
     return panel;
   }
   addPanel(panel: CodeLayoutPanel) {
@@ -66,7 +63,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     if (panelInternal.parentGroup)
       throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
     if (this.context.panelInstances.has(panelInternal.name))
-      throw new Error(`A panel named ${panel.name} already exists`);
+      throw new Error(`A panel named ${panel.name} already exists in this layout`);
   
     const panelResult = reactive(new CodeLayoutSplitNPanelInternal(this.context));
     Object.assign(panelResult, panel);
