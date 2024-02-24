@@ -1,56 +1,62 @@
 <template>
-  <ColumnView :flex="1">
-    <MenuBar 
-      :options="menuData"
-      class="node-main-menu"
-    >
-      <template #prefix>
-        <img class="node-menu-logo" src="../Images/Logo/logo-huge-light.svg">
+  <CodeLayout
+    ref="codeLayout"
+    :layout-config="config"
+    :main-menu-config="menuData"
+  >
+    <template #centerArea>
+      <SplitLayout
+        ref="splitLayout"
+        @panelClose="onPanelClose"
+        @panelActive="onActiveTabChange"
+      >
+        <template #tabContentRender="{ panel }">
+          <template v-if="panel.name.startsWith('NodeEditor')">
+            <NodeDocunmentEditorComponent
+              :docunment="(panel.data as NodeDocunmentEditor)"
+              :editorSettings="editorSettings"
+              @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g)"
+              @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
+            />
+          </template>
+        </template>
+        <template #tabEmptyContentRender="{ grid }">
+          <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
+        </template>
+        <template #tabHeaderExtraRender>
+          haha
+        </template>
+      </SplitLayout>
+    </template>
+    <template #titleBarIcon>
+      <img class="node-menu-logo" src="../Images/Logo/logo-huge-light.svg">
+    </template>
+    <template #panelRender="{ panel }">
+      <template v-if="panel.name==='Props'">
+        <PropTab>
+          <PropTabPanel title="单元属性" icon="icon-cube">
+            <PropBox class="node-custom-editor">
+              <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
+              <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
+            </PropBox>
+          </PropTabPanel>
+          <PropTabPanel title="图表属性" icon="icon-docunment">
+            <PropBox class="node-custom-editor">
+              <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+              <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+            </PropBox>
+          </PropTabPanel>
+        </PropTab>
       </template>
-    </MenuBar>
-    <DockLayout
-      ref="dockLayout"
-      theme="dark"
-      class="node-main-area"
-      @activeTabChange="onActiveTabChange"
-    >
-      <template #panelRender="{ panel }">
-        <template v-if="panel.key.startsWith('NodeEditor')">
-          <NodeDocunmentEditorComponent 
-            v-if="opendDocunment.has(panel.key.substr(10))"
-            :docunment="getDocunmentByUid(panel.key.substr(10))!"
-            :editorSettings="editorSettings"
-            @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange(panel.key.substr(10), g)"
-            @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange(panel.key.substr(10), p1, p2, p3)"
-          />
-        </template>
-        <template v-else-if="panel.key==='Props'">
-          <PropTab>
-            <PropTabPanel title="单元属性" icon="icon-cube">
-              <PropBox class="node-custom-editor">
-                <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
-                <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
-              </PropBox>
-            </PropTabPanel>
-            <PropTabPanel title="图表属性" icon="icon-docunment">
-              <PropBox class="node-custom-editor">
-                <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
-                <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
-              </PropBox>
-            </PropTabPanel>
-          </PropTab>
-        </template>
-        <template v-else-if="panel.key==='Console'">
-          <Console />
-        </template>
+      <template v-else-if="panel.name==='Console'">
+        <Console />
       </template>
-    </DockLayout>
-  </ColumnView>  
+    </template>
+  </CodeLayout>
 </template>
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
-import ColumnView from '../Nana/Layout/ColumnView.vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
@@ -61,10 +67,11 @@ import PropTab from './Tab/PropTab.vue';
 import PropTabPanel from './Tab/PropTabPanel.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import { DockLayout, DockPanel, type DockLayoutInterface } from '../Nana/DockLayout';
-import { MenuBar, type MenuBarOptions } from '@imengyu/vue3-context-menu';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
+import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout/CodeLayout';
+import type { CodeLayoutSplitNInstance } from './CodeLayout/SplitLayout/SplitN';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
@@ -74,7 +81,31 @@ import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import Alert from '../Nana/Modal/Alert';
 
-const dockLayout = ref<DockLayoutInterface>();
+const splitLayout = ref<CodeLayoutSplitNInstance>();
+const codeLayout = ref<CodeLayoutInstance>();
+
+const config = reactive<CodeLayoutConfig>({
+  primarySideBarSwitchWithActivityBar: true,
+  primarySideBarPosition: 'left',
+  primarySideBarWidth: 20,
+  primarySideBarMinWidth: 170,
+  activityBarPosition: 'side',
+  secondarySideBarWidth: 20,
+  secondarySideBarMinWidth: 170,
+  bottomPanelHeight: 30,
+  bottomPanelMinHeight: 40,
+  bottomAlignment: 'center',
+  panelHeaderHeight: 24,
+  panelMinHeight: 150,
+  titleBar: true,
+  titleBarShowCustomizeLayout: true,
+  activityBar: true,
+  primarySideBar: true,
+  secondarySideBar: true,
+  bottomPanel: true,
+  statusBar: true,
+  menuBar: true,
+});
 
 //#region 设置
 
@@ -95,8 +126,9 @@ window.addEventListener('beforeunload', saveSettings);
 
 //#region 菜单管理
 
-const menuData = reactive<MenuBarOptions>({
-  theme: 'flat',
+const menuData = reactive<MenuOptions>({
+  x: 0,
+  y: 0,
   items: [
     {
       label: '文件',
@@ -318,8 +350,8 @@ function onCurrentActiveDocunmentChanged() {
 /**
  * 激活图表更改事件
  */
-function onActiveGraphEditorChange(docUid: string, graph: NodeGraph) {
-  if (docUid === currentActiveDocunment.value?.uid) {
+function onActiveGraphEditorChange(doc: NodeDocunmentEditor, graph: NodeGraph) {
+  if (doc.uid === currentActiveDocunment.value?.uid) {
     currentActiveGraph.value = graph;
     currentActiveNodes.value = [];
     currentActiveConnectors.value = [];
@@ -328,8 +360,8 @@ function onActiveGraphEditorChange(docUid: string, graph: NodeGraph) {
 /**
  * 激活图表选择更改事件
  */
-function onActiveGraphSelectionChange(docUid: string, graphUid: string, selectedNodes: NodeEditor[], selectedConnectors: NodeConnectorEditor[]) {
-  if (docUid === currentActiveDocunment.value?.uid && graphUid === currentActiveGraph.value?.uid) {
+function onActiveGraphSelectionChange(doc: NodeDocunmentEditor, graphUid: string, selectedNodes: NodeEditor[], selectedConnectors: NodeConnectorEditor[]) {
+  if (doc.uid === currentActiveDocunment.value?.uid && graphUid === currentActiveGraph.value?.uid) {
     currentActiveNodes.value = selectedNodes;
     currentActiveConnectors.value = selectedConnectors;
   }
@@ -357,12 +389,7 @@ function closeDocunment(uid: string) {
   const doc = opendDocunment.value.get(uid)
   if (!doc)
     return;
-  opendDocunment.value.delete(uid);
-  dockLayout.value?.removePanel(`NodeEditor${uid}`);
-  if (currentActiveDocunment.value === doc) {
-    currentActiveDocunment.value = opendDocunment.value.values().next().value;
-    onCurrentActiveDocunmentChanged();
-  }
+  splitLayout.value?.getPanelByName(`NodeEditor${uid}`)?.closePanel();
 }
 /**
  * 打开文档
@@ -376,15 +403,11 @@ function openDocunment(doc: NodeDocunmentEditor) {
   opendDocunment.value.set(doc.uid, doc);
   currentActiveDocunment.value = doc;
   onCurrentActiveDocunmentChanged();
-  dockLayout.value?.addPanel({
-    key: `NodeEditor${doc.uid}`,
+  splitLayout.value?.getActiveGird().addPanel({
+    name: `NodeEditor${doc.uid}`,
     title: doc.name,
-    closeable: true,
-    onClose() {
-      closeDocunment(doc.uid);
-      return true;
-    },
-  }, 'centerArea');
+    closeType: 'close',
+  });
 
   //打开主图表
   setTimeout(() => {
@@ -392,7 +415,7 @@ function openDocunment(doc: NodeDocunmentEditor) {
       if (doc.mainGraph)
         doc.activeEditor.openGraph(doc.mainGraph);
     }
-    dockLayout.value?.activePanel(`NodeEditor${doc.uid}`);
+    splitLayout.value?.activePanel(`NodeEditor${doc.uid}`);
   }, 300);
 }
 /**
@@ -429,59 +452,43 @@ function saveDocunment() {
 
 function initLayout() {
   nextTick(() => {
-    dockLayout.value?.setData({
-      name: 'root',
-      size: 100,
-      grids: [
-        {
-          size: 20,
-          name: 'left',
-        },
-        {
-          size: 60,
-          name: 'center',
-          grids: [
-            {
-              size: 70,
-              name: 'centerArea',
-              alwaysVisible: true,
-              tabStyle: { marginLeft: '40px' },
-            },
-            {
-              size: 30,
-              name: 'centerConsole',
-            },
-          ],
-        },
-        {
-          size: 20,
-          name: 'right',
-          tabStyle: { marginLeft: '30px' },
-        },
-      ],
-    });
-    dockLayout.value?.addPanel({
-      key: 'Console',
+    if (!codeLayout.value)
+      return;
+    const bottomPanel = codeLayout.value.getRootGrid('bottomPanel');
+    const secondarySideBar = codeLayout.value.getRootGrid('secondarySideBar');
+
+    bottomPanel.addPanel({
+      name: 'Console',
       title: '控制台',
-    }, 'centerConsole');
-    dockLayout.value?.addPanel({
-      key: 'Props',
+    });
+    secondarySideBar.addPanel({
+      name: 'Props',
       title: '属性窗口',
-    }, 'right');
+    });
   });
 }
 function resetDefultLayout() {
-  dockLayout.value?.removePanel
   initLayout();
 }
 
 //#endregion
 
-function onActiveTabChange(currentActive: DockPanel) {
+function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
+  if (panel.name.startsWith('NodeEditor'))  {
+    const editor = (panel.data as NodeDocunmentEditor);
+    opendDocunment.value.delete(editor.uid);
+    if (currentActiveDocunment.value?.uid === editor.uid) {
+      currentActiveDocunment.value = opendDocunment.value.values().next().value;
+      onCurrentActiveDocunmentChanged();
+    }
+  }
+  resolve();
+}
+function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
   if (!currentActive)
     return;
-  if (currentActive.key.startsWith('NodeEditor')) {
-    const doc = getDocunmentByUid(currentActive.key.substring(10));
+  if (currentActive.name.startsWith('NodeEditor')) {
+    const doc = currentActive.data as NodeDocunmentEditor;
     if (doc) {
       currentActiveDocunment.value = doc;
       currentActiveGraph.value = doc.activeEditor?.getActiveGraph() || null;
@@ -491,6 +498,8 @@ function onActiveTabChange(currentActive: DockPanel) {
 }
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
+import CodeLayout from './CodeLayout/CodeLayout.vue';
+import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
 
 const loadTestScript = true;
 

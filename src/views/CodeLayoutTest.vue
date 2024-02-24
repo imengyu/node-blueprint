@@ -269,7 +269,6 @@ onMounted(() => {
         name: '0',
         visible: true,
         size: 0,
-        direction: 'horizontal',
       });
       grid.addGrid({
         name: '2',

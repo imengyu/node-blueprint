@@ -1,5 +1,8 @@
 <template>
-  <div class="code-layout-split-tab">
+  <div 
+    class="code-layout-split-tab"
+    @click="context.activeGrid(grid)"
+  >
     <!--tab list-->
     <div
       v-if="grid.children.length > 0" 
@@ -26,7 +29,7 @@
             <SplitTabItem 
               :panel="panel"
               :active="panel === grid.activePanel"
-              @click="grid.setActiveChild(panel)"
+              @click="onTabClick(panel)"
               @contextmenu="emit('tabItemContextMenu', panel, $event)"
             />
           </slot>
@@ -57,7 +60,7 @@
 
 <script setup lang="ts">
 import { ref, type PropType, inject, toRefs } from 'vue';
-import type { CodeLayoutSplitLayoutContext, CodeLayoutSplitNGridInternal } from './SplitN';
+import type { CodeLayoutSplitLayoutContext, CodeLayoutSplitNGridInternal, CodeLayoutSplitNPanelInternal } from './SplitN';
 import SplitTabItem from './SplitTabItem.vue'
 import { getCurrentDragPanel, usePanelDragOverDetector } from '../Composeable/DragDrop';
 
@@ -68,13 +71,22 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([ 'tabItemContextMenu' ])
+const emit = defineEmits([
+  'tabItemContextMenu',
+  'tabActive',
+])
 
 const { grid } = toRefs(props);
 const context = inject('splitLayoutContext') as CodeLayoutSplitLayoutContext;
 const tabScroll = ref<HTMLElement>();
 const tabContent = ref<HTMLElement>();
 const horizontal = ref(false);
+
+function onTabClick(panel: CodeLayoutSplitNPanelInternal) {
+  const oldActivePanel = grid.value.activePanel;
+  grid.value.setActiveChild(panel);
+  emit('tabActive', panel, oldActivePanel);
+}
 
 const tabHeaderDragOverDetector = usePanelDragOverDetector(
   tabScroll, grid, horizontal,

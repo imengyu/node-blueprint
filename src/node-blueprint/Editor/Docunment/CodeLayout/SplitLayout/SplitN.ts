@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, type Ref } from "vue";
 import { CodeLayoutGridInternal, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext, type CodeLayoutPanel, type CodeLayoutDragDropReferencePosition } from "../CodeLayout";
 
 
@@ -159,8 +159,25 @@ export interface CodeLayoutSplitNInstance {
    * Get root grid instance.
    */
   getRootGrid() : CodeLayoutSplitNGridInternal;
+  /**
+   * Get panel instance by name.
+   * @param name The pance name.
+   */
+  getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
+  /**
+   * Obtain a grid that is currently active and can be used to add panels.
+   */
+  getActiveGird() : CodeLayoutSplitNGridInternal;
+
+  /**
+   * Active a panel.
+   * @param name Panel name
+   */
+  activePanel(name: string): void;
 }
 
 export interface CodeLayoutSplitLayoutContext {
+  currentActiveGrid: Ref<CodeLayoutSplitNGridInternal|null>,
+  activeGrid(grid: CodeLayoutSplitNGridInternal) : void;
   dragDropToPanel(referencePanel: CodeLayoutPanelInternal, referencePosition: CodeLayoutDragDropReferencePosition, panel: CodeLayoutPanelInternal, toTab?: boolean) : void;
 }

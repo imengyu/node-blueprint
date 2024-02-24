@@ -5,6 +5,7 @@
         <SplitTab 
           :grid="grid"
           @tabItemContextMenu="(a, b) => emit('panelContextMenu', a, b)"
+          @tabActive="(a, b) => emit('panelActive', a, b)"
         >
           <template #tabContentRender="params">
             <slot name="tabContentRender" v-bind="params" />
@@ -25,13 +26,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue';
+import { ref, provide, type Ref } from 'vue';
 import type { CodeLayoutPanelInternal, CodeLayoutPanelHosterContext } from '../CodeLayout';
 import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance, CodeLayoutSplitNPanelInternal } from './SplitN';
 import SplitNest from './SplitNest.vue';
 import SplitTab from './SplitTab.vue';
 
-const emit = defineEmits([ 'panelClose', 'panelContextMenu' ]);
+const emit = defineEmits([ 
+  'panelClose', 
+  'panelContextMenu',
+  'panelActive',
+]);
 
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 const hosterContext : CodeLayoutPanelHosterContext = {
@@ -48,11 +53,20 @@ rootGrid.value.size = 100;
 rootGrid.value.accept = [ 'centerArea' ];
 rootGrid.value.parentGrid = 'centerArea';
 rootGrid.value.noAutoShink = true;
+const currentActiveGrid = ref<CodeLayoutSplitNGridInternal|null>(null);
+
 const instance : CodeLayoutSplitNInstance = {
   getRootGrid: () => rootGrid.value as CodeLayoutSplitNGridInternal,
+  getPanelByName: (name) => panelInstances.get(name),
+  getActiveGird: () => (currentActiveGrid.value || rootGrid.value) as CodeLayoutSplitNGridInternal,
+  activePanel(name) {
+    panelInstances.get(name)?.activeSelf();
+  },
 };
 
 const context : CodeLayoutSplitLayoutContext = {
+  currentActiveGrid: currentActiveGrid as Ref<CodeLayoutSplitNGridInternal|null>,
+  activeGrid(grid) { currentActiveGrid.value = grid; },
   /**
    * 拖放面板操作流程
    * 

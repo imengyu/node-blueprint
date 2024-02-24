@@ -334,6 +334,13 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
     this.activePanel = this.children.find((p) => p.visible && p.open) || null;
   }
   /**
+   * Set parent activePanel to self.
+   */
+  activeSelf() {
+    if (this.parentGroup)
+      this.parentGroup.activePanel = this;
+  }
+  /**
    * Get grid hoster container size (pixel).
    * @returns 
    */
