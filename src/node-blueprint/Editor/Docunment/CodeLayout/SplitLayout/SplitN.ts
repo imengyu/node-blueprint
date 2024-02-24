@@ -47,6 +47,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
     panelResult.parentGrid = this.parentGrid;
+    panelResult.direction = this.direction === 'vertical' ? 'horizontal' : 'vertical';
     this.addChildGrid(panelResult as CodeLayoutSplitNGridInternal);
     return panelResult as CodeLayoutSplitNGridInternal;
   }
@@ -83,8 +84,6 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
   //Internal
 
   addChildGrid(child: CodeLayoutSplitNGridInternal, index?: number) {
-    if (this.name === child.name)
-      throw new Error('Try add self');
     if (typeof index === 'number')
       this.childGrid.splice(index, 0, child);
     else
@@ -98,8 +97,6 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     else
       this.childGrid.push(...childs);
     for (const child of childs) {
-      if (this.name === child.name)
-        throw new Error('Try add self');
       child.parentGroup = this;
       child.parentGrid = this.parentGrid;
     }

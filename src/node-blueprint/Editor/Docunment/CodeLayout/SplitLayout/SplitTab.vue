@@ -104,6 +104,7 @@ const tabContentDragOverDetector = usePanelDragOverDetector(
     return (
       (!dragPanel.accept || dragPanel.accept.includes(props.grid.parentGrid))
       && (!dragPanel.preDropCheck || dragPanel.preDropCheck(dragPanel, props.grid.parentGrid))
+      && !(grid.value.hasChild(dragPanel) && grid.value.children.length === 1) //当前面板只有一个，并且这一个就是它自己，则不可拖放
     );
   },
 );

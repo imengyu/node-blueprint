@@ -488,6 +488,7 @@ function removePanelInternal(panel: CodeLayoutPanelInternal) {
 
   panel.size = 0;
   panel.parentGrid = 'none';
+  return undefined;
 }
 //移除重构: 移除面板后进行布局
 function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boolean, panel: CodeLayoutPanelInternal) {

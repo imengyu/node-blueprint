@@ -25,24 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType, provide } from 'vue';
-import { defaultCodeLayoutConfig, type CodeLayoutLangConfig, type CodeLayoutConfig, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext } from '../CodeLayout';
+import { ref, provide } from 'vue';
+import type { CodeLayoutPanelInternal, CodeLayoutPanelHosterContext } from '../CodeLayout';
 import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance, CodeLayoutSplitNPanelInternal } from './SplitN';
 import SplitNest from './SplitNest.vue';
 import SplitTab from './SplitTab.vue';
-
-const props = defineProps({
-  layoutConfig: {
-    type: Object as PropType<CodeLayoutConfig>,
-    default: () => defaultCodeLayoutConfig
-  },
-  langConfig: {
-    type: Object as PropType<CodeLayoutLangConfig>,
-    default: () => ({
-      lang: 'en',
-    }),
-  },
-});
 
 const emit = defineEmits([ 'panelClose', 'panelContextMenu' ]);
 
@@ -99,23 +86,24 @@ const context : CodeLayoutSplitLayoutContext = {
       return;
 
     //2
-    if (panel.parentGroup !== targetGrid || referencePosition !== 'center' || !toTab)
-      panel.removeSelfWithShrink();
-
-    //上方面板移除后可能结构已发生变化，需要重新获取父级
-    if (referencePanel instanceof CodeLayoutSplitNPanelInternal)
-      targetGrid = referencePanel.parentGroup as CodeLayoutSplitNGridInternal;
+    if (panel.parentGroup !== targetGrid || referencePosition !== 'center' || !toTab) {
+      const shrinkPanel = panel.removeSelfWithShrink();
+      //上方面板移除后可能结构已发生变化，需要重新获取父级
+      if (shrinkPanel)
+        targetGrid = shrinkPanel as CodeLayoutSplitNGridInternal;
+    }
 
     const targetGridParent = targetGrid.parentGroup as CodeLayoutSplitNGridInternal;
 
     //3
     if (referencePosition === 'center' || toTab) {
       //3.1
-      targetGrid.addChild(
-        panel, 
-        targetGrid.children.indexOf(referencePanel) 
-          + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0)
-      );
+      if (!targetGrid.hasChild(panel))
+        targetGrid.addChild(
+          panel, 
+          targetGrid.children.indexOf(referencePanel) 
+            + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0)
+        );
       targetGrid.setActiveChild(panel);
     } else if (
       targetGridParent && (
@@ -140,7 +128,7 @@ const context : CodeLayoutSplitLayoutContext = {
         size: 0,
       });
       newGrid.addChild(panel);
-      newGrid.reselectActiveChild();
+      newGrid.setActiveChild(panel);
       targetGridParent.addChildGrid(
         newGrid, 
         targetGridParent.childGrid.indexOf(targetGrid)
@@ -169,16 +157,16 @@ const context : CodeLayoutSplitLayoutContext = {
       });
       targetGrid.size = 0; //设为0以让后续进行布局
       newGridTop.addChildGrid(targetGrid);
-      newGridTop.addChildGrid(newGrid);
+      newGrid.addChild(panel);
 
       switch (referencePosition) {
         case 'left':
         case 'up':
-          newGrid.addChild(panel, 0);
+          newGridTop.addChildGrid(newGrid, 0);
           break;
         case 'right':
         case 'down':
-          newGrid.addChild(panel);
+          newGridTop.addChildGrid(newGrid);
           break;
       }
 
@@ -211,7 +199,7 @@ function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
 
   const targetGrid = panel.parentGroup as CodeLayoutSplitNGridInternal;
   if (!targetGrid)
-    return;
+    return undefined;
 
   //1
   targetGrid.removeChild(panel);
@@ -219,13 +207,13 @@ function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
   //2.1
   if (targetGrid.children.length > 0) {
     targetGrid.reselectActiveChild();
-    return;
+    return undefined;
   }
 
   //2.2
 
   if (targetGrid.noAutoShink)
-    return;
+    return undefined;
   
   const targetGridParent = targetGrid.parentGroup as CodeLayoutSplitNGridInternal;
   targetGridParent.removeChildGrid(targetGrid);
@@ -233,13 +221,16 @@ function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
   //2.2.2
   if (targetGridParent.childGrid.length === 1) {
     const oldChilds = targetGridParent.childGrid[0].children;
+    const oldActivePanel = targetGridParent.childGrid[0].activePanel;
 
     targetGridParent.children = oldChilds;
+    targetGridParent.activePanel = oldActivePanel;
     targetGridParent.removeChildGrid(targetGridParent.childGrid[0]);
     for (const child of oldChilds)
       child.parentGroup = targetGridParent;
   }
 
+  return targetGridParent;
 }
 
 

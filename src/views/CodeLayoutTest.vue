@@ -11,10 +11,10 @@
           @panelClose="onPanelClose"
         >
           <template #tabContentRender="{ panel }">
-            <h2 :style="{ margin: 0, backgroundColor: colors[panel.data] }">Grid {{ panel.name }}</h2>
+            <h2 :style="{ margin: 0, backgroundColor: colors[panel.data] }">Grid {{ panel.name }} {{ (panel.parentGroup as CodeLayoutSplitNGridInternal).direction }}</h2>
           </template>
           <template #tabEmptyContentRender="{ grid }">
-            <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }}</h2>
+            <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
           </template>
           <template #tabHeaderExtraRender>
             haha
@@ -46,7 +46,7 @@ import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import type { CodeLayoutSplitNInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
+import type { CodeLayoutSplitNGridInternal, CodeLayoutSplitNInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
 import SplitLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitLayout.vue';
 
 const colors = [

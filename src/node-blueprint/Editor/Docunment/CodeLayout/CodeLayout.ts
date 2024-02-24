@@ -88,7 +88,7 @@ export interface CodeLayoutInstance {
 
 export interface CodeLayoutPanelHosterContext {
   panelInstances: Map<string, CodeLayoutPanelInternal>;
-  removePanelInternal(panel: CodeLayoutPanelInternal): void;
+  removePanelInternal(panel: CodeLayoutPanelInternal): undefined|CodeLayoutPanelInternal;
   closePanelInternal(panel: CodeLayoutPanelInternal): void;
 }
 
@@ -197,7 +197,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   }
 
   removeSelfWithShrink() {
-    this.context.removePanelInternal(this);
+    return this.context.removePanelInternal(this);
   }
   reselectActiveChild() {
     this.activePanel = this.children.find((p) => p.visible && p.open) || null;
