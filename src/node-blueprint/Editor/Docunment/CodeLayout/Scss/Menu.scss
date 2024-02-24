@@ -37,11 +37,11 @@
     --mx-menu-shortcut-backgroud-active:transparent;
     --mx-menu-shortcut-backgroud-open:transparent;
     --mx-menu-shortcut-backgroud-disabled:transparent;
-    --mx-menu-shortcut-text: #424242;
-    --mx-menu-shortcut-text-hover: #fff;
-    --mx-menu-shortcut-text-active: #fff;
-    --mx-menu-shortcut-text-open: #fff;
-    --mx-menu-shortcut-text-disabled: #a5a5a5;
+    --mx-menu-shortcut-text: var(--code-layout-color-text-gray);
+    --mx-menu-shortcut-text-hover: var(--code-layout-color-text-light);
+    --mx-menu-shortcut-text-active: var(--code-layout-color-text-light);
+    --mx-menu-shortcut-text-open: var(--code-layout-color-text-light);
+    --mx-menu-shortcut-text-disabled: var(--code-layout-color-text-disabled);
 
     //Focus border color
     --mx-menu-focus-color: transparent;

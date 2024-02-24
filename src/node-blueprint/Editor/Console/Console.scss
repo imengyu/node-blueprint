@@ -8,8 +8,8 @@
     display: flex;
     flex-direction: row;
     position: relative;
-    background-color: #282c34;
-    border-bottom: 1px solid #313131;
+    background-color: var(--mx-editor-background-second-color);
+    border-bottom: 1px solid var(--mx-editor-border-color);
     min-height: 33px;
 
     button {
@@ -26,7 +26,7 @@
       color: #fff;
 
       &:hover, &.active {
-        background: rgba(133, 133, 133, 0.5);
+        background: var(--mx-editor-clickable-background-color);
       }
 
       .icon {

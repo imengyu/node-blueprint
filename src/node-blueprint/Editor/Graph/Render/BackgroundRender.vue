@@ -14,6 +14,7 @@ import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
 
+
 const canvas = ref<HTMLCanvasElement>();
 const props = defineProps({
   /**
@@ -41,11 +42,17 @@ const props = defineProps({
   },
   gridColorSmall: {
     type: String,
-    default: "#23282e",
+    default: () => {
+      const computedStyle = window.getComputedStyle(document.body);
+      return computedStyle.getPropertyValue('--node-graph-line-secondary')
+    },
   },
   gridColorBig: {
     type: String,
-    default: "#1b2026",
+    default: () => {
+      const computedStyle = window.getComputedStyle(document.body);
+      return computedStyle.getPropertyValue('--node-graph-line-primary')
+    },
   },
 });
 

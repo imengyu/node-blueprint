@@ -50,7 +50,7 @@ provide<PropBoxContext>('PropBoxContext', {
   margin: 5px 10px;
   padding: 2px 4px;
   border-radius: 4px;
-  background-color: var(--mx-editor-backgroud);
+  background-color: var(--mx-editor-background-color);
   border: 1px solid var(--mx-editor-border-color);
   color: var(--mx-editor-text-color);
 
@@ -62,5 +62,8 @@ provide<PropBoxContext>('PropBoxContext', {
 .prop-box {
   display: flex;
   flex-direction: column;
+  background-color: var(--mx-editor-background-second-color);
+  border-radius: var(--mx-editor-border-radius-small);
+  margin: 0 0 0 var(--mx-editor-border-radius-small);
 }
 </style>

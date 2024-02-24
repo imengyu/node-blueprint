@@ -111,6 +111,7 @@
   overflow: hidden;
   overflow-x: scroll;
   height: var(--tab-height);
+  background-color: var(--tab-border-color);
 
   &::before {
     display: block;
@@ -150,6 +151,7 @@
       background-color: var(--tab-mormal-color);
       border: 1px solid transparent;
       border-bottom-color: var(--tab-border-color);
+      border-right-color: var(--tab-active-color);
       justify-content: center;
       align-items: center;
       height: 100%;

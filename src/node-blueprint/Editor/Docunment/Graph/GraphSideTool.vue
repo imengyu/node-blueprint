@@ -12,7 +12,7 @@
   border-right: none;
   height: 100%;
   padding-top: 20px;
-  background: var(--mx-editor-backgroud);
+  background: var(--mx-editor-background-color);
   width: $left-toolbar-width;
   z-index: 4;
   

@@ -75,13 +75,13 @@ const splterDrageHandler = createMouseDragHandler({
   position: relative;
   display: flex;
   align-items: stretch;
-  font-size: 12px;
+  font-size: var(--mx-editor-font-size-small);
   
   &.border {
-    border-bottom: 1px solid var(--mx-editor-border-color);
+    border-bottom: 1px solid var(--mx-editor-border-color-dark);
 
     > .prop-split::after {
-      background-color: var(--mx-editor-border-color);
+      background-color: var(--mx-editor-border-color-dark);
     }
   }
 
@@ -107,8 +107,9 @@ const splterDrageHandler = createMouseDragHandler({
 
   > span {
     flex-shrink: 0;
-    padding: 6px 14px;
+    padding: 4px;
     display: flex;
+    font-size: var(--mx-editor-font-size-small);
     justify-content: flex-end;
     text-align: right;
     color: var(--mx-editor-text-color);

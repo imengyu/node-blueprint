@@ -1,5 +1,6 @@
 <template>
   <SplitN
+    v-if="grid.childGrid?.length"
     :grid="grid"
     :horizontal="grid.direction === 'horizontal'"
   >
@@ -15,6 +16,7 @@
       <slot v-else name="grid" :grid="childGrid" :index="index" />
     </template>
   </SplitN>
+  <slot v-else name="grid" :grid="grid" :index="0" />
 </template>
 
 <script setup lang="ts">

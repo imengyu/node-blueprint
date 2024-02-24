@@ -11,7 +11,7 @@
       <Icon icon="icon-arrow-right-bold" :size="12" />
     </div>
     <div v-if="!graphBreadcrumb || graphBreadcrumb.length == 0">
-      {{ currentDocunment.name }}
+      {{ currentDocunment?.name }}
     </div>
   </div>
 </template>
@@ -89,13 +89,13 @@ onMounted(() => {
   left: $left-toolbar-width;
   right: 0;
   height: $top-breadcrumb-height;
-  padding: 3px 6px;
+  padding: 0 6px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   user-select: none;
   cursor: pointer;
-  color: #c0c0c0;
+  color: var(--mx-editor-light-text-color);
 
   > div {
     display: inline-flex;
@@ -105,10 +105,10 @@ onMounted(() => {
 
     svg {
       margin: 0 3px;
-      fill: #fff;
+      fill: var(--mx-editor-text-color);
     }
     a {
-      color: #fff;
+      color: var(--mx-editor-text-color);
 
       &:hover, &:active {
         transform: scale(1.1);

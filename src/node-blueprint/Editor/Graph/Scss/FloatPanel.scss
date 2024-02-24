@@ -1,22 +1,17 @@
 @import "./Scroll.scss";
 
-$background-second-color: #282c34;
-$background-second-color-light: #4f5768;
-$border-color: #3e4053;
-$border-color-dark: #111216;
-
 
 //添加单元浮动菜单
 .node-float-panel {
-  background-color: $background-second-color;
-  border: 1px solid $border-color-dark;
+  background-color: var(--mx-editor-background-color);
+  border: 1px solid var(--mx-editor-border-color-dark);
   border-radius: 5px;
   font-size: 1rem;
   position: absolute;
   min-width: 230px;
-  padding: 15px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.8);
-  color: #929292;
+  padding: 15px 5px 15px 15px;
+  box-shadow: 0 0 20px var( --mx-editor-shadow-color);
+  color: var(--mx-editor-light-text-color);
   z-index: 65;
   max-height: 500px;
   overflow: hidden;
@@ -28,7 +23,7 @@ $border-color-dark: #111216;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #3a3a3a;
+    border-bottom: 1px solid var(--mx-editor-border-color);
     user-select: none;
     padding-bottom: 6px;
     margin-bottom: 8px;
@@ -44,10 +39,10 @@ $border-color-dark: #111216;
       height: 10px;
       cursor: pointer;
       border-radius: 4px;
-      fill: #fff;
+      fill: var(--mx-editor-text-color);
 
       &:hover {
-        background-color: rgba(#e6e6e6, 0.2);
+        background-color: rgba(var(--mx-editor-text-color), 0.2);
       }
     }
   }

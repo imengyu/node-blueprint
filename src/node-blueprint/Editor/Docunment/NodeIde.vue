@@ -19,12 +19,14 @@
               @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
             />
           </template>
+          <template v-else>
+            <h2 :style="{ margin: 0 }">Grid {{ panel.name }}</h2>
+          </template>
         </template>
         <template #tabEmptyContentRender="{ grid }">
           <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
         </template>
         <template #tabHeaderExtraRender>
-          haha
         </template>
       </SplitLayout>
     </template>
@@ -32,21 +34,17 @@
       <img class="node-menu-logo" src="../Images/Logo/logo-huge-light.svg">
     </template>
     <template #panelRender="{ panel }">
-      <template v-if="panel.name==='Props'">
-        <PropTab>
-          <PropTabPanel title="单元属性" icon="icon-cube">
-            <PropBox class="node-custom-editor">
-              <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
-              <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
-            </PropBox>
-          </PropTabPanel>
-          <PropTabPanel title="图表属性" icon="icon-docunment">
-            <PropBox class="node-custom-editor">
-              <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
-              <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
-            </PropBox>
-          </PropTabPanel>
-        </PropTab>
+      <template v-if="panel.name==='CommonProps'">
+        <PropBox class="node-custom-editor">
+          <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
+          <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
+        </PropBox>
+      </template>
+      <template v-if="panel.name==='DocProps'">
+        <PropBox class="node-custom-editor">
+          <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+        </PropBox>
       </template>
       <template v-else-if="panel.name==='Console'">
         <Console />
@@ -63,10 +61,10 @@ import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
 import NodeGraphProp from './Prop/NodeGraphProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
-import PropTab from './Tab/PropTab.vue';
-import PropTabPanel from './Tab/PropTabPanel.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
+import CodeLayout from './CodeLayout/CodeLayout.vue';
+import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
@@ -83,7 +81,6 @@ import Alert from '../Nana/Modal/Alert';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
-
 const config = reactive<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
   primarySideBarPosition: 'left',
@@ -385,11 +382,22 @@ function newDocunment() {
  * 关闭已打开文档
  * @param uid 
  */
-function closeDocunment(uid: string) {
+function closeDocunment(uid: string, force = false) {
   const doc = opendDocunment.value.get(uid)
   if (!doc)
     return;
-  splitLayout.value?.getPanelByName(`NodeEditor${uid}`)?.closePanel();
+  if (force)
+    opendDocunment.value.delete(uid);
+  else
+    splitLayout.value?.getPanelByName(`NodeEditor${uid}`)?.closePanel();
+}
+/**
+ * 关闭全部文档
+ */
+function closeAllDocunment() {
+  const openedUids = Array.from(opendDocunment.value.values()).map(p => p.uid);
+  for (const uid of openedUids)
+    closeDocunment(uid, true);
 }
 /**
  * 打开文档
@@ -403,20 +411,14 @@ function openDocunment(doc: NodeDocunmentEditor) {
   opendDocunment.value.set(doc.uid, doc);
   currentActiveDocunment.value = doc;
   onCurrentActiveDocunmentChanged();
+
   splitLayout.value?.getActiveGird().addPanel({
     name: `NodeEditor${doc.uid}`,
     title: doc.name,
     closeType: 'close',
+    data: doc,
   });
-
-  //打开主图表
-  setTimeout(() => {
-    if (doc.activeEditor) {
-      if (doc.mainGraph)
-        doc.activeEditor.openGraph(doc.mainGraph);
-    }
-    splitLayout.value?.activePanel(`NodeEditor${doc.uid}`);
-  }, 300);
+  splitLayout.value?.activePanel(`NodeEditor${doc.uid}`);
 }
 /**
  * 加载文档
@@ -462,8 +464,12 @@ function initLayout() {
       title: '控制台',
     });
     secondarySideBar.addPanel({
-      name: 'Props',
+      name: 'CommonProps',
       title: '属性窗口',
+    });
+    secondarySideBar.addPanel({
+      name: 'DocProps',
+      title: '文档属性',
     });
   });
 }
@@ -498,8 +504,6 @@ function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
 }
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
-import CodeLayout from './CodeLayout/CodeLayout.vue';
-import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
 
 const loadTestScript = true;
 
@@ -513,7 +517,10 @@ onMounted(() => {
       doc.load(TestScript as any);
       openDocunment(doc);
     }
-  }, 500);
+  }, 1000);
+});
+onBeforeUnmount(() => {
+  closeAllDocunment();
 });
 
 const context = reactive({

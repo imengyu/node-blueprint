@@ -65,7 +65,7 @@ function onValueUpdate(v: string) {
     width: 22px;
     height: 22px;
     border-radius: 22px;
-    background-color: var(--mx-editor-backgroud);
+    background-color: var(--mx-editor-background-color);
     border: 1px solid var(--mx-editor-text-color);
     margin: 0;
     margin-right: 5px;

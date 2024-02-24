@@ -45,10 +45,10 @@ watch(show, () => {
   white-space: nowrap;
   position: relative;
   padding: 10px 2px 5px 15px;
-  border-bottom: 1px solid var(--mx-editor-border-color);
+  border-bottom: 1px solid var(--mx-editor-border-color-dark);
   color: #b1b1b1;
   font-weight: bold;
-  font-size: 14px;
+  font-size: var(--mx-editor-font-size-small);
   color: var(--mx-editor-text-color);
 
   a {
@@ -57,11 +57,6 @@ watch(show, () => {
   }
   svg {
     fill: var(--mx-editor-text-color);
-  }
-} 
-.prop-content {
-  .prop-header {
-    margin-left: 10px;
   }
 }
 </style>

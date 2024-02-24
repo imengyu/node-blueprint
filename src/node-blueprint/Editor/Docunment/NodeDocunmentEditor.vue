@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, type PropType, onBeforeUnmount } from 'vue';
+import { onMounted, ref, type PropType, onBeforeUnmount, watch } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import RowView from '../Nana/Layout/RowView.vue';
 import NodeGraphEditor, { type INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
@@ -131,11 +131,21 @@ function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: 
   emit('activeGraphSelectionChange', graphUid, nodes, connectors);
 }
 
+watch(() => props.docunment, (doc) => {
+  context.closeAllGraph();
+  if (doc.mainGraph)
+    context.openGraph(doc.mainGraph);
+});
 onMounted(() => {
   const doc = props.docunment;
   doc.activeEditor = context;
+
+  //打开主图表
+  if (doc.mainGraph)
+    context.openGraph(doc.mainGraph);
 });
 onBeforeUnmount(() => {
+  context.closeAllGraph();
   const doc = props.docunment;
   doc.activeEditor = null;
 });

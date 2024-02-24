@@ -5,9 +5,8 @@
   justify-content: center;
   align-items: center;
   text-decoration: none;
-  color: #cccccc;
   user-select: none;
-  color: #fff;
+  color: var(--mx-editor-text-color);
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 6px;
@@ -15,12 +14,17 @@
 
   &:hover {
     background-color: #7e7e7e;
-    color: #fff;
+    color: var(--mx-editor-text-color);
   }
 
   .nana-icon {
-    margin-right: 3px;
-    fill: #fff;
+    fill: currentColor;
+  }
+
+  &.text {
+    .nana-icon {
+      margin-right: 3px;
+    }
   }
 }
 .node-small-input {
