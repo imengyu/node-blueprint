@@ -24,7 +24,7 @@ export interface PropBoxContext {
 const props = defineProps({
   gridMaxWidth: {
     type: Number,
-    default: 1,
+    default: 0.8,
   },
   gridMinWidth: {
     type: Number,

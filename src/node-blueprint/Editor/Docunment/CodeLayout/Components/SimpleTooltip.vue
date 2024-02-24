@@ -160,6 +160,10 @@ onBeforeUnmount(() => {
 <style lang="scss">
 @use 'sass:math';
 
+.code-layout-tooltip-ref {
+  display: block;
+  height: auto;
+}
 .code-layout-tooltip {
   overflow: visible;
   position: absolute;

@@ -1,8 +1,10 @@
 <template>
-  <div :class="[
-    'collapse-item',
-    open ? 'open' : '',
-  ]">
+  <div
+    :class="[
+      'collapse-item',
+      open ? 'open' : '',
+    ]"
+  >
     <span class="collapse-title" @click="$emit('update:open', !open)">
       <Icon class="collapse-arrow" icon="icon-arrow-right-bold" />
       {{ title }}

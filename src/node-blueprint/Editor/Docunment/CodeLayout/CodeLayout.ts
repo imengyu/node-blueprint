@@ -632,15 +632,20 @@ export interface CodeLayoutPanel {
  * Panel Action button Type Definition
  */
 export interface CodeLayoutActionButton {
-  name: string,
-  icon: string|(() => VNode),
+  name?: string,
+  /**
+   * Render this action button by yourself.
+   */
+  render?: (() => VNode)|undefined,
+  icon?: string|(() => VNode),
+  text?: string,
   tooltip?: string,
   tooltipDirection?: 'left'|'top'|'right'|'bottom',
   /**
    * Click callback
    * @returns 
    */
-  onClick: () => void,
+  onClick?: () => void,
 }
 
 //运行时类型定义

@@ -4,40 +4,9 @@
   position: relative;
   height: 100%;
 
-  .toolbar {
-    display: flex;
-    flex-direction: row;
-    position: relative;
-    background-color: var(--mx-editor-background-second-color);
-    border-bottom: 1px solid var(--mx-editor-border-color);
-    min-height: 33px;
-
-    button {
-      display: inline-flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      background: transparent;
-      outline: none;
-      border: none;
-      height: 33px;
-      cursor: pointer;
-      padding: 0px 6px;
-      color: #fff;
-
-      &:hover, &.active {
-        background: var(--mx-editor-clickable-background-color);
-      }
-
-      .icon {
-        display: inline-block;
-        margin-right: 5px;
-      }
-    }
-  }
   .list {
     position: absolute;
-    top: 33px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -182,4 +151,9 @@
   .sp {
     margin: 0 3px 0 1px;
   }
+}
+
+.console-toolbar-left {
+  font-size: 12px;
+  margin-left: 10px;
 }

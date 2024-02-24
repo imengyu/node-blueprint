@@ -56,7 +56,7 @@ let mouseDragDownX = 0;
 const splterDrageHandler = createMouseDragHandler({
   onDown() { 
     if (propItem.value)
-      mouseDragDownX = HtmlUtils.getLeft(propItem.value);
+      mouseDragDownX = HtmlUtils.getLeft(propItem.value) + 10;
     return true;
   },
   onMove(downPos, movedPos, e) {
@@ -112,7 +112,7 @@ const splterDrageHandler = createMouseDragHandler({
     font-size: var(--mx-editor-font-size-small);
     justify-content: flex-end;
     text-align: right;
-    color: var(--mx-editor-text-color);
+    color: var(--mx-editor-light-text-color);
   }
 }
 </style>

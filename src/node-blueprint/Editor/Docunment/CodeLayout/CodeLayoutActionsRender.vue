@@ -3,52 +3,43 @@
     :class="[ 'code-layout-actions' ]"
   > 
     <SimpleTooltip
-      v-for="action in actionsShow"
-      :key="action.name"
+      v-for="(action, index) in actions"
+      :key="index"
       :content="action.tooltip"
       :direction="action.tooltipDirection ?? 'bottom'"
     >
+      <CodeLayoutVNodeStringRender v-if="action.render" :content="action.render" />
       <button 
+        v-else
         tabindex="0"
         @click="action.onClick"
       >
         <CodeLayoutVNodeStringRender :content="action.icon" />
+        <CodeLayoutVNodeStringRender :content="action.text" />
       </button>
     </SimpleTooltip>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
+import type { PropType } from 'vue';
 import type { CodeLayoutActionButton } from './CodeLayout';
 import CodeLayoutVNodeStringRender from './Components/CodeLayoutVNodeStringRender.vue';
 import SimpleTooltip from './Components/SimpleTooltip.vue';
 
 defineEmits([ 'update:open' ])
 
-const props = defineProps({
+defineProps({
   actions: {
     type: Object as PropType<CodeLayoutActionButton[]>,
     default: () => ([] as any),
   },
-  maxCount: {
-    type: Number,
-    default: 4,
-  },
 });
-
-const actionsShow = computed(() => {
-  if (!props.actions)
-    return [];
-  if (props.actions.length < props.maxCount)
-    return props.actions;
-  return props.actions.slice(0, props.maxCount);
-});
-
 </script>
 
 <style lang="scss">
 .code-layout-actions {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -56,14 +47,20 @@ const actionsShow = computed(() => {
 
   button {
     position: relative;
-    padding: 2px 4px;
+    padding: 0 4px;
     color: var(--code-layout-color-text);
     border-radius: var(--code-layout-border-radius-small);
+    font-size: var(--code-layout-font-size-small);
     background-color: transparent;
     appearance: none;
     border: none;
     outline: none;
     cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 25px;
 
     svg {
       fill: currentColor;

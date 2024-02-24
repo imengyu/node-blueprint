@@ -203,7 +203,7 @@ const {
       flex-direction: row;
       align-items: center;
       flex-wrap: nowrap;
-      flex-shrink: 0;
+      flex-shrink: 1;
     }
     .tab-item {
       position: relative;

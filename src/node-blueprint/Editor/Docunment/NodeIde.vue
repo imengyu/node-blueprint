@@ -47,14 +47,14 @@
         </PropBox>
       </template>
       <template v-else-if="panel.name==='Console'">
-        <Console />
+        <Console :panel="panel" />
       </template>
     </template>
   </CodeLayout>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide, h } from 'vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
@@ -509,7 +509,7 @@ const loadTestScript = true;
 
 onMounted(() => {
   initLayout();
-  setTimeout(() => {
+  nextTick(() => {
     if (!loadTestScript) {
       newDocunment();
     } else {
@@ -517,7 +517,7 @@ onMounted(() => {
       doc.load(TestScript as any);
       openDocunment(doc);
     }
-  }, 1000);
+  });
 });
 onBeforeUnmount(() => {
   closeAllDocunment();

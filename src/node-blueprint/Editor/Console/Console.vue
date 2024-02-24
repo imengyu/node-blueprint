@@ -1,24 +1,7 @@
 <template>
   <div class="console-base">
-    <div class="toolbar">
-      <button @click="clearLogs">
-        <Icon icon="icon-close-bold" class="icon text-white" />清空输出
-      </button>
-      <button @click="filterWarning=!filterWarning" v-tooltip="'筛选警告条目'" :class="filterWarning?'active':''">
-        <Icon icon="icon-warning-filling" class="icon text-warning" />{{ waringCount }}
-      </button>
-      <button @click="filterError=!filterError" v-tooltip="'筛选错误条目'" :class="filterError?'active':''">
-        <Icon icon="icon-delete-filling" class="icon text-danger" />{{ errorCount }}
-      </button>
-      <button @click="filterError=false;filterWarning=false">
-        全部: {{ outputs.length }}
-      </button>
-      <button @click="authScrool=!authScrool;" :class="authScrool?'active':''">
-        自动滚动
-      </button>
-    </div>
-    <div class="list" ref="list">
-      <div v-for="(i, k) in outputs" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')" v-show="showItem(i)">
+    <div ref="list" class="list">
+      <div v-for="(i, k) in outputs" v-show="showItem(i)" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')">
         <Icon v-if="i.hasWarp" icon="icon-arrow-right-filling" :class="'switch iconfont' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
 
         <Icon v-if="i.level==='error'" icon="icon-delete-filling" class="icon iconfont text-danger" />
@@ -27,23 +10,24 @@
 
         <span class="tag mr-2">{{ i.tag }}</span>
         
-        <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)"></ConsoleObjectShower>
-        <ConsoleRefShower v-else :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" :isTop="true"></ConsoleRefShower>
+        <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
+        <ConsoleRefShower v-else :value="i.content" :isTop="true" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
 
-        <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)">{{i.srcText}}</a>
+        <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)">{{ i.srcText }}</a>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script lang="ts" setup>
+import { onMounted, ref, type PropType, onBeforeUnmount, watch, h } from 'vue'
 import ConsoleRefShower from "./ConsoleRefShower.vue";
 import ConsoleObjectShower from "./ConsoleObjectShower.vue";
 import Icon from "../Nana/Icon.vue";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
 import logger from '@/node-blueprint/Base/Logger/Logger';
+import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
+import type { CodeLayoutPanelInternal } from '../Docunment/CodeLayout/CodeLayout';
 
 interface LogItem {
   tag: string,
@@ -59,97 +43,131 @@ interface LogItem {
 }
 type LogSpeicalType = 'none'|'undefined'|'null'|'true'|'false'|'object'|'number';
 
-export default defineComponent({
-  name: 'Console',
-  components: {
-    ConsoleRefShower,
-    ConsoleObjectShower,
-    Icon,
-  },
-  data() {
-    return {
-      outputs: new Array<LogItem>(),
-      waringCount: 0,
-      errorCount: 0,
-      filterWarning: false,
-      filterError: false,
-      authScrool: true,
-      list: null as HTMLElement | null,
-    }
-  },
-  mounted() {
-    this.logListener = this.logListener.bind(this);
-    logger.addListener(this.logListener);
-    logger.reSendTemparyLogs();
-    setTimeout(() => {
-      this.list = this.$refs.list as HTMLElement;
-    }, 200)
-  },
-  beforeUnmount() {
-    logger.removeListener(this.logListener);
-  },
-  methods: {
-    logListener(tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: unknown) {
-      let hasWarp = false;
-      let speicalType : LogSpeicalType = 'none';
-      
-      if(content === null)
-        speicalType = 'null';
-      else if(typeof content === 'string') 
-        hasWarp = content.includes('\n');
-      else if(typeof content === 'undefined')
-        speicalType = 'undefined';
-      else if(typeof content === 'object')
-        speicalType = 'object';
-      else if(typeof content === 'number')
-        speicalType = 'number';
-      else if(typeof content === 'boolean')
-        speicalType = content ? 'true' : 'false'; 
-
-      let srcText = '';
-      let srcBlock = '';
-      let srcPort = '';
-      let srcDoc = '';
-
-      this.outputs.push({
-        tag: tag,
-        hasWarp: hasWarp,
-        content: content as any,
-        level: level,
-        speicalType: speicalType,
-        warpOpen: false,
-        srcText: srcText,
-        srcBlock: srcBlock,
-        srcPort: srcPort,
-        srcDoc: srcDoc,
-      });
-      if(level === 'warning') this.waringCount++;
-      if(level === 'error') this.errorCount++;
-
-
-
-      if(this.authScrool && this.list) 
-        this.list.scrollTo(0, this.list.scrollHeight);
-    },
-    clearLogs() {
-      this.waringCount = 0;
-      this.errorCount = 0;
-      ArrayUtils.clear(this.outputs);
-    },
-    showItem(item : LogItem) {
-      if(this.filterWarning)
-        return item.level === 'warning';
-      if(this.filterError)
-        return item.level === 'error';
-      if(!this.filterWarning && !this.filterError)
-        return true;
-      return false;
-    },
-    onGoRef(refDoc : string, refBlock : string, refPort : string) {
-      this.$emit('on-go-ref', refDoc, refBlock, refPort);
-    },
+const props = defineProps({
+  panel: {
+    type: Object as PropType<CodeLayoutPanelInternal>,
+    default: null,
   }
-})
+});
+const emit = defineEmits([ 'goRef' ]);
+
+const outputs = ref(new Array<LogItem>());
+const waringCount = ref(0);
+const errorCount = ref(0);
+const filterWarning = ref(false);
+const filterError = ref(false);
+const autoScroll = ref(true);
+const list = ref<HTMLElement | null>(null);
+
+function logListener(tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: unknown) {
+  let hasWarp = false;
+  let speicalType : LogSpeicalType = 'none';
+  
+  if(content === null)
+    speicalType = 'null';
+  else if(typeof content === 'string') 
+    hasWarp = content.includes('\n');
+  else if(typeof content === 'undefined')
+    speicalType = 'undefined';
+  else if(typeof content === 'object')
+    speicalType = 'object';
+  else if(typeof content === 'number')
+    speicalType = 'number';
+  else if(typeof content === 'boolean')
+    speicalType = content ? 'true' : 'false'; 
+
+  let srcText = '';
+  let srcBlock = '';
+  let srcPort = '';
+  let srcDoc = '';
+
+  outputs.value.push({
+    tag: tag,
+    hasWarp: hasWarp,
+    content: content as any,
+    level: level,
+    speicalType: speicalType,
+    warpOpen: false,
+    srcText: srcText,
+    srcBlock: srcBlock,
+    srcPort: srcPort,
+    srcDoc: srcDoc,
+  });
+  if(level === 'warning') waringCount.value++;
+  if(level === 'error') errorCount.value++;
+
+
+
+  if(autoScroll.value && list) 
+    list.value?.scrollTo(0, list.value.scrollHeight);
+}
+function clearLogs() {
+  waringCount.value = 0;
+  errorCount.value = 0;
+  ArrayUtils.clear(outputs.value);
+}
+function showItem(item : LogItem) {
+  if(filterWarning.value)
+    return item.level === 'warning';
+  if(filterError.value)
+    return item.level === 'error';
+  if(!filterWarning.value && !filterError.value)
+    return true;
+  return false;
+}
+function onGoRef(refDoc : string, refBlock : string, refPort : string) {
+  emit('goRef', refDoc, refBlock, refPort);
+}
+
+function initToolbar() {
+  const panel = props.panel;
+  panel.actions = [
+    {
+      tooltip: '筛选警告条目',
+      icon: () => h(Icon, { icon: 'icon-warning-filling', class: filterWarning.value ? 'text-warning' : 'text-secondary' }),
+      onClick() {
+        filterWarning.value = !filterWarning.value;
+      },
+    },
+    {
+      tooltip: '筛选错误条目',
+      icon: () => h(Icon, { icon: 'icon-delete-filling', class: filterError.value ? 'text-danger' : 'text-secondary' }),
+      onClick() {
+        filterError.value = !filterError.value;
+      },
+    },
+    {
+      tooltip: '自动滚动',
+      icon: () => h(Icon, { icon: 'icon-decline-filling', class: autoScroll.value ? '' : 'text-secondary' }),
+      onClick() {
+        autoScroll.value = !autoScroll.value;
+      },
+    },
+    {
+      text: '清除列表',
+      icon: () => h(Icon, { icon: 'icon-close-bold' }),
+      onClick() {
+        clearLogs();
+      },
+    },
+    {
+      render: () => h('span', {
+        class: 'console-toolbar-left',
+      }, `全部: ${ outputs.value.length }`),
+    },
+  ];
+}
+
+watch(() => props.panel, initToolbar);
+
+onMounted(() => {
+  logger.addListener(logListener);
+  logger.reSendTemparyLogs();
+  initToolbar();
+});
+onBeforeUnmount(() => {
+  logger.removeListener(logListener);
+});
 </script>
 
 <style lang="scss">

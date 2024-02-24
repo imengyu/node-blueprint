@@ -14,7 +14,6 @@
   padding-top: 20px;
   background: var(--mx-editor-background-color);
   width: $left-toolbar-width;
-  z-index: 4;
   
   &::before {
     display: inline-block;
@@ -33,7 +32,6 @@
   align-items: flex-start;
   flex-direction: column;
   user-select: none;
-  z-index: 100;
   overflow: hidden;
 
   > .tool-item {

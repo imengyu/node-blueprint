@@ -46,8 +46,6 @@ watch(show, () => {
   position: relative;
   padding: 10px 2px 5px 15px;
   border-bottom: 1px solid var(--mx-editor-border-color-dark);
-  color: #b1b1b1;
-  font-weight: bold;
   font-size: var(--mx-editor-font-size-small);
   color: var(--mx-editor-text-color);
 
