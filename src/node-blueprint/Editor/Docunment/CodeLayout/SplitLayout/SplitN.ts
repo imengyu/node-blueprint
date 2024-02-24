@@ -1,6 +1,19 @@
 import { reactive } from "vue";
 import { CodeLayoutGridInternal, CodeLayoutPanelInternal, type CodeLayoutPanelHosterContext, type CodeLayoutPanel, type CodeLayoutDragDropReferencePosition } from "../CodeLayout";
 
+
+export interface CodeLayoutSplitNGrid extends Omit<CodeLayoutPanel, 'title'> {
+  /**
+   * Set whether users can close the current panel by continuously shrinking it.
+   * 
+   * Default: false
+   */
+  canMinClose?: boolean;
+}
+
+/**
+ * Panel type definition of SplitLayout.
+ */
 export class CodeLayoutSplitNPanelInternal extends CodeLayoutPanelInternal {
 
   public constructor(context: CodeLayoutPanelHosterContext) {
@@ -8,19 +21,24 @@ export class CodeLayoutSplitNPanelInternal extends CodeLayoutPanelInternal {
     this.open = true;
   }
 
+  /**
+   * Panel in SplitLayout always open, no need to call the open method.
+   */
   openPanel(): void {
     throw new Error('SplitLayout panel can only close');
   }
+  /**
+   * Close this panel.
+   * 
+   * This method will trigger panelClose event in SplitLayout.
+   */
   closePanel(): void {
     this.context.closePanelInternal(this);
   }
 }
-
-export interface CodeLayoutSplitNGrid extends Omit<CodeLayoutPanel, 'title'> {
-  canMinClose?: boolean;
-  direction?: 'vertical'|'horizontal';
-}
-
+/**
+ * Grid type definition of SplitLayout.
+ */
 export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal implements CodeLayoutSplitNGrid {
 
   public constructor(context: CodeLayoutPanelHosterContext) {
@@ -29,7 +47,13 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
   }
 
   canMinClose = false;
+  /**
+   * Layout direction. 
+   */
   direction: 'vertical'|'horizontal' = 'vertical';
+  /**
+   * Child drid of this grid.
+   */
   childGrid : CodeLayoutSplitNGridInternal[] = [];
 
   //Public
@@ -82,6 +106,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
   }
 
   //Internal
+  //These methods is called internally, and you do not need to use them.
 
   addChildGrid(child: CodeLayoutSplitNGridInternal, index?: number) {
     if (typeof index === 'number')
@@ -120,7 +145,19 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
 
 }
 
+/**
+ * Instance of SplitLayout.
+ * 
+ * Can use like this:
+ * ```
+ * const splitLayout = ref<CodeLayoutSplitNInstance>(); 
+ * const rootGrid = splitLayout.value.getRootGrid();
+ * ```
+ */
 export interface CodeLayoutSplitNInstance {
+  /**
+   * Get root grid instance.
+   */
   getRootGrid() : CodeLayoutSplitNGridInternal;
 }
 

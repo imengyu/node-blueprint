@@ -607,22 +607,21 @@ function addGroup(panel: CodeLayoutPanel, target: CodeLayoutGrid) {
 
   return groupResult as CodeLayoutPanelInternal;
 }
-function removeGroup(panel: CodeLayoutPanel) {
-  const panelInternal = panel as CodeLayoutPanelInternal;
-  const grid = panelInternal.parentGrid;
+function removeGroup(panel: CodeLayoutPanelInternal) {
+  const grid = panel.parentGrid;
   if (!grid || grid === 'none')
     throw new Error(`Group ${panel.name} already removed from any grid !`);
 
   const gridInstance = getRootGrid(grid);
 
-  gridInstance.removeChild(panelInternal);
-  panelInternal.parentGrid = 'none';
+  gridInstance.removeChild(panel);
+  panel.parentGrid = 'none';
 
   //当目标网格已经没有面板了，发出通知
   if (gridInstance.children.length === 0) 
     props.layoutConfig.onGridEmpty?.(grid);
 
-  panelInstances.delete(panelInternal.name);
+  panelInstances.delete(panel.name);
 
   return panel;
 }

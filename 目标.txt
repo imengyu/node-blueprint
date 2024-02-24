@@ -80,8 +80,10 @@ Codelayout
 🆗 SplitN大小控制转为百分比以实现大小自动调整
 🆗 主区域TAB
 🆗 主区域拖拽切分
+TAB的标记
 Codelayou拖拽高亮框闪烁优化
 ScrollBar测试和问题修改
+Codelayout,SplitLayout数据加载与保存
 文档整理
 打包模块后测试
 发布

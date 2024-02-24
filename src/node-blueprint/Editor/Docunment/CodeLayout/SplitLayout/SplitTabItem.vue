@@ -7,6 +7,7 @@
       dragEnterState ? 'drag-active' : '',
       `drag-over-${dragOverState}`,
     ]"
+    :title="panel.tooltip"
     :draggable="true"
     @dragstart="handleDragStart(panel, $event)"
     @dragend="handleDragEnd"
