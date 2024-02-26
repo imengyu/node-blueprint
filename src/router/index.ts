@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import IdeTest from '../views/IdeTest.vue'
 import EditorTest from '../views/EditorTest.vue'
 import CodeLayoutTest from '../views/CodeLayoutTest.vue'
+import CodeScrollTest from '../views/CodeScrollTest.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/code-layout',
       name: 'codelayout',
       component: CodeLayoutTest
+    },
+    {
+      path: '/code-scroll',
+      name: 'codelayoutScroll',
+      component: CodeScrollTest
     },
     {
       path: '/about',

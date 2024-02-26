@@ -85,15 +85,15 @@ function calcScrollBarPosition() {
     const sizePrecent = (container.value.offsetWidth / container.value.scrollWidth);
     scrollBarX.sizeRaw = sizePrecent * container.value.offsetWidth;
     scrollBarX.size = sizePrecent * 100;
-    scrollBarX.pos = (container.value.scrollLeft / container.value.scrollWidth) * 100;
+    scrollBarX.pos = (container.value.scrollLeft / (container.value.scrollWidth - container.value.offsetWidth)) * (100 - scrollBarX.size);
     if (sizePrecent >= 1)
       scrollBarX.show = false;
   }
   if (scrollBarY.show) {
     const sizePrecent = (container.value.offsetHeight / container.value.scrollHeight);
-    scrollBarX.sizeRaw = sizePrecent * container.value.offsetHeight;
+    scrollBarY.sizeRaw = sizePrecent * container.value.offsetHeight;
     scrollBarY.size = sizePrecent * 100;
-    scrollBarY.pos = (container.value.scrollTop / container.value.scrollWidth) * 100;
+    scrollBarY.pos = (container.value.scrollTop / (container.value.scrollHeight - container.value.offsetHeight)) * (100 - scrollBarY.size);
     if (sizePrecent >= 1)
       scrollBarY.show = false;
   }
@@ -146,7 +146,7 @@ const thumbDrageHandlerX = createMouseDragHandler({
     if (container.value && scrollBarRefX.value) {
       container.value.scrollLeft = (e.x - mouseDragDownThumbX - mouseDragDownX) 
         / (container.value.offsetWidth - scrollBarX.sizeRaw)
-        * container.value.scrollWidth;
+        * (container.value.scrollWidth - container.value.offsetWidth);
       e.preventDefault();
       e.stopPropagation();
     }
@@ -164,7 +164,7 @@ const thumbDrageHandlerY = createMouseDragHandler({
     if (container.value && scrollBarRefY.value) {
       container.value.scrollTop = (e.y - mouseDragDownThumbY - mouseDragDownY) 
         / (container.value.offsetHeight - scrollBarY.sizeRaw)
-        * container.value.scrollHeight;
+        * (container.value.scrollHeight - container.value.offsetHeight);
       e.preventDefault();
       e.stopPropagation();
     }
