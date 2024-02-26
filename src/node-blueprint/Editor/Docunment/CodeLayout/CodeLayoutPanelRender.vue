@@ -11,6 +11,8 @@
       resizeDragging ? 'resizing' : '',
       horizontal ? 'horizontal' : '',
       dragEnterState ? 'drag-enter' : '',
+      dragSelfState ? 'dragging-self' : '',
+      dragPanelState ? 'dragging' : '',
       `drag-over-${dragOverState}`,
     ]"
     :style="{
@@ -143,11 +145,13 @@ const context = inject('codeLayoutContext') as CodeLayoutContext;
 //拖放面板处理函数
 
 const {
+  dragSelfState,
   handleDragStart,
   handleDragEnd,
 } = usePanelDragger();
 
 const {
+  dragPanelState,
   dragEnterState,
   dragOverState,
   handleDragOver,
@@ -263,6 +267,16 @@ const {
   }
   &:first-child:not(:focus) > .collapse {
     border-top-color: transparent;
+  }
+
+  //防止拖拽到内容上闪烁
+  &.dragging:not(.dragging-self) * {
+    pointer-events: none;
+  }
+  &.dragging.dragging-self {
+    .collapse-title *, .content * {
+      pointer-events: none;
+    }
   }
 
   &::after, &::before {

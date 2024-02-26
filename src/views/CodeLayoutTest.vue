@@ -78,7 +78,7 @@ const config = reactive<CodeLayoutConfig>({
   activityBar: true,
   primarySideBar: true,
   secondarySideBar: false,
-  bottomPanel: false,
+  bottomPanel: true,
   statusBar: true,
   menuBar: true,
 });

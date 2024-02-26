@@ -28,6 +28,7 @@ const dragPanelState = ref(false);
 export function usePanelDragger() {
   const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
   const cornerSize = 40;
+  const dragSelfState = ref(false);
 
   function draggingMouseMoveHandler(e: MouseEvent) {    
     if (e.x < cornerSize) {
@@ -52,6 +53,7 @@ export function usePanelDragger() {
     if (ev.dataTransfer)
       ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
 
+    dragSelfState.value = true;
     dragPanelState.value = true;
     document.addEventListener('dragover', draggingMouseMoveHandler);
   }
@@ -62,10 +64,12 @@ export function usePanelDragger() {
     }
     (ev.target as HTMLElement).classList.remove("dragging");
 
+    dragSelfState.value = false;
     dragPanelState.value = false;
     document.removeEventListener('dragover', draggingMouseMoveHandler);
   }
   return {
+    dragSelfState,
     handleDragStart,
     handleDragEnd,
   }

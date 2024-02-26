@@ -558,12 +558,16 @@ function handleDrop(e: DragEvent) {
   if (dropPanel && dragOverState.value) {
     e.preventDefault();
     e.stopPropagation();
-    context.dragDropToPanelNear(
-      group.value.getLastChildOrSelf(), 
-      'right', 
-      dropPanel, 
-      'empty'
-    );
+
+    const reference = group.value.getLastChildOrSelf();
+    if (reference !== dropPanel) { 
+      context.dragDropToPanelNear(
+        reference, 
+        'right', 
+        dropPanel, 
+        'empty'
+      );
+    }
   }
   resetDragOverState();
 }
