@@ -62,6 +62,32 @@ const instance : CodeLayoutSplitNInstance = {
   activePanel(name) {
     panelInstances.get(name)?.activeSelf();
   },
+  loadLayout(json, instantiatePanelCallback) {
+
+    function loadGrid(grid: any, gridInstance: CodeLayoutSplitNGridInternal) {
+      gridInstance.loadFromJson(grid);
+
+      if (grid.childGrid instanceof Array && grid.childGrid.length > 0) {
+        for (const childGrid of grid.childGrid) {
+          const childGridInstance = new CodeLayoutSplitNGridInternal(hosterContext);
+          loadGrid(childGrid, childGridInstance);
+          gridInstance.addChildGrid(childGridInstance);
+        }
+        gridInstance.notifyRelayout()
+      } else {
+        for (const childPanel of grid.children) {
+          const childPanelInstance = new CodeLayoutSplitNPanelInternal(hosterContext);
+          childPanelInstance.loadFromJson(childPanel);
+          instantiatePanelCallback(childPanelInstance);
+          gridInstance.addChild(childPanelInstance);
+        }
+      }
+    }
+
+    loadGrid(json, rootGrid.value as CodeLayoutSplitNGridInternal);
+    rootGrid.value.notifyRelayout();
+  },
+  saveLayout: () => rootGrid.value.toJson(),
 };
 
 const context : CodeLayoutSplitLayoutContext = {

@@ -142,7 +142,20 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
   hasChildGrid(child: CodeLayoutSplitNGridInternal) {
     return this.childGrid.includes(child);
   }
-
+  
+  toJson() : any {
+    return {
+      ...super.toJson(),
+      canMinClose: this.canMinClose,
+      direction: this.direction,
+      childGrid: this.childGrid.map(p => p.toJson()),
+    }
+  }
+  loadFromJson(json: any): void {
+    this.direction = json.direction;
+    this.canMinClose = json.canMinClose;
+    super.loadFromJson(json);
+  }
 }
 
 /**
@@ -165,7 +178,7 @@ export interface CodeLayoutSplitNInstance {
    */
   getPanelByName(name: string): CodeLayoutPanelInternal | undefined,
   /**
-   * Obtain a grid that is currently active and can be used to add panels.
+   * Obtain a grid that is currently actived by user and can be used to add panels.
    */
   getActiveGird() : CodeLayoutSplitNGridInternal;
 
@@ -174,6 +187,16 @@ export interface CodeLayoutSplitNInstance {
    * @param name Panel name
    */
   activePanel(name: string): void;
+
+  /**
+   * Save current layout to JSON data.
+   */
+  saveLayout(): any;
+  /**
+   * Load the previous layout from JSON data, 
+   * instantiatePanelCallback will sequentially call all panels, where you can process panel data.
+   */
+  loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutSplitNPanelInternal) => void): void;
 }
 
 export interface CodeLayoutSplitLayoutContext {

@@ -462,6 +462,26 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   getFlatternChildOrSelf() {
     return this.children.length > 0 ? this.children : [ this ];
   }
+
+  toJson() : any {
+    return {
+      name: this.name,
+      open: this.open,
+      resizeable: this.resizeable,
+      visible: this.visible,
+      showBadge: this.showBadge,
+      size: this.size,
+      children: this.children.map(p => p.toJson()),
+    }
+  }
+  loadFromJson(json: any)  {
+    this.name = json.name;
+    this.open = json.open;
+    this.resizeable = json.resizeable;
+    this.visible = json.visible;
+    this.showBadge = json.showBadge;
+    this.size = json.size;
+  }
 }
 export class CodeLayoutGridInternal extends CodeLayoutPanelInternal {
 

@@ -263,7 +263,7 @@ onMounted(() => {
       });
     }
 
-    if (splitLayout.value) {
+    /*if (splitLayout.value) {
       const grid = splitLayout.value.getRootGrid();
       const grid1 = grid.addGrid({
         name: '0',
@@ -324,7 +324,19 @@ onMounted(() => {
         data: 4,
         iconSmall: () => h(IconSearch),
       });
-    }
+    }*/
+
+    let i = 0;
+
+    splitLayout.value?.loadLayout({"name":"centerArea","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":100,"children":[],"canMinClose":false,"direction":"vertical","childGrid":[{"name":"0","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":false,"direction":"horizontal","childGrid":[{"name":"3","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[{"name":"panel3.1","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.2","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.3","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.4","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]}],"canMinClose":false,"direction":"vertical","childGrid":[]},{"name":"4","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":true,"direction":"vertical","childGrid":[]}]},{"name":"2","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":false,"direction":"horizontal","childGrid":[]}]}, (panel) => {
+      panel.data = i++;
+      panel.title = `Panel ${i}`;
+    })
+
+    setTimeout(() => {
+      //console.log('saveLayout', JSON.stringify(splitLayout.value?.saveLayout()));
+      
+    }, 1000);
   });
 });
 
