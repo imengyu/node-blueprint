@@ -44,7 +44,7 @@ import IconSearch from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconSearc
 import type { CodeLayoutConfig, CodeLayoutInstance, CodeLayoutPanelInternal } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
 import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
 import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
-import { ref, reactive, onMounted, nextTick, h } from 'vue';
+import { ref, reactive, onMounted, nextTick, h, onBeforeUnmount } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
 import type { CodeLayoutSplitNGridInternal, CodeLayoutSplitNInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
 import SplitLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitLayout.vue';
@@ -143,6 +143,13 @@ const menuData : MenuOptions = {
 
 function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
   resolve();
+}
+
+function saveLayout() {
+  if (splitLayout.value)
+    localStorage.setItem('SplitLayoutTestSave', JSON.stringify(splitLayout.value.saveLayout()));
+  if (codeLayout.value)
+    localStorage.setItem('CodeLayoutTestSave', JSON.stringify(codeLayout.value.saveLayout()));
 }
 
 onMounted(() => {
@@ -263,82 +270,85 @@ onMounted(() => {
       });
     }
 
-    /*if (splitLayout.value) {
-      const grid = splitLayout.value.getRootGrid();
-      const grid1 = grid.addGrid({
-        name: '0',
-        visible: true,
-        size: 0,
-      });
-      grid.addGrid({
-        name: '2',
-        visible: true,
-        size: 0,
-        minSize: 100,
-      });
-      const grid3 = grid1.addGrid({
-        name: '3',
-        visible: true,
-        size: 0,
-        minSize: 0,
-      });
-      grid1.addGrid({
-        name: '4',
-        visible: true,
-        size: 0,
-        minSize: 100,
-        canMinClose: true,
-      });
+    if (splitLayout.value) {
 
-      grid3.addPanel({
-        title: 'Panel3-1',
-        tooltip: 'Panel3-1',
-        name: 'panel3.1',
-        startOpen: true,
-        iconSmall: () => h(IconSearch),
-        data: 2,
-      });
-      grid3.addPanel({
-        title: 'Panel3-2',
-        tooltip: 'Panel3-2',
-        name: 'panel3.2',
-        startOpen: true,
-        data: 1,
-        closeType: 'close',
-        iconSmall: () => h(IconSearch),
-      });
-      grid3.addPanel({
-        title: 'Panel3-3',
-        tooltip: 'Panel3-3',
-        name: 'panel3.3',
-        startOpen: true,
-        data: 3,
-        closeType: 'unSave',
-        iconSmall: () => h(IconSearch),
-      });
-      grid3.addPanel({
-        title: 'Panel3-4',
-        tooltip: 'Panel3-4',
-        name: 'panel3.4',
-        startOpen: true,
-        data: 4,
-        iconSmall: () => h(IconSearch),
-      });
-    }*/
+      let i = 0;
 
-    let i = 0;
+      const lastJson = localStorage.getItem('SplitLayoutTestSave');
+      if (lastJson && lastJson.length > 130) {
+        splitLayout.value?.loadLayout(JSON.parse(lastJson), (panel) => {
+          panel.data = i++;
+          panel.title = `Panel ${i}`;
+          return panel;
+        })
+      } else {
+        const grid = splitLayout.value.getRootGrid();
+        const grid1 = grid.addGrid({
+          name: '0',
+          visible: true,
+          size: 0,
+        });
+        grid.addGrid({
+          name: '2',
+          visible: true,
+          size: 0,
+          minSize: 100,
+        });
+        const grid3 = grid1.addGrid({
+          name: '3',
+          visible: true,
+          size: 0,
+          minSize: 0,
+        });
+        grid1.addGrid({
+          name: '4',
+          visible: true,
+          size: 0,
+          minSize: 100,
+          canMinClose: true,
+        });
 
-    splitLayout.value?.loadLayout({"name":"centerArea","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":100,"children":[],"canMinClose":false,"direction":"vertical","childGrid":[{"name":"0","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":false,"direction":"horizontal","childGrid":[{"name":"3","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[{"name":"panel3.1","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.2","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.3","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]},{"name":"panel3.4","open":true,"resizeable":false,"visible":true,"showBadge":true,"size":0,"children":[]}],"canMinClose":false,"direction":"vertical","childGrid":[]},{"name":"4","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":true,"direction":"vertical","childGrid":[]}]},{"name":"2","open":false,"resizeable":false,"visible":true,"showBadge":true,"size":50,"children":[],"canMinClose":false,"direction":"horizontal","childGrid":[]}]}, (panel) => {
-      panel.data = i++;
-      panel.title = `Panel ${i}`;
-    })
+        grid3.addPanel({
+          title: 'Panel3-1',
+          tooltip: 'Panel3-1',
+          name: 'panel3.1',
+          iconSmall: () => h(IconSearch),
+          data: 2,
+        });
+        grid3.addPanel({
+          title: 'Panel3-2',
+          tooltip: 'Panel3-2',
+          name: 'panel3.2',
+          data: 1,
+          closeType: 'close',
+          iconSmall: () => h(IconSearch),
+        });
+        grid3.addPanel({
+          title: 'Panel3-3',
+          tooltip: 'Panel3-3',
+          name: 'panel3.3',
+          data: 3,
+          closeType: 'unSave',
+          iconSmall: () => h(IconSearch),
+        });
+        grid3.addPanel({
+          title: 'Panel3-4',
+          tooltip: 'Panel3-4',
+          name: 'panel3.4',
+          data: 4,
+          iconSmall: () => h(IconSearch),
+        });
+      }
+    }
 
-    setTimeout(() => {
-      //console.log('saveLayout', JSON.stringify(splitLayout.value?.saveLayout()));
-      
-    }, 1000);
   });
+
+  window.onbeforeunload = saveLayout;
 });
+onBeforeUnmount(() => {
+  saveLayout();
+})
+
 
 </script>
 

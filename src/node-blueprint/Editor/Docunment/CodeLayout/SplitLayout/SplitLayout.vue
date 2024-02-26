@@ -63,6 +63,8 @@ const instance : CodeLayoutSplitNInstance = {
     panelInstances.get(name)?.activeSelf();
   },
   loadLayout(json, instantiatePanelCallback) {
+    if (!json)
+      return;
 
     function loadGrid(grid: any, gridInstance: CodeLayoutSplitNGridInternal) {
       gridInstance.loadFromJson(grid);
@@ -74,12 +76,11 @@ const instance : CodeLayoutSplitNInstance = {
           gridInstance.addChildGrid(childGridInstance);
         }
         gridInstance.notifyRelayout()
-      } else {
+      } else if (grid.childGrid instanceof Array) {
         for (const childPanel of grid.children) {
-          const childPanelInstance = new CodeLayoutSplitNPanelInternal(hosterContext);
-          childPanelInstance.loadFromJson(childPanel);
-          instantiatePanelCallback(childPanelInstance);
-          gridInstance.addChild(childPanelInstance);
+          const data = instantiatePanelCallback(childPanel);
+          const panel = gridInstance.addPanel(data);
+          panel.loadFromJson(childPanel);
         }
       }
     }

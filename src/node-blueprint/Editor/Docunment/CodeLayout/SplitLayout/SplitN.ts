@@ -10,6 +10,9 @@ export interface CodeLayoutSplitNGrid extends Omit<CodeLayoutPanel, 'title'> {
    */
   canMinClose?: boolean;
 }
+export interface CodeLayoutSplitNPanel extends Omit<CodeLayoutPanel, 'visible'|'showBadge'|'tabStyle'|'noHide'|'startOpen'> {
+}
+
 
 /**
  * Panel type definition of SplitLayout.
@@ -82,7 +85,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     this.removeChildGrid(panelInternal);
     return panel;
   }
-  addPanel(panel: CodeLayoutPanel) {
+  addPanel(panel: CodeLayoutSplitNPanel) {
     const panelInternal = panel as CodeLayoutPanelInternal;
     
     if (panelInternal.parentGroup)
@@ -152,8 +155,8 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     }
   }
   loadFromJson(json: any): void {
-    this.direction = json.direction;
-    this.canMinClose = json.canMinClose;
+    this.direction = json.direction || this.direction;
+    this.canMinClose = json.canMinClose ?? this.canMinClose;
     super.loadFromJson(json);
   }
 }
@@ -196,7 +199,7 @@ export interface CodeLayoutSplitNInstance {
    * Load the previous layout from JSON data, 
    * instantiatePanelCallback will sequentially call all panels, where you can process panel data.
    */
-  loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutSplitNPanelInternal) => void): void;
+  loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutSplitNPanel) => CodeLayoutSplitNPanel): void;
 }
 
 export interface CodeLayoutSplitLayoutContext {

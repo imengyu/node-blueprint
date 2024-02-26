@@ -134,6 +134,15 @@ export interface CodeLayoutInstance {
    * @param name Group name.
    */
   relayoutGroup(name: string): void;
+  /**
+   * Save current layout to JSON data.
+   */
+  saveLayout(): any;
+  /**
+   * Load the previous layout from JSON data, 
+   * instantiatePanelCallback will sequentially call all panels, where you can process panel data.
+   */
+  loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutPanel) => CodeLayoutPanel): void;
 }
 
 //内部类定义

@@ -199,6 +199,8 @@ const codeLayoutInstance : CodeLayoutInstance = {
   relayoutGroup,
   getRootGrid,
   getPanelByName,
+  loadLayout,
+  saveLayout,
 };
 const codeLayoutContext : CodeLayoutContext = {
   dragDropToGrid,
@@ -540,6 +542,38 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
 
   //普通组移除状态下，无需其他操作，通知面板进行布局
   panelInstances.get(group.name)?.relayoutAllWithRemovePanel(panel);
+}
+
+//布局加载与保存
+function saveLayout() {
+  return {
+    primary: panels.value.primary.toJson(),
+    secondary: panels.value.secondary.toJson(),
+    bottom: panels.value.bottom.toJson(),
+  };
+}
+function loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutPanel) => CodeLayoutPanel) {
+  if (!json)
+      return;
+
+  function loadGrid(grid: any, gridInstance: CodeLayoutPanelInternal) {
+    gridInstance.loadFromJson(grid);
+    if (grid.children instanceof Array) {
+      for (const childPanel of grid.children) {
+        const data = instantiatePanelCallback(childPanel);
+        const panel = gridInstance.addPanel(data as CodeLayoutPanel);
+        loadGrid(panel, childPanel);
+      }
+    }
+    gridInstance.notifyRelayout();
+  }
+
+  if (json.primary)
+    loadGrid(json.primary, panels.value.primary as CodeLayoutPanelInternal);
+  if (json.secondary)
+    loadGrid(json.secondary, panels.value.secondary as CodeLayoutPanelInternal);
+  if (json.primary)
+    loadGrid(json.bottom, panels.value.bottom as CodeLayoutPanelInternal);
 }
 
 //处理函数
