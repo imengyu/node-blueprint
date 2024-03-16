@@ -199,6 +199,7 @@ const codeLayoutInstance : CodeLayoutInstance = {
   relayoutGroup,
   getRootGrid,
   getPanelByName,
+  clearLayout,
   loadLayout,
   saveLayout,
 };
@@ -545,6 +546,15 @@ function relayoutAfterRemovePanel(group: CodeLayoutPanelInternal, isInTab: boole
 }
 
 //布局加载与保存
+function clearLayout() {
+  panels.value.primary.children.splice(0);
+  panels.value.secondary.children.splice(0);
+  panels.value.bottom.children.splice(0);
+  panels.value.primary.activePanel = null;
+  panels.value.secondary.activePanel = null;
+  panels.value.bottom.activePanel = null;
+  panelInstances.clear();
+}
 function saveLayout() {
   return {
     primary: panels.value.primary.toJson(),
@@ -553,16 +563,18 @@ function saveLayout() {
   };
 }
 function loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutPanel) => CodeLayoutPanel) {
-  if (!json)
-      return;
 
-  function loadGrid(grid: any, gridInstance: CodeLayoutPanelInternal) {
-    gridInstance.loadFromJson(grid);
-    if (grid.children instanceof Array) {
-      for (const childPanel of grid.children) {
-        const data = instantiatePanelCallback(childPanel);
-        const panel = gridInstance.addPanel(data as CodeLayoutPanel);
-        loadGrid(panel, childPanel);
+  clearLayout();
+
+  if (!json)
+    return;
+
+  function loadGrid(gridData: any, gridInstance: CodeLayoutPanelInternal) {
+    gridInstance.loadFromJson(gridData);
+    if (gridData.children instanceof Array) {
+      for (const childPanelData of gridData.children) {
+        const panelInstance = gridInstance.addPanel(childPanelData as CodeLayoutPanel);
+        loadGrid(childPanelData, instantiatePanelCallback(panelInstance) as CodeLayoutPanelInternal);
       }
     }
     gridInstance.notifyRelayout();
@@ -667,7 +679,6 @@ function relayoutGroup(name: string) {
 }
 
 defineExpose(codeLayoutInstance);
-
 
 onMounted(() => {
   nextTick(() => {

@@ -53,6 +53,9 @@ defineProps({
   --nana-button-default-hover-color: var(--nana-fill-3);
   --nana-button-normal-border-radius: var(--nana-border-radius-large);
   --nana-button-round-border-radius: var(--nana-border-radius-round);
+  --nana-icon-button-default-bg-color: 255, 255, 255;
+  --nana-icon-button-default-active-color: rgba(var(--nana-icon-button-default-bg-color), 0.3);
+  --nana-icon-button-default-hover-color: rgba(var(--nana-icon-button-default-bg-color), 0.1);
 }
 
 .nana-button {

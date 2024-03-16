@@ -139,8 +139,14 @@ export interface CodeLayoutInstance {
    */
   saveLayout(): any;
   /**
-   * Load the previous layout from JSON data, 
+   * Clear all panels.
+   */
+  clearLayout(): void;
+  /**
+   * Load the previous layout from JSON data, will clear all panels,
    * instantiatePanelCallback will sequentially call all panels, where you can process panel data.
+   * @param json json data from `saveLayout`.
+   * @param instantiatePanelCallback process layout data panel.
    */
   loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutPanel) => CodeLayoutPanel): void;
 }
@@ -340,7 +346,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
    * Auto set activePanel.
    */
   reselectActiveChild() {
-    this.activePanel = this.children.find((p) => p.visible && p.open) || null;
+    this.activePanel = this.children.find((p) => p.visible) || null;
   }
   /**
    * Set parent activePanel to self.

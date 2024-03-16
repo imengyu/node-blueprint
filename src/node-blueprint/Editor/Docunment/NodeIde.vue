@@ -27,6 +27,9 @@
           <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
         </template>
         <template #tabHeaderExtraRender>
+          <IconButton fillHeight @click="newDocunment()">
+            <Icon icon="icon-add-bold" fill="var(--tab-text-color)" />
+          </IconButton>
         </template>
       </SplitLayout>
     </template>
@@ -54,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide, h } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
@@ -78,6 +81,9 @@ import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import Alert from '../Nana/Modal/Alert';
+import Icon from '../Nana/Icon.vue';
+import IconButton from '../Nana/Button/IconButton.vue';
+import TestScript from '../../../../test-scripts/sub-graph.json';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
@@ -113,6 +119,7 @@ const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSetti
 }));
 
 function saveSettings() {
+  saveLayout();
   SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
 }
 
@@ -456,25 +463,50 @@ function initLayout() {
   nextTick(() => {
     if (!codeLayout.value)
       return;
-    const bottomPanel = codeLayout.value.getRootGrid('bottomPanel');
-    const secondarySideBar = codeLayout.value.getRootGrid('secondarySideBar');
 
-    bottomPanel.addPanel({
-      name: 'Console',
-      title: '控制台',
-    });
-    secondarySideBar.addPanel({
-      name: 'CommonProps',
-      title: '属性窗口',
-    });
-    secondarySideBar.addPanel({
-      name: 'DocProps',
-      title: '文档属性',
-    });
+    const layoutData = SettingsUtils.getSettings<any>('NodeIdeEditorLayout', null);
+
+    if (layoutData) {
+      codeLayout.value.loadLayout(layoutData, (panel) => {
+        switch (panel.name) {
+          case 'Console':
+            panel.name = '控制台';
+            break;
+          case 'CommonProps':
+            panel.name = '属性窗口';
+            break;
+          case 'DocProps':
+            panel.name = '文档属性';
+            break;
+        }
+        return panel;
+      });
+    } else {
+      const bottomPanel = codeLayout.value.getRootGrid('bottomPanel');
+      const secondarySideBar = codeLayout.value.getRootGrid('secondarySideBar');
+
+      bottomPanel.addPanel({
+        name: 'Console',
+        title: '控制台',
+      });
+      secondarySideBar.addPanel({
+        name: 'CommonProps',
+        title: '属性窗口',
+      });
+      secondarySideBar.addPanel({
+        name: 'DocProps',
+        title: '文档属性',
+      });
+    }
   });
 }
 function resetDefultLayout() {
+  SettingsUtils.setSettings('NodeIdeEditorLayout', null);
+  codeLayout.value?.clearLayout();
   initLayout();
+}
+function saveLayout() {
+  SettingsUtils.setSettings('NodeIdeEditorLayout', codeLayout.value?.saveLayout() || null);
 }
 
 //#endregion
@@ -503,8 +535,6 @@ function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
   }
 }
 
-import TestScript from '../../../../test-scripts/sub-graph.json';
-
 const loadTestScript = true;
 
 onMounted(() => {
@@ -520,6 +550,7 @@ onMounted(() => {
   });
 });
 onBeforeUnmount(() => {
+  saveLayout();
   closeAllDocunment();
 });
 

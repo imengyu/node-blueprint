@@ -21,7 +21,7 @@ const SettingsUtils = {
    * @param key 设置的键值
    * @param value 设置的新值
    */
-  setSettings(key : string, value : IKeyAnyObject|number|boolean|bigint|Array<unknown>|string) : void {
+  setSettings(key : string, value : IKeyAnyObject|number|boolean|bigint|Array<unknown>|string|null) : void {
     localStorage.setItem(`Settings${key}`, JSON.stringify(value));
   },
 }
