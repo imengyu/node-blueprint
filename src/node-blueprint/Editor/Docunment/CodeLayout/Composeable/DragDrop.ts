@@ -50,9 +50,6 @@ export function usePanelDragger() {
 
     currentDragPanel = panel;
     (ev.target as HTMLElement).classList.add("dragging");
-    if (ev.dataTransfer)
-      ev.dataTransfer.setData("text/plain", `CodeLayoutPanel:${panel.name}`);
-
     dragSelfState.value = true;
     dragPanelState.value = true;
     document.addEventListener('dragover', draggingMouseMoveHandler);
@@ -98,9 +95,13 @@ export function usePanelDragOverDetector(
       return;
 
     delayLeaveTimer.stop();
+
       
     //检查面板，必须存在面板，并且不能是自己或者自己的父级
     const panel = getCurrentDragPanel();
+    // 如果是内部拖拽数据，则不应该让浏览器处理弹出窗口
+    if (panel)
+      e.preventDefault();
     if (
       panel
       && selfPanel && panel !== selfPanel.value 
@@ -110,7 +111,6 @@ export function usePanelDragOverDetector(
       if (!container.value)
         return;
 
-      e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = 'copy';
 
