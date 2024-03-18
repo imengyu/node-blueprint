@@ -8,6 +8,7 @@ const messages = {
   GRAPH_DELETE: 2,
   GRAPH_NAME_CHANGE: 3,
   GRAPH_PORT_CHANGE: 4,
+  GRAPH_ONLINE: 6,
 };
 
 export default { 
@@ -89,7 +90,7 @@ import NodeIconClock from '../NodeIcon/clock.svg';
 import NodeIconClock2 from '../NodeIcon/clock2.svg';
 import NodeIconEntryGo from '../NodeIcon/entry_go.svg';
 import NodeIconEntryExit from '../NodeIcon/entry_exit.svg';
-import NodeIconEntryIn from '../NodeIcon/entry-ing.svg';
+import NodeIconEntryIn from '../NodeIcon/block.svg';
 import NodeIconEntryWarning from '../NodeIcon/warning.svg';
 import NodeIconEntryTrace from '../NodeIcon/trace.svg';
 import NodeIconEntryNumber from '../NodeIcon/number.svg';
@@ -510,11 +511,11 @@ function registerScriptGraphBase()  {
       onEditorCreate(node, context) {
         //在初始化时加载绑定的子图表信息
         const graph = context.getCurrentGraph();
-        const callName = node.options.callName as string;
-        const childGraph = callName ? graph.children.find(v => v.name === callName) : undefined;
+        const callGraphName = node.options.callGraphName as string;
+        const childGraph = callGraphName ? graph.children.find(v => v.name === callGraphName) : undefined;
         if (childGraph) {
           //直接调用下方消息进行相关状态设置
-          node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: callName });
+          node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: childGraph.name });
           node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
         } else {
           node.sendSelfMessage(messages.GRAPH_DELETE, {});
@@ -529,9 +530,13 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           inputPorts.forEach((port, index) => {
+            port.forceNoDelete = true;
+            port.direction = 'input';
             const oldPort = node.inputPorts[index];
-            if (oldPort)
+            if (oldPort) {
               oldPort.load(port);
+              oldPort.dyamicAdd = true;
+            }
             else
               node.addPort(port, true, port.initialValue);
           });
@@ -540,14 +545,20 @@ function registerScriptGraphBase()  {
             node.deletePort(node.inputPorts[i]);
 
           outputPorts.forEach((port, index) => {
+            port.forceNoDelete = true;
+            port.direction = 'output';
             const oldPort = node.outputPorts[index];
-            if (oldPort)
+            if (oldPort) {
               oldPort.load(port);
+              oldPort.dyamicAdd = true;
+            }
             else
               node.addPort(port, true, port.initialValue);
           });
           for (let i = outputPorts.length; i < node.outputPorts.length; i++) 
             node.deletePort(node.outputPorts[i]);
+          node.postLateUpdateRegion();
+          node.setErrorState('');
         }
         //子图表名称更改消息
         else if (msg?.message === messages.GRAPH_NAME_CHANGE) 
@@ -555,13 +566,36 @@ function registerScriptGraphBase()  {
           const newName = msg.data.name as string;
 
           node.tags[0] = `GraphCall${newName}`;
-          node.options.callName = newName;
           node.name = `调用子图表 ${newName}`;
+          node.postLateUpdateRegion();
+          node.setErrorState('');
         } 
         //子图表移除消息
         else if (msg?.message === messages.GRAPH_DELETE) 
         {
-          node.name = '未知调用';
+          node.name = `未知调用 ${node.options.callGraphName}`;
+          node.setErrorState('error', '调用目标图表丢失');
+          node.postLateUpdateRegion();
+        }
+        //子图表重新添加
+        else if (msg?.message === messages.GRAPH_ONLINE) 
+        {
+          node.name = `调用子图表 ${node.options.callGraphName}`;
+          node.postLateUpdateRegion();
+          node.setErrorState('');
+        }
+      },
+      onEditorClickEvent(node, context, event) {
+        if (event === 'dblclick') {
+          //双击进入图表
+          const graph = context.getCurrentGraph();
+          const callGraphName = node.options.callGraphName as string;
+          const childGraph = callGraphName ? graph.children.find(v => v.name === callGraphName) : undefined;
+          if (childGraph) {
+            graph.getParentDocunment()?.activeEditor?.openGraph(childGraph);
+          } else {
+            context.showSmallTip('调用目标图表丢失');
+          }
         }
       }
     },
@@ -599,8 +633,10 @@ function registerScriptGraphBase()  {
           //添加图表的端口至当前节点
           inputPorts.forEach((port, index) => {
             const oldPort = node.outputPorts[index];
-            if (oldPort)
+            if (oldPort) {
               oldPort.load(port);
+              oldPort.direction = 'output';
+            }
             else
               node.addPort(port, false, port.initialValue, 'output');
           });
@@ -644,8 +680,10 @@ function registerScriptGraphBase()  {
           //添加图表的端口至当前节点
           outputPorts.forEach((port, index) => {
             const oldPort = node.inputPorts[index];
-            if (oldPort)
+            if (oldPort) {
               oldPort.load(port);
+              oldPort.direction = 'input';
+            }
             else
               node.addPort(port, false, port.initialValue, 'input');
           });

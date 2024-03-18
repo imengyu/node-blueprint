@@ -14,6 +14,7 @@
     @keydown="onKeyDown"
     @keyup="onKeyUp"
     @contextmenu="onCanvasContextMenu"
+    @dragover="onDragOver"
     @drop="onDrop"
   >
     <BackgroundRender
@@ -198,7 +199,8 @@ const {
 } = useEditorKeyBoardControllerController(context);
 
 const {
-  onDrop
+  onDrop,
+  onDragOver,
 } = useEditorDragController(context);
 
 useEditorUserController(context);

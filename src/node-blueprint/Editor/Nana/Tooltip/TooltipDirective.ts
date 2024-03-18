@@ -8,7 +8,7 @@ let currentShowTooltipId = 0;
 
 const tooltipDirective : ObjectDirective = {
   mounted(el, binding) {
-    const event = registerContextMenuMutex(300, 200, hideTooltip, showTooltip);
+    const event = registerContextMenuMutex(200, 200, hideTooltip, showTooltip);
     let isMouseDown = false;
     let isShow = false;
     const currentMousePos = { x: 0, y: 0 };

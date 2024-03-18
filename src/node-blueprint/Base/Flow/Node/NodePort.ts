@@ -15,8 +15,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
       serializeSchemes: {
         default: {
           serializeAll: true,
-          noSerializableProperties: [
-            'guid',
+          noSerializableProperties: [ 
             'editorState',
             'connectedFromPort',
             'connectedToPort',
@@ -31,6 +30,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
         },
         onlyValues: {
           serializableProperties: [
+            'guid',
             'name',
             'description',
             'guid',
@@ -73,7 +73,7 @@ export class NodePort extends SerializableObject<INodePortDefine> {
   /**
    * 参数默认值，在创建节点时使用
    */
-  paramDefaultValue = undefined;
+  paramDefaultValue : ISaveableTypes|undefined = undefined;
   /**
    * 端口方向
    */
@@ -126,6 +126,10 @@ export class NodePort extends SerializableObject<INodePortDefine> {
    * 强制不检查循环调用
    */
   forceNoCycleDetection = false;
+  /**
+   * 强制禁止用户删除此端口
+   */
+  forceNoDelete = false;
 
   public getValue() : unknown {
     return this.initialValue;
@@ -297,4 +301,8 @@ export interface INodePortDefine {
    * 强制不检查循环调用
    */
   forceNoCycleDetection?: boolean;
+  /**
+   * 强制禁止用户删除此端口
+   */
+  forceNoDelete?: boolean;
 }

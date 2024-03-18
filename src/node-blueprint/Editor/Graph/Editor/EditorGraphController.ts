@@ -4,6 +4,7 @@ import { ChunkInstance } from "../Cast/ChunkedPanel";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
+import { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
@@ -87,6 +88,13 @@ export interface NodeGraphEditorGraphControllerContext {
    * @param data 消息数据
    */
   sendMessageToFilteredNodes(tag: string, message: string|number, data: any) : void;
+  
+  /**
+   * 向编辑器分发消息
+   * @param message 消息
+   * @param data 消息数据
+   */
+  dispstchMessage(message: string, data: any) : void;
 }
 
 const TAG = 'EditorGraphController';
@@ -139,11 +147,20 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * @param connector 
    */
   function addConnector(connector: NodeConnectorEditor) {
+    if (!connector.startPort || !connector.endPort) {
+      printError(TAG, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
+      return;
+    }
+    if (!(connector.startPort instanceof NodePort) || !(connector.endPort instanceof NodePort)) {
+      printError(TAG, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
+      return;
+    }
+
     allConnectors.set(connector.uid, connector);
     if (currentGraph.value)
      ArrayUtils.addOnce(currentGraph.value.connectors, connector);
-    ArrayUtils.addOnce((connector.startPort?.parent as NodeEditor).connectors, connector);
-    ArrayUtils.addOnce((connector.endPort?.parent as NodeEditor).connectors, connector);
+    ArrayUtils.addOnce((connector.startPort.parent as NodeEditor).connectors, connector);
+    ArrayUtils.addOnce((connector.endPort.parent as NodeEditor).connectors, connector);
 
     //更新
     if (connector !== null) {
@@ -327,11 +344,24 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   function sendMessageToFilteredNodes(tag: string, message: string|number, data: any) {
     filterNodes(tag).forEach(node => node.events.onEditorMessage?.(node, context, { message, data }));
   }
+  /**
+   * 向打开的编辑器分发消息
+   * @param message 消息
+   * @param data 消息数据
+   */
+  function dispstchMessage(message: string, data: any) {
+    switch (message) {
+      case 'sendMessageToFilteredNodes': sendMessageToFilteredNodes(data.tag, data.message, data.data); break;
+      case 'sendMessageToNode': sendMessageToNodes(data.nodes, data.message, data.data); break;
+      case 'sendMessageToNodes': sendMessageToNode(data.node, data.message, data.data); break;
+    }
+  }
 
   context.filterNodes = filterNodes;
   context.sendMessageToNode = sendMessageToNode;
   context.sendMessageToNodes = sendMessageToNodes;
   context.sendMessageToFilteredNodes = sendMessageToFilteredNodes;
+  context.dispstchMessage = dispstchMessage;
 
   context.closeGraph = closeGraph;
   context.clearAll = clearAll;

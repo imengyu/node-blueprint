@@ -4,10 +4,10 @@
 
   .prop-list-item {
     position: relative;
-    padding: 4px 5px;
+    padding: 5px 10px;
     background-color: var(--mx-editor-list-item-background-color);
-    margin: 3px;
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
     
     .prop-delete {
       display: inline-block;
@@ -32,7 +32,7 @@
       align-items: center;
       border-bottom: none;
 
-      span {
+      > span {
         width: 30%;
         text-align: right;
       }
@@ -41,6 +41,12 @@
         resize: vertical;
       }
 
+    }
+
+    .prop-row-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 5px;
     }
 
     &.add-button {
@@ -58,6 +64,10 @@
         fill: var(--mx-editor-text-color);
         margin-right: 6px;
       }
+    }
+    &.empty-text {
+      text-align: center;
+      font-size: 12px;
     }
 
     &:hover {

@@ -32,6 +32,20 @@
       display: inline-block;
     }
   }
+  &.error-warning {
+    border: 3px solid rgb(216, 176, 0);
+
+    &.selected {
+      border: 3px solid rgb(255, 208, 0);
+    }
+  }
+  &.error-error {
+    border: 3px solid rgb(214, 32, 0);
+
+    &.selected {
+      border: 3px solid rgb(255, 38, 0);
+    }
+  }
 
   &.isolate:not(:hover) {
     opacity: 0.65;
@@ -174,6 +188,31 @@
 
   .custom-editor {
     position: relative;
+  }
+}
+
+//错误状态
+.node-block-error-state {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+
+  &.error {
+    svg {
+      fill: #cf1010;
+    }
+  }
+  &.warning {
+    svg {
+      fill: #cf7c10;
+    }
   }
 }
 
@@ -371,6 +410,10 @@
     padding: 1px 2px;
   }
 
+  svg {
+    fill: #fff
+  }
+  
   &:hover {
     > .default-content {
       background-color: rgba(255, 255, 255, 0.3);

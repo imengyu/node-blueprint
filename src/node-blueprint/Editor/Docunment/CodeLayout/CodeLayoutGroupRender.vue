@@ -180,7 +180,8 @@ const {
   flex-direction: column;
 
   --tab-padding: 10px;
-  --tab-vertical-padding: 4px;
+  --tab-top-padding: 8px;
+  --tab-bottom-padding: 4px;
   --tab-font-size: 13px;
   --tab-font-size-small: 11px;
 
@@ -207,9 +208,9 @@ const {
     }
     .tab-item {
       position: relative;
-      padding: var(--tab-vertical-padding) var(--tab-padding);
+      padding: var(--tab-top-padding) var(--tab-padding) var(--tab-bottom-padding) var(--tab-padding);
       font-size: var(--tab-font-size);
-      line-height: calc(var(--tab-font-size) * 2);
+      line-height: calc(var(--tab-font-size) * 1.5);
       color: var(--code-layout-color-text);
       cursor: pointer;
 
@@ -228,6 +229,9 @@ const {
         background-color: var(--code-layout-color-highlight);
       }
 
+      svg {
+        fill: currentColor;
+      }
       span {
         pointer-events: none;
       }
@@ -255,8 +259,8 @@ const {
         &::before {
           position: absolute;
           content: '';
-          top: var(--tab-vertical-padding);
-          bottom: var(--tab-vertical-padding);
+          top: var(--tab-top-padding);
+          bottom: var(--tab-bottom-padding);
           width: var(--code-layout-border-size-larger);
           background-color: var(--code-layout-color-border-light);
         }

@@ -2,7 +2,7 @@ import { nextTick } from "vue";
 import { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
-import type { Node, INodeDefine, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
@@ -15,7 +15,7 @@ export interface NodeEditorUserControllerContext {
    * @param define 单元定义
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
    */
-  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) : Node|null;
+  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined, intitalOptions?: CustomStorageObject|undefined) : Node|null;
   /**
    * 用户删除单元
    * @param node 
@@ -283,7 +283,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param define 单元定义
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
    */
-  function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined) {
+  function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined, intitalOptions?: CustomStorageObject|undefined) {
     const currentGraph = context.getCurrentGraph();
 
     //检查单元是否只能有一个
@@ -302,6 +302,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
     const newNode = new NodeEditor(define);
     newNode.load();
+    //配置
+    if (intitalOptions)
+      newNode.options = intitalOptions;
+
     if(context.isConnectToNew()) { //添加单元并连接
       const connectingEndPos = context.getConnectingInfo().endPos;
       newNode.position.set(connectingEndPos);

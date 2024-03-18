@@ -83,7 +83,17 @@ export interface SerializaeObjectSave<T> {
   [SerializableObjectSaveObjObjKey]: T,
 }
 export interface SerializePropCustomRet {
+  /**
+   * 指定当前回调是否已处理数据，设置为 true，则不进行默认序列化。
+   */
   parsed: boolean,
+  /**
+   * 在加载序列化数组、集合时，是否忽略此返回值，如果是，则不加入当前条目至数组、集合。默认：false
+   */
+  ignore?: boolean,
+  /**
+   * 设置当前回调已处理数据。
+   */
   return?: unknown|undefined,
 }
 export interface SerializableSchemeConfig {
@@ -167,8 +177,13 @@ export interface SerializableConfig<T> {
    * @returns 
    */
   mergeOverride?: (keyName: string, thisData : unknown, fromData : unknown) =>  SerializePropCustomRet|undefined,
+  /**
+   * load\merge 之后回调
+   * @returns 
+   */
+  afterLoadOrMerge?: () => void,
 }
-
+export const SerializableObjectLoadIgnore = Symbol('LoadIgnore');
 export const SerializableObjectPureObjName = 'PureObject';
 const SerializableObjectSaveObjNameKey = '@SNK';
 const SerializableObjectSaveObjObjKey = '@SNO';
@@ -211,6 +226,9 @@ export class SerializableObject<T> {
   define: T|null = null;
   
   protected saveProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: unknown) : unknown {
+    
+    if (key === 'customSize')
+    console.log('!');
     if (config.saveProp) {
       const ret = config.saveProp(key, parentKey, element);
       if (ret?.parsed)
@@ -271,7 +289,7 @@ export class SerializableObject<T> {
       }
       else { 
         const forceSerializableClass = this.isForceSerializableClassProperty(config, key, parentKey);
-          if (forceSerializableClass === SerializableObjectPureObjName) {
+        if (forceSerializableClass === SerializableObjectPureObjName) {
           //Serializable object keys
           const saveObject : IKeyValueObject = {};
           for (const skey in element) {
@@ -288,8 +306,11 @@ export class SerializableObject<T> {
     return undefined;
   }
   protected loadProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: IKeyValueObject) : unknown {
+   
     if (!key.startsWith('@') && config.loadProp) {
       const ret = config.loadProp(key, parentKey, element);
+      if (ret?.ignore)
+        return SerializableObjectLoadIgnore;
       if (ret?.parsed)
         return ret.return as IKeyValueObject;
     }
@@ -307,12 +328,21 @@ export class SerializableObject<T> {
         [SerializableObjectSaveObjObjKey]: obj, 
       } = element as unknown as SerializaeObjectSave<unknown>;
       switch (className) {
-        case 'Array':
-          return (obj as Array<IKeyValueObject>).map((v, index) => this.loadProp(config, `${key}[${index}]`, key, v));
+        case 'Array': {
+          const arr = new Array();
+          (obj as IKeyValueObject[]).forEach((v, index) => {
+            const data = this.loadProp(config, `${key}[${index}]`, key, v);
+            if (data !== SerializableObjectLoadIgnore)
+              arr.push(data);
+          });
+          return arr;
+        }
         case 'Set': {
           const set = new Set();
           (obj as IKeyValueObject[]).forEach((v, index) => {
-            set.add(this.loadProp(config, `${key}[${index}]`, key, v));
+            const data = this.loadProp(config, `${key}[${index}]`, key, v);
+            if (data !== SerializableObjectLoadIgnore)
+              set.add(data);
           });
           return set;
         } 
@@ -322,7 +352,9 @@ export class SerializableObject<T> {
             [SerializableObjectSaveMapKey]: string,
             [SerializableObjectSaveValueKey]: IKeyValueObject,
           }[]).forEach((v, index) => {
-            map.set(v[SerializableObjectSaveMapKey], this.loadProp(config, `${key}[${index}]`, key, v[SerializableObjectSaveValueKey]));
+            const data = this.loadProp(config, `${key}[${index}]`, key, v[SerializableObjectSaveValueKey]);
+            if (data !== SerializableObjectLoadIgnore)
+              map.set(v[SerializableObjectSaveMapKey], data);
           });
           return map;
         }
@@ -463,6 +495,7 @@ export class SerializableObject<T> {
       this.serializeConfig.loadOverride = undefined;
       const ret = loadOverride(data);
       this.serializeConfig.loadOverride = loadOverride;
+      this.serializeConfig.afterLoadOrMerge?.();
       return ret;
     }
 
@@ -478,6 +511,7 @@ export class SerializableObject<T> {
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
     }
 
+    this.serializeConfig.afterLoadOrMerge?.();
     config.afterLoad?.();
 
     return this;
@@ -502,7 +536,7 @@ export class SerializableObject<T> {
    * 将影子数据以追加方式合并至当前对象中
    * @param data 
    */
-  mergeShadow(data: IKeyValueObject) {
+  mergeShadow(data: IKeyValueObject, mergeList = false) {
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -517,13 +551,16 @@ export class SerializableObject<T> {
             continue;
         }
 
-        if (typeof element === 'object' && typeof thisEle === 'object') {
+        if (mergeList && typeof element === 'object' && typeof thisEle === 'object') {
           if (element instanceof Map && thisEle instanceof Map) {
             o[key] = ObjectUtils.mergeMap(thisEle, element) as any;
           } else if (element instanceof Set && thisEle instanceof Set) {
             o[key] = ObjectUtils.mergeSet(thisEle, element) as any;
           } else if (element instanceof Array && thisEle instanceof Array) {
             o[key] = element.concat(thisEle);
+          } else if (thisEle instanceof SerializableObject) {
+            thisEle.mergeShadow(element as any);
+            o[key] = thisEle;
           } else {
             o[key] = {
               ...(thisEle as IKeyValueObject),
@@ -535,6 +572,7 @@ export class SerializableObject<T> {
         }
       }
     }
+    this.serializeConfig.afterLoadOrMerge?.();
   }
   /**
    * 按当前对象的序列化配置直接创建单个序列化子对象

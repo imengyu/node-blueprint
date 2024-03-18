@@ -19,7 +19,7 @@ export default defineComponent({
     },
     showDelay: {
       type: Number,
-      default: 1000,
+      default: 600,
     },
     hideDelay: {
       type: Number,

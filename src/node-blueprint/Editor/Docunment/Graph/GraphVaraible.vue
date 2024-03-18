@@ -51,15 +51,16 @@ import PropList from '../../Components/PropList/PropList.vue';
 import Input from '../../Nana/Input/Input.vue';
 import Icon from '../../Nana/Icon.vue';
 import DraggerBg from '../../Images/dragger-bg.svg';
-import { NodeVariable } from '@/node-blueprint/Base/Flow/Graph/NodeVariable';
 import NodeParamTypePicker from '../../Components/PropControl/Components/NodeParamTypePicker.vue';
 import GraphVaraibleParamEditor from '../Graph/GraphVaraibleParamEditor.vue';
 import BaseCheck from '../../Components/PropControl/Components/BaseCheck.vue';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
+import { NodeVariable } from '@/node-blueprint/Base/Flow/Graph/NodeVariable';
+import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
+import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
 
 const props = defineProps({
   graph: {
@@ -83,8 +84,9 @@ function onGraphVariableDrag(variable: NodeVariable, e: DragEvent) {
     e.preventDefault(); 
     e.stopPropagation(); 
   }
-  else if (e.dataTransfer)
-    e.dataTransfer.setData('text/plain', 'drag:graph-variable:' + graph.uid + ':' + variable.name);
+  else {
+    startInternalDataDragging('drag:graph-variable:' + graph.uid + ':' + variable.name);
+  }
 }
 function onDeleteGraphVariable(variable: NodeVariable) {
   const graph = props.graph;

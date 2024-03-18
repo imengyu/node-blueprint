@@ -1,14 +1,24 @@
 <template>
+  <!--图表导航栏-->
   <div class="node-graph-breadcrumb">
-    <div v-for="(graph, i) in graphBreadcrumb" :key="i" :class="(i==graphBreadcrumb.length-1?'last':'')+(graph.isCurrent?' current':'')">
+    <div 
+      v-for="(graph, i) in graphBreadcrumb"
+      :key="i"
+      :class="(i==graphBreadcrumb.length-1?'last':'')+(graph.isCurrent?' current':'')"
+    >
       <span v-if="graph.isCurrent">{{ graph.text }}</span>
       <a 
         v-else href="javascript:;" 
-        @click="$emit('goGraph', graph.graph)"
+        @click="onGraphClicked(graph.graph as NodeGraph)"
       >
         {{ graph.text }}
       </a>
-      <Icon icon="icon-arrow-right-bold" :size="12" />
+      <Icon 
+        v-if="!graph.isEnd"
+        icon="icon-arrow-right-bold"
+        :size="12"
+        @click="onArrowClicked($event, graph as GraphBreadcrumb)"
+      />
     </div>
     <div v-if="!graphBreadcrumb || graphBreadcrumb.length == 0">
       {{ currentDocunment?.name }}
@@ -22,8 +32,21 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import Icon from '../../Nana/Icon.vue';
+import ContextMenuGlobal, { type MenuItem } from '@imengyu/vue3-context-menu';
+import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
-defineEmits([ 'goGraph' ]);
+interface GraphBreadcrumb {
+  text: string,
+  graph: NodeGraph,
+  isCurrent: boolean,
+  isEnd: boolean,
+  childList: {
+    text: string,
+    graph: NodeGraph,
+  }[],
+}
+
+const emit = defineEmits([ 'goGraph' ]);
 
 const props = defineProps({
   currentDocunment: {
@@ -40,11 +63,7 @@ const {
   currentDocunment, currentGraph,
 } = toRefs(props);
 
-const graphBreadcrumb = ref<Array<{
-  text: string,
-  graph: NodeGraph,
-  isCurrent: boolean,
-}>>([]);
+const graphBreadcrumb = ref<GraphBreadcrumb[]>([]);
 
 watch(currentGraph, (v) => {
   loadGraphBreadcrumb(v);
@@ -54,17 +73,32 @@ function loadGraphBreadcrumb(v : NodeGraph) {
   ArrayUtils.clear(graphBreadcrumb.value);
   if (v === null || currentDocunment.value === null) 
     return;
+
+  let childList = v.children.map((v1) => ({
+    text: v1.name,
+    graph: v1,
+  }));
   
   graphBreadcrumb.value.push({
     text: v.name,
     graph: v,
-    isCurrent: true
+    childList,
+    isCurrent: true,
+    isEnd: childList.length === 0,
   });
+  
   let loop = (graph : NodeGraph) => {
+    childList = graph.children.map((v1) => ({
+      text: v1.name,
+      graph: v1,
+    }));
+
     graphBreadcrumb.value.unshift({
       text: graph.name,
       graph: graph,
-      isCurrent: false
+      childList,
+      isCurrent: false,
+      isEnd: childList.length === 0,
     });
     if(graph.parent !== null && graph.parent instanceof NodeGraph) 
       loop(graph.parent);
@@ -72,6 +106,21 @@ function loadGraphBreadcrumb(v : NodeGraph) {
   if(v.parent !== null && v.parent instanceof NodeGraph) 
     loop(v.parent);
 } 
+function onGraphClicked(graph: NodeGraph) {
+  emit('goGraph', graph);
+}
+function onArrowClicked(e: MouseEvent, graphBreadcrum: GraphBreadcrumb) {
+  const ele = (e.target as HTMLElement).parentElement;
+  ContextMenuGlobal.showContextMenu({
+    x: HtmlUtils.getLeft(ele!),
+    y: HtmlUtils.getTop(ele!) + ele!.offsetHeight,
+    theme: 'mac dark',
+    items: graphBreadcrum.childList.map((b) => ({
+      label: b.text,
+      onClick: () => onGraphClicked(b.graph),
+    } as MenuItem))
+  })
+}
 
 onMounted(() => {
   nextTick(() => {

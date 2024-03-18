@@ -3,8 +3,8 @@
     v-if="show"
     class="node-float-panel"
     :style="{
-      left: `${position.x}px`,
-      top: `${position.y}px`,
+      left: `${adjustedPosition.x}px`,
+      top: `${adjustedPosition.y}px`,
       width: `${size.x}px`,
       height: `${size.y}px`
     }"
@@ -21,11 +21,11 @@
 <script setup lang="ts">
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
-import type { PropType } from 'vue';
+import { watch, type PropType, ref } from 'vue';
 
 defineEmits([ 'update:show' ]);
 
-defineProps({
+const props = defineProps({
   show: {
     type: Boolean,
     default: false
@@ -43,5 +43,24 @@ defineProps({
     default: () => new Vector2(),
   },
 });
+
+const adjustedPosition = ref(new Vector2());
+
+watch(() => props.show, (show) => {
+  if (show) {
+    adjustPanelPosition();
+  }
+})
+
+function adjustPanelPosition() {
+  if (props.position.x + props.size.x > window.innerWidth - 200)
+    adjustedPosition.value.x = props.position.x - props.size.x;
+  else
+    adjustedPosition.value.x = props.position.x;
+  if (props.position.y + props.size.y > window.innerHeight)
+    adjustedPosition.value.y = window.innerHeight - props.size.y;
+  else
+    adjustedPosition.value.y = props.position.y;
+}
 
 </script>

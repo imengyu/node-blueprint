@@ -11,6 +11,7 @@ import { printWarning } from "../../Logger/DevLog";
 import { CreateObjectFactory } from "../../Serializable/SerializableObject";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { Vector2 } from "../../Utils/Base/Vector2";
+import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData";
 
 /**
  * 流图类型
@@ -18,6 +19,7 @@ import { Vector2 } from "../../Utils/Base/Vector2";
  * 基础
  * * none 未知
  * * main 静态主入口（单文档只有一个）
+ * * class 类
  * * subblock 子程序块（一个图表只有一个，只能被自己或者父级范围）
  * 类
  * * static 静态函数
@@ -25,12 +27,12 @@ import { Vector2 } from "../../Utils/Base/Vector2";
  * * function 类实例函数
  * * macro 宏
  */
-export type NodeGraphType = 'main' | 'subblock' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
+export type NodeGraphType = 'main' | 'class' | 'subblock' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
 
 /**
  * 图表数据
  */
-export class NodeGraph extends SerializableObject<INodeGraphDefine> {
+export class NodeGraph extends SerializableObject<INodeGraphDefine> implements IObjectSharedData {
   type = 'none' as NodeGraphType;
   name = '';
   uid = RandomUtils.genNonDuplicateIDHEX(32);
@@ -77,7 +79,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                 const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
                 if (!nodeDefine) {
                   printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
-                  return undefined;
+                  return { parsed: true, ignore: true };
                 }
               
                 const nodeInstance = this.createNode(nodeDefine);
@@ -97,22 +99,22 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                 const endNode = this.nodes.get(endPort.nodeUid);
                 if (!startNode) {
                   printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
-                  return undefined;
+                  return { parsed: true, ignore: true };
                 }
                 if (!endNode) {
                   printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
-                  return undefined;
+                  return { parsed: true, ignore: true };
                 }
                 
                 const startPortInstance = startNode.getPortByGUID(startPort.portUid);
                 const endPortInstance = endNode.getPortByGUID(endPort.portUid);
                 if (!startPortInstance) {
                   printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
-                  return undefined;
+                  return { parsed: true, ignore: true };
                 }
                 if (!endPortInstance) {
                   printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
-                  return undefined;
+                  return { parsed: true, ignore: true };
                 }
     
                 const connector = (isEditor ? 
@@ -158,11 +160,11 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
                   return: {
                     uid: connector.uid,
                     startPort: {
-                      nodeUid: connector.startPort?.parent.uid,
+                      nodeUid: connector.startPort?.parent?.uid,
                       portUid: connector.startPort?.guid,
                     },
                     endPort: {
-                      nodeUid: connector.endPort?.parent.uid,
+                      nodeUid: connector.endPort?.parent?.uid,
                       portUid: connector.endPort?.guid,
                     },
                   } as INodeConnectorSaveData
@@ -236,6 +238,9 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
         this.nodes.set(endNode.uid, endNode);
         break;
       }
+      case 'macro':
+      case 'static':
+      case 'function':
       case 'subblock': {
         const startNode = this.createNode({
           ...BaseNodes.getScriptBaseGraphIn(),
@@ -249,10 +254,12 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
         this.nodes.set(endNode.uid, endNode);
         break;
       }
-      case 'function': {
-        break;
-      }
-      case 'static': {
+      case 'constructor': {
+        const startNode = this.createNode({
+          ...BaseNodes.getScriptBaseGraphIn(),
+          position: new Vector2(250, 100),
+        });
+        this.nodes.set(startNode.uid, startNode);
         break;
       }
       default:
@@ -311,10 +318,6 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
   //==========================
 
   /**
-   * 图表所在文档
-   */
-  docunment: NodeDocunment | null = null;
-  /**
    * 指定当前文件是否已经更改
    */
   fileChanged = false;
@@ -336,6 +339,36 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> {
     }
     return baseName;
   }
+  /**
+   * 获取一个可用的图表变量名称
+   * @param baseName 基础名称
+   * @returns 
+   */
+  getUseablePortName(input: boolean): string {
+    const array = input ? this.inputPorts : this.outputPorts;
+    const baseName = input ? 'INPUT' : 'OUTPUT';
+    for (let i = array.length, c = array.length + 10; i < c; i++) {
+      const name = baseName + i;
+      if (!array.find(p => p.name === name))
+        return name;
+    }
+    return baseName;
+  }
+  /**
+   * 获取一个可用的图表名称
+   * @param baseName 基础名称
+   * @returns 
+   */
+  getUseableGraphName(baseName: string): string {
+    const array = this.children;
+    for (let i = array.length, c = array.length + 10; i < c; i++) {
+      const name = baseName + i;
+      if (!array.find(p => p.name === name))
+        return name;
+    }
+    return baseName;
+  }
+
 
 }
 

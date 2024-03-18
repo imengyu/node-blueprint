@@ -66,6 +66,8 @@ export class NodeEditor extends Node {
   };
   public editorProp ?: PropControlItem[];
   public menu ?: { items: NodeContextMenuItem[] };
+  public errorState : ''|'warning'|'error' = '';  
+  public errorMessage = '';
   
   /**
    * 保存块当前位置，以供移动使用
@@ -80,6 +82,28 @@ export class NodeEditor extends Node {
    */
   public updateRegion() {
     this.editorHooks.callbackUpdateRegion?.();
+  }
+
+  private postingLateUpdateRegion = false;
+
+  /**
+   * 设置当前节点错误信息以供用户查看
+   */
+  public setErrorState(type: 'warning'|'error'|'', message?: string) {
+    this.errorState = type;
+    this.errorMessage = message || '';
+  }
+  /**
+   * 延时触发 updateRegion
+   */
+  public postLateUpdateRegion() {
+    if (this.postingLateUpdateRegion)
+      return;
+    this.postingLateUpdateRegion = true;
+    setTimeout(() => {
+      this.editorHooks.callbackUpdateRegion?.();
+      this.postingLateUpdateRegion = false;
+    }, 40);
   }
   /**
    * 获取自上次鼠标按下后，用户是否移动了单元

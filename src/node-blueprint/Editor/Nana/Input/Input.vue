@@ -12,7 +12,9 @@
     </div>
 
     <input 
+      ref="inputRef"
       class="nana-input-inner"
+      :draggable="false"
       :type="type"
       :value="modelValue"
       :placeholder="placeholder"
@@ -21,6 +23,7 @@
       @input="onInput"
       @focus="onFocus"
       @blur="onBlur"
+      @keypress="onKeyPress"
     >
 
     <div class="nana-suffix">
@@ -31,6 +34,11 @@
 
 <script setup lang="ts">
 import { ref, type PropType } from 'vue';
+
+export interface InputRef {
+  focus: () => void;
+  blur: () => void;
+}
 
 const props = defineProps({
   modelValue: {
@@ -85,10 +93,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * 是否Enter键提交
+   */
+  enterSubmit: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([ 'update:modelValue', 'focus', 'blur' ])
 
+const inputRef = ref<HTMLInputElement>();
 const focus = ref(false);
 
 function onInput(e: Event) {
@@ -105,6 +121,19 @@ function onBlur(e: Event) {
     emit('update:modelValue', (e.target as HTMLInputElement).value);
   emit('blur');
 }
+function onKeyPress(e: KeyboardEvent) {
+  if (props.enterSubmit && e.key === 'Enter')
+    inputRef.value?.blur();
+}
+
+defineExpose({
+  focus() {
+    inputRef.value?.focus();
+  },
+  blur() {
+    inputRef.value?.blur();
+  },
+});
 
 </script>
 

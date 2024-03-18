@@ -23,27 +23,6 @@ export class Node extends SerializableObject<INodeDefine> {
 
   constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
     super('Node', define, mergeSerializableConfig({    
-      loadOverride: (data : INodeDefine) => {
-        const ret = super.load(data);
-    
-        ArrayUtils.clear(this.inputPorts);
-        ArrayUtils.clear(this.outputPorts);
-        this.mapPorts.clear();
-    
-        //加载端口
-        this.ports.forEach((port) => {
-          if (port.direction === 'input') {
-            this.mapPorts.set(port.guid, port);
-            this.inputPorts.push(port);
-          } else if (port.direction === 'output') {
-            this.mapPorts.set(port.guid, port);
-            this.outputPorts.push(port);
-          } else {
-            printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
-          }
-        });
-        return ret;
-      },
       mergeOverride(keyName, thisData, fromData) {
         if (keyName === 'ports') {
           const thisArray = thisData as NodePort[];
@@ -61,6 +40,23 @@ export class Node extends SerializableObject<INodeDefine> {
           }
           return { parsed: true };
         }
+      },
+      afterLoadOrMerge: () => {
+        ArrayUtils.clear(this.inputPorts);
+        ArrayUtils.clear(this.outputPorts);
+        this.mapPorts.clear();
+        //加载端口
+        this.ports.forEach((port) => {
+          if (port.direction === 'input') {
+            this.mapPorts.set(port.guid, port);
+            this.inputPorts.push(port);
+          } else if (port.direction === 'output') {
+            this.mapPorts.set(port.guid, port);
+            this.outputPorts.push(port);
+          } else {
+            printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
+          }
+        });
       },
       serializeSchemes: {
         default: {
@@ -456,6 +452,7 @@ export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
 export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
 export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up" | "leave" | "enter", e: MouseEvent) => boolean;
+export type NodeEditorMoseClickEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "click" | "dblclick", e: MouseEvent) => void;
 export type NodeEditorEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "select" | "unselect") => void;
 
 export interface NodeEditorMessageData {
@@ -511,6 +508,10 @@ export interface INodeEventSettings {
    * 单元鼠标事件回调。
    */
   onEditorMoseEvent ?: NodeEditorMoseEventFunction,
+  /**
+   * 单元鼠标点击事件回调。
+   */
+  onEditorClickEvent ?: NodeEditorMoseClickEventFunction,
   /**
    * 单元编辑器事件回调。
    */
@@ -605,6 +606,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
   onAddToEditor ?: NodeEventCallback;
   onCreateCustomEditor ?: NodeCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
+  onEditorClickEvent ?: NodeEditorMoseClickEventFunction;
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;
   onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {

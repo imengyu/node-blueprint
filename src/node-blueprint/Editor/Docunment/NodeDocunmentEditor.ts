@@ -28,6 +28,11 @@ export interface NodeDocunmentEditorContext {
     */
   getOtherGraphs() : NodeGraph[]|undefined;
   /**
+    * 获取已打开的图表
+    * @param graph 
+    */
+  getOpenedGraphs() : NodeGraph[]|undefined;
+  /**
    * 获取当前激活的图表上下文
    */
   getActiveGraphEditor(): NodeGraphEditorContext | undefined;
@@ -35,4 +40,10 @@ export interface NodeDocunmentEditorContext {
   * 关播所有打开的图表
   */
   closeAllGraph() : void;
+  /**
+   * 向打开的编辑器分发消息
+   * @param message 消息
+   * @param data 消息数据
+   */
+  dispstchMessage(message: string, data: any) : void;
 }

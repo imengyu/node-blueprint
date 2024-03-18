@@ -79,6 +79,9 @@ const context = {
   getOtherGraphs() {
     return openedGraphs.value.filter(p => p.graph !== currentGraph.value).map(p => p.graph);
   },
+  getOpenedGraphs() {
+    return openedGraphs.value.map(p => p.graph);
+  },
   getActiveGraphEditor() {
     return currentGraph.value?.activeEditor || undefined;
   },
@@ -117,6 +120,9 @@ const context = {
     ArrayUtils.clear(openedGraphs.value);
     currentGraph.value = undefined;
     emit('activeGraphEditorChange', currentGraph.value);
+  },
+  dispstchMessage(m, d) {
+    openedGraphs.value.map(p => p.context.dispstchMessage(m, d));
   },
 } as NodeDocunmentEditorContext;
 

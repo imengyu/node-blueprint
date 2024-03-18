@@ -5,12 +5,14 @@
   >
     <template #content>
       <h4>{{ instance.name }}</h4>
+      <p v-if="instance.errorState">{{ instance.errorMessage }}</p>
       <p>{{ instance.description }}</p>
     </template>
     <div 
       ref="nodeRef"
       tabindex="-1"
       :class="['node-block',
+               (instance.errorState ? `error-${instance.errorState} ` : ''),
                (instance.selected ? 'selected ' : ''),
                (instance.style.customClassNames),
                (twinkleActive ? 'actived' : ''),
@@ -35,7 +37,17 @@
       @mouseup="onMouseUp($event)"
       @mousewheel="onMouseWhell($event)"
       @contextmenu="onContextmenu($event)"
+      @click="onMouseClick($event)"
+      @dblclick="onMouseDblclick($event)"
     >
+      <!--错误区域-->
+      <div
+        v-if="instance.errorState" 
+        :class="'node-block-error-state ' + instance.errorState"
+      >
+        <Icon v-if="instance.errorState === 'error'" icon="icon-error-" :size="26" />
+        <Icon v-else-if="instance.errorState === 'warning'" icon="icon-warning-filling" :size="26" />
+      </div>
       <!--注释区域-->
       <div
         v-show="instance.markOpen && !instance.style.noComment" 
@@ -73,6 +85,7 @@
       >
         <template #content>
           <h4>{{ instance.name }}</h4>
+          <p v-if="instance.errorState">{{ instance.errorMessage }}</p>
           <p>{{ instance.description }}</p>
         </template>
         <div 
@@ -626,6 +639,12 @@ function onMouseEnter(e : MouseEvent) {
 }
 function onMouseLeave(e : MouseEvent) {
   instance.value.events.onEditorMoseEvent?.(instance.value, context, 'leave', e);
+}
+function onMouseClick(e : MouseEvent) {
+  instance.value.events.onEditorClickEvent?.(instance.value, context, 'click', e);
+}
+function onMouseDblclick(e : MouseEvent) {
+  instance.value.events.onEditorClickEvent?.(instance.value, context, 'dblclick', e);
 }
 
 //#endregion

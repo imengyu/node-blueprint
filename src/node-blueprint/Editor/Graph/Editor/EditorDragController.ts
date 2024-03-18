@@ -1,5 +1,23 @@
+import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
+
+let editorDragData : any = null;
+
+/**
+ * 设置编辑器内部拖拽数据
+ * @param data 
+ */
+export function startInternalDataDragging(data: unknown) {
+  editorDragData = data;
+}
+/**
+ * 获取编辑器内部拖拽数据
+ * @returns 
+ */
+export function getInternalDraggingData<T>() : T {
+  return editorDragData as T;
+}
 
 /**
  * 流程图用户拖拽管理器
@@ -8,11 +26,20 @@ import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
  */
 export function useEditorDragController(context: NodeGraphEditorInternalContext) {
 
+
+  function onDragOver(e: DragEvent) {
+    if (getInternalDraggingData()) 
+    {
+      e.preventDefault();
+      e.stopPropagation();
+      context.updateMousePos(e);
+    }
+  }
   //拖放处理
   function onDrop(e: DragEvent) {
     context.updateMousePos(e);
 
-    const data = e.dataTransfer?.getData('text/plain') || '';
+    const data = getInternalDraggingData<string>() || '';
     if(data && data.startsWith('drag:')) {
       const datav = data.split(':');
       switch(datav[1]) {
@@ -23,14 +50,14 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
           ); 
           break;
         //拖拽子图表
-        // TODO: case 'graph': {
-        //   let block = new BlockEditor(BaseBlocks.getScriptBaseGraphCall());
-        //   block.options['graph'] = datav[2];
-        //    let pos = this.editorWorker.getMouseCurrentPosInViewPort();
-        //   let zoom = this.viewZoom;
-        //   this.editorWorker.addBlock(block, new Vector2(pos.x / zoom, pos.y / zoom));
-        //   break;
-        // }
+        case 'graph': {
+          const pos = context.getMouseInfo().mouseCurrentPosViewPort;
+          const nodeDefine = BaseNodes.getScriptBaseGraphCall();
+          context.userAddNode(nodeDefine, pos, {
+            callGraphName: datav[3]
+          });
+          break;
+        }
         //拖拽节点
         case 'node': {
           const pos = context.getMouseInfo().mouseCurrentPosViewPort;
@@ -48,5 +75,8 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
 
   return {
     onDrop,
+    onDragOver,
+    startInternalDataDragging,
+    getInternalDraggingData,
   }
 }

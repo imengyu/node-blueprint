@@ -37,16 +37,30 @@
       <img class="node-menu-logo" src="../Images/Logo/logo-huge-light.svg">
     </template>
     <template #panelRender="{ panel }">
-      <template v-if="panel.name==='CommonProps'">
+      <template v-if="panel.name==='NodeProps'">
         <PropBox class="node-custom-editor">
           <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
           <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
         </PropBox>
       </template>
-      <template v-if="panel.name==='DocProps'">
+      <template v-else-if="panel.name==='DocProps'">
+        <PropBox class="node-custom-editor">
+          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+        </PropBox>
+      </template>
+      <template v-else-if="panel.name==='GraphProps'">
         <PropBox class="node-custom-editor">
           <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
-          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
+        </PropBox>
+      </template>
+      <template v-else-if="panel.name==='GraphVariableProps'">
+        <PropBox class="node-custom-editor">
+          <NodeGraphVariableProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+        </PropBox>
+      </template>
+      <template v-else-if="panel.name==='GraphChildrenProps'">
+        <PropBox class="node-custom-editor">
+          <NodeGraphChildrenProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
         </PropBox>
       </template>
       <template v-else-if="panel.name==='Console'">
@@ -57,11 +71,13 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide, h } from 'vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
 import NodeGraphProp from './Prop/NodeGraphProp.vue';
+import NodeGraphVariableProp from './Prop/NodeGraphVariableProp.vue';
+import NodeGraphChildrenProp from './Prop/NodeGraphChildrenProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
@@ -84,6 +100,7 @@ import Alert from '../Nana/Modal/Alert';
 import Icon from '../Nana/Icon.vue';
 import IconButton from '../Nana/Button/IconButton.vue';
 import TestScript from '../../../../test-scripts/sub-graph.json';
+import DefaultLayoutData from './Data/DefaultLayoutData.json';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
@@ -464,40 +481,42 @@ function initLayout() {
     if (!codeLayout.value)
       return;
 
-    const layoutData = SettingsUtils.getSettings<any>('NodeIdeEditorLayout', null);
-
-    if (layoutData) {
-      codeLayout.value.loadLayout(layoutData, (panel) => {
-        switch (panel.name) {
-          case 'Console':
-            panel.name = '控制台';
-            break;
-          case 'CommonProps':
-            panel.name = '属性窗口';
-            break;
-          case 'DocProps':
-            panel.name = '文档属性';
-            break;
-        }
-        return panel;
-      });
-    } else {
-      const bottomPanel = codeLayout.value.getRootGrid('bottomPanel');
-      const secondarySideBar = codeLayout.value.getRootGrid('secondarySideBar');
-
-      bottomPanel.addPanel({
-        name: 'Console',
-        title: '控制台',
-      });
-      secondarySideBar.addPanel({
-        name: 'CommonProps',
-        title: '属性窗口',
-      });
-      secondarySideBar.addPanel({
-        name: 'DocProps',
-        title: '文档属性',
-      });
-    }
+    const layoutData = SettingsUtils.getSettings<any>('NodeIdeEditorLayout', null) || DefaultLayoutData;
+    codeLayout.value.loadLayout(layoutData, (panel) => {
+      switch (panel.name) {
+        case 'Console':
+          panel.title = '控制台';
+          panel.iconSmall = () => h(Icon, { icon: 'icon-develop' });
+          break;
+        case 'NodeProps':
+          panel.title = '节点属性';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-vector' });
+          break;
+        case 'GraphProps':
+          panel.title = '图表属性';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-edit-filling' });
+          break;
+        case 'GraphVariableProps':
+          panel.title = '图表变量';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-' });
+          break;
+        case 'GraphChildrenProps':
+          panel.title = '子图表';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-2' });
+          break;
+        case 'DocProps':
+          panel.title = '文档属性';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-cube' });
+          break;
+      }
+      return panel;
+    });
+    
   });
 }
 function resetDefultLayout() {

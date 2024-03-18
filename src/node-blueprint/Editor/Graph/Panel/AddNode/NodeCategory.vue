@@ -52,6 +52,7 @@ import CollapseItem from '../../../Components/List/CollapseItem.vue';
 import DefaultLogo from '../../../Images/BlockIcon/function_static.svg';
 import SmallButton from '../../../Components//SmallButton.vue';
 import Tooltip from '@/node-blueprint/Editor/Nana/Tooltip/Tooltip.vue';
+import { startInternalDataDragging } from '../../Editor/EditorDragController';
 
 const props = defineProps({
   categoryData: {
@@ -71,8 +72,8 @@ function onDrag(item: CategoryDataItem, e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
   }
-  else if (e.dataTransfer) {
-    e.dataTransfer.setData("text/plain", "drag:node:" + item.define.guid);
+  else {
+    startInternalDataDragging("drag:node:" + item.define.guid);
   }
 }
 function onClick(item: CategoryDataItem) {

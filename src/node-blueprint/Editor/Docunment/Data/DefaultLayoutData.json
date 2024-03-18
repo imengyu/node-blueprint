@@ -1,0 +1,76 @@
+{
+  "primary": {
+    "name": "primarySideBar",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": []
+  },
+  "secondary": {
+    "name": "secondarySideBar",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": [
+      {
+        "name": "NodeProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "GraphProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "GraphVariableProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "GraphChildrenProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      }
+    ]
+  },
+  "bottom": {
+    "name": "bottomPanel",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": [
+      {
+        "name": "Console",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      }
+    ]
+  }
+}

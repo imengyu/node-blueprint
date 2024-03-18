@@ -21,6 +21,9 @@ export function injectNodeGraphEditorContextInEditorOrIDE() {
     getNodeGraphEditorContext() {
       return editorContext ? editorContext : (context.getCurrentActiveGraphEditor());
     },
+    getNodeDocunmentEditorContext() {
+      return editorContext ? editorContext : (context.getCurrentActiveDocunmentEditor());
+    },
     getNodeIdeControlContext() {
       return context
     }
