@@ -260,6 +260,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   
     const panelResult = reactive(new CodeLayoutPanelInternal(this.context));
     Object.assign(panelResult, panel);
+    panelResult.children = [];
     panelResult.open = panel.startOpen ?? false;
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
@@ -401,6 +402,8 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
   //These methods is called internally, and you do not need to use them.
 
   addChild(child: CodeLayoutPanelInternal, index?: number) {
+    if (!(child instanceof CodeLayoutPanelInternal))
+      throw new Error('Try add bad panel data');
     if (this.name === child.name)
       throw new Error('Try add self');
     if (typeof index === 'number')
@@ -413,6 +416,10 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
       this.activePanel = child;
   }
   addChilds(childs: CodeLayoutPanelInternal[], startIndex?: number) {
+    for (const child of childs) {
+      if (!(child instanceof CodeLayoutPanelInternal))
+        throw new Error('Try add bad panel data');
+    }
     if (typeof startIndex === 'number')
       this.children.splice(startIndex, 0, ...childs);
     else

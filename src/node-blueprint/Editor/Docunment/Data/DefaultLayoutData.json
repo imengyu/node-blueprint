@@ -35,22 +35,32 @@
         "children": []
       },
       {
-        "name": "GraphVariableProps",
+        "name": "GraphVariableChildrenGroup",
         "open": false,
         "resizeable": false,
         "visible": true,
         "showBadge": true,
         "size": 0,
-        "children": []
-      },
-      {
-        "name": "GraphChildrenProps",
-        "open": false,
-        "resizeable": false,
-        "visible": true,
-        "showBadge": true,
-        "size": 0,
-        "children": []
+        "children": [
+          {
+            "name": "GraphVariableProps",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 364,
+            "children": []
+          },
+          {
+            "name": "GraphChildrenProps",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 346,
+            "children": []
+          }
+        ]
       }
     ]
   },

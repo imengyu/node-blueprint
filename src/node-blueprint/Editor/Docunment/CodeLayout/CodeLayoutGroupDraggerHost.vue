@@ -383,8 +383,27 @@ function getAvgAllocSize() {
     canAllocSize / notAllocSpaceAndOpenCount
     : 0;
 }
+//因为保存数据是固定的像素值，第二次加载时，
+//有可能容器大小已更改，所以如果所有面板大小
+//加起来不等于容器大小，则需要重新布局
+function relayoutAfterLoad() {
+  if (!container.value)
+    return;
+  const containerSize = props.horizontal ? container.value.offsetWidth : container.value.offsetHeight;
+  let allSize = 0;
+  props.group.children.forEach((panel) => {
+    if (!panel.visible)
+      return;
+      allSize += panel.open ? 
+        panel.size : 
+        getPanelMinSize(panel.minSize);
+  });
+  if (allSize !== containerSize)
+    relayoutAllWithResizedSize(allSize - containerSize);
+}
 //强制重新布局
 function relayoutAll() {
+
 
   //初始大小情况下，有可能有些面板空间还未分配，现在分配这些空间
   const allocSize = getAvgAllocSize();
@@ -580,6 +599,7 @@ onMounted(() => {
     relayoutAllWhenSizeChange();
     setTimeout(() => {
       relayoutAllWhenSizeChange();
+      relayoutAfterLoad();
     }, 200);
   });
 });

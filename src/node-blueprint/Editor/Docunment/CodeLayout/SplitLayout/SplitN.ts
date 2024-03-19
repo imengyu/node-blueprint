@@ -67,9 +67,10 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     if (panelInternal.parentGroup)
       throw new Error(`Panel ${panel.name} already added to ${panelInternal.parentGroup.name} !`);
 
-  
     const panelResult = reactive(new CodeLayoutSplitNGridInternal(this.context));
     Object.assign(panelResult, panel);
+    panelResult.children = [];
+    panelResult.childGrid = [];
     panelResult.open = panel.startOpen ?? false;
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
@@ -95,6 +96,7 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
   
     const panelResult = reactive(new CodeLayoutSplitNPanelInternal(this.context));
     Object.assign(panelResult, panel);
+    panelResult.children = [];
     panelResult.size = panel.size ?? 0;
     panelResult.accept = panel.accept ?? this.accept;
     this.addChild(panelResult as CodeLayoutSplitNPanelInternal);

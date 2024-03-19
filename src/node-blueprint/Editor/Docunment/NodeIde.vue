@@ -509,13 +509,18 @@ function initLayout() {
           panel.tooltip = panel.title;
           panel.iconSmall = () => h(Icon, { icon: 'icon-vector' });
           break;
+        case 'GraphVariableChildrenGroup':
+          panel.title = '图表变量和图表树';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-' });
+          break;
         case 'GraphVariableProps':
           panel.title = '图表变量';
           panel.tooltip = panel.title;
           panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-' });
           break;
         case 'GraphChildrenProps':
-          panel.title = '子图表';
+          panel.title = '图表树';
           panel.tooltip = panel.title;
           panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-2' });
           break;
@@ -531,7 +536,7 @@ function resetDefultLayout() {
   initLayout();
 }
 function saveLayout() {
-  SettingsUtils.setSettings('NodeIdeEditorLayout', codeLayout.value?.saveLayout() || null);
+  //SettingsUtils.setSettings('NodeIdeEditorLayout', codeLayout.value?.saveLayout() || null);
 }
 
 //#endregion
