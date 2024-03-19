@@ -4,12 +4,20 @@
     ref="eleRef"
     class="nana-tooltip"
     role="tooltip"
+    :class="[
+      ignoreEvent ? 'ignore-event' : '',
+    ]"
     :style="{
       left: `${currentPos.x}px`,
       top: `${currentPos.y}px`,
     }"
   >
-    <slot name="content">
+    <div v-if="centerContent" class="center">
+      <slot name="content">
+        <span v-html="content" />
+      </slot>
+    </div>
+    <slot v-else name="content">
       <span v-html="content" />
     </slot>
   </div>
@@ -31,6 +39,14 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  ignoreEvent: {
+    type: Boolean,
+    default: false,
+  },
+  centerContent: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const eleRef = ref<HTMLElement>();
@@ -39,8 +55,8 @@ const currentPos = reactive({ x: 0, y: 0});
 function testAndAdjustPosition() {
   nextTick(() => {
     if (eleRef.value) {
-    const xOverflow = document.documentElement.clientWidth - (currentPos.x + eleRef.value.offsetWidth);
-    const yOverflow = document.documentElement.clientHeight - (currentPos.y + eleRef.value.offsetHeight);
+      const xOverflow = document.documentElement.clientWidth - (currentPos.x + eleRef.value.offsetWidth);
+      const yOverflow = document.documentElement.clientHeight - (currentPos.y + eleRef.value.offsetHeight);
       if (xOverflow < 0) currentPos.x += xOverflow;
       if (yOverflow < 0) currentPos.y += yOverflow;
     }
@@ -52,7 +68,7 @@ watch(() => props.x, (v) => {
   testAndAdjustPosition();
 })
 watch(() => props.y, (v) => {
-  currentPos.x = v;
+  currentPos.y = v;
   testAndAdjustPosition();
 })
 
@@ -60,7 +76,7 @@ onMounted(() => {
   currentPos.x = props.x;
   currentPos.y = props.y;
   testAndAdjustPosition();
-})
+});
 </script>
 
 <style lang="scss">

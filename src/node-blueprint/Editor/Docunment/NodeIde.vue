@@ -40,27 +40,26 @@
       <template v-if="panel.name==='NodeProps'">
         <PropBox class="node-custom-editor">
           <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
+          <PropItem v-else>
+            在图表选中单元来编辑其属性
+          </PropItem>
           <NodeConnectorProp v-if="currentActiveConnectors.length > 0" :connectors="(currentActiveConnectors as NodeConnectorEditor[])" />
-        </PropBox>
-      </template>
-      <template v-else-if="panel.name==='DocProps'">
-        <PropBox class="node-custom-editor">
-          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
         </PropBox>
       </template>
       <template v-else-if="panel.name==='GraphProps'">
         <PropBox class="node-custom-editor">
           <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+          <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
         </PropBox>
       </template>
       <template v-else-if="panel.name==='GraphVariableProps'">
-        <PropBox class="node-custom-editor">
+        <PropBox class="node-custom-editor" noSearch>
           <NodeGraphVariableProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
         </PropBox>
       </template>
       <template v-else-if="panel.name==='GraphChildrenProps'">
-        <PropBox class="node-custom-editor">
-          <NodeGraphChildrenProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
+        <PropBox class="node-custom-editor" noSearch>
+          <NodeGraphChildrenProp v-if="currentActiveDocunment?.mainGraph" :activeGraph="(currentActiveGraph as NodeGraph)" :graph="(currentActiveDocunment.mainGraph as NodeGraph)" />
         </PropBox>
       </template>
       <template v-else-if="panel.name==='Console'">
@@ -89,7 +88,7 @@ import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout/CodeLayout';
 import type { CodeLayoutSplitNInstance } from './CodeLayout/SplitLayout/SplitN';
-import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
+import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
@@ -101,6 +100,7 @@ import Icon from '../Nana/Icon.vue';
 import IconButton from '../Nana/Button/IconButton.vue';
 import TestScript from '../../../../test-scripts/sub-graph.json';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
+import PropItem from '../Components/PropList/PropItem.vue';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
@@ -133,11 +133,13 @@ const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSetti
   topMargin: 30,
   drawDebugInfo: false,
   drawGrid: true,
+  snapGrid: true,
 }));
 
 function saveSettings() {
   saveLayout();
-  SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
+  if (SettingsUtils.getSettings('NodeIdeEditorSettings', '') !== '')
+    SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
 }
 
 onBeforeUnmount(saveSettings)
@@ -233,6 +235,15 @@ const menuData = reactive<MenuOptions>({
           onClick() {
             editorSettings.drawGrid = !editorSettings.drawGrid;
             this.checked = editorSettings.drawGrid;
+          },
+        },
+        {
+          label: '吸附网格',
+          divided: true,
+          checked: editorSettings.snapGrid,
+          onClick() {
+            editorSettings.snapGrid = !editorSettings.snapGrid;
+            this.checked = editorSettings.snapGrid;
           },
         },
         {
@@ -489,14 +500,14 @@ function initLayout() {
           panel.iconSmall = () => h(Icon, { icon: 'icon-develop' });
           break;
         case 'NodeProps':
-          panel.title = '节点属性';
+          panel.title = '单元属性';
           panel.tooltip = panel.title;
-          panel.iconSmall = () => h(Icon, { icon: 'icon-vector' });
+          panel.iconSmall = () => h(Icon, { icon: 'icon-cube' });
           break;
         case 'GraphProps':
           panel.title = '图表属性';
           panel.tooltip = panel.title;
-          panel.iconSmall = () => h(Icon, { icon: 'icon-edit-filling' });
+          panel.iconSmall = () => h(Icon, { icon: 'icon-vector' });
           break;
         case 'GraphVariableProps':
           panel.title = '图表变量';
@@ -507,11 +518,6 @@ function initLayout() {
           panel.title = '子图表';
           panel.tooltip = panel.title;
           panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-2' });
-          break;
-        case 'DocProps':
-          panel.title = '文档属性';
-          panel.tooltip = panel.title;
-          panel.iconSmall = () => h(Icon, { icon: 'icon-cube' });
           break;
       }
       return panel;

@@ -194,22 +194,27 @@
 //错误状态
 .node-block-error-state {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  top: -15px;
+  right: -15px;
   z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   pointer-events: none;
+  background-color: #fff;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.error {
+    border-color: #cf1010;
     svg {
       fill: #cf1010;
     }
   }
   &.warning {
+    border-color: #cf7c10;
     svg {
       fill: #cf7c10;
     }

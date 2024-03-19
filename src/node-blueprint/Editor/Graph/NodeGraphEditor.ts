@@ -56,8 +56,19 @@ export interface NodeGraphEditorBaseContext {
    * @param args 事件参数
    */
   emitEvent(name: string, ...args: unknown[]) : void;
+
+  /**
+   * 获取编辑器设置
+   */
+  getSettings(): INodeGraphEditorSettings;
 }
 
+export interface INodeGraphEditorSettings {
+  topMargin?: number;
+  drawDebugInfo?: boolean;
+  drawGrid?: boolean;
+  snapGrid?: boolean;
+}
 
 export type NodeGraphEditorBaseEventCallback =  (...args: unknown[]) => void;
 export interface NodeGraphEditorBaseEventListener {

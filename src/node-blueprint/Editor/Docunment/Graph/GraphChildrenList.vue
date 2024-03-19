@@ -1,28 +1,30 @@
 <template>
   <PropList 
-    :items="graphList"
-    emptyText="没有数据，可点击右上角按钮添加"
+    expandable
     dragSortable
+    :items="graphList"
+    :emptyText="showEmpty ? '没有数据，可点击右上角按钮添加' : ''"
+    :childExpandable="(childGraph) => (childGraph as NodeGraph).children.length > 0"
+    :childDragable="(childGraph, index) => ((childGraph as NodeGraph).type !== 'subgraph' || activeGraph.children.includes((childGraph as NodeGraph))) && !graphRenameState[index]"
+    :childMouseEvent="onChildGraphMouseEvent"
+    :childStartDrag="(childGraph, index, event) => onChildGraphDrag(childGraph as NodeGraph, event)"
     @drag-sort="onChildDragSort"
     @add="onAddChildGraph"
   >
-    <template #row="{ item: childGraph, index }">
-      <PropItem
-        :draggable="!graphRenameState[index]"
-        @contextmenu="onChildGraphMenu(index, childGraph as NodeGraph, $event)"
-        @dblclick="onEditChildGraph(childGraph as NodeGraph)"
-        @dragstart="onChildGraphDrag(childGraph as NodeGraph, $event)"
-      >
-        <GraphChildrenIcon
-          :graph="(childGraph as NodeGraph)"
-        />
-        <PropEditTextItem 
-          :renameState="graphRenameState[index] ?? false"
-          :model-value="(childGraph as NodeGraph).name"
-          @update:model-value="(v: string) => onChildGraphNameUpdate((childGraph as NodeGraph), v as string)"
-          @update:renameState="(v: boolean) => graphRenameState[index] = v"
-        />
-      </PropItem>
+    <template #rowHorizontal="{ item: childGraph, index }">
+      <GraphChildrenIcon
+        :graph="(childGraph as NodeGraph)"
+      />
+      <PropEditTextItem 
+        :renameState="graphRenameState[index] ?? false"
+        :model-value="(childGraph as NodeGraph).name"
+        @update:model-value="(v: string) => onChildGraphNameUpdate((childGraph as NodeGraph), v as string)"
+        @update:renameState="(v: boolean) => graphRenameState[index] = v"
+      />
+      <GraphChildrenActiveDot v-if="(childGraph as NodeGraph) === activeGraph" />
+    </template>
+    <template #rowExtend="{ item: childGraph }">
+      <GraphChildrenList :graph="(childGraph as NodeGraph)" :activeGraph="activeGraph" type="subgraph" />
     </template>
   </PropList>
 </template>
@@ -33,13 +35,12 @@ import PropList from '../../Components/PropList/PropList.vue';
 import PropEditTextItem from '../../Components/PropList/PropEditTextItem.vue';
 import GraphChildrenIcon from './GraphChildrenIcon.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import { NodeGraph, type NodeGraphType } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
-import PropItem from '../../Components/PropList/PropItem.vue';
+import GraphChildrenActiveDot from './GraphChildrenActiveDot.vue';
 
 export interface GraphChildrenListRef {
   onAddChildGraph(): void;
@@ -50,9 +51,17 @@ const props = defineProps({
     type: Object as PropType<NodeGraph>,
     required: true,
   },
+  activeGraph: {
+    type: Object as PropType<NodeGraph>,
+    default: null,
+  },
   type: {
     type: String as PropType<NodeGraphType>,
     required: true,
+  },
+  showEmpty: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -63,7 +72,7 @@ const graphRenameState = ref<boolean[]>([]);
 const { getNodeGraphEditorContext, getNodeIdeControlContext, getNodeDocunmentEditorContext } = injectNodeGraphEditorContextInEditorOrIDE();
 
 function onAddChildGraph() {
-  const graph = props.graph;
+  const graph = props.activeGraph;
   let childGraph: NodeGraph|null = null;
   switch (props.type) {
     case 'constructor':
@@ -82,7 +91,7 @@ function onAddChildGraph() {
       break;
     case 'function':
     case 'static':
-    case 'subblock':
+    case 'subgraph':
     case 'macro':
       childGraph = new NodeGraph({
         name: graph.getUseableGraphName('新图表'),
@@ -112,13 +121,17 @@ function onAddChildGraph() {
   }
 }
 function onChildGraphDrag(childGraph: NodeGraph, e: DragEvent) {
-  const graph = props.graph; 
-  if(HtmlUtils.isEventInControl(e)) { 
-    e.preventDefault(); 
-    e.stopPropagation(); 
-  }
-  else {
-    startInternalDataDragging('drag:graph:' + graph.uid + ':' + childGraph.uid);
+  e.stopPropagation();
+  startInternalDataDragging('drag:graph:' + (childGraph.type === 'subgraph' ? 'subgraph' : 'function') + ':' + childGraph.name);
+}
+function onChildGraphMouseEvent(item: unknown, index: number, type: 'click'|'dblclick'|'contextmenu', e: MouseEvent) {
+  switch (type) {
+    case 'dblclick':
+      onEditChildGraph(item as NodeGraph);
+      break;
+    case 'contextmenu':
+      onChildGraphMenu(index, item as NodeGraph, e);
+      break;
   }
 }
 function onChildGraphMenu(index: number, childGraph: NodeGraph, e: MouseEvent) {

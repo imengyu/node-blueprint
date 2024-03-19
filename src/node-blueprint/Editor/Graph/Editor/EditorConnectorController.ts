@@ -97,8 +97,6 @@ export interface IConnectingInfo {
   canConnect: boolean,
   shouldAddConverter: boolean,
   nextAddConverter: null|NodeTypeCoverter,
-  failedText: string,
-  successText: string,
   otherSideRequireDirection: NodePortDirection,
   otherSideRequireType: null|NodeParamType,
 }
@@ -210,19 +208,19 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     canConnect: false,
     shouldAddConverter: false,
     nextAddConverter: null,
-    failedText: '',
-    successText: '',
     otherSideRequireDirection: 'input',
     otherSideRequireType: null,
   }) as IConnectingInfo;
 
   //更新当前鼠标激活的端口
   function updateCurrentHoverPort(port : NodePortEditor, active : boolean) {
+
+    let successText = '', failedText = '';
+
     if(active) {
       connectingInfo.currentHoverPort = port;
       connectingInfo.shouldAddConverter = false;
       connectingInfo.nextAddConverter = null;
-      connectingInfo.successText = '';
 
       if(connectingInfo.startPort === null){
         connectingInfo.isFail = false;
@@ -234,13 +232,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       //类型检查
       if(connectingInfo.currentHoverPort.parent === connectingInfo.startPort.parent){
         connectingInfo.canConnect = false;
-        connectingInfo.failedText = '不能连接同一个单元的节点';
+        failedText = '不能连接同一个单元的节点';
       }
       else{
         //方向必须不同才能链接
         connectingInfo.canConnect = connectingInfo.currentHoverPort.direction !== connectingInfo.startPort.direction;
         if(!connectingInfo.canConnect) 
-          connectingInfo.failedText ='不能连接相同方向的节点';
+          failedText ='不能连接相同方向的节点';
         //参数类型检查
         else {
 
@@ -248,13 +246,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
             connectingInfo.canConnect = connectingInfo.currentHoverPort.checkTypeAllow(connectingInfo.startPort as NodePort); 
 
             if(connectingInfo.currentHoverPort.connectedFromPort.length > 0) 
-              connectingInfo.successText = '将会替换已有连接';
+              successText = '将会替换已有连接';
           }
           else if(connectingInfo.startPort.direction === 'input') {
             connectingInfo.canConnect = connectingInfo.startPort.checkTypeAllow(connectingInfo.currentHoverPort as NodePort);
 
             if(connectingInfo.startPort.connectedFromPort.length > 0) 
-              connectingInfo.successText = '将会替换已有连接';
+              successText = '将会替换已有连接';
           }
 
           //如果不能连接
@@ -271,10 +269,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
               connectingInfo.shouldAddConverter = true;
               connectingInfo.nextAddConverter = converter;
               connectingInfo.canConnect = true;
-              connectingInfo.successText = `转换 ${startType.define?.typeTitle} 至 ${endType.define?.typeTitle}`;
+              successText = `转换 ${startType.define?.typeTitle} 至 ${endType.define?.typeTitle}`;
             } else  {
               //没有转换器，不兼容连接
-              connectingInfo.failedText = `${startType.define?.typeTitle} 与 ${endType.define?.typeTitle} 不兼容`;
+              failedText = `${startType.define?.typeTitle} 与 ${endType.define?.typeTitle} 不兼容`;
             }
           }
           else {
@@ -300,8 +298,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
               }
             }
             //如果不能连接，则显示错误
-            if(!connectingInfo.canConnect && err) 
-              connectingInfo.failedText = err;
+            if(!connectingInfo.canConnect && err)
+              failedText = err;
           }
         }
       }
@@ -320,8 +318,20 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         (connectingInfo.currentHoverPort as NodePortEditor).state = connectingInfo.currentHoverPort.isConnected() ? 'active' : 'normal';
         connectingInfo.currentHoverPort = null;
       }
+      successText = '连接至新的单元';
+      connectingInfo.canConnect = true;
       connectingInfo.isSamePort = false;
       connectingInfo.isFail = false;
+    }
+
+    //更新连接显示状态
+    if (connectingInfo.isConnecting || connectingInfo.isConnectingToNew) {
+      if (connectingInfo.canConnect)
+        context.showEditorHoverInfoTip(successText, 'success');
+      else
+        context.showEditorHoverInfoTip(failedText, 'failed');
+    } else {
+      context.closeEditorHoverInfoTip();
     }
   }
   function updateConnectEnd(screenPos : Vector2) {
@@ -334,12 +344,14 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.startPort = port;
     connectingInfo.isConnecting = true;
     port.state = 'active';
+    context.showEditorHoverInfoTip('连接至新的单元', 'success');
   }
   function endConnect(P ?: NodePort) {
+    context.closeEditorHoverInfoTip();
+
     const port = P as NodePortEditor;
     if(port)
       port.state = 'normal';
-
     //连接到新的节点
     if(connectingInfo.currentHoverPort === null && connectingInfo.startPort !== null) {
 
@@ -379,7 +391,6 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected() ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
-
   }
   //使用转换器连接两个端口
   function connectConnectorWithConverter() {
@@ -393,6 +404,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   function endConnectToNew(node?: Node) : [NodePortEditor|null,NodeConnector|null] {
     let port : NodePortEditor|null = null;
     let connector : NodeConnector|null = null;
+
+    context.closeEditorHoverInfoTip();
 
     //如果已选单元，则连接至这个单元
     if(typeof node !== 'undefined' && connectingInfo.otherSideRequireType) {

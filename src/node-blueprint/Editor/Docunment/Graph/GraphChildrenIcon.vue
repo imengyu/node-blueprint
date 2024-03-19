@@ -26,7 +26,7 @@ const icon = computed(() => {
     return IconFunction;
   if (props.graph.type === 'static')
     return IconFunctionStatic;
-  if (props.graph.type === 'subblock')
+  if (props.graph.type === 'subgraph')
     return IconBlock;
   if (props.graph.type === 'macro')
     return IconMacro;

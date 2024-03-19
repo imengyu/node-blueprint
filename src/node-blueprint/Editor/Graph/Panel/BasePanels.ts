@@ -20,6 +20,18 @@ export interface NodeGraphEditorBasePanelsContext {
    */
   closeAddNodePanel: () => void;
   /**
+   * 显示鼠标悬浮信息提示
+   * @param text 
+   * @returns 
+   */
+  showEditorHoverInfoTip: (text : string, status?: 'success'|'failed'|'') => void;
+  /**
+   * 显示鼠标悬浮信息提示
+   * @param text 
+   * @returns 
+   */
+  closeEditorHoverInfoTip: () => void;
+  /**
    * 显示选择类型菜单
    * @param canbeExecute 是否可以选择执行类型  
    * @param canbeAny 是否可以选择any类型 

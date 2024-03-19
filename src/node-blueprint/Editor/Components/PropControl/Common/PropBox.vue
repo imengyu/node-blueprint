@@ -1,6 +1,6 @@
 <template>
   <div class="prop-box">  
-    <Input v-model="filterProp" class="prop-search" placeholder="搜索属性">
+    <Input v-if="!noSearch" v-model="filterProp" class="prop-search" placeholder="搜索属性">
       <template #prefix>
         <Icon icon="icon-search-" />
       </template>
@@ -29,6 +29,10 @@ const props = defineProps({
   gridMinWidth: {
     type: Number,
     default: 0.2,
+  },
+  noSearch: {
+    type: Boolean,
+    default: false,
   },
 });
 

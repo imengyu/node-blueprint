@@ -46,7 +46,8 @@ function onTextClick() {
     clearInterval(lateFocus);
     lateFocus = 0;
   }
-  if (lastClickTime.getTime() - now.getTime() > 800 && lastClickTime.getTime() - now.getTime() < 1800) {
+  const time = now.getTime() - lastClickTime.getTime();
+  if (time > 800 && time < 1800) {
     lateFocus = setTimeout(() => {
       showEdit();
       lateFocus = 0;

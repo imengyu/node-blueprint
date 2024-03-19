@@ -33,7 +33,7 @@
 import { onMounted, ref, type PropType, onBeforeUnmount, watch } from 'vue';
 import ColumnView from '../Nana/Layout/ColumnView.vue';
 import RowView from '../Nana/Layout/RowView.vue';
-import NodeGraphEditor, { type INodeGraphEditorSettings } from '../Graph/NodeGraphEditor.vue';
+import NodeGraphEditor from '../Graph/NodeGraphEditor.vue';
 import GraphBreadcrumb from './Graph/GraphBreadcrumb.vue';
 import GraphSideTool from './Graph/GraphSideTool.vue';
 import GraphSideToolItem from './Graph/GraphSideToolItem.vue';
@@ -46,6 +46,7 @@ import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
+import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 
 const props = defineProps({
   docunment: {

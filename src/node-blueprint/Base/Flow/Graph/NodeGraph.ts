@@ -20,14 +20,14 @@ import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData"
  * * none 未知
  * * main 静态主入口（单文档只有一个）
  * * class 类
- * * subblock 子程序块（一个图表只有一个，只能被自己或者父级范围）
+ * * subgraph 子程序块（一个图表只有一个，只能被自己或者父级范围）
  * 类
  * * static 静态函数
  * * constructor 类构造函数
  * * function 类实例函数
  * * macro 宏
  */
-export type NodeGraphType = 'main' | 'class' | 'subblock' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
+export type NodeGraphType = 'main' | 'class' | 'subgraph' | 'none' | 'static' | 'constructor' | 'function' | 'macro';
 
 /**
  * 图表数据
@@ -241,7 +241,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
       case 'macro':
       case 'static':
       case 'function':
-      case 'subblock': {
+      case 'subgraph': {
         const startNode = this.createNode({
           ...BaseNodes.getScriptBaseGraphIn(),
           position: new Vector2(250, 100),

@@ -1,11 +1,21 @@
 <template>
   <div>
-    <div class="prop-header">
+    <div 
+      :class="[
+        'prop-header', 
+        noDark ? 'no-dark' : '' ,
+        clickable ? 'clickable' : '' ,
+      ]"
+      @click="emit('click', $event)"
+      @dblclick="emit('dblclick', $event)"
+    >
       <div>
         <a v-if="!noFold" href="javascript:;" @click="show=!show">
           <Icon :icon="show ? 'icon-arrow-down-bold' : 'icon-arrow-right-bold'" />
         </a>
-        {{ title }} 
+        <slot name="title">
+          {{ title }} 
+        </slot>
       </div> 
       <slot name="titleRight" />
     </div>
@@ -19,12 +29,22 @@
 import { watch, ref } from 'vue';
 import Icon from '../../../Nana/Icon.vue';
 
+const emit = defineEmits([ 'click', 'dblclick' ]);
+
 const props = defineProps({
   title: {
     type: String,
     default: '',
   },
+  clickable: {
+    type: Boolean,
+    default: false,
+  },
   noFold: {
+    type: Boolean,
+    default: false,
+  },
+  noDark: {
     type: Boolean,
     default: false,
   },
@@ -62,6 +82,19 @@ watch(show, () => {
   font-size: var(--mx-editor-font-size-small);
   color: var(--mx-editor-text-color);
 
+  &.clickable {
+    cursor: pointer;
+    user-select: none;
+  }
+  &.no-dark {
+    background-color: transparent;
+  }
+
+  > div { 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
   a {
     vertical-align: middle;
     margin-right: 5px;

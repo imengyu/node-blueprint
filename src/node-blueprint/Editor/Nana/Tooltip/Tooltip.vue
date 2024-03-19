@@ -37,6 +37,10 @@ export default defineComponent({
       type: Object,
       default: () => ({ x: 5, y: 10 }),
     },
+    followMousePosition: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: [
     'update:show'
@@ -62,6 +66,7 @@ export default defineComponent({
         { 
           x: currentMousePos.value.x + offset.value.x,
           y: currentMousePos.value.y + offset.value.y,
+          followMousePosition: props.followMousePosition,
           content: props.content,
           onMouseenter: () => {
             event.onTooltipMouseEnter();

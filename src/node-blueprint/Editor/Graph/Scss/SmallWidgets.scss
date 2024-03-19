@@ -85,4 +85,12 @@
     justify-content: flex-start;
     align-items: center;
   }
+
+  &.ignore-event {
+    pointer-events: none;
+
+    * {
+      pointer-events: none;
+    }
+  }
 }

@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "38274194",
+      "name": "警告2-F",
+      "font_class": "warning-singal",
+      "unicode": "e651",
+      "unicode_decimal": 58961
+    },
+    {
       "icon_id": "11249690",
       "name": "controller-1",
       "font_class": "controller-1",
@@ -111,20 +118,6 @@
       "unicode_decimal": 59536
     },
     {
-      "icon_id": "11249712",
-      "name": "error-1",
-      "font_class": "error-",
-      "unicode": "e891",
-      "unicode_decimal": 59537
-    },
-    {
-      "icon_id": "11249713",
-      "name": "error-2",
-      "font_class": "error-1",
-      "unicode": "e892",
-      "unicode_decimal": 59538
-    },
-    {
       "icon_id": "11249714",
       "name": "eye-disable",
       "font_class": "eye-disable",
@@ -172,13 +165,6 @@
       "font_class": "filter-",
       "unicode": "e899",
       "unicode_decimal": 59545
-    },
-    {
-      "icon_id": "11249722",
-      "name": "filter-3",
-      "font_class": "filter-1",
-      "unicode": "e89a",
-      "unicode_decimal": 59546
     },
     {
       "icon_id": "11249723",
@@ -585,13 +571,6 @@
       "font_class": "notifications-",
       "unicode": "e8da",
       "unicode_decimal": 59610
-    },
-    {
-      "icon_id": "11249785",
-      "name": "notifications-2",
-      "font_class": "notifications-1",
-      "unicode": "e8db",
-      "unicode_decimal": 59611
     },
     {
       "icon_id": "11249786",

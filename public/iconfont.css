@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 3664239 */
-  src: url('iconfont.woff2?t=1710733533099') format('woff2'),
-       url('iconfont.woff?t=1710733533099') format('woff'),
-       url('iconfont.ttf?t=1710733533099') format('truetype');
+  src: url('iconfont.woff2?t=1710746766312') format('woff2'),
+       url('iconfont.woff?t=1710746766312') format('woff'),
+       url('iconfont.ttf?t=1710746766312') format('truetype');
 }
 
 .iconfont {
@@ -11,6 +11,10 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-warning-singal:before {
+  content: "\e651";
 }
 
 .icon-controller-1:before {
@@ -73,14 +77,6 @@
   content: "\e890";
 }
 
-.icon-error-:before {
-  content: "\e891";
-}
-
-.icon-error-1:before {
-  content: "\e892";
-}
-
 .icon-eye-disable:before {
   content: "\e893";
 }
@@ -107,10 +103,6 @@
 
 .icon-filter-:before {
   content: "\e899";
-}
-
-.icon-filter-1:before {
-  content: "\e89a";
 }
 
 .icon-file-1:before {
@@ -343,10 +335,6 @@
 
 .icon-notifications-:before {
   content: "\e8da";
-}
-
-.icon-notifications-1:before {
-  content: "\e8db";
 }
 
 .icon-notifications-disable:before {

@@ -3,7 +3,7 @@
     :items="graph.variables"
     @add="onAddGraphVariable"
   >
-    <template #row="{ item: variable }">
+    <template #rowVertical="{ item: variable }">
       <div
         v-tooltip="'可直接拖拽此箭头以添加变量至图表中'"
         class="prop-list-dragger" 

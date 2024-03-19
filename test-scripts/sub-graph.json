@@ -12,7 +12,7 @@
         "@SNK": "Array",
         "@SNO": [
           {
-            "uid": "6f7563776d396a",
+            "uid": "78397938793964",
             "startPort": {
               "nodeUid": "2666f6e636d306e",
               "portUid": "START"
@@ -23,7 +23,7 @@
             }
           },
           {
-            "uid": "667316869786578",
+            "uid": "353677796f726c",
             "startPort": {
               "nodeUid": "6271746339726d",
               "portUid": "DEFAULT_OUTPUT"
@@ -34,7 +34,7 @@
             }
           },
           {
-            "uid": "62306171753263",
+            "uid": "7a776c727a3570",
             "startPort": {
               "nodeUid": "46c616538326f34",
               "portUid": "DEFAULT_OUTPUT"
@@ -154,7 +154,7 @@
                 "tags": {
                   "@SNK": "Array",
                   "@SNO": [
-                    "GraphCall新子图表1"
+                    "GraphCall新图表1"
                   ]
                 },
                 "customSize": {
@@ -174,7 +174,8 @@
                 "markOpen": false,
                 "markContent": "",
                 "options": {
-                  "callGraphName": "新子图表1"
+                  "callGraphName": "新图表1",
+                  "callGraphType": "subgraph"
                 },
                 "ports": {
                   "@SNK": "Array",
@@ -238,7 +239,7 @@
                 "tags": {
                   "@SNK": "Array",
                   "@SNO": [
-                    "GraphCall新子图表2"
+                    "GraphCall新图表2"
                   ]
                 },
                 "customSize": {
@@ -258,7 +259,8 @@
                 "markOpen": false,
                 "markContent": "",
                 "options": {
-                  "callGraphName": "新子图表2"
+                  "callGraphName": "新图表2",
+                  "callGraphType": "subgraph"
                 },
                 "ports": {
                   "@SNK": "Array",
@@ -464,8 +466,8 @@
               "description": "",
               "version": "",
               "uid": "306e3865337467",
-              "name": "新子图表1",
-              "type": "subblock"
+              "name": "新图表1",
+              "type": "subgraph"
             }
           },
           {
@@ -601,8 +603,143 @@
               "description": "",
               "version": "",
               "uid": "2756e6968646276",
-              "name": "新子图表2",
-              "type": "subblock"
+              "name": "新图表2",
+              "type": "subgraph"
+            }
+          },
+          {
+            "@SNK": "NodeGraph",
+            "@SNO": {
+              "connectors": {
+                "@SNK": "Array",
+                "@SNO": []
+              },
+              "nodes": {
+                "@SNK": "Map",
+                "@SNO": [
+                  {
+                    "@SNM": "6e37766c6c3278",
+                    "@SNV": {
+                      "guid": "4AD57ADE-04FE-DC87-7AA6-6F3D4384F872",
+                      "uid": "6e37766c6c3278",
+                      "node": {
+                        "tags": {
+                          "@SNK": "Array",
+                          "@SNO": [
+                            "GraphEntry"
+                          ]
+                        },
+                        "customSize": {
+                          "@SNK": "Vector2",
+                          "@SNO": {
+                            "x": 0,
+                            "y": 0
+                          }
+                        },
+                        "position": {
+                          "@SNK": "Vector2",
+                          "@SNO": {
+                            "x": 250,
+                            "y": 100
+                          }
+                        },
+                        "markOpen": false,
+                        "markContent": "",
+                        "options": {},
+                        "ports": {
+                          "@SNK": "Array",
+                          "@SNO": []
+                        },
+                        "uid": "6e37766c6c3278"
+                      }
+                    }
+                  },
+                  {
+                    "@SNM": "363475316c3671",
+                    "@SNV": {
+                      "guid": "8E5E3FFF-FC2F-BAA7-00AF-A14B89125D7E",
+                      "uid": "363475316c3671",
+                      "node": {
+                        "tags": {
+                          "@SNK": "Array",
+                          "@SNO": [
+                            "GraphEntry"
+                          ]
+                        },
+                        "customSize": {
+                          "@SNK": "Vector2",
+                          "@SNO": {
+                            "x": 0,
+                            "y": 0
+                          }
+                        },
+                        "position": {
+                          "@SNK": "Vector2",
+                          "@SNO": {
+                            "x": 650,
+                            "y": 100
+                          }
+                        },
+                        "markOpen": false,
+                        "markContent": "",
+                        "options": {},
+                        "ports": {
+                          "@SNK": "Array",
+                          "@SNO": []
+                        },
+                        "uid": "363475316c3671"
+                      }
+                    }
+                  }
+                ]
+              },
+              "outputPorts": {
+                "@SNK": "Array",
+                "@SNO": [
+                  {
+                    "guid": "DEFAULT_OUTPUT",
+                    "direction": "input",
+                    "name": "退出",
+                    "paramType": {
+                      "@SNK": "NodeParamType",
+                      "@SNO": {
+                        "name": "execute"
+                      }
+                    }
+                  }
+                ]
+              },
+              "inputPorts": {
+                "@SNK": "Array",
+                "@SNO": [
+                  {
+                    "guid": "DEFAULT_IN",
+                    "direction": "input",
+                    "name": "进入",
+                    "paramType": {
+                      "@SNK": "NodeParamType",
+                      "@SNO": {
+                        "name": "execute"
+                      }
+                    }
+                  }
+                ]
+              },
+              "static": false,
+              "variables": {
+                "@SNK": "Array",
+                "@SNO": []
+              },
+              "children": {
+                "@SNK": "Array",
+                "@SNO": []
+              },
+              "author": "",
+              "description": "",
+              "version": "",
+              "uid": "3074616233366c",
+              "name": "函数1",
+              "type": "static"
             }
           }
         ]

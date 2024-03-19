@@ -91,6 +91,7 @@ import NodeIconClock2 from '../NodeIcon/clock2.svg';
 import NodeIconEntryGo from '../NodeIcon/entry_go.svg';
 import NodeIconEntryExit from '../NodeIcon/entry_exit.svg';
 import NodeIconEntryIn from '../NodeIcon/block.svg';
+import NodeIconEntryFunction from '../NodeIcon/function.svg';
 import NodeIconEntryWarning from '../NodeIcon/warning.svg';
 import NodeIconEntryTrace from '../NodeIcon/trace.svg';
 import NodeIconEntryNumber from '../NodeIcon/number.svg';
@@ -109,6 +110,11 @@ import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+
+export interface IGraphCallNodeOptions {
+  callGraphType: 'subgraph'|'function';
+  callGraphName: string;
+}
 
 function registerScriptBase()  {
   const NodeParamTypeRegistryInstance = NodeParamTypeRegistry.getInstance();
@@ -212,11 +218,6 @@ function registerScriptBase()  {
       titleBakgroundColor: "rgba(255,20,147,0.6)",
       titleState: 'hide',
     },
-    exec: {
-      onPortParamRequest: () => {
-        //TODO: return getCurrentPlatform()
-      }
-    }
   };
 
   //延时
@@ -259,17 +260,6 @@ function registerScriptBase()  {
       logo: NodeIconClock,
       logoRight: NodeIconClock,
     },
-    exec: {
-      onPortExecuteIn: (node, port) => {
-        /* let v = node.getInputParamValue('TIME');
-        let context = node.currentRunningContext;
-        context.markContexInUse();
-        setTimeout(() => {
-          node.activeOutputPortInNewContext('OUT');
-          context.unsetContexInUse();
-        }, v ? v : 1000); */
-      }
-    }
   };
 
   //延时
@@ -317,31 +307,6 @@ function registerScriptBase()  {
         defaultConnectPort: false,
       },
     ],
-    exec: {
-      onPortExecuteIn: (node, port) => {
-        /* let context = node.currentRunningContext;
-        let variables = node.variables();
-        switch(port.guid) {
-          case 'START': {
-            let v = node.getInputParamValue('TIME');
-            context.markContexInUse();
-            variables['intervalId'] = setInterval(() => {
-              node.activeOutputPortInNewContext('OUT');
-            }, v ? v : 1000);
-            break;
-          }
-          case 'STOP': {
-            let id = variables['intervalId'];
-            if(id) {
-              context.unsetContexInUse();
-              clearInterval(id);
-              variables['intervalId'] = undefined;
-            }
-            break; 
-          }
-        } */
-      }
-    },
     style: {
       logo: NodeIconClock2,
       logoRight: NodeIconClock2,
@@ -405,10 +370,6 @@ function registerScriptVariableBase()  {
           if (OUTPUT)
             OUTPUT.name = newName;
         } 
-      }
-    },
-    exec: {
-      onPortParamRequest: (block, port) => {
       }
     },
   };
@@ -483,16 +444,11 @@ function registerScriptVariableBase()  {
         } 
       }
     },
-    exec: {
-      onPortParamRequest: (block, port) => {
-      }
-    },
   };
 
   return [ variableGet, variableSet ]
 }
 function registerScriptGraphBase()  {
-  //TODO: registerScriptGraphBase
 
   graphCall = {
     guid: '0A2C56F2-7101-7747-50E0-40E4B73C25D9',
@@ -506,15 +462,28 @@ function registerScriptGraphBase()  {
     ports: [],
     style: {
       logo: NodeIconEntryIn,
+      titleBakgroundColor: '#096288',
     },
     events: {
       onEditorCreate(node, context) {
         //在初始化时加载绑定的子图表信息
         const graph = context.getCurrentGraph();
-        const callGraphName = node.options.callGraphName as string;
-        const childGraph = callGraphName ? graph.children.find(v => v.name === callGraphName) : undefined;
+        const options = node.options as unknown as IGraphCallNodeOptions;
+        let childGraph : NodeGraph|undefined;
+        switch (options.callGraphType) {
+          case 'function': {
+            const topGraph = graph.getParentDocunment()?.mainGraph;
+            if (topGraph)
+              childGraph = topGraph.children.find(v => v.name === options.callGraphName);
+            break;
+          }
+          case 'subgraph':
+            childGraph = options.callGraphName ? graph.children.find(v => v.name === options.callGraphName) : undefined;
+            break;
+        }
         if (childGraph) {
           //直接调用下方消息进行相关状态设置
+          node.sendSelfMessage(messages.GRAPH_ONLINE, {});
           node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: childGraph.name });
           node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
         } else {
@@ -566,7 +535,7 @@ function registerScriptGraphBase()  {
           const newName = msg.data.name as string;
 
           node.tags[0] = `GraphCall${newName}`;
-          node.name = `调用子图表 ${newName}`;
+          node.name = newName;
           node.postLateUpdateRegion();
           node.setErrorState('');
         } 
@@ -580,7 +549,8 @@ function registerScriptGraphBase()  {
         //子图表重新添加
         else if (msg?.message === messages.GRAPH_ONLINE) 
         {
-          node.name = `调用子图表 ${node.options.callGraphName}`;
+          node.name = node.options.callGraphName as string;
+          node.style.logo = node.options.callGraphType === 'function' ? NodeIconEntryFunction : NodeIconEntryIn;
           node.postLateUpdateRegion();
           node.setErrorState('');
         }
@@ -597,10 +567,6 @@ function registerScriptGraphBase()  {
             context.showSmallTip('调用目标图表丢失');
           }
         }
-      }
-    },
-    exec: {
-      onPortParamRequest: (block, port) => {
       }
     },
   };
@@ -646,10 +612,6 @@ function registerScriptGraphBase()  {
         }
       }
     },
-    exec: {
-      onPortParamRequest: (block, port) => {
-      }
-    },
   };
 
   graphOut = {
@@ -691,10 +653,6 @@ function registerScriptGraphBase()  {
           for (let i = outputPorts.length; i < node.inputPorts.length; i++) 
             node.deletePort(node.inputPorts[i]);
         }
-      }
-    },
-    exec: {
-      onPortParamRequest: (block, port) => {
       }
     },
   };
@@ -764,22 +722,6 @@ function registerDebugBase() {
         paramType: NodeParamType.Execute,
       },
     ],
-    exec: {
-      onPortExecuteIn: (block, port) => {
-        /* let con = node.getInputParamValue('CONDITION');
-        let throwError = node.getInputParamValue('THROWERR');
-        if(con)
-          node.activeOutputPort('SUCCESS');
-        else {
-          if(throwError)
-            node.throwError('条件断言失败！', port, 'error', true);
-          else {
-            node.throwError('条件断言失败！', port, 'warning', false);
-            node.activeOutputPort('FAILED');
-          }
-        } */
-      }
-    },
   };
 
   //追踪
@@ -808,13 +750,6 @@ function registerDebugBase() {
     style: {
       logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
-    },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-        //打印调用堆栈
-        //logger.log(node.getName(), node.currentRunningContext.runner.mainContext.printCallStack(true));
-        //node.activeOutputPort('OUT');
-      }
     },
   };
 
@@ -871,10 +806,6 @@ function registerDebugBase() {
       logo: NodeIconEntryTrace,
       titleBakgroundColor: "rgba(120,200,254,0.6)",
     },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
-    },
   };
 
   return [ blockDebug, blockAssert, blockTrace  ]
@@ -909,10 +840,6 @@ function registerTypeBase() {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
-    },
   };
   const blockNumber : INodeDefine = {
     guid: 'EE8345CE-14FB-3CE5-C5CD-30CF3A102DE5',
@@ -941,10 +868,6 @@ function registerTypeBase() {
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
     },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
-    },
   };
   const blockBoolean : INodeDefine = {
     guid: '90833609-8CF7-2324-A4C0-781344701C06',
@@ -972,10 +895,6 @@ function registerTypeBase() {
       titleBakgroundColor: "rgba(180,0,0,0.6)",
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
-    },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
     },
   };
 
@@ -1006,10 +925,6 @@ function registerTypeBase() {
       minWidth: 200,
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
-    },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
     },
   };
   const blockAsTypeTypeName : INodeDefine = {
@@ -1067,10 +982,6 @@ function registerTypeBase() {
           }
         };
       },
-    },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
     },
   };
   const blockConvertToTypeTypeName : INodeDefine = {
@@ -1146,10 +1057,6 @@ function registerTypeBase() {
           }
         };
       },
-    },
-    exec: {
-      onPortExecuteIn: (block, port) => {
-      }
     },
   };
 
@@ -1233,7 +1140,7 @@ function registerCommentNode() {
       onEditorCreate: (node) => {
         node.addClass('node-block-comment-block');
       },
-      onCreateCustomEditor: (parentEle, node, context) => {
+      onCreateCustomEditor: (parentEle, node) => {
         if (!parentEle) 
           return undefined;
         
@@ -1424,20 +1331,6 @@ function registerConvertNode() {
       titleState: 'hide',
       titleBakgroundColor: "rgba(250,250,250,0.6)",
     },
-    exec: {
-      onPortExecuteIn: (node, port) => {
-        /**
-         * let coverter = <NodeParameterTypeConverterData>node.data['coverter'];
-    if(coverter) {
-      let input = node.getInputParamValue('INPUT', context);
-      return coverter.converter(input);
-    } else {
-      node.throwError('转换器没有设置转换方法，请删除之后重新添加', port, 'error');
-      return undefined;
-    }
-         */
-      }
-    },
   }; 
 
   return [ convertNode ];
@@ -1504,11 +1397,6 @@ function registerConnNode() {
         }
       },
     },
-    exec: {
-      onPortParamRequest() {
-
-      },
-    },
   };
   const connNode2 : INodeDefine = {
     guid: '799E6D41-BB70-83FA-6995-F7A8B6037AEB',
@@ -1538,11 +1426,6 @@ function registerConnNode() {
       outputPortMinWidth: '0',
       noComment: true,
       minWidth: 0,
-    },
-    exec: {
-      onPortParamRequest() {
-
-      },
     },
     events: {
       onEditorCreate: (node) => {

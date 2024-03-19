@@ -1,6 +1,7 @@
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
+import { useDragEnterLeaveFilter } from "../../Composeable/DragEnterLeaveFilter";
 
 let editorDragData : any = null;
 
@@ -26,18 +27,74 @@ export function getInternalDraggingData<T>() : T {
  */
 export function useEditorDragController(context: NodeGraphEditorInternalContext) {
 
+  //预检测拖放数据是否允许拖放
+  function preCheckDragData() : { message: string, canDrop: boolean } {
+    const data = getInternalDraggingData<string>() || '';
+    console.log('preCheckDragData', data);
+    
+    if(data && data.startsWith('drag:')) {
+      const datav = data.split(':');
+      switch(datav[1]) {
+        case 'node':
+          return { canDrop: true, message: '' };
+        case 'graph-variable': 
+          return { canDrop: true, message: '创建变量引用' }
+        case 'graph': {
+          const callGraphType = datav[2] as string;
+          const callGraphName = datav[3] as string;
 
+          if (callGraphType === 'function')
+            return { canDrop: true, message: '创建函数调用' }
+          if (callGraphType === 'subgraph') {
+            const graph = context.getCurrentGraph();
+            if (callGraphName ? graph.children.find(v => v.name === callGraphName) : undefined)
+              return { canDrop: true, message: '创建子图表调用' }
+            else
+              return { canDrop: false, message: '仅可以调用当前层的级下一级子图表，如果需要递归，请包装为函数' }
+          }
+          break;
+        }
+      }
+    }
+    return { canDrop: false, message: '不能拖放至这里' }
+  }
+
+  const {
+    onDragEnter,
+    onDragLeave,
+    reset,
+  } = useDragEnterLeaveFilter(
+    (e) => {
+      //预检测拖放数据是否允许拖放，给用户提示
+      const { canDrop, message } = preCheckDragData();
+      if (canDrop) {
+        if (message)
+          context.showEditorHoverInfoTip(message, 'success');
+        else
+          context.closeEditorHoverInfoTip();
+        e.dataTransfer!.dropEffect = 'copy';
+      } else {
+        context.showEditorHoverInfoTip(message, 'failed');
+        e.dataTransfer!.dropEffect = 'none';
+      }
+    },
+    () => {
+      context.closeEditorHoverInfoTip();
+    },
+  );
   function onDragOver(e: DragEvent) {
-    if (getInternalDraggingData()) 
-    {
+    if (getInternalDraggingData()) {
       e.preventDefault();
       e.stopPropagation();
       context.updateMousePos(e);
     }
   }
+
   //拖放处理
   function onDrop(e: DragEvent) {
     context.updateMousePos(e);
+    context.closeEditorHoverInfoTip();
+    reset();
 
     const data = getInternalDraggingData<string>() || '';
     if(data && data.startsWith('drag:')) {
@@ -54,6 +111,7 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
           const pos = context.getMouseInfo().mouseCurrentPosViewPort;
           const nodeDefine = BaseNodes.getScriptBaseGraphCall();
           context.userAddNode(nodeDefine, pos, {
+            callGraphType: datav[2],
             callGraphName: datav[3]
           });
           break;
@@ -74,6 +132,8 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
   }
 
   return {
+    onDragEnter,
+    onDragLeave,
     onDrop,
     onDragOver,
     startInternalDataDragging,

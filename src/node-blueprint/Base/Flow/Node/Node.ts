@@ -76,7 +76,7 @@ export class Node extends SerializableObject<INodeDefine> {
             ports: 'NodePort',
             style: 'NodeStyleSettings',
             events: 'NodeEventSettings',
-            simulate: 'NodeExecSettings',
+            compile: 'NodeCompileSettings',
           },
         },
         graph: {
@@ -397,9 +397,9 @@ export interface INodeDefine {
    */
   hideInAddPanel ?: boolean;
   /**
-   * 单元运行设置
+   * 单元编译设置
    */
-  exec ?: INodeExecSettings;
+  compile ?: INodeCompileSettings;
   /**
    * 单元筛选标签
    */
@@ -759,32 +759,17 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
 }
 
 /**
- * 单元运行设置
+ * 单元编译设置
  */
-export interface INodeExecSettings {
-  /**
-   * 当图表开始运行
-   */
-  onStartRun ?: NodeEventCallback,
-  /**
-   * 单元工作处理函数。入方向的执行端口激活时的回调。
-   * 通常在这个回调里面进行本单元的运算，然后调用下一个单元。
-   */
-  onPortExecuteIn ?: NodePortEventCallback,
-  /**
-   * 单元端口更新处理函数。
-   * 下一级单元请求本单元输出参数时发生的回调。
-   * 返回：
-   * 在此回调中直接返回参数。如果本单元存在运行上下文，可直接设置出端口参数。
-   */
-  onPortParamRequest ?: NodePortRequestCallback,
+export interface INodeCompileSettings {
+  
 }
 /**
- * 单元自定义事件设置
+ * 单元编译设置
  */
-export class NodeExecSettings extends SerializableObject<INodeExecSettings> {
-  constructor(define?: INodeExecSettings) {
-    super('NodeSimulate', define, {
+export class NodeCompileSettings extends SerializableObject<INodeCompileSettings> {
+  constructor(define?: INodeCompileSettings) {
+    super('NodeCompile', define, {
       serializeSchemes: {
         default: {
           serializeAll: true,

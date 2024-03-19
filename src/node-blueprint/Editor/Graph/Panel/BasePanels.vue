@@ -1,28 +1,22 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <!--单元连接弹出提示-->
-  <div
-    v-if="connectingInfo"
-    v-show="connectingInfo.isConnecting && !connectingInfo.isConnectingToNew"
-    class="nana-tooltip node-editor-no-move"
-    :style="{
-      left: (connectingTooltipPos.x + 10) + 'px', 
-      top: (connectingTooltipPos.y - 40) + 'px' 
-    }"
-  >
-    <span v-if="connectingInfo.currentHoverPort==null" class="center">
-      <Icon icon="icon-select-bold" class="text-success mr-1" />
-      连接至新的单元
-    </span>
-    <span v-else-if="connectingInfo.canConnect" class="center">
-      <Icon icon="icon-select-bold" class="text-success mr-1" />
-      <span v-html="connectingInfo.successText" />
-    </span>
-    <span v-else class="center">
-      <Icon icon="icon-close" class="text-danger mr-1" />
-      <span v-html="connectingInfo.failedText" />
-    </span>
-  </div>
+  <!--编辑器内部鼠标悬浮弹出提示-->
+  <Teleport :to="teleport">
+    <TooltipContent 
+      v-if="editorHoverInfoTip.show"
+      :x="editorHoverInfoTooltipPos.x"
+      :y="editorHoverInfoTooltipPos.y"
+      ignoreEvent
+      centerContent
+      class="node-editor-no-move"
+    >
+      <template #content>
+        <Icon v-if="editorHoverInfoTip.status === 'success'" icon="icon-select-bold" class="text-success mr-1" />
+        <Icon v-else-if="editorHoverInfoTip.status === 'failed'" icon="icon-close" class="text-danger mr-1" />
+        <span v-html="editorHoverInfoTip.text" />
+      </template>
+    </TooltipContent>
+  </Teleport>
   <!--小信息提示-->
   <div 
     v-show="isShowSmallTip"
@@ -56,27 +50,24 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, type PropType, toRefs, onMounted, computed, watch } from 'vue';
+import { inject, ref, type PropType, onMounted, watch, reactive } from 'vue';
 import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
-import type { IConnectingInfo } from '../Editor/EditorConnectorController';
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
 import Alert from '../../Nana/Modal/Alert';
+import { SimpleTimer } from '@/node-blueprint/Base/Utils/Timer/Timer';
+import TooltipContent from '../../Nana/Tooltip/TooltipContent.vue';
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
-const props = defineProps({
-  connectingInfo: {
-    type: Object as PropType<IConnectingInfo>,
-    default: null
-  },
+defineProps({
   viewPort: {
     type: Object as PropType<NodeGraphEditorViewport>,
     default: null
@@ -86,16 +77,6 @@ const props = defineProps({
     default: '#app',
   }
 })
-
-const { viewPort, connectingInfo } = toRefs(props);
-
-//#region 连接中提示
-
-const connectingTooltipPos = computed(() => {
-  return viewPort.value.viewportPointToEditorPoint(connectingInfo.value.endPos);
-})
-
-//#endregion
 
 //#region 小信息提示
 
@@ -124,6 +105,30 @@ context.showConfirm = (options) => {
   return Alert.confirm(options);
 };
 
+//#endregion
+
+//#region 鼠标悬浮提示
+
+const editorHoverInfoTip = reactive({
+  show: false,
+  text: '',
+  status: '',
+});
+const editorHoverInfoTooltipPos = ref(new Vector2());
+const updateMousePointTimer = new SimpleTimer(undefined, () => {
+  editorHoverInfoTooltipPos.value.set(context.getMouseInfo().mouseCurrentPosScreen);
+}, 20);
+
+context.showEditorHoverInfoTip = (text : string, status: 'success'|'failed'|'' = '') => {
+  editorHoverInfoTip.show = true;
+  editorHoverInfoTip.text = text;
+  editorHoverInfoTip.status = status;
+  updateMousePointTimer.start();
+};
+context.closeEditorHoverInfoTip = () => {
+  editorHoverInfoTip.show = false;
+  updateMousePointTimer.stop();
+};
 
 //#endregion
 

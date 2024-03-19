@@ -85,7 +85,11 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
   //Connector Menu
   function showContextMenu(options: MenuOptions) {
-    ContextMenuGlobal.showContextMenu(options);
+    ContextMenuGlobal.showContextMenu({ 
+      zIndex: 100,
+      theme: 'flat',
+      ...options,
+    });
   }
 
   //Connector Menu
@@ -117,7 +121,6 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         },
       ] : []),
       zIndex: 100,
-      theme: 'flat',
     });
   }
 
@@ -193,7 +196,6 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       y: screenPos.y,
       items: menuItems,
       zIndex: 100,
-      theme: 'flat',
     });
   }
   //Port Menu
@@ -245,8 +247,6 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       x: screenPos.x,
       y: screenPos.y,
       items: menuItems,
-      zIndex: 100,
-      theme: 'flat',
     });
   }
 
@@ -299,8 +299,6 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       x: screenPos.x,
       y: screenPos.y,
       items: menuItems,
-      zIndex: 100,
-      theme: 'flat',
     });
   }
 
@@ -324,8 +322,6 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           },
         },
       ],
-      zIndex: 100,
-      theme: 'flat',
     });
   }
 

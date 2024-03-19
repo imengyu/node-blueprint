@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <CollapsePropHeader title="单元属性">
-    <CollapsePropItem v-if="props.nodes.length > 1">
+    <CollapsePropItem v-if="props.nodes.length > 0">
       已选 {{ nodes.length }} 个单元
     </CollapsePropItem>
     <PropControl 

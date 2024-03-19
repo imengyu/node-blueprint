@@ -8,7 +8,7 @@
       height: size,
     }"
   >
-    <use :xlink:href="`#${icon}`"></use>
+    <use :xlink:href="`#${icon}`" />
   </svg>
 </template>
 

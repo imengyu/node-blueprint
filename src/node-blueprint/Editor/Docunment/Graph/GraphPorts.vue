@@ -3,7 +3,7 @@
     :items="ports"
     @add="onAddPort"
   >
-    <template #row="{ item }">
+    <template #rowVertical="{ item }">
       <PropItem title="">
         <Input 
           :model-value="(item as INodePortDefine).name" 

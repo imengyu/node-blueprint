@@ -15,6 +15,8 @@
     @keyup="onKeyUp"
     @contextmenu="onCanvasContextMenu"
     @dragover="onDragOver"
+    @dragenter="onDragEnter"
+    @dragleave="onDragLeave"
     @drop="onDrop"
   >
     <BackgroundRender
@@ -69,7 +71,6 @@
     />
     <BasePanels
       :viewPort="(viewPort as NodeGraphEditorViewport)"
-      :connectingInfo="connectingInfo"
     />
   </div>
 </template>
@@ -93,19 +94,13 @@ import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
 import { useEditorViewPortController } from './Editor/EditorViewPortController';
-import type { NodeGraphEditorViewport } from './NodeGraphEditor';
+import type { INodeGraphEditorSettings, NodeGraphEditorViewport } from './NodeGraphEditor';
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
-
-export interface INodeGraphEditorSettings {
-  topMargin?: number;
-  drawDebugInfo?: boolean;
-  drawGrid?: boolean;
-}
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -156,6 +151,7 @@ context.emitEvent = (n, ...args) => {
   if (cbs)
     cbs.forEach(cb => cb(...args));
 };
+context.getSettings = () => props.settings;
 
 provide('NodeGraphEditorContext', context);
 
@@ -199,6 +195,8 @@ const {
 } = useEditorKeyBoardControllerController(context);
 
 const {
+  onDragEnter,
+  onDragLeave,
   onDrop,
   onDragOver,
 } = useEditorDragController(context);

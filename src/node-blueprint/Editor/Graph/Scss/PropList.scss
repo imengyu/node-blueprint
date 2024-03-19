@@ -2,13 +2,31 @@
 .prop-list {
   position: relative;
 
+  .prop-list {
+    margin-left: 10px;
+  }
+
   .prop-list-item {
     position: relative;
-    padding: 5px 10px;
+    padding: 4px 10px;
+    color:  var(--mx-editor-text-color);
     background-color: var(--mx-editor-list-item-background-color);
     display: flex;
-    flex-direction: column;
+
+    > .expand-arrow {
+      cursor: pointer;
+      fill: currentColor;
+      margin-right: 10px;
+    }
     
+    &.horizontal {
+      flex-direction: row;
+      align-items: center;
+    }
+    &.vertical {
+      flex-direction: column;
+    }
+
     .prop-delete {
       display: inline-block;
       position: absolute;

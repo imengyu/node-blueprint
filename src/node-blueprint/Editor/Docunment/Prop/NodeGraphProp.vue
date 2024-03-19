@@ -8,7 +8,7 @@
       <CollapsePropItem title="图表注释">
         <textarea v-model="graph.description" class="prop-item-editor" placeholder="图表的解释注释或者说明..." style="resize:vertical;" />
       </CollapsePropItem>
-      <GraphChildrenDragArrow :childGraph="(graph as NodeGraph)" />
+      <GraphChildrenDragArrow v-if="graphCanInsertToSelf" :childGraph="(graph as NodeGraph)" />
     </CollapsePropHeader>
     <CollapsePropHeader v-if="graph.type !== 'main'" title="输入">
       <GraphPorts :graph="graph" :input="true" />
@@ -20,18 +20,26 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 import Input from '../../Nana/Input/Input.vue';
 import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue'
 import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
+import GraphChildrenDragArrow from '../Graph/GraphChildrenDragArrow.vue';
 import GraphPorts from '../Graph/GraphPorts.vue';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import GraphChildrenDragArrow from '../Graph/GraphChildrenDragArrow.vue';
 
-defineProps({
+const props = defineProps({
   graph: {
     type: Object as PropType<NodeGraph>,
     required: true,
   },
 });
+
+const graphCanInsertToSelf = computed(() => {
+  if (props.graph.type === 'function' || props.graph.type === 'static' 
+    || props.graph.type === 'macro' || props.graph.type === 'class')
+    return true;
+  return false;
+});
+
 </script>

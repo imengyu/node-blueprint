@@ -22,7 +22,7 @@ export function injectNodeGraphEditorContextInEditorOrIDE() {
       return editorContext ? editorContext : (context.getCurrentActiveGraphEditor());
     },
     getNodeDocunmentEditorContext() {
-      return editorContext ? editorContext : (context.getCurrentActiveDocunmentEditor());
+      return context.getCurrentActiveDocunmentEditor();
     },
     getNodeIdeControlContext() {
       return context

@@ -45,8 +45,7 @@
         v-if="instance.errorState" 
         :class="'node-block-error-state ' + instance.errorState"
       >
-        <Icon v-if="instance.errorState === 'error'" icon="icon-error-" :size="26" />
-        <Icon v-else-if="instance.errorState === 'warning'" icon="icon-warning-filling" :size="26" />
+        <Icon icon="icon-warning-singal" :size="26" />
       </div>
       <!--注释区域-->
       <div
@@ -537,6 +536,7 @@ const resizeMouseHandler = createMouseDragHandler({
 
 let mouseDown = false;
 let lastMovedBlock = false;
+let snapGridSize = 10;
 
 const dragMouseHandler = createMouseDragHandler({
   onDown() {
@@ -555,6 +555,10 @@ const dragMouseHandler = createMouseDragHandler({
       );
       const pos = new Vector2(instance.value.lastBlockPos);
       pos.add(movedScaledDistance);
+
+      //吸附最小刻度
+      if (context.getSettings().snapGrid)
+        pos.set(pos.x - pos.x % snapGridSize, pos.y - pos.y % snapGridSize);
 
       if(pos.x !== instance.value.position.x || pos.y !== instance.value.position.y) {
 

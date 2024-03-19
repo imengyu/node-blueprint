@@ -31,7 +31,7 @@ function onChildGraphDrag(e: DragEvent) {
     e.stopPropagation(); 
   }
   else {
-    startInternalDataDragging('drag:graph:0:' + props.childGraph.uid);
+    startInternalDataDragging(`drag:graph:${props.childGraph.type === 'subgraph' ? 'subgraph' : 'function'}: ${props.childGraph.name}`);
   }
 }
 </script>
