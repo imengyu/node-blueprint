@@ -8,7 +8,7 @@ import { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
-import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
@@ -354,6 +354,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       case 'sendMessageToFilteredNodes': sendMessageToFilteredNodes(data.tag, data.message, data.data); break;
       case 'sendMessageToNode': sendMessageToNodes(data.nodes, data.message, data.data); break;
       case 'sendMessageToNodes': sendMessageToNode(data.node, data.message, data.data); break;
+      case 'emitEvent': context.emitEvent(data.message, data.data); break;
+      default: devWarning(TAG, `dispstchMessage failed: Unkown message ${message}`); break;
     }
   }
 

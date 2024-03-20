@@ -27,13 +27,15 @@
 </template>
 
 <script lang="ts" setup>
-import { toRefs, watch, type PropType, ref, onMounted, nextTick } from 'vue';
+import { toRefs, watch, type PropType, ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import Icon from '../../Nana/Icon.vue';
 import ContextMenuGlobal, { type MenuItem } from '@imengyu/vue3-context-menu';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
+import type { NodeGraphEditorBaseEventListener } from '../../Graph/NodeGraphEditor';
 
 interface GraphBreadcrumb {
   text: string,
@@ -62,6 +64,8 @@ const props = defineProps({
 const {
   currentDocunment, currentGraph,
 } = toRefs(props);
+
+const { getNodeGraphEditorContext } = injectNodeGraphEditorContextInEditorOrIDE();
 
 const graphBreadcrumb = ref<GraphBreadcrumb[]>([]);
 
@@ -122,11 +126,21 @@ function onArrowClicked(e: MouseEvent, graphBreadcrum: GraphBreadcrumb) {
   })
 }
 
+function onGraphNameChanged() {
+  loadGraphBreadcrumb(currentGraph.value);
+}
+
+let offListen : NodeGraphEditorBaseEventListener|undefined;
+
 onMounted(() => {
   nextTick(() => {
+    offListen = getNodeGraphEditorContext()?.listenEvent('GraphNameChangedForUIUpdate', onGraphNameChanged);
     loadGraphBreadcrumb(currentGraph.value);
   });
 });
+onBeforeUnmount(() => {
+  offListen?.unListen();
+})
 </script>
 
 <style lang="scss">
