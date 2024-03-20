@@ -13,6 +13,8 @@ import { createMouseDownAndUpHandler } from "./MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
+import BaseNodes, { type ICoverterNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 
 /**
  * 节点连接上下文函数
@@ -394,7 +396,45 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   }
   //使用转换器连接两个端口
   function connectConnectorWithConverter() {
-    //TODO: 使用转换器连接两个端口
+    if (!connectingInfo.startPort || !connectingInfo.currentHoverPort)
+      return;
+    const startPort = connectingInfo.startPort?.direction === 'output' ? 
+      connectingInfo.startPort : connectingInfo.currentHoverPort;
+    const endPort = connectingInfo.startPort?.direction === 'input' ? 
+      connectingInfo.startPort : connectingInfo.currentHoverPort;
+
+    const converter = connectingInfo.nextAddConverter;
+    if (!converter)
+      return;
+
+    //创建转换器节点
+    //新的节点在两个端口的中心位置
+    const convertNode = context.userAddNode<ICoverterNodeOptions>(
+      BaseNodes.getScriptBaseConvertNode(), 
+      {
+        addNodeInPos: Rect.makeBy2Point(
+          new Rect(), 
+          startPort.getPortPositionViewport(), 
+          endPort.getPortPositionViewport()
+        ).calcCenter(),
+        addNodePosRefernceCenter: true,
+        intitalOptions: {
+          coverterFrom: converter.fromType.toString(),
+          coverterTo: converter.toType.toString(),
+        }
+      }
+    );
+    if (!convertNode)
+      return;
+
+    //连接转换器节点与端口
+    const convertNodeInputPort = convertNode.getPortByGUID('INPUT');
+    const convertNodeOutputPort = convertNode.getPortByGUID('OUTPUT');
+
+    if (convertNodeInputPort)
+      connectConnector(startPort, convertNodeInputPort);
+    if (convertNodeOutputPort)
+      connectConnector(convertNodeOutputPort, endPort);
   }
   //获取用户当前是否可以连接
   function getCanConnect() { 

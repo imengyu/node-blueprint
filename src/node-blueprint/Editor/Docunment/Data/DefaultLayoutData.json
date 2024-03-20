@@ -25,21 +25,21 @@
         "size": 0,
         "children": [
           {
-            "name": "GraphVariableProps",
-            "open": true,
-            "resizeable": false,
-            "visible": true,
-            "showBadge": true,
-            "size": 364,
-            "children": []
-          },
-          {
             "name": "GraphChildrenProps",
             "open": true,
             "resizeable": true,
             "visible": true,
             "showBadge": true,
             "size": 346,
+            "children": []
+          },
+          {
+            "name": "GraphVariableProps",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 364,
             "children": []
           }
         ]

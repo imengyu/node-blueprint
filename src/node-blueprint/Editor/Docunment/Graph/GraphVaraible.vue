@@ -112,8 +112,11 @@ function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {
   getNodeGraphEditorContext()?.sendMessageToFilteredNodes(oldName, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
 }
 function onGraphVariableTypeUpdate(variable: NodeVariable, type: NodeParamType) {
-  variable.type = type;
-
+  //设置变量类型，重新设置使用类型的默认值
+  if (!variable.type.equal(type)) {
+    variable.type = type;
+    variable.defaultValue = type.define?.defaultValue();
+  }
   //进行图表中所有变量节点的更新
   getNodeGraphEditorContext()?.sendMessageToFilteredNodes(variable.name, BaseNodes.messages.VARIABLE_UPDATE_TYPE, { type });
 }

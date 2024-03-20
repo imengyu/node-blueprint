@@ -12,7 +12,6 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@imengyu/vue-dock-layout": "^0.6.0",
     "@imengyu/vue3-context-menu": "^1.3.8",
     "pinia": "^2.0.28",
     "vue": "^3.2.45",

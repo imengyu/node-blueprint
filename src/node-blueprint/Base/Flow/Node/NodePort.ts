@@ -135,7 +135,6 @@ export class NodePort extends SerializableObject<INodePortDefine> {
     return this.initialValue;
   }
   public setValue(value: unknown) {
-    //TODO: setValue
     this.initialValue = value;
   }
 

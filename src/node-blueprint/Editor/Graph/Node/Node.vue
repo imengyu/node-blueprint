@@ -180,7 +180,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType, inject, nextTick } from 'vue';
+import { onMounted, ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';
@@ -200,6 +200,7 @@ import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
 import PropControl from '../../Components/PropControl/PropControl.vue';
+import { useResizeChecker } from '../../Docunment/CodeLayout/Composeable/ResizeChecker';
 
 const props = defineProps({
   instance: {
@@ -250,7 +251,7 @@ onMounted(() => {
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
-    nextTick(() => updateRegion());
+    updateRegion();
   };
   instance.value.editorHooks.callbackRequireContext = () => context;
   instance.value.editorHooks.callbackUpdateRegion = updateRegion;
@@ -270,9 +271,28 @@ onMounted(() => {
     if (instance.value.style.noIsolate)
       instance.value.isolateState = false;
     updateComment();
-    nextTick(() => updateRegion());
+    updateRegion();
+    startResizeChecker();
   })
 });
+onBeforeUnmount(() => {
+  stopResizeChecker();
+});
+
+//#region 单元大小更改后重新布局
+
+const {
+  startResizeChecker,
+  stopResizeChecker,
+} = useResizeChecker(
+  nodeRef,
+  undefined, undefined,
+  () => {
+    updateRegion();
+  }
+);
+
+//#endregion
 
 //#region 区块大小与区块功能
 

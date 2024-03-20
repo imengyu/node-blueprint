@@ -335,8 +335,9 @@ export class Node extends SerializableObject<INodeDefine> {
    * 更改参数端口的数据类型
    * @param port 参数端口
    * @param newType 新的数据类型
+   * @param changeIntitalValue 是否更改端口的设置默认值
    */
-  public changePortParamType(port: NodePort|string, newType: NodeParamType) {
+  public changePortParamType(port: NodePort|string, newType: NodeParamType, changeIntitalValue = true) {
     if(!port) {
       printError(this.name, 'changePortParamType: Must provide port');
       return;
@@ -354,6 +355,10 @@ export class Node extends SerializableObject<INodeDefine> {
     }
       
     port.paramType = newType;
+    if (changeIntitalValue) {
+      port.paramDefaultValue = newType.define?.defaultValue() as ISaveableTypes;
+      port.initialValue = port.paramDefaultValue;
+    }
   }
 }
 

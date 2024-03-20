@@ -5,6 +5,7 @@ export function useResizeChecker(
   ref: Ref<HTMLElement|undefined>,
   onWidthChange?: (newWidth: number) => void,
   onHeightChange?: (newHeight: number) => void,
+  onSizeChange?: (newWidth: number, newHeight: number) => void,
 ) {
 
   let sizeChangeTimer = 0;
@@ -21,6 +22,8 @@ export function useResizeChecker(
             onWidthChange(ref.value.offsetWidth);
           if (onHeightChange && sizeChangeLastHeight !== ref.value.offsetHeight)
             onHeightChange(ref.value.offsetHeight);
+          if (onSizeChange && (sizeChangeLastWidth !== ref.value.offsetWidth || sizeChangeLastHeight !== ref.value.offsetHeight))
+            onSizeChange(ref.value.offsetWidth, ref.value.offsetHeight);
           sizeChangeLastWidth = ref.value.offsetWidth;
           sizeChangeLastHeight = ref.value.offsetHeight;
         }

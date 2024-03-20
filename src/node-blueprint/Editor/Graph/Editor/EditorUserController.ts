@@ -9,13 +9,28 @@ import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 
+
+export interface NodeEditorUserAddNodeOptions<T> {
+  /**
+   * 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
+   */
+  addNodeInPos?: Vector2|undefined, 
+  /**
+   * 如果指定了 addNodeInPos，是否将 addNodeInPos 减去当前的单元大小（也就是居中放置），默认：false
+   */
+  addNodePosRefernceCenter?: boolean,
+  /**
+   * 初始化单元的 options 数据
+   */
+  intitalOptions?: T|undefined,
+}
 export interface NodeEditorUserControllerContext {
   /**
    * 用户添加单元
    * @param define 单元定义
-   * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
+   * @param options 自定义配置 
    */
-  userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined, intitalOptions?: CustomStorageObject|undefined) : Node|null;
+  userAddNode<T = CustomStorageObject>(define: INodeDefine, options: NodeEditorUserAddNodeOptions<T>) : Node|null;
   /**
    * 用户删除单元
    * @param node 
@@ -283,7 +298,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param define 单元定义
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
    */
-  function userAddNode(define: INodeDefine, addNodeInPos?: Vector2|undefined, intitalOptions?: CustomStorageObject|undefined) {
+  function userAddNode<T = CustomStorageObject>(define: INodeDefine, options: NodeEditorUserAddNodeOptions<T>) {
     const currentGraph = context.getCurrentGraph();
 
     //检查单元是否只能有一个
@@ -303,8 +318,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     const newNode = new NodeEditor(define);
     newNode.load();
     //配置
-    if (intitalOptions)
-      newNode.options = intitalOptions;
+    if (options.intitalOptions)
+      newNode.options = options.intitalOptions;
+    //事件
+    newNode.events.onCreate?.(newNode);
 
     if(context.isConnectToNew()) { //添加单元并连接
       const connectingEndPos = context.getConnectingInfo().endPos;
@@ -330,8 +347,17 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
           newNode.updateRegion();
         }
       });
-    } else if(addNodeInPos) { //在指定位置添加单元
-      newNode.position.set(addNodeInPos);
+    } else if(options.addNodeInPos) { //在指定位置添加单元
+      newNode.position.set(options.addNodeInPos);
+      //居中放置
+      if (options.addNodePosRefernceCenter) {
+        userInterfaceNextTick(() => {
+          const size = newNode.getRealSize();
+          newNode.position.x -= size.x / 2;
+          newNode.position.y -= size.y / 2;
+          newNode.updateRegion();
+        });
+      }
       context.addNode(newNode)
     } else { //在屏幕中央位置添加单元
       const center = context.getViewPort().rect().calcCenter();
@@ -379,7 +405,9 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       return;
 
     const rect = context.calcNodesRegion(selectedNodes);
-    const node = userAddNode(BaseNodes.getScriptBaseCommentNode(), new Vector2(rect.x - 15, rect.y - 15 - 50));
+    const node = userAddNode(BaseNodes.getScriptBaseCommentNode(), {
+      addNodeInPos: new Vector2(rect.x - 15, rect.y - 15 - 50)
+    });
     if (node) {
       node.customSize.set(rect.w + 30, rect.h + 30 + 50);
     }
@@ -403,11 +431,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     }
 
     if (type === 'get') {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableGet(), context.getMouseInfo().mouseCurrentPosViewPort);
+      const node = userAddNode(BaseNodes.getScriptBaseVariableGet(), {
+        addNodeInPos: context.getMouseInfo().mouseCurrentPosViewPort
+      });
       if (node)
         node.options.variable = variable.name;
     } else {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableSet(), context.getMouseInfo().mouseCurrentPosViewPort);
+      const node = userAddNode(BaseNodes.getScriptBaseVariableSet(), {
+        addNodeInPos: context.getMouseInfo().mouseCurrentPosViewPort
+      });
       if (node)
         node.options.variable = variable.name;
     }

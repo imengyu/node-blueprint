@@ -110,9 +110,12 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
         case 'graph': {
           const pos = context.getMouseInfo().mouseCurrentPosViewPort;
           const nodeDefine = BaseNodes.getScriptBaseGraphCall();
-          context.userAddNode(nodeDefine, pos, {
-            callGraphType: datav[2],
-            callGraphName: datav[3]
+          context.userAddNode(nodeDefine, {  
+            addNodeInPos: pos, 
+            intitalOptions: {
+              callGraphType: datav[2],
+              callGraphName: datav[3]
+            }
           });
           break;
         }
@@ -121,7 +124,7 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
           const pos = context.getMouseInfo().mouseCurrentPosViewPort;
           const node = NodeRegistry.getInstance().getNodeByGUID(datav[2]);
           if (node)
-            context.userAddNode(node, pos);
+            context.userAddNode(node, { addNodeInPos: pos });
           else
             context.userActionAlert('error', '无法找到对应节点GUID：' + datav[2]);
           context.closeAddNodePanel();

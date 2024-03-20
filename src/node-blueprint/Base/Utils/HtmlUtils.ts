@@ -33,16 +33,17 @@ function isEleEditable(e: HTMLElement) : boolean {
  */
 function getTop(e: HTMLElement, stopClassOrEle ? : string|HTMLElement) : number {
   let offset = e.offsetTop;
+  const parent = e.offsetParent as HTMLElement;
   if (
     e.offsetParent !== null && (
       !stopClassOrEle 
       || (typeof stopClassOrEle === 'string' ? 
-        !(<HTMLElement>e.offsetParent).classList.contains(stopClassOrEle) :
+        !parent.classList.contains(stopClassOrEle) :
         e.offsetParent !== stopClassOrEle
       )
     )
   ) 
-    offset += getTop(<HTMLElement>e.offsetParent, stopClassOrEle);
+    offset += getTop(parent, stopClassOrEle) - parent.scrollTop;
   return offset;
 }
 /**
@@ -52,16 +53,17 @@ function getTop(e: HTMLElement, stopClassOrEle ? : string|HTMLElement) : number 
  */
 function getLeft(e: HTMLElement, stopClassOrEle ? : string|HTMLElement) : number {
   let offset = e.offsetLeft;
+  const parent = e.offsetParent as HTMLElement;
   if (
     e.offsetParent !== null && (
       !stopClassOrEle 
       || (typeof stopClassOrEle === 'string' ? 
-        !(<HTMLElement>e.offsetParent).classList.contains(stopClassOrEle) :
+        !parent.classList.contains(stopClassOrEle) :
         e.offsetParent !== stopClassOrEle
       )
     )
   ) 
-    offset += getLeft(<HTMLElement>e.offsetParent, stopClassOrEle);
+    offset += getLeft(parent, stopClassOrEle) - parent.scrollLeft;
     
   return offset;
 }

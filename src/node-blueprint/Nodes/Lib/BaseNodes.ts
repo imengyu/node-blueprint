@@ -1,5 +1,5 @@
 import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
+import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 
 const messages = {
@@ -114,6 +114,10 @@ import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
   callGraphName: string;
+}
+export interface ICoverterNodeOptions {
+  coverterFrom: string,
+  coverterTo: string,
 }
 
 function registerScriptBase()  {
@@ -1307,33 +1311,30 @@ function registerConvertNode() {
     ],
     events: {
       onCreate: (node) => {
-        const ParamTypeServiceInstance = NodeParamTypeRegistry.getInstance();
+        const options = node.options as unknown as ICoverterNodeOptions;
 
         if (
-          !StringUtils.isNullOrEmpty(node.options.coverterFrom as string) && 
-          !StringUtils.isNullOrEmpty(node.options.coverterTo as string)
-        )
-          node.data['coverter'] = ParamTypeServiceInstance.getTypeCoverter(
-            NodeParamType.FromString(node.options.coverterFrom as string), 
-            NodeParamType.FromString(node.options.coverterTo as string)
-          );
-    
-          const coverter = node.data['coverter'] as NodeTypeCoverter;
-        if(coverter) {
-    
+          !StringUtils.isNullOrEmpty(options.coverterFrom) && 
+          !StringUtils.isNullOrEmpty(options.coverterTo)
+        ) {
+          const fromType = NodeParamType.FromString(options.coverterFrom);
+          const toType = NodeParamType.FromString(options.coverterTo);
+
           const fromPort = node.getPortByGUID('INPUT') as NodePort;
           const toPort = node.getPortByGUID('OUTPUT') as NodePort;
     
-          node.changePortParamType(fromPort, coverter.fromType);
-          node.changePortParamType(toPort, coverter.toType);
-          node.define.description = '转换 ' + coverter.fromType.toUserFriendlyName() + 
-            ' 至 ' + coverter.toType.toUserFriendlyName();
+          node.changePortParamType(fromPort, fromType);
+          node.changePortParamType(toPort, toType);
+          
+          node.description = node.define.description = '转换 ' + fromType.toUserFriendlyName() + 
+            ' 至 ' + toType.toUserFriendlyName();
         }
       },
     },
     style: {
       logo: NodeIconEntryString,
       minWidth: 0,
+      inputPortMinWidth: 0,
       titleState: 'hide',
       titleBakgroundColor: "rgba(250,250,250,0.6)",
     },
