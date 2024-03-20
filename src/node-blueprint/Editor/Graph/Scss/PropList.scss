@@ -27,6 +27,20 @@
       flex-direction: column;
     }
 
+    &.drop-up::after, &.drop-down::after {
+      position: absolute;
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--mx-editor-border-light-color);
+    }
+    &.drop-down::after {
+      top: unset;
+      bottom: 0;
+    }
+
     .prop-delete {
       display: inline-block;
       position: absolute;
@@ -84,6 +98,8 @@
       }
     }
     &.empty-text {
+      flex-direction: row;
+      justify-content: center;
       text-align: center;
       font-size: 12px;
     }

@@ -1,10 +1,4 @@
 {
-  "uid": "747669696b383275",
-  "name": "新文档",
-  "version": "1.0",
-  "description": "新文档",
-  "author": "",
-  "comment": "",
   "mainGraph": {
     "@SNK": "NodeGraph",
     "@SNO": {
@@ -12,7 +6,7 @@
         "@SNK": "Array",
         "@SNO": [
           {
-            "uid": "78397938793964",
+            "uid": "38713465787471",
             "startPort": {
               "nodeUid": "2666f6e636d306e",
               "portUid": "START"
@@ -23,7 +17,7 @@
             }
           },
           {
-            "uid": "353677796f726c",
+            "uid": "7966653938626b",
             "startPort": {
               "nodeUid": "6271746339726d",
               "portUid": "DEFAULT_OUTPUT"
@@ -34,7 +28,7 @@
             }
           },
           {
-            "uid": "7a776c727a3570",
+            "uid": "70696b61746339",
             "startPort": {
               "nodeUid": "46c616538326f34",
               "portUid": "DEFAULT_OUTPUT"
@@ -69,8 +63,8 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 101,
-                    "y": 102
+                    "x": 110,
+                    "y": 100
                   }
                 },
                 "markOpen": true,
@@ -117,7 +111,7 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 705,
+                    "x": 710,
                     "y": 100
                   }
                 },
@@ -167,8 +161,8 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 276,
-                    "y": 102
+                    "x": 250,
+                    "y": 100
                   }
                 },
                 "markOpen": false,
@@ -239,7 +233,7 @@
                 "tags": {
                   "@SNK": "Array",
                   "@SNO": [
-                    "GraphCall新图表2"
+                    "GraphCall按数字生成数组"
                   ]
                 },
                 "customSize": {
@@ -252,14 +246,14 @@
                 "position": {
                   "@SNK": "Vector2",
                   "@SNO": {
-                    "x": 501,
-                    "y": 104
+                    "x": 430,
+                    "y": 100
                   }
                 },
                 "markOpen": false,
                 "markContent": "",
                 "options": {
-                  "callGraphName": "新图表2",
+                  "callGraphName": "按数字生成数组",
                   "callGraphType": "subgraph"
                 },
                 "ports": {
@@ -295,6 +289,76 @@
                         "@SNK": "NodeParamType",
                         "@SNO": {
                           "name": "execute"
+                        }
+                      },
+                      "direction": "output",
+                      "dyamicAdd": true,
+                      "defaultConnectPort": false,
+                      "isRefPassing": false,
+                      "isStatic": false,
+                      "isAsync": false,
+                      "isFlexible": false,
+                      "forceNoEditorControl": false,
+                      "forceEditorControlOutput": false,
+                      "forceNoCycleDetection": false,
+                      "forceNoDelete": true
+                    },
+                    {
+                      "guid": "INPUT1",
+                      "name": "起始值",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "number"
+                        }
+                      },
+                      "paramDefaultValue": 0,
+                      "direction": "input",
+                      "dyamicAdd": true,
+                      "initialValue": 0,
+                      "defaultConnectPort": false,
+                      "isRefPassing": false,
+                      "isStatic": false,
+                      "isAsync": false,
+                      "isFlexible": false,
+                      "forceNoEditorControl": false,
+                      "forceEditorControlOutput": false,
+                      "forceNoCycleDetection": false,
+                      "forceNoDelete": true
+                    },
+                    {
+                      "guid": "INPUT2",
+                      "name": "数量",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "number"
+                        }
+                      },
+                      "paramDefaultValue": 0,
+                      "direction": "input",
+                      "dyamicAdd": true,
+                      "initialValue": 0,
+                      "defaultConnectPort": false,
+                      "isRefPassing": false,
+                      "isStatic": false,
+                      "isAsync": false,
+                      "isFlexible": false,
+                      "forceNoEditorControl": false,
+                      "forceEditorControlOutput": false,
+                      "forceNoCycleDetection": false,
+                      "forceNoDelete": true
+                    },
+                    {
+                      "guid": "OUTPUT1",
+                      "name": "新端口2",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "array<number>"
                         }
                       },
                       "direction": "output",
@@ -511,7 +575,46 @@
                         "options": {},
                         "ports": {
                           "@SNK": "Array",
-                          "@SNO": []
+                          "@SNO": [
+                            {
+                              "guid": "DEFAULT_IN",
+                              "name": "进入",
+                              "description": "",
+                              "paramType": {
+                                "@SNK": "NodeParamType",
+                                "@SNO": {
+                                  "name": "execute"
+                                }
+                              },
+                              "dyamicAdd": false
+                            },
+                            {
+                              "guid": "INPUT1",
+                              "name": "起始值",
+                              "description": "",
+                              "paramType": {
+                                "@SNK": "NodeParamType",
+                                "@SNO": {
+                                  "name": "number"
+                                }
+                              },
+                              "dyamicAdd": false,
+                              "initialValue": 0
+                            },
+                            {
+                              "guid": "INPUT2",
+                              "name": "数量",
+                              "description": "",
+                              "paramType": {
+                                "@SNK": "NodeParamType",
+                                "@SNO": {
+                                  "name": "number"
+                                }
+                              },
+                              "dyamicAdd": false,
+                              "initialValue": 0
+                            }
+                          ]
                         },
                         "uid": "626d6167356968"
                       }
@@ -548,7 +651,32 @@
                         "options": {},
                         "ports": {
                           "@SNK": "Array",
-                          "@SNO": []
+                          "@SNO": [
+                            {
+                              "guid": "DEFAULT_OUTPUT",
+                              "name": "退出",
+                              "description": "",
+                              "paramType": {
+                                "@SNK": "NodeParamType",
+                                "@SNO": {
+                                  "name": "execute"
+                                }
+                              },
+                              "dyamicAdd": false
+                            },
+                            {
+                              "guid": "OUTPUT1",
+                              "name": "新端口2",
+                              "description": "",
+                              "paramType": {
+                                "@SNK": "NodeParamType",
+                                "@SNO": {
+                                  "name": "array<number>"
+                                }
+                              },
+                              "dyamicAdd": false
+                            }
+                          ]
                         },
                         "uid": "6c6d3032627163"
                       }
@@ -570,6 +698,18 @@
                       }
                     },
                     "forceNoDelete": true
+                  },
+                  {
+                    "name": "新端口2",
+                    "guid": "OUTPUT1",
+                    "direction": "output",
+                    "paramType": {
+                      "@SNK": "NodeParamType",
+                      "@SNO": {
+                        "name": "array<number>"
+                      }
+                    },
+                    "forceNoDelete": true
                   }
                 ]
               },
@@ -587,6 +727,32 @@
                       }
                     },
                     "forceNoDelete": true
+                  },
+                  {
+                    "name": "起始值",
+                    "guid": "INPUT1",
+                    "direction": "input",
+                    "paramType": {
+                      "@SNK": "NodeParamType",
+                      "@SNO": {
+                        "name": "number"
+                      }
+                    },
+                    "forceNoDelete": true,
+                    "paramDefaultValue": 0
+                  },
+                  {
+                    "name": "数量",
+                    "guid": "INPUT2",
+                    "direction": "input",
+                    "paramType": {
+                      "@SNK": "NodeParamType",
+                      "@SNO": {
+                        "name": "number"
+                      }
+                    },
+                    "forceNoDelete": true,
+                    "paramDefaultValue": 0
                   }
                 ]
               },
@@ -603,7 +769,7 @@
               "description": "",
               "version": "",
               "uid": "2756e6968646276",
-              "name": "新图表2",
+              "name": "按数字生成数组",
               "type": "subgraph"
             }
           },
@@ -752,9 +918,28 @@
       "type": "main"
     }
   },
-  "customData": {},
   "customTypes": {
     "@SNK": "Array",
-    "@SNO": []
-  }
+    "@SNO": [
+      {
+        "name": "array<number>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "可以将同一类型的多个变量存储在一个数组数据结构中。",
+          "typeTitle": "数组",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      }
+    ]
+  },
+  "customData": {},
+  "comment": "",
+  "author": "",
+  "description": "新文档",
+  "version": "1.0",
+  "name": "新文档",
+  "uid": "747669696b383275"
 }

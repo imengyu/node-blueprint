@@ -3,6 +3,7 @@ import { printWarning } from "../../Logger/DevLog";
 import { Singleton } from "../../Singleton/Singleton";
 import { createEnumInternalEditor, registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
+import type { IKeyAnyObject } from "@imengyu/vue-dock-layout/lib/DockUtils";
 
 const TAG = 'NodeParamTypeRegistry';
 
@@ -131,7 +132,11 @@ export class NodeParamTypeRegistry extends Singleton {
     if (newType.isGeneric && autoMergeGeneric) {
       const pureType = this.getTypeByString(newType.name);
       if (pureType) {
-        newType.define = pureType.define!;
+        const define2 = newType.define as unknown as IKeyAnyObject;
+        for (const key in pureType.define) {
+          if (typeof define2[key] === 'undefined')
+            define2[key] = (pureType.define as unknown as IKeyAnyObject)[key];
+        }
         newType.hiddenInChoosePanel = true;
       }
     }

@@ -3,6 +3,7 @@
     v-if="renameState"
     ref="input"
     :model-value="modelValue" 
+    :placeholder="placeholder"
     :update-at="'blur'"
     :enterSubmit="true"
     @update:model-value="(s: string) => emit('update:model-value', s)"
@@ -27,6 +28,10 @@ const props = defineProps({
     default: false,
   },
   modelValue: {
+    type: String,
+    default: '',
+  },
+  placeholder: {
     type: String,
     default: '',
   },

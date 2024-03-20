@@ -14,7 +14,7 @@ export default defineComponent({
     if (this.port?.paramType?.define?.typeEditor)
       return [
         this.port.paramType.define.typeEditor({
-          value: this.port.paramDefaultValue,
+          value: this.port.paramDefaultValue ?? this.port.paramType.define.defaultValue(),
           'onUpdate:value': (v : ISaveableTypes) => {
             const port = this.port;
             port.paramDefaultValue = v;

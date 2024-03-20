@@ -50,6 +50,8 @@ provide<PropBoxContext>('PropBoxContext', {
 </script>
 
 <style lang="scss">
+@import '../../../Nana/Scss/Scroll.scss';
+
 .prop-search {
   margin: 5px 10px;
   padding: 2px 4px;
@@ -64,10 +66,19 @@ provide<PropBoxContext>('PropBoxContext', {
   }
 }
 .prop-box {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   background-color: var(--mx-editor-background-second-color);
   border-radius: var(--mx-editor-border-radius-small);
   margin: 0 0 0 var(--mx-editor-border-radius-small);
+  overflow: hidden;
+  overflow-y: scroll;
+
+  @include pc-fix-scrollbar();
 }
 </style>

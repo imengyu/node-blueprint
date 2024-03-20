@@ -486,8 +486,10 @@ function registerScriptGraphBase()  {
           node.sendSelfMessage(messages.GRAPH_ONLINE, {});
           node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: childGraph.name });
           node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
+          node.data.childGraph = childGraph;
         } else {
           node.sendSelfMessage(messages.GRAPH_DELETE, {});
+          node.data.childGraph = null;
         }
       },
       onEditorMessage(node, context, msg) {
@@ -536,6 +538,7 @@ function registerScriptGraphBase()  {
 
           node.tags[0] = `GraphCall${newName}`;
           node.name = newName;
+          node.options.callGraphName = newName;
           node.postLateUpdateRegion();
           node.setErrorState('');
         } 
@@ -558,11 +561,9 @@ function registerScriptGraphBase()  {
       onEditorClickEvent(node, context, event) {
         if (event === 'dblclick') {
           //双击进入图表
-          const graph = context.getCurrentGraph();
-          const callGraphName = node.options.callGraphName as string;
-          const childGraph = callGraphName ? graph.children.find(v => v.name === callGraphName) : undefined;
+          const childGraph = node.data.childGraph as NodeGraph;
           if (childGraph) {
-            graph.getParentDocunment()?.activeEditor?.openGraph(childGraph);
+            context.getCurrentGraph().getParentDocunment()?.activeEditor?.openGraph(childGraph);
           } else {
             context.showSmallTip('调用目标图表丢失');
           }

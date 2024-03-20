@@ -54,7 +54,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    if (this.value)
+    if (typeof this.value !== 'undefined')
       this.numberStringValue = "" + this.value;
   },
   methods: {

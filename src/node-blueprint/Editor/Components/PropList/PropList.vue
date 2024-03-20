@@ -2,20 +2,16 @@
   <div v-if="items" class="prop-list">
     <slot>
       <template v-for="(item,i) in items" :key="i">
-        <div 
-          :class="[
-            'prop-list-item',
-            $slots.rowHorizontal ? 'horizontal' : 'vertical',
-            rowClass,
-          ]"
+        <PropListItem 
+          :horizontal="$slots.rowHorizontal!==undefined"
           :draggable="dragSortable && (!childDragable || childDragable?.(item,i))"
+          :dropData="draggingItemIndex >= 0"
           @contextmenu="childMouseEvent?.(item,i,'contextmenu',$event)"
           @click="childMouseEvent?.(item,i,'click',$event)"
           @dblclick="childMouseEvent?.(item,i,'dblclick',$event)"
           @dragstart="onDragStart(item,i,$event)"
           @dragend="onDragEnd()"
-          @dragover="onDragOver(item,i,$event)"
-          @drop="onDrop(item,i,$event)"
+          @drop="(e: DragEvent, pos: string) => onDrop(item,i,e,pos)"
         >
           <Icon 
             v-if="expandable && childExpandable?.(item,i)"
@@ -25,7 +21,7 @@
           />
           <slot v-if="$slots.rowHorizontal" name="rowHorizontal" :item="item" :index="i" />
           <slot v-if="$slots.rowVertical" name="rowVertical" :item="item" :index="i" />
-        </div>
+        </PropListItem>
         <slot v-if="expandable && expandState[i]" name="rowExtend" :item="item" :index="i" />
       </template>
     </slot>
@@ -41,6 +37,7 @@
 <script setup lang="ts">
 import { ref, type PropType } from 'vue';
 import Icon from '../../Nana/Icon.vue';
+import PropListItem from './PropListItem.vue';
 
 const emit = defineEmits([ 'add', 'dragSort' ])
 
@@ -84,29 +81,21 @@ const props = defineProps({
 })
 
 const expandState = ref<boolean[]>([]);
-let draggingItemIndex = -1;
+const draggingItemIndex = ref(-1);
 
 function onDragStart(item: unknown, index: number, e: DragEvent) {
   if (props.dragSortable)
-    draggingItemIndex = index;
+    draggingItemIndex.value = index;
   props.childStartDrag?.(item, index, e);
 }
 function onDragEnd() {
-  draggingItemIndex = -1;
+  draggingItemIndex.value = -1;
 }
-function onDragOver(item: unknown, index: number, e: DragEvent) {
-  if (draggingItemIndex >= 0) {
+function onDrop(item: unknown, index: number, e: DragEvent, pos: string) {
+  if (draggingItemIndex.value >= 0) {
     e.preventDefault();
     e.stopPropagation();
-  }
-}
-function onDrop(item: unknown, index: number, e: DragEvent) {
-  if (draggingItemIndex >= 0) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const target = e.target as HTMLElement;
-    emit('dragSort', props.items[draggingItemIndex], e.offsetY < target.offsetHeight / 2 ? index : (index + 1));
+    emit('dragSort', props.items[draggingItemIndex.value ], pos === 'up' ? index : (index + 1));
   }
 }
 

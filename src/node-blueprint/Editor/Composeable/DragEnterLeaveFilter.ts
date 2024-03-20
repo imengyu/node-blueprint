@@ -16,7 +16,7 @@ export function useDragEnterLeaveFilter(
     lockLeaveState--;
     if (lockLeaveState > 0)
       delayLeaveTimer.start();
-  }, 10);
+  }, 0);
 
   let lockLeaveState = 0;
   let enterState = false;

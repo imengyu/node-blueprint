@@ -59,13 +59,13 @@ $custom-editor-base-color: rgba(104, 104, 104, 0.5);
       }
 
       &.input-border {
-        border: 2px solid transparent;
+        outline: 2px solid transparent;
       }
       &.input-error {
-        border: 2px solid #f76758!important;
+        outline: 2px solid #f76758!important;
       }
       &.input-warn {
-        border: 2px solid #daa000!important;
+        outline: 2px solid #daa000!important;
       }
     }
   }

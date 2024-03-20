@@ -77,6 +77,24 @@ function downData(arr : Array<any>, index : number) {
     return swapItems(arr, index, index + 1)
 }
 
+/**
+ * 将数组中某个条目重新插入数组指定索引位置，此函数适用于拖拽的场景中，
+ * 此函数会自动计算移除条目之后的索引，并将其插入到指定位置中。
+ * @param array 数组
+ * @param item 条目
+ * @param index 新的索引
+ */
+function reInsertToArray(array: any[], item: any, index: number) {
+  const oldIndex = array.indexOf(item);
+  if (oldIndex < index) {
+    removeAt(array, oldIndex);
+    insert(array, index - 1, item);
+  } else if (oldIndex > index) {
+    removeAt(array, oldIndex);
+    insert(array, index, item);
+  }
+}
+
 export default {
   addOnce,
   isEmpty,
@@ -89,4 +107,5 @@ export default {
   swapItems,
   upData,
   downData,
+  reInsertToArray,
 };

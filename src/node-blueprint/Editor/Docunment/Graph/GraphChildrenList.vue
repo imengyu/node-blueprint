@@ -5,7 +5,7 @@
     :items="graphList"
     :emptyText="showEmpty ? '没有数据，可点击右上角按钮添加' : ''"
     :childExpandable="(childGraph) => (childGraph as NodeGraph).children.length > 0"
-    :childDragable="(childGraph, index) => ((childGraph as NodeGraph).type !== 'subgraph' || activeGraph.children.includes((childGraph as NodeGraph))) && !graphRenameState[index]"
+    :childDragable="(childGraph, index) => ((childGraph as NodeGraph).type !== 'subgraph' || activeGraph?.children?.includes((childGraph as NodeGraph))) && !graphRenameState[index]"
     :childMouseEvent="onChildGraphMouseEvent"
     :childStartDrag="(childGraph, index, event) => onChildGraphDrag(childGraph as NodeGraph, event)"
     @drag-sort="onChildDragSort"
@@ -36,11 +36,12 @@ import PropEditTextItem from '../../Components/PropList/PropEditTextItem.vue';
 import GraphChildrenIcon from './GraphChildrenIcon.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
+import GraphChildrenActiveDot from './GraphChildrenActiveDot.vue';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import { NodeGraph, type NodeGraphType } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
-import GraphChildrenActiveDot from './GraphChildrenActiveDot.vue';
+import { useGraphNameChangeHandler } from './Composeable/GraphNameChange';
 
 export interface GraphChildrenListRef {
   onAddChildGraph(): void;
@@ -178,21 +179,9 @@ function onDeleteChildGraph(childGraph: NodeGraph) {
   })
 
 }
-function onChildGraphNameUpdate(childGraph: NodeGraph, newName: string) {
-  //检查是否有其他图表也使用了这个名称，如果有则不允许更改
-  const graph = props.graph;
-  const oldName = childGraph.name;
-  if (newName !== oldName) {
-    if (graph.children.find(k => k.name === newName)) {
-      getNodeGraphEditorContext()?.userActionAlert('warning', `已有一个名为 ${newName} 的图表，请换一个名称`);
-      return;
-    }
-    childGraph.name = newName;
-  }
-  //进行图表中所有调用节点的更新
-  getNodeDocunmentEditorContext()?.dispstchMessage('sendMessageToFilteredNodes', { tag: `GraphCall${newName}`, message: BaseNodes.messages.GRAPH_ONLINE, data: {}});
-  getNodeDocunmentEditorContext()?.dispstchMessage('sendMessageToFilteredNodes', { tag: `GraphCall${oldName}`, message: BaseNodes.messages.GRAPH_NAME_CHANGE, data: { name: newName }});
-}
+
+const { onGraphNameUpdate: onChildGraphNameUpdate } = useGraphNameChangeHandler();
+
 function onEditChildGraph(childGraph: NodeGraph) {
   getNodeIdeControlContext()
     .getCurrentActiveDocunmentEditor()

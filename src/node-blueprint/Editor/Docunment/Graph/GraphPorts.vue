@@ -1,13 +1,17 @@
 <template>
   <PropList 
+    dragSortable
     :items="ports"
+    :emptyText="`没有${input?'输入':'输出'}，可点击右上角按钮添加`"
     @add="onAddPort"
+    @dragSort="onChildDragSort"
   >
     <template #rowVertical="{ item }">
       <PropItem title="">
-        <Input 
-          :model-value="(item as INodePortDefine).name" 
+        <PropEditTextItem
           placeholder="端口名称"
+          :renameState="true"
+          :model-value="(item as INodePortDefine).name"
           @update:model-value="(v: string) => onPortNameUpdate(item as INodePortDefine, v)"
         />
         <NodeParamTypePicker 
@@ -34,10 +38,6 @@
       >
         <GraphPortParamEditor :port="(item as NodePort)" />
       </PropItem>
-    </template> 
-    <template #add>
-      <Icon icon="icon-add-bold" />
-      添加{{ (input ? '输入' : '输出') }}
     </template>
   </PropList>
 </template>
@@ -47,7 +47,6 @@ import { computed, type PropType } from 'vue';
 import PropItem from '../../Components/PropList/PropItem.vue';
 import PropList from '../../Components/PropList/PropList.vue';
 import Icon from '../../Nana/Icon.vue';
-import Input from '../../Nana/Input/Input.vue';
 import SmallButton from '../../Components/SmallButton.vue';
 import GraphPortParamEditor from './GraphPortParamEditor.vue';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
@@ -57,6 +56,11 @@ import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
 import NodeParamTypePicker from '../../Components/PropControl/Components/NodeParamTypePicker.vue';
+import PropEditTextItem from '../../Components/PropList/PropEditTextItem.vue';
+
+export interface GraphPortListRef {
+  onAddPort(): void;
+}
 
 const props = defineProps({
   graph: {
@@ -111,13 +115,18 @@ function onDeletPort(port: INodePortDefine) {
 function onMovePort(port: INodePortDefine, down: boolean) {
   const index = ports.value.indexOf(port) ;
   if (down) {
-    if(index > 0)
-      ArrayUtils.swapItems(ports.value, index, index - 1);
+    ArrayUtils.downData(ports.value, index);
   } else {
-    if(index < ports.value.length - 2)
-      ArrayUtils.swapItems(ports.value, index, index + 1);
+    ArrayUtils.upData(ports.value, index);
   }
   notifyPortChange();
 }
+function onChildDragSort(dragItem: INodePortDefine, targetIndex: number) {
+  ArrayUtils.reInsertToArray(ports.value, dragItem, targetIndex);
+}
+
+defineExpose<GraphPortListRef>({
+  onAddPort,
+});
 
 </script>
