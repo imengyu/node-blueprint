@@ -86,6 +86,7 @@ const types = computed(() => {
 
   function preFilterType(type: NodeParamType) {
     return (
+      !type.hiddenInChoosePanel &&
       (props.canBeArrayOrSetOrDict || 
         (!type.isArray && !type.isSet && !type.isDictionary)
       ) &&

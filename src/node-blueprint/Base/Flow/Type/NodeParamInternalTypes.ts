@@ -78,6 +78,14 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
       });
     },
     typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
+    typeGenericPickerOption() {
+      return {
+        canBeAny: true,
+        canBeExecute: false,
+        canBeNoHash: true,
+        canBeContainer: true,
+      };
+    },
     typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
   });
   NodeParamType.Set = registry.registerType('set', {
@@ -92,6 +100,14 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
         ...type.define as NodeParamTypeDefine,
         hiddenInChoosePanel: true,
       });
+    },
+    typeGenericPickerOption() {
+      return {
+        canBeAny: true,
+        canBeExecute: false,
+        canBeNoHash: true,
+        canBeContainer: true,
+      };
     },
     typeGenericNameMerger: (genericNames, source) => genericNames[0] + source,
     typeColorMerger: (type) => (type.genericTypes.length === 1 ? type.genericTypes[0].define?.typeColor : '') || '#fff',
@@ -109,20 +125,26 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
         hiddenInChoosePanel: true,
       });
     },
-    typeColorMerger: (type) => (type.genericTypes.length === 2 ? type.genericTypes[1].define?.typeColor : '') || '#fff',
-    typeGenericPickerOption(index) {
-      if (index === 0) {
+    typeGenericPickerOption(i) {
+      if (i === 0) {
         return {
           canBeAny: true,
           canBeExecute: false,
           canBeNoHash: false,
           canBeContainer: false,
-        }
+        };
       }
+      return {
+        canBeAny: true,
+        canBeExecute: false,
+        canBeNoHash: true,
+        canBeContainer: false,
+      };
     },
-    typeGenericNameMerger: (genericNames, source, inControl) => {
+    typeColorMerger: (type) => (type.genericTypes.length === 2 ? type.genericTypes[1].define?.typeColor : '') || '#fff',
+    typeGenericNameMerger: (genericNames, source) => {
       if (genericNames.length === 2)
-        return (inControl ? '' : genericNames[0]) + ' 映射到 ' + genericNames[1];
+        return genericNames[0] + ' 映射到 ' + genericNames[1];
       return source;
     },
   });

@@ -17,24 +17,6 @@
     "size": 0,
     "children": [
       {
-        "name": "NodeProps",
-        "open": false,
-        "resizeable": false,
-        "visible": true,
-        "showBadge": true,
-        "size": 0,
-        "children": []
-      },
-      {
-        "name": "GraphProps",
-        "open": false,
-        "resizeable": false,
-        "visible": true,
-        "showBadge": true,
-        "size": 0,
-        "children": []
-      },
-      {
         "name": "GraphVariableChildrenGroup",
         "open": false,
         "resizeable": false,
@@ -61,6 +43,24 @@
             "children": []
           }
         ]
+      },
+      {
+        "name": "NodeProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "GraphProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
       }
     ]
   },

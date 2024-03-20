@@ -77,9 +77,12 @@ export class NodeParamTypeRegistry extends Singleton {
   }
   /**
    * 注册自定义类型
-   * @param reg 类型数据
+   * @param defString 类型定义字符串
+   * @param define 类型数据
+   * @param autoMergeGeneric 是否自动合并泛型数据，而不是创建一个新的类型，默认：true
+   * @returns 
    */
-  public registerType(defString : string, define : NodeParamTypeDefine) : NodeParamType {
+  public registerType(defString : string, define : NodeParamTypeDefine, autoMergeGeneric = true) : NodeParamType {
     const old = this.getTypeByString(defString);
     if(old !== null && !define.hiddenInChoosePanel) {
       printWarning(TAG, "Type " + defString + " alreday registered !");
@@ -123,6 +126,15 @@ export class NodeParamTypeRegistry extends Singleton {
     }
 
     this.allTypes.set(defString, newType);
+
+    //合并泛型数据
+    if (newType.isGeneric && autoMergeGeneric) {
+      const pureType = this.getTypeByString(newType.name);
+      if (pureType) {
+        newType.define = pureType.define!;
+        newType.hiddenInChoosePanel = true;
+      }
+    }
 
     //创建枚举类型的转换器
     if(newType.baseType === 'enum' && define.autoCreateEnumConverter)

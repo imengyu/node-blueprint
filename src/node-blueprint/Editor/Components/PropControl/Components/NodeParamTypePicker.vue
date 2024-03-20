@@ -1,7 +1,7 @@
 <template>
   <!--类型选择器-->
   <div ref="selectBox" class="node-param-type-picker">
-    <template v-if="canChangeSetType">
+    <template v-if="canChangeSetType && !modelValue.isExecute">
       <!--用于修改容器类型-->
       <NodeParamSetTypeChoose 
         :type="modelValue"
