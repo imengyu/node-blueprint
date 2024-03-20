@@ -25,6 +25,7 @@
       </PropItem>
       <PropItem title="变量类型">
         <NodeParamTypePicker
+          canChangeSetType
           :model-value="(variable as NodeVariable).type" 
           @update:model-value="(v) => onGraphVariableTypeUpdate((variable as NodeVariable), v as NodeParamType)"
         />

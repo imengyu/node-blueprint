@@ -136,8 +136,14 @@ export interface SerializableSchemeConfig {
    * @returns 
    */
   saveProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
+  
   /**
-   * 加载之前回调
+   * 单个属性加载之后回调
+   * @returns 
+   */
+  afterPropertyLoad?: (key: string) => void,
+  /**
+   * 整个对象加载之前回调
    * @returns 
    */
   beforeLoad?: (data: unknown) => void,
@@ -509,6 +515,7 @@ export class SerializableObject<T> {
       if (!this.isPropertySerializable(config, key))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
+      config.afterPropertyLoad?.(key);
     }
 
     this.serializeConfig.afterLoadOrMerge?.();

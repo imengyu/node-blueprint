@@ -98,7 +98,7 @@ import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import Alert from '../Nana/Modal/Alert';
 import Icon from '../Nana/Icon.vue';
 import IconButton from '../Nana/Button/IconButton.vue';
-import TestScript from '../../../../test-scripts/sub-graph.json';
+import TestScript from '../../../../test-scripts/param-type-picker.json';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
@@ -126,6 +126,15 @@ const config = reactive<CodeLayoutConfig>({
   statusBar: true,
   menuBar: true,
 });
+
+const props = defineProps({
+  modalTeleport: {
+    type: String,
+    default: '#app',
+  },
+});
+
+provide('NodeGraphUIModalTeleport', props.modalTeleport);
 
 //#region 设置
 
@@ -536,7 +545,7 @@ function resetDefultLayout() {
   initLayout();
 }
 function saveLayout() {
-  //SettingsUtils.setSettings('NodeIdeEditorLayout', codeLayout.value?.saveLayout() || null);
+  SettingsUtils.setSettings('NodeIdeEditorLayout', codeLayout.value?.saveLayout() || null);
 }
 
 //#endregion

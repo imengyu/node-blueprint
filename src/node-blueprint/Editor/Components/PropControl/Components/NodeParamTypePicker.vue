@@ -21,7 +21,13 @@
           :modelValue="gtype"
           @update:modelValue="(t) => onChangeGenericType(i, t)"
         />
-        <Icon v-tooltip="'删除泛型参数'" class="type-clear-button" icon="icon-close" @click="onClearMainGenericType" />
+        <Icon 
+          v-tooltip="'删除泛型参数'"
+          class="type-clear-button"
+          icon="icon-close"
+          fill="currentColor"
+          @click="onClearMainGenericType"
+        />
       </template>
       <span v-else @click="onPickMainType">{{ modelValue?.toUserFriendlyName() || '请选择' }}</span>
     </template>
@@ -119,7 +125,16 @@ function onPickMainType() {
   background-color: var(--mx-editor-clickable-background-color);
   color: var(--mx-editor-text-color);
 
+  > span {
+    margin: 0 4px 0 2px;
+  }
+
+  &:hover > .type-clear-button {
+    display: initial;
+  }
+
   .type-clear-button {
+    display: none;
     border-radius: 4px;
     background-color: var(--mx-editor-background-third-color);
     cursor: pointer;

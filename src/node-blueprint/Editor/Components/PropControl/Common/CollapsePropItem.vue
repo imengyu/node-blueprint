@@ -74,7 +74,8 @@ const splterDrageHandler = createMouseDragHandler({
   white-space: nowrap;
   position: relative;
   display: flex;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
   font-size: var(--mx-editor-font-size-small);
   
   &.border {
@@ -88,7 +89,6 @@ const splterDrageHandler = createMouseDragHandler({
   > .prop-item-editor {
     position: relative;
     display: inline-block;
-    padding: 4px;
     color: var(--mx-editor-text-color);
   }
   > .prop-split {

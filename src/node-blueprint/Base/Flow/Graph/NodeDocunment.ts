@@ -23,8 +23,22 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
             'customData',
             'customTypes',
           ],
+          serializePropertyOrder: {
+            'customTypes': 1,
+            'mainGraph': 2,
+          },
           forceSerializableClassProperties: {
             mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
+          },
+          afterPropertyLoad: (key) => {
+            if (key === 'customTypes') {
+              //加载自定义组合类型数据
+              const typeRegistry = NodeParamTypeRegistry.getInstance();
+              for (const type of this.customTypes) {
+                if (!typeRegistry.isTypeRegistered(type.name))
+                  typeRegistry.registerType(type.name, type.define);
+              }
+            }
           },
           beforeSave: () => {
             //保存其他数据
@@ -34,14 +48,6 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
             for (const [,type] of typeRegistry.getAllTypes()) {
               if (type.isCustomType)
                 this.customTypes.push({ name: type.toString(), define: type.define });
-            }
-          },
-          afterLoad: () => {
-            //加载自定义组合类型数据
-            const typeRegistry = NodeParamTypeRegistry.getInstance();
-            for (const type of this.customTypes) {
-              if (!typeRegistry.isTypeRegistered(type.name))
-                typeRegistry.registerType(type.name, type.define);
             }
           },
         },

@@ -170,7 +170,7 @@
         </div>
       </div>
       <!--自定义属性区域（下）-->
-      <div v-if="instance.nodeProp?.after" class="ode-custom-editor">
+      <div v-if="instance.nodeProp?.after" class="node-custom-editor">
         <PropControl :items="instance.nodeProp.after" :mini="true" />
       </div>
       <!--右下角拖拽-->
@@ -250,7 +250,7 @@ onMounted(() => {
   instance.value.editorHooks.callbackOnAddToEditor = () => {
     instance.value.chunkInfo.data = instance.value.uid;
     chunkedPanel.value.addInstance(instance.value.chunkInfo);
-    updateRegion();
+    nextTick(() => updateRegion());
   };
   instance.value.editorHooks.callbackRequireContext = () => context;
   instance.value.editorHooks.callbackUpdateRegion = updateRegion;
@@ -270,6 +270,7 @@ onMounted(() => {
     if (instance.value.style.noIsolate)
       instance.value.isolateState = false;
     updateComment();
+    nextTick(() => updateRegion());
   })
 });
 

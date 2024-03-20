@@ -66,15 +66,12 @@ import { SimpleTimer } from '@/node-blueprint/Base/Utils/Timer/Timer';
 import TooltipContent from '../../Nana/Tooltip/TooltipContent.vue';
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
+const teleport = inject('NodeGraphUIModalTeleport') as string;
 
 defineProps({
   viewPort: {
     type: Object as PropType<NodeGraphEditorViewport>,
     default: null
-  },
-  teleport: {
-    type: String,
-    default: '#app',
   }
 })
 

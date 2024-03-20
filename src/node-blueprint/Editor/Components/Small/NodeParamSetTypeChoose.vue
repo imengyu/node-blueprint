@@ -1,26 +1,37 @@
 <template>
   <div class="node-param-set-type-choose">
     <div
-      v-tooltip="'更改容器类型'"  
-      class="node-float-set-typedot" 
-      @click="show=!show" 
+      ref="dot"
+      v-tooltip="'更改容器类型'"
+      class="node-float-set-typedot"
+      @click="onDotClick" 
     >
       <slot />
     </div>
-    <div v-show="show" class="node-float-set-selector">
-      <Icon v-tooltip="'变量'" icon="icon-sphere" @click="switchType('variable')" />
-      <Icon v-tooltip="'数组'" icon="icon-port-array-full" @click="switchType('array')" />
-      <Icon v-tooltip="'集合'" icon="icon-port-set" @click="switchType('set')" />
-      <Icon v-tooltip="'映射'" icon="icon-port-dictionary-full" @click="switchType('dictionary')" />
-    </div>
+    <Teleport :to="teleport">
+      <div 
+        v-if="show" 
+        class="node-float-set-selector"
+        :style="{
+          left: `${pos.x}px`,
+          top: `${pos.y}px`,
+        }"
+      >
+        <Icon v-tooltip="'变量'" icon="icon-sphere" @click="switchType('variable')" />
+        <Icon v-tooltip="'数组'" icon="icon-port-array-full" @click="switchType('array')" />
+        <Icon v-tooltip="'集合'" icon="icon-port-set" @click="switchType('set')" />
+        <Icon v-tooltip="'映射'" icon="icon-port-dictionary-full" @click="switchType('dictionary')" />
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType } from 'vue';
+import { ref, type PropType, inject } from 'vue';
 import Icon from '../../Nana/Icon.vue';
 import { NodeParamType, type NodeParamTypeDefine } from '../../../Base/Flow/Type/NodeParamType';
 import { NodeParamTypeRegistry } from '@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry';
+import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 
 const props = defineProps({
   type: {
@@ -29,7 +40,20 @@ const props = defineProps({
   },
 });
 
+const teleport = inject('NodeGraphUIModalTeleport') as string;
 const emit = defineEmits([ 'update:type' ]);
+
+const dot = ref<HTMLDivElement>();
+const show = ref(false);
+const pos = ref({ x: 0, y: 0 });
+
+function onDotClick() {
+  show.value = !show.value;
+
+  const teleportRef = document.querySelector(teleport);
+  if (dot.value && teleportRef)
+    pos.value = HtmlUtils.getElementAbsolutePositionInParent(dot.value, teleportRef as HTMLElement);
+}
 
 function switchType(type: 'variable'|'array'|'set'|'dictionary') {
   const registry = NodeParamTypeRegistry.getInstance()
@@ -101,11 +125,11 @@ function switchType(type: 'variable'|'array'|'set'|'dictionary') {
   show.value = false;
 }
 
+
 function updateType(type: NodeParamType) {
   emit('update:type', type);
 }
 
-const show = ref(false);
 </script>
 
 <style lang="scss">
@@ -118,7 +142,7 @@ const show = ref(false);
 .node-float-set-typedot {
   display: flex;
   cursor: pointer;
-  padding: 2px 5px;
+  padding: 2px 2px 2px 0;
   text-shadow: 0px 0px 3px rgb(0, 0, 0);
 }
 .node-float-set-selector {

@@ -1030,6 +1030,14 @@ function registerTypeBase() {
     },
     events: {
       onEditorCreate(node) {
+
+        if (node.options.type)
+          changeOutParamType(NodeParamType.FromString(node.options.type as string));
+        else {
+          node.options.type = NodeParamType.Any.toString();
+          node.updateRegion();
+        }
+
         function changeOutParamType(newType: NodeParamType) {
           const outNode = node.getPortByGUID('OUT');
           if (outNode) {
@@ -1039,9 +1047,6 @@ function registerTypeBase() {
           }
           node.updateRegion();
         }
-
-        if (node.options.type)
-          changeOutParamType(NodeParamType.FromString(node.options.type as string));
 
         return {
           nodeProp: {

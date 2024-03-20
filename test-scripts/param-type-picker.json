@@ -1,1 +1,385 @@
-{"uid":"6b7a687873723869","name":"新文档","version":"1.0","description":"新文档","author":"","comment":"","mainGraph":{"@SNK":"NodeGraph","@SNO":{"connectors":{"@SNK":"Array","@SNO":[{"uid":"776643171796f6f","startPort":{"nodeUid":"4376b6e6f643365","portUid":"EXEC-SUCCESS"},"endPort":{"nodeUid":"69776b396c7573","portUid":"END"}},{"uid":"6573356f717135","startPort":{"nodeUid":"e65376b7a733864","portUid":"START"},"endPort":{"nodeUid":"4376b6e6f643365","portUid":"IN"}}]},"nodes":{"@SNK":"Map","@SNO":[{"@SNM":"e65376b7a733864","@SNV":{"guid":"0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F","uid":"e65376b7a733864","node":{"customSize":{"@SNK":"Vector2","@SNO":{"x":0,"y":0}},"position":{"@SNK":"Vector2","@SNO":{"x":81,"y":161}},"markOpen":false,"markContent":"这是入口节点，程序从这里开始运行","options":{},"ports":{"@SNK":"Array","@SNO":[{"guid":"START","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false}]},"uid":"e65376b7a733864"}}},{"@SNM":"69776b396c7573","@SNV":{"guid":"77885802-92C8-569B-1E7F-48938943A549","uid":"69776b396c7573","node":{"customSize":{"@SNK":"Vector2","@SNO":{"x":0,"y":0}},"position":{"@SNK":"Vector2","@SNO":{"x":762,"y":164}},"markOpen":false,"markContent":"这是程序结束节点，运行到这里后程序结束","options":{},"ports":{"@SNK":"Array","@SNO":[{"guid":"END","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false}]},"uid":"69776b396c7573"}}},{"@SNM":"4376b6e6f643365","@SNV":{"guid":"EC05F8A0-AD4E-EE00-0BE4-6F02BDFD6470","uid":"4376b6e6f643365","node":{"customSize":{"@SNK":"Vector2","@SNO":{"x":0,"y":0}},"position":{"@SNK":"Vector2","@SNO":{"x":416,"y":128}},"markOpen":false,"markContent":"","options":{},"ports":{"@SNK":"Array","@SNO":[{"guid":"IN","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false,"initialValue":true},{"guid":"DATA","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"any"}},"dyamicAdd":false,"initialValue":true},{"guid":"EXEC-SUCCESS","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false},{"guid":"EXEC-FAILED","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"execute"}},"dyamicAdd":false},{"guid":"OUT","paramType":{"@SNK":"NodeParamType","@SNO":{"name":"any"}},"dyamicAdd":false}]},"uid":"4376b6e6f643365"}}}]},"outputPorts":{"@SNK":"Array","@SNO":[]},"inputPorts":{"@SNK":"Array","@SNO":[]},"static":false,"variables":{"@SNK":"Array","@SNO":[]},"children":{"@SNK":"Array","@SNO":[]},"author":"","description":"主图表是整个程序的入口","version":"1.0","uid":"6e713871727473","name":"主图表","type":"main"}}}
+{
+  "uid": "6b7a687873723869",
+  "name": "新文档",
+  "version": "1.0",
+  "description": "新文档",
+  "author": "",
+  "comment": "",
+  "mainGraph": {
+    "@SNK": "NodeGraph",
+    "@SNO": {
+      "connectors": {
+        "@SNK": "Array",
+        "@SNO": [
+          {
+            "uid": "6b38733377706a",
+            "startPort": {
+              "nodeUid": "4376b6e6f643365",
+              "portUid": "EXEC-SUCCESS"
+            },
+            "endPort": {
+              "nodeUid": "69776b396c7573",
+              "portUid": "END"
+            }
+          },
+          {
+            "uid": "4716833676d6372",
+            "startPort": {
+              "nodeUid": "e65376b7a733864",
+              "portUid": "START"
+            },
+            "endPort": {
+              "nodeUid": "4376b6e6f643365",
+              "portUid": "IN"
+            }
+          }
+        ]
+      },
+      "nodes": {
+        "@SNK": "Map",
+        "@SNO": [
+          {
+            "@SNM": "e65376b7a733864",
+            "@SNV": {
+              "guid": "0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F",
+              "uid": "e65376b7a733864",
+              "node": {
+                "tags": {
+                  "@SNK": "Array",
+                  "@SNO": []
+                },
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 210,
+                    "y": 160
+                  }
+                },
+                "markOpen": false,
+                "markContent": "这是入口节点，程序从这里开始运行",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "guid": "START",
+                      "name": "脚本开始",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "e65376b7a733864"
+              }
+            }
+          },
+          {
+            "@SNM": "69776b396c7573",
+            "@SNV": {
+              "guid": "77885802-92C8-569B-1E7F-48938943A549",
+              "uid": "69776b396c7573",
+              "node": {
+                "tags": {
+                  "@SNK": "Array",
+                  "@SNO": []
+                },
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 560,
+                    "y": 160
+                  }
+                },
+                "markOpen": false,
+                "markContent": "这是程序结束节点，运行到这里后程序结束",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "guid": "END",
+                      "name": "结束脚本",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "69776b396c7573"
+              }
+            }
+          },
+          {
+            "@SNM": "4376b6e6f643365",
+            "@SNV": {
+              "guid": "EC05F8A0-AD4E-EE00-0BE4-6F02BDFD6470",
+              "uid": "4376b6e6f643365",
+              "node": {
+                "tags": {
+                  "@SNK": "Array",
+                  "@SNO": []
+                },
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 340,
+                    "y": 130
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {
+                  "type": "array<number>"
+                },
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "guid": "IN",
+                      "name": "",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": true
+                    },
+                    {
+                      "guid": "DATA",
+                      "name": "",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "any"
+                        }
+                      },
+                      "dyamicAdd": false,
+                      "initialValue": true
+                    },
+                    {
+                      "guid": "EXEC-SUCCESS",
+                      "name": "转换成功",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "EXEC-FAILED",
+                      "name": "转换失败",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "execute"
+                        }
+                      },
+                      "dyamicAdd": false
+                    },
+                    {
+                      "guid": "OUT",
+                      "name": "转为 数组 泛型参数数字 ",
+                      "description": "",
+                      "paramType": {
+                        "@SNK": "NodeParamType",
+                        "@SNO": {
+                          "name": "array<number>"
+                        }
+                      },
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "4376b6e6f643365"
+              }
+            }
+          }
+        ]
+      },
+      "outputPorts": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "inputPorts": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "static": false,
+      "variables": {
+        "@SNK": "Array",
+        "@SNO": [
+          {
+            "@SNK": "NodeVariable",
+            "@SNO": {
+              "name": "变量0",
+              "type": {
+                "@SNK": "NodeParamType",
+                "@SNO": {
+                  "name": "number"
+                }
+              },
+              "static": false,
+              "customData": {}
+            }
+          },
+          {
+            "@SNK": "NodeVariable",
+            "@SNO": {
+              "name": "变量1",
+              "type": {
+                "@SNK": "NodeParamType",
+                "@SNO": {
+                  "name": "array<string>"
+                }
+              },
+              "static": false,
+              "customData": {}
+            }
+          },
+          {
+            "@SNK": "NodeVariable",
+            "@SNO": {
+              "name": "变量2",
+              "type": {
+                "@SNK": "NodeParamType",
+                "@SNO": {
+                  "name": "dictionary<string,number>"
+                }
+              },
+              "static": false,
+              "customData": {}
+            }
+          }
+        ]
+      },
+      "children": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "author": "",
+      "description": "主图表是整个程序的入口",
+      "version": "1.0",
+      "uid": "6e713871727473",
+      "name": "主图表",
+      "type": "main"
+    }
+  },
+  "customData": {},
+  "customTypes": {
+    "@SNK": "Array",
+    "@SNO": [
+      {
+        "name": "array<number>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "可以将同一类型的多个变量存储在一个数组数据结构中。",
+          "typeTitle": "数组",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      },
+      {
+        "name": "dictionary<any,any>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "映射表示键和值的一对一映射集合。",
+          "typeTitle": "映射",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      },
+      {
+        "name": "dictionary<string,any>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "映射表示键和值的一对一映射集合。",
+          "typeTitle": "映射",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      },
+      {
+        "name": "dictionary<string,number>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "映射表示键和值的一对一映射集合。",
+          "typeTitle": "映射",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      },
+      {
+        "name": "array<any>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "可以将同一类型的多个变量存储在一个数组数据结构中。",
+          "typeTitle": "数组",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      },
+      {
+        "name": "array<string>",
+        "define": {
+          "baseType": "object",
+          "inheritType": null,
+          "typeColor": "#fff",
+          "typeDescription": "可以将同一类型的多个变量存储在一个数组数据结构中。",
+          "typeTitle": "数组",
+          "hiddenInChoosePanel": true,
+          "isCustomType": true
+        }
+      }
+    ]
+  }
+}
