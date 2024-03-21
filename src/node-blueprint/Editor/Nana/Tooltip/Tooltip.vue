@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref, onBeforeUnmount } from 'vue';
-import { registerContextMenuMutex } from './TooltipMutex';
+import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref, onBeforeUnmount, onMounted } from 'vue';
+import { registerTooltipDownChecker, registerTooltipMutex, unRegisterTooltipDownChecker } from './TooltipMutex';
 import TooltipContent from './TooltipContent.vue';
 import { getContainer } from './TooltipUtils';
 
@@ -54,7 +54,7 @@ export default defineComponent({
       showDelay,
     } = toRefs(props);
 
-    const event = registerContextMenuMutex(showDelay.value, hideDelay.value, hideTooltip, showTooltip);
+    const event = registerTooltipMutex(showDelay.value, hideDelay.value, hideTooltip, showTooltip);
     const isDown = ref(false);
     const currentMousePos = ref({ x: 0, y: 0 });
 
@@ -91,7 +91,11 @@ export default defineComponent({
       if (!v)
         hideTooltip();
     });
+    onMounted(() => {
+      registerTooltipDownChecker();
+    });
     onBeforeUnmount(() => {
+      unRegisterTooltipDownChecker();
       hideTooltip();
     });
 

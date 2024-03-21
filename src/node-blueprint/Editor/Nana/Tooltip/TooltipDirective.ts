@@ -1,5 +1,5 @@
 import { render, h, type App, type  ObjectDirective } from "vue";
-import { registerContextMenuMutex } from "./TooltipMutex";
+import { registerTooltipMutex } from "./TooltipMutex";
 import { getContainer } from "./TooltipUtils";
 import TooltipContent from "./TooltipContent.vue";
 
@@ -8,7 +8,7 @@ let currentShowTooltipId = 0;
 
 const tooltipDirective : ObjectDirective = {
   mounted(el, binding) {
-    const event = registerContextMenuMutex(200, 200, hideTooltip, showTooltip);
+    const event = registerTooltipMutex(200, 200, hideTooltip, showTooltip);
     let isMouseDown = false;
     let isShow = false;
     const currentMousePos = { x: 0, y: 0 };

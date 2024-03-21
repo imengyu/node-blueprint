@@ -8,6 +8,30 @@ let lastShowTooltip : TooltipMutexItem|null = null
 let lastShowDelay = 0;
 let lastHideDelay = 0;
 let uidTemp = 0;
+let currentIsMouseDown = false;
+let currentCheckerMouseDown = 0;
+
+function onDocunmentMouseDown() {
+  currentIsMouseDown = true;
+}
+function onDocunmentMouseUp() {
+  currentIsMouseDown = false;
+}
+
+export function registerTooltipDownChecker() {
+  if (currentCheckerMouseDown === 0) {
+    document.addEventListener('mousedown', onDocunmentMouseDown, true);
+    document.addEventListener('mouseup', onDocunmentMouseUp, true);
+  }
+  currentCheckerMouseDown++;
+}
+export function unRegisterTooltipDownChecker() {
+  currentCheckerMouseDown--;
+  if (currentCheckerMouseDown === 0) {
+    document.removeEventListener('mousedown', onDocunmentMouseDown, true);
+    document.removeEventListener('mouseup', onDocunmentMouseUp, true);
+  }
+}
 
 /**
  * 鼠标进入，延时一会后显示Tooltip
@@ -15,7 +39,7 @@ let uidTemp = 0;
  * 鼠标移开，需要等待延时结束后才执行关闭
  */
 
-export function registerContextMenuMutex(
+export function registerTooltipMutex(
   showDelayTime: number, 
   hideDelayTime: number, 
   closeCallback: () => void,
@@ -24,6 +48,8 @@ export function registerContextMenuMutex(
   const uid = (++uidTemp).toString();
   return {
     onMouseEnter() {
+      if (currentIsMouseDown)
+        return;
       if (lastShowDelay)
         clearTimeout(lastShowDelay);
       if (lastHideDelay) {
@@ -71,5 +97,4 @@ export function registerContextMenuMutex(
       this.onMouseLeave();
     }
   }
- 
 }
