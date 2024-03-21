@@ -18,3 +18,23 @@ export function createMiniTimeOut(interval: number, cb: () => void) {
     },
   }
 }
+export function createMiniTimer(interval: number, cb: () => void) {
+  let timerId = 0;
+
+  return {
+    start() {
+      if (timerId > 0)
+        clearInterval(timerId);
+      timerId = setInterval(() => {
+        timerId = 0;
+        cb();
+      }, interval);
+    },
+    stop() {
+      if (timerId > 0) {
+        clearInterval(timerId);
+        timerId = 0;
+      }
+    },
+  }
+}

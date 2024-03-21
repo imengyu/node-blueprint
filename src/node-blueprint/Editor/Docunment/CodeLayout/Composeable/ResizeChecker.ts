@@ -1,12 +1,11 @@
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import { SimpleTimer } from "@/node-blueprint/Base/Utils/Timer/Timer";
 import type { Ref } from "vue";
+import { createMiniTimer } from "./MiniTimeout";
 
 const globalResizeCheckerList = [] as (() => void)[];
-const globalResizeCheckerTimer = new SimpleTimer(globalResizeCheckerList, () => {
+const globalResizeCheckerTimer = createMiniTimer(100, () => {
   for (const cb of globalResizeCheckerList)
     cb();
-}, 100);
+});
 
 export function useResizeChecker(
   ref: Ref<HTMLElement|undefined>,
@@ -37,7 +36,9 @@ export function useResizeChecker(
       globalResizeCheckerList.push(checkerCallback);
     },
     stopResizeChecker() {
-      ArrayUtils.remove(globalResizeCheckerList, checkerCallback);
+      const index = globalResizeCheckerList.indexOf(checkerCallback);
+      if (index >= 0)
+        globalResizeCheckerList.splice(index, 1);
       if (globalResizeCheckerList.length === 0)
         globalResizeCheckerTimer.stop();
     },
