@@ -490,7 +490,7 @@ export class SerializableObject<T> {
    * @param data If empty, use define data provided in constructor
    * @returns Return this 
    */
-  load(data ?: T, scheme?: string) : SerializableObject<T> {
+  load(data ?: T, scheme?: string) : this {
     if (!data) 
       data = this.define as T;
     if (!data)
@@ -502,7 +502,7 @@ export class SerializableObject<T> {
       const ret = loadOverride(data);
       this.serializeConfig.loadOverride = loadOverride;
       this.serializeConfig.afterLoadOrMerge?.();
-      return ret;
+      return ret as typeof this;
     }
 
     const config = this.getSerializeScheme(scheme || 'default');

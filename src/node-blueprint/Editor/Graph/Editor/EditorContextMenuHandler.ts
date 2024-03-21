@@ -225,21 +225,12 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
     let menuItems : Array<MenuItem> = [
       { 
-        label: "删除参数", onClick: () => {
-          context.userDeletePort(port);
-        }, 
+        label: "删除参数", onClick: () => context.userDeletePort(port), 
         disabled: !port.dyamicAdd, 
         divided: true 
       },
       { label: "断开所有连接", onClick: () => context.unConnectPortConnectors(port) },
-      { 
-        label: "提升为变量", 
-        onClick: () => {
-          //TODO: 提升为变量
-          //port
-        }, 
-        divided: true 
-      },
+      { label: "提升为变量", onClick: () => context.userPromotePortToVariable(port), divided: true },
     ];
     menuItems = menuItems.concat(menuJumpItems);
 

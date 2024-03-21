@@ -210,6 +210,19 @@ export class NodePort extends SerializableObject<INodePortDefine> {
 
     return thisType.acceptable(targetType); 
   }
+
+  /**
+   * 获取是否是输入端口
+   */
+  public get isInput() {
+    return this.direction === 'input';
+  }
+  /**
+   * 获取是否是输入端口
+   */
+  public get isOutput() {
+    return this.direction === 'output';
+  }
 }
 
 /**

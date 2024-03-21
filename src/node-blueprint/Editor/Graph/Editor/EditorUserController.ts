@@ -8,6 +8,7 @@ import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnecto
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -69,7 +70,13 @@ export interface NodeEditorUserControllerContext {
    * @param name 变量名称
    * @param type 添加类型
    */
-  userAddVariableNode(uid: string, name: string, type: 'get'|'set'): void;
+  userAddVariableNode(uid: string, name: string, type: 'get'|'set', pos?: Vector2): Node|null;
+  /**
+   * 提升为变量
+   * @param port 
+   * @returns 
+   */
+  userPromotePortToVariable(port: NodePort): void;
 
   /**
    * 删除选中连接线
@@ -294,6 +301,49 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     return true;
   }
   /**
+   * 提升为变量
+   * @param port 
+   * @returns 
+   */
+  function userPromotePortToVariable(port: NodePort) {
+    const graph = context.getCurrentGraph();
+    const name = graph.getUseableVariableName(port.isInput ? 'Input' : 'Output');
+
+    //添加变量
+    graph.variables.push(new NodeVariable().load({
+      name,
+      type: port.paramType,
+      defaultValue: port.paramType.define?.defaultValue(),
+      static: false,
+      customData: {}
+    }));
+
+    //添加节点
+    const node = userAddVariableNode(
+      graph.uid, 
+      name, 
+      port.isInput ? 'get' : 'set', 
+      (port as NodePortEditor).getPortPositionViewport().substract(new Vector2(port.isInput ? 180 : -100, 0))
+    );
+    if (!node)
+      return false;
+
+    //连接端口与变量节点
+    const connector = context.connectConnector(
+      node.getPortByGUID(port.isInput ? 'OUTPUT' : 'INPUT') as NodePortEditor,
+      port as NodePortEditor
+    );
+    if (!connector)
+      return false;
+
+    context.userInterfaceNextTick(() => {
+      //拉直连接
+      context.straightenConnector(port as NodePortEditor, connector);
+    });
+   
+    return true;
+  }
+  /**
    * 用户添加单元
    * @param define 单元定义
    * @param addNodeInPos 添加之后设置单元的位置，如果不提供，则默认设置到视口中心位置
@@ -419,32 +469,29 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * @param name 
    * @param type 
    */
-  function userAddVariableNode(uid: string, name: string, type: 'get'|'set') {
+  function userAddVariableNode(uid: string, name: string, type: 'get'|'set', pos?: Vector2) {
     const currentGraph = context.getCurrentGraph();
     if (currentGraph.uid !== uid)
-      return;
+      return null;
 
     const variable = currentGraph.variables.find(v => v.name === name);
     if (!variable) {
       userActionAlert('error', `未找到变量 ${name}`);
-      return;
+      return null;
     }
 
     if (type === 'get') {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableGet(), {
-        addNodeInPos: context.getMouseInfo().mouseCurrentPosViewPort
+      return userAddNode(BaseNodes.getScriptBaseVariableGet(), {
+        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
+        intitalOptions: { variable: variable.name },
       });
-      if (node)
-        node.options.variable = variable.name;
     } else {
-      const node = userAddNode(BaseNodes.getScriptBaseVariableSet(), {
-        addNodeInPos: context.getMouseInfo().mouseCurrentPosViewPort
+      return userAddNode(BaseNodes.getScriptBaseVariableSet(), {
+        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
+        intitalOptions: { variable: variable.name },
       });
-      if (node)
-        node.options.variable = variable.name;
     }
   }
-
 
   let autoNodeSizeChangeCheckerTimer = 0;
 
@@ -465,6 +512,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userDeletePort = userDeletePort;
   context.userDelete = userDelete;
   context.userAddVariableNode = userAddVariableNode;
+  context.userPromotePortToVariable = userPromotePortToVariable;
 
   context.userActionConfirm = userActionConfirm;
   context.userActionAlert = userActionAlert;

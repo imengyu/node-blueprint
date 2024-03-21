@@ -19,7 +19,6 @@ export class NodeVariable extends SerializableObject<INodeVariableDefine> {
   name = '';  
   type = NodeParamType.Any;
   defaultValue : unknown = null;
-  value : unknown = null;
   static = false;
   customData : IKeyValueObject = {};
 }
@@ -28,7 +27,6 @@ export interface INodeVariableDefine {
   name: string; 
   type: NodeParamType;
   defaultValue ?: unknown;
-  value ?: unknown;
   static ?: boolean;
   customData ?: IKeyValueObject;
 }

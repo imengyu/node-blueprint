@@ -101,7 +101,7 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/convert.json';
+import TestScript from '../../../../test-scripts/graph-variable.json';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
