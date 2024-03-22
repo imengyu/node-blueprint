@@ -146,9 +146,9 @@ function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
 }
 
 function saveLayout() {
-  if (splitLayout.value)
+  if (splitLayout.value && localStorage.getItem('SplitLayoutTestSave'))
     localStorage.setItem('SplitLayoutTestSave', JSON.stringify(splitLayout.value.saveLayout()));
-  if (codeLayout.value)
+  if (codeLayout.value && localStorage.getItem('CodeLayoutTestSave'))
     localStorage.setItem('CodeLayoutTestSave', JSON.stringify(codeLayout.value.saveLayout()));
 }
 

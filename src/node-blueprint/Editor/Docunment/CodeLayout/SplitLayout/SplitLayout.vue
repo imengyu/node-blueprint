@@ -150,6 +150,7 @@ function onChildGridActiveChildChanged(panel: CodeLayoutPanelInternal) {
  *    2.2 目标网格和当前父级网格不同，调用 removePanelInternal 触发移除收缩
  * 3. 判断方向
  *    3.1 拖放到网格中或者TAB，则直接插入至网格中指定位置
+ *      3.1.2 拖放到TAB末尾，则调整顺序插入至网格末尾
  *    3.2 拖放切割方向与当前网格方向一致
  *      创建新网格包围当前面板
  *      插入至指定位置
@@ -196,6 +197,11 @@ function dragDropToPanel(
         targetGrid.children.indexOf(referencePanel) 
           + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0)
       );
+    else if (toTab) {
+      //3.1.2
+      targetGrid.removeChild(panel);
+      targetGrid.addChild(panel, targetGrid.children.length);
+    }
     targetGrid.setActiveChild(panel);
   } else if (
     targetGridParent && (

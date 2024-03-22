@@ -160,15 +160,26 @@
       height: 100%;
       vertical-align: middle;
 
-      &.drag-active::after {
-        background-color: var(--code-layout-color-background-mask-light);
+      &::after {
         position: absolute;
         content: '';
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 1;
+        background-color: var(--code-layout-color-border-white);
+        z-index: 2;
+        width: var(--code-layout-border-size-larger);
+      }
+      &.drag-over-left {
+        &::after {
+          top: 0;
+          bottom: 0;
+          left: calc(var(--code-layout-border-size-larger) / 2 * -1);
+        }
+      }
+      &.drag-over-right {
+        &::after {
+          top: 0;
+          bottom: 0;
+          right: calc(var(--code-layout-border-size-larger) / 2 * -1);
+        }
       }
 
       .icon {
