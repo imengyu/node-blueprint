@@ -4,34 +4,46 @@
       <GraphSideToolItem />
       <GraphSideToolItem />
       <GraphSideToolSeparator />
-      <GraphSideToolItem ref="refAddButton" icon="icon-add-bold" @click="onAdd" />
+      <GraphSideToolItem ref="addButtonRef" icon="icon-add-bold" @click="onAdd" />
       <GraphSideToolItem icon="icon-trash" @click="onDelete" />
       <GraphSideToolSeparator />
       <GraphSideToolItem icon="icon-Play" color="green" />
       <GraphSideToolItem icon="icon-Next" color="blue" />
     </GraphSideTool>
-    <ColumnView :fill="true">
-      <GraphBreadcrumb 
-        :current-docunment="docunment"
-        :current-graph="currentGraph"
-        @goGraph="context.openGraph"
-      />
-      <NodeGraphEditor 
-        v-for="graph in openedGraphs"
-        v-show="graph.graph.uid === currentGraph?.uid"
-        :key="graph.graph.uid"
-        :context="graph.context"
-        :graph="(graph.graph as NodeGraph)"
-        :settings="editorSettings"
-        @select-node-or-connector-changed="(p, p2) =>onSelectNodeChanged(graph.graph.uid, p, p2)"
-      />
-    </ColumnView>
+    <SplitLayout
+      ref="splitLayoutRef"
+      rootGridType="centerArea1"
+      @panelClose="onPanelClose"
+      @panelActive="onActiveTabChange"
+    >
+      <template #tabContentRender="{ panel }">
+        <GraphBreadcrumb 
+          :currentDocunment="docunment"
+          :currentGraph="currentGraph"
+          :canGoBack="canGoBack"
+          :canGoForward="canGoForward"
+          @goGraph="context.openGraph"
+          @goBack="backStack"
+          @goForward="forwardStack"
+        />
+        <NodeGraphEditor
+          :key="(panel.data as OpenedGraphsData).graph.uid"
+          class="node-graph-breadcrumb-space"
+          :context="(panel.data as OpenedGraphsData).context"
+          :graph="(panel.data as OpenedGraphsData).graph"
+          :settings="editorSettings"
+          @selectNodeOrConnectorChanged="(p, p2) => onSelectNodeChanged((panel.data as OpenedGraphsData).graph.uid, p, p2)"
+        />
+      </template>
+      <template #tabEmptyContentRender="{ grid }">
+        <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
+      </template>
+    </SplitLayout>
   </RowView>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, type PropType, onBeforeUnmount, watch } from 'vue';
-import ColumnView from '../Nana/Layout/ColumnView.vue';
 import RowView from '../Nana/Layout/RowView.vue';
 import NodeGraphEditor from '../Graph/NodeGraphEditor.vue';
 import GraphBreadcrumb from './Graph/GraphBreadcrumb.vue';
@@ -47,6 +59,15 @@ import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
+import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
+import type { CodeLayoutSplitNInstance } from './CodeLayout/SplitLayout/SplitN';
+import type { CodeLayoutPanelInternal } from './CodeLayout/CodeLayout';
+import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
+
+interface OpenedGraphsData {
+  graph: NodeGraph,
+  context: NodeGraphEditorInternalContext,
+}
 
 const props = defineProps({
   docunment: {
@@ -64,15 +85,50 @@ const emit = defineEmits([
   'activeGraphSelectionChange',
 ])
 
-const refAddButton = ref();
+const addButtonRef = ref();
+const splitLayoutRef = ref<CodeLayoutSplitNInstance>();
 
-const openedGraphs = ref<{
-  graph: NodeGraph,
-  context: NodeGraphEditorInternalContext,
-}[]>([]);
-
+//打开的图表
+const openedGraphs = ref<OpenedGraphsData[]>([]);
 const currentGraph = ref<NodeGraph>();
 
+//打开图表历史记录
+const { 
+  canGoBack, 
+  canGoForward,
+  pushStack,
+  forwardStack,
+  backStack,
+  clearStack,
+} = useGraphOpenStack(onJumpStack);
+
+function onJumpStack(data: GraphOpenStackData) {
+  const graph = props.docunment.findChildGraph(data.graphUid);
+  if (graph)
+    context.openGraph(graph, true);
+}
+function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
+  const data = (panel.data as OpenedGraphsData);
+  ArrayUtils.remove(openedGraphs.value, data);
+  resolve();
+}
+function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
+  if (!currentActive)
+    return;
+  const data = currentActive.data as OpenedGraphsData;
+  if (data) {
+    currentGraph.value = data.graph;
+    pushStack(data.graph.uid, '');
+    emit('activeGraphEditorChange', data.graph);
+  }
+}
+function setActiveGraphPanel(graph: NodeGraph) {
+  const nextPanel = splitLayoutRef.value?.getPanelByName(graph.uid);
+  if (nextPanel)
+    nextPanel.activeSelf();
+}
+
+//控制接口
 const context = {
   getActiveGraph() {
     return currentGraph.value;
@@ -86,39 +142,45 @@ const context = {
   getActiveGraphEditor() {
     return currentGraph.value?.activeEditor || undefined;
   },
-  switchActiveGraph(graph) {
+  switchActiveGraph(graph, noStackHistory = false) {
     currentGraph.value = graph;
+    setActiveGraphPanel(graph);
+    if (!noStackHistory)
+      pushStack(graph.uid, '');
     emit('activeGraphEditorChange', graph);
   },
-  openGraph(graph) {
+  openGraph(graph, noStackHistory = false) {
     currentGraph.value = graph;
     emit('activeGraphEditorChange', graph);
-
-    if (openedGraphs.value.find((g) => g.graph === graph))
+    if (openedGraphs.value.find((g) => g.graph === graph)) {
+      this.switchActiveGraph(graph, noStackHistory);
       return;
-
-    openedGraphs.value.push({
+    }
+    const data : OpenedGraphsData = {
       graph,
       context: {} as NodeGraphEditorInternalContext,
+    };
+    const panel = splitLayoutRef.value?.getRootGrid().addPanel({
+      name: graph.uid,
+      title: graph.name,
+      data,
+      closeType: graph === props.docunment.mainGraph ? 'none' : 'close',
+      accept: [ 'centerArea1' ],
     });
+    panel?.activeSelf();
+    openedGraphs.value.push(data);
+    if (!noStackHistory)
+      pushStack(graph.uid, '');
   },
   closeGraph(graph) {
-    const index = openedGraphs.value.findIndex((g) => g.graph === graph);
-    if (index >= 0) {
-      ArrayUtils.removeAt(openedGraphs.value, index);
-      if (currentGraph.value === graph) {
-        if (openedGraphs.value.length > 0)
-          currentGraph.value = (index > 0 && index < openedGraphs.value.length - 1 ?
-            openedGraphs.value[index - 1] :
-            openedGraphs.value[0]).graph as NodeGraph;
-        else
-          currentGraph.value = undefined;
-      }
-      emit('activeGraphEditorChange', currentGraph.value);
-    }
+    const editorPanel = splitLayoutRef.value?.getPanelByName(graph.uid);
+    if (editorPanel)
+      editorPanel.closePanel();
   },
   closeAllGraph() {
     ArrayUtils.clear(openedGraphs.value);
+    clearStack();
+    splitLayoutRef.value?.clearLayout();
     currentGraph.value = undefined;
     emit('activeGraphEditorChange', currentGraph.value);
   },
@@ -128,7 +190,7 @@ const context = {
 } as NodeDocunmentEditorContext;
 
 function onAdd() {
-  const buttonPos = refAddButton.value.getButtonPosition() as Vector2;
+  const buttonPos = addButtonRef.value.getButtonPosition() as Vector2;
   context.getActiveGraphEditor()?.showAddNodePanel(buttonPos, undefined, undefined, undefined, true);
 }
 function onDelete() {
@@ -140,16 +202,18 @@ function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: 
 
 watch(() => props.docunment, (doc) => {
   context.closeAllGraph();
-  if (doc.mainGraph)
+  if (doc && doc.mainGraph)
     context.openGraph(doc.mainGraph);
 });
 onMounted(() => {
   const doc = props.docunment;
-  doc.activeEditor = context;
+  if (doc) {
+    doc.activeEditor = context;
 
-  //打开主图表
-  if (doc.mainGraph)
-    context.openGraph(doc.mainGraph);
+    //打开主图表
+    if (doc.mainGraph)
+      context.openGraph(doc.mainGraph);
+  }
 });
 onBeforeUnmount(() => {
   context.closeAllGraph();

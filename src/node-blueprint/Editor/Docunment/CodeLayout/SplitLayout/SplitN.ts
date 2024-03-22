@@ -110,6 +110,15 @@ export class CodeLayoutSplitNGridInternal extends CodeLayoutGridInternal impleme
     return super.getContainerSize();
   }
 
+  setActiveChild(child: CodeLayoutPanelInternal|null) {
+    super.setActiveChild(child);
+    this.context.childGridActiveChildChanged(this);
+  }
+  reselectActiveChild(): void {
+    super.reselectActiveChild();
+    this.context.childGridActiveChildChanged(this);
+  }
+
   //Internal
   //These methods is called internally, and you do not need to use them.
 
@@ -192,7 +201,10 @@ export interface CodeLayoutSplitNInstance {
    * @param name Panel name
    */
   activePanel(name: string): void;
-
+  /**
+   * Clear all grid.
+   */
+  clearLayout(): void;
   /**
    * Save current layout to JSON data.
    */

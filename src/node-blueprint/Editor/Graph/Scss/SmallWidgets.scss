@@ -12,7 +12,7 @@
   border-radius: 6px;
   font-size: 12px;
 
-  &:hover {
+  &:hover:not(.disabled) {
     background-color: #7e7e7e;
     color: var(--mx-editor-text-color);
   }
@@ -25,6 +25,10 @@
     .nana-icon {
       margin-right: 3px;
     }
+  }
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 }
 .node-small-input {

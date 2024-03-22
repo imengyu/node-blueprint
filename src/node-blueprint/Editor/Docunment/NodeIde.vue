@@ -101,7 +101,7 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/graph-variable.json';
+import TestScript from '../../../../test-scripts/sub-graph.json';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
@@ -140,7 +140,6 @@ provide('NodeGraphUIModalTeleport', props.modalTeleport);
 //#region 设置
 
 const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSettings('NodeIdeEditorSettings', {
-  topMargin: 30,
   drawDebugInfo: false,
   drawGrid: true,
   snapGrid: true,

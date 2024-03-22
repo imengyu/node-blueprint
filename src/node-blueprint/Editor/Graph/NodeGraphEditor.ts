@@ -64,7 +64,6 @@ export interface NodeGraphEditorBaseContext {
 }
 
 export interface INodeGraphEditorSettings {
-  topMargin?: number;
   drawDebugInfo?: boolean;
   drawGrid?: boolean;
   snapGrid?: boolean;

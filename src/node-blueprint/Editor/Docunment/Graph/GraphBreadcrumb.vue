@@ -1,6 +1,10 @@
 <template>
   <!--图表导航栏-->
   <div class="node-graph-breadcrumb">
+    <!--前进后退-->
+    <SmallButton v-tooltip="'后退'" :disabled="!canGoBack" icon="icon-arrow-left-" @click="emit('goBack')" />
+    <SmallButton v-tooltip="'前进'" :disabled="!canGoForward" icon="icon-arrow-right-" @click="emit('goForward')" />
+    <div class="spliter" />
     <div 
       v-for="(graph, i) in graphBreadcrumb"
       :key="i"
@@ -36,6 +40,7 @@ import ContextMenuGlobal, { type MenuItem } from '@imengyu/vue3-context-menu';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import type { NodeGraphEditorBaseEventListener } from '../../Graph/NodeGraphEditor';
+import SmallButton from '../../Components/SmallButton.vue';
 
 interface GraphBreadcrumb {
   text: string,
@@ -48,7 +53,7 @@ interface GraphBreadcrumb {
   }[],
 }
 
-const emit = defineEmits([ 'goGraph' ]);
+const emit = defineEmits([ 'goGraph', 'goBack', 'goForward' ]);
 
 const props = defineProps({
   currentDocunment: {
@@ -58,6 +63,14 @@ const props = defineProps({
   currentGraph: {
     type: Object as PropType<NodeGraph>,
     default: null,
+  },
+  canGoBack: {
+    type: Boolean,
+    default: false,
+  },
+  canGoForward: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -146,10 +159,14 @@ onBeforeUnmount(() => {
 <style lang="scss">
 @import '../NodeIdeDefine.scss';
 
+.node-graph-breadcrumb-space {
+  top: $top-breadcrumb-height;
+  height: calc(100% - #{$top-breadcrumb-height});
+}
 .node-graph-breadcrumb {
   position: absolute;
   top: 0;
-  left: $left-toolbar-width;
+  left: 0;
   right: 0;
   height: $top-breadcrumb-height;
   padding: 0 6px;
@@ -159,6 +176,13 @@ onBeforeUnmount(() => {
   user-select: none;
   cursor: pointer;
   color: var(--mx-editor-light-text-color);
+
+  .spliter {
+    background-color: var(--mx-editor-border-color-dark);
+    width: 1px;
+    height: 80%;
+    margin: 10px;
+  }
 
   > div {
     display: inline-flex;

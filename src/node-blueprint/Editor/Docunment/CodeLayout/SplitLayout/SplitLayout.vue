@@ -1,11 +1,13 @@
 <template>
-  <SplitNest :grid="(rootGrid as CodeLayoutSplitNGridInternal)">
+  <SplitNest 
+    :grid="(rootGrid as CodeLayoutSplitNGridInternal)"
+  >
     <template #grid="{ grid }">
       <slot name="tabRender" :grid="grid">
         <SplitTab 
           :grid="grid"
           @tabItemContextMenu="(a, b) => emit('panelContextMenu', a, b)"
-          @tabActive="(a, b) => emit('panelActive', a, b)"
+          @tabActive="onTabActiveChild"
         >
           <template #tabContentRender="params">
             <slot name="tabContentRender" v-bind="params" />
@@ -26,11 +28,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide, type Ref } from 'vue';
-import type { CodeLayoutPanelInternal, CodeLayoutPanelHosterContext } from '../CodeLayout';
+import { ref, provide, type Ref, type PropType, watch } from 'vue';
+import type { CodeLayoutPanelInternal, CodeLayoutPanelHosterContext, CodeLayoutGrid } from '../CodeLayout';
 import { CodeLayoutSplitNGridInternal, type CodeLayoutSplitLayoutContext, type CodeLayoutSplitNInstance, CodeLayoutSplitNPanelInternal } from './SplitN';
 import SplitNest from './SplitNest.vue';
 import SplitTab from './SplitTab.vue';
+import { usePanelDraggerRoot } from '../Composeable/DragDrop';
 
 const emit = defineEmits([ 
   'panelClose', 
@@ -38,10 +41,21 @@ const emit = defineEmits([
   'panelActive',
 ]);
 
+const props = defineProps({
+  /**
+   * Set rootGrid accept value
+   */
+  rootGridType: {
+    type: String as PropType<CodeLayoutGrid>,
+    default: 'centerArea',
+  },
+})
+
 const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 const hosterContext : CodeLayoutPanelHosterContext = {
   panelInstances,
   removePanelInternal,
+  childGridActiveChildChanged: onChildGridActiveChildChanged,
   closePanelInternal(panel) {
     new Promise<void>((resolve, reject) => emit('panelClose', panel, resolve, reject))
       .then(() => panel.parentGroup?.removePanel(panel))
@@ -50,10 +64,14 @@ const hosterContext : CodeLayoutPanelHosterContext = {
 }
 const rootGrid = ref(new CodeLayoutSplitNGridInternal(hosterContext));
 rootGrid.value.size = 100;
-rootGrid.value.accept = [ 'centerArea' ];
+rootGrid.value.accept = [ props.rootGridType ];
 rootGrid.value.parentGrid = 'centerArea';
 rootGrid.value.noAutoShink = true;
 const currentActiveGrid = ref<CodeLayoutSplitNGridInternal|null>(null);
+
+watch(() => props.rootGridType, (v) => {
+  rootGrid.value.accept = [ v ];
+});
 
 const instance : CodeLayoutSplitNInstance = {
   getRootGrid: () => rootGrid.value as CodeLayoutSplitNGridInternal,
@@ -62,9 +80,14 @@ const instance : CodeLayoutSplitNInstance = {
   activePanel(name) {
     panelInstances.get(name)?.activeSelf();
   },
+  clearLayout() {
+    rootGrid.value.childGrid.splice(0);
+    rootGrid.value.children.splice(0);
+  },
   loadLayout(json, instantiatePanelCallback) {
     if (!json)
       return;
+    this.clearLayout();
 
     function loadGrid(grid: any, gridInstance: CodeLayoutSplitNGridInternal) {
       gridInstance.loadFromJson(grid);
@@ -91,6 +114,7 @@ const instance : CodeLayoutSplitNInstance = {
   saveLayout: () => rootGrid.value.toJson(),
 };
 
+const lastActivePanel  = ref<CodeLayoutPanelInternal|null>(null);
 const context : CodeLayoutSplitLayoutContext = {
   currentActiveGrid: currentActiveGrid as Ref<CodeLayoutSplitNGridInternal|null>,
   activeGrid(grid) { currentActiveGrid.value = grid; },
@@ -223,6 +247,22 @@ const context : CodeLayoutSplitLayoutContext = {
   }
 };
 
+usePanelDraggerRoot();
+
+function onTabActiveChild(old: CodeLayoutPanelInternal, panel: CodeLayoutPanelInternal) {
+  if (panel === context.currentActiveGrid.value) {
+    emit('panelActive', lastActivePanel.value, panel.activePanel);
+    lastActivePanel.value = panel.activePanel;
+  }
+}
+
+function onChildGridActiveChildChanged(panel: CodeLayoutPanelInternal) {
+  if (panel === context.currentActiveGrid.value) {
+    emit('panelActive', lastActivePanel.value, panel.activePanel);
+    lastActivePanel.value = panel.activePanel;
+  }
+}
+
 /**
  * 移除面板操作流程
  * 
@@ -265,7 +305,7 @@ function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
     const oldActivePanel = targetGridParent.childGrid[0].activePanel;
 
     targetGridParent.children = oldChilds;
-    targetGridParent.activePanel = oldActivePanel;
+    targetGridParent.setActiveChild(oldActivePanel);
     targetGridParent.removeChildGrid(targetGridParent.childGrid[0]);
     for (const child of oldChilds)
       child.parentGroup = targetGridParent;
@@ -273,7 +313,6 @@ function removePanelInternal(panel: CodeLayoutSplitNPanelInternal) {
 
   return targetGridParent;
 }
-
 
 provide('splitLayoutContext', context);
 defineExpose(instance);

@@ -1,5 +1,11 @@
 <template>
-  <div :class="'node-small-button'+(text?' text':'')">
+  <div 
+    :class="[
+      'node-small-button',
+      text ? 'text' : '',
+      disabled ? 'disabled' : '',
+    ]"
+  >
     <Icon v-if="icon && iconPlace === 'before'" :icon="icon" />
     {{ text }}
     <slot />
@@ -22,6 +28,10 @@ defineProps({
   text: {
     type: String,
     default: ""
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 </script>

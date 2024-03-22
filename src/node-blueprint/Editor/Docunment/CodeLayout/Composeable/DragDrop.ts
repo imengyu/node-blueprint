@@ -1,4 +1,4 @@
-import { inject, ref, type Ref } from "vue";
+import { inject, provide, ref, type Ref } from "vue";
 import type { CodeLayoutConfig, CodeLayoutDragDropReferencePosition, CodeLayoutPanelInternal } from "../CodeLayout";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { createMiniTimeOut } from "./MiniTimeout";
@@ -22,10 +22,14 @@ export function getCurrentDragPanel() {
   return currentDragPanel;
 }
 
-const dragPanelState = ref(false);
+export function usePanelDraggerRoot() {
+  const dragPanelState = ref(false);
+  provide('dragPanelState', dragPanelState);
+}
 
 //拖拽开始函数封装
 export function usePanelDragger() {
+  const dragPanelState = inject('dragPanelState') as Ref<boolean>;
   const layoutConfig = inject('codeLayoutConfig') as Ref<CodeLayoutConfig>;
   const cornerSize = 40;
   const dragSelfState = ref(false);
@@ -48,6 +52,7 @@ export function usePanelDragger() {
     if (userCancel)
       return;
 
+    ev.stopPropagation();
     currentDragPanel = panel;
     (ev.target as HTMLElement).classList.add("dragging");
     dragSelfState.value = true;
@@ -60,7 +65,6 @@ export function usePanelDragger() {
       currentDragPanel = null;
     }
     (ev.target as HTMLElement).classList.remove("dragging");
-
     dragSelfState.value = false;
     dragPanelState.value = false;
     document.removeEventListener('dragover', draggingMouseMoveHandler);
@@ -81,6 +85,7 @@ export function usePanelDragOverDetector(
   dragoverChecking?: ((dragPanel: CodeLayoutPanelInternal) => boolean)|undefined,
 ) {
   
+  const dragPanelState = inject('dragPanelState') as Ref<boolean>;
   const dragEnterState = ref(false);
   const dragOverState = ref<CodeLayoutDragDropReferencePosition>('');
   const focusTimer = createMiniTimeOut(600, focusPanel);

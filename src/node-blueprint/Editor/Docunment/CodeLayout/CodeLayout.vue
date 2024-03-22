@@ -106,6 +106,7 @@ import CodeLayoutCustomizeLayout from './Components/CodeLayoutCustomizeLayout.vu
 import { MenuBar, type MenuOptions } from '@imengyu/vue3-context-menu';
 import type { MenuBarOptions } from '@imengyu/vue3-context-menu/lib/MenuBar';
 import type { CodeLayoutPanel, CodeLayoutPanelHosterContext } from './CodeLayout';
+import { usePanelDraggerRoot } from './Composeable/DragDrop';
 
 const codeLayoutBase = ref<CodeLayoutBaseInstance>();
 
@@ -134,6 +135,7 @@ const panelInstances = new Map<string, CodeLayoutPanelInternal>();
 const hosterContext : CodeLayoutPanelHosterContext = {
   panelInstances,
   removePanelInternal,
+  childGridActiveChildChanged() {},
   closePanelInternal() {}
 }
 
@@ -213,7 +215,7 @@ const codeLayoutContext : CodeLayoutContext = {
     if (panel.visible) {
       if (parent instanceof CodeLayoutPanelInternal)
         parent.relayoutAllWithNewPanel([ panel ]);
-      parent.activePanel = panel;
+      parent.setActiveChild(panel);
     } else {
       if (parent instanceof CodeLayoutPanelInternal)
         parent.relayoutAllWithRemovePanel(panel);
@@ -316,7 +318,7 @@ function dragDropToPanelNear(
   ) {
     oldParent.removeChild(panel);
     oldParent.addChild(panel, reference.getIndexInParent() + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0))
-    oldParent.activePanel = panel;
+    oldParent.setActiveChild(panel);
     return;
   }
   //0.2 原父级和目标父级一致(顶级容器)
@@ -324,7 +326,7 @@ function dragDropToPanelNear(
     const parentGrid = getRootGrid(panel.parentGrid);
     parentGrid.removeChild(panel);
     parentGrid.addChild(panel, reference.getIndexInParent() + (referencePosition === 'right' || referencePosition === 'down' ? 1 : 0))
-    parentGrid.activePanel = panel;
+    parentGrid.setActiveChild(panel);
     return;
   }
 
@@ -338,7 +340,7 @@ function dragDropToPanelNear(
   if (reference.parentGroup?.getIsTabContainer() && dropToActiviyBar) {
     reference.parentGroup.addChild(panel);
     reference.parentGroup.notifyRelayout();
-    reference.parentGroup.activePanel = panel;
+    reference.parentGroup.setActiveChild(panel);
     panel.size = 0;
     panel.notifyRelayout();
     return;
@@ -347,7 +349,7 @@ function dragDropToPanelNear(
   if (reference.getIsTabContainer()) {
     reference.addChild(panel);
     reference.notifyRelayout();
-    reference.activePanel = panel;
+    reference.setActiveChild(panel);
     panel.size = 0;
     panel.notifyRelayout();
     return;
@@ -361,7 +363,7 @@ function dragDropToPanelNear(
 
     //侧边栏拖拽后自动激活
     if (reference.parentGrid === 'primarySideBar')
-      grid.activePanel = panel;
+      grid.setActiveChild(panel);
     return;
   }
 
@@ -406,7 +408,7 @@ function dragDropToPanelNear(
 
     //替换至当前级
     newParent.replaceChild(reference, newGroup);
-    newParent.activePanel = newGroup;
+    newParent.setActiveChild(newGroup);
 
     for (const child of newGroup.children) {
       child.size = 0;
@@ -444,7 +446,7 @@ function dragDropToPanelNear(
     }
       
     panel.notifyRelayout();
-    newParent.activePanel = panel;
+    newParent.setActiveChild(panel);
   }
 }
 
@@ -550,9 +552,9 @@ function clearLayout() {
   panels.value.primary.children.splice(0);
   panels.value.secondary.children.splice(0);
   panels.value.bottom.children.splice(0);
-  panels.value.primary.activePanel = null;
-  panels.value.secondary.activePanel = null;
-  panels.value.bottom.activePanel = null;
+  panels.value.primary.setActiveChild(null);
+  panels.value.secondary.setActiveChild(null);
+  panels.value.bottom.setActiveChild(null);
   panelInstances.clear();
 }
 function saveLayout() {
@@ -589,6 +591,7 @@ function loadLayout(json: any, instantiatePanelCallback: (data: CodeLayoutPanel)
 }
 
 //处理函数
+usePanelDraggerRoot();
 
 provide('codeLayoutConfig', layoutConfig);
 provide('codeLayoutLangConfig', props.langConfig);
@@ -606,7 +609,7 @@ function onActivityBarAcitve(panelGroup: CodeLayoutPanelInternal) {
     //取消激活其他的面板
     panels.value.primary.children.forEach((p) => p.open = false);
     panelGroup.open = true;
-    panels.value.primary.activePanel = panelGroup;
+    panels.value.primary.setActiveChild(panelGroup);
   }
 }
 function onPrimarySideBarSwitch(on: boolean) {

@@ -7,13 +7,12 @@
   --mx-editor-background-four-color: #3c3c3c;
   --mx-editor-border-color: #3b3b3b;
   --mx-editor-border-color-dark: #111216;
+  --mx-editor-border-color-light: #fff;
+  --mx-editor-border-radius-small: 5px;
   --mx-editor-shadow-color: rgba(0,0,0,0.8);
 
   --mx-editor-font-size: 13px;
   --mx-editor-font-size-small: 11.5px;
-  
-  --mx-editor-border-light-color: #fff;
-  --mx-editor-border-radius-small: 5px;
 
   --mx-editor-list-item-background-color: transparent;
   --mx-editor-list-item-hover-color: #414344;
@@ -44,6 +43,11 @@
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+.node-top-margin-container {
+  position: absolute;
+  width: 100%;
   overflow: hidden;
 }
 .node-main-menu {

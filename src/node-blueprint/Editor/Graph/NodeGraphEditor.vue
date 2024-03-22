@@ -3,9 +3,7 @@
     ref="editorHost"
     class="node-graph-editor"
     :style="{
-      cursor,
-      top: settings?.topMargin ? `${settings.topMargin}px` : undefined,
-      height: settings?.topMargin ? `calc(100% - ${settings.topMargin}px)` : undefined,
+      cursor
     }"
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"

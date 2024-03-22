@@ -153,7 +153,7 @@ const props = defineProps({
 
 function handleTabClick(panel: CodeLayoutPanelInternal) {
   const parent = props.group;
-  parent.activePanel = panel;
+  parent.setActiveChild(panel);
 }
 
 //拖放面板处理函数

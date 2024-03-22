@@ -88,7 +88,7 @@ export const defaultCodeLayoutConfig : CodeLayoutConfig = {
 
 //用户接口定义
 
-export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'bottomPanel'|'centerArea'|'none';
+export type CodeLayoutGrid = 'primarySideBar'|'secondarySideBar'|'bottomPanel'|'centerArea'|'centerArea1'|'centerArea2'|'none';
 
 export type CodeLayoutPanelCloseType = 'unSave'|'close'|'none';
 
@@ -155,6 +155,7 @@ export interface CodeLayoutInstance {
 
 export interface CodeLayoutPanelHosterContext {
   panelInstances: Map<string, CodeLayoutPanelInternal>;
+  childGridActiveChildChanged(panel: CodeLayoutPanelInternal): void,
   removePanelInternal(panel: CodeLayoutPanelInternal): undefined|CodeLayoutPanelInternal;
   closePanelInternal(panel: CodeLayoutPanelInternal): void;
 }
@@ -340,7 +341,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
    * Set activePanel.
    * @param child 
    */
-  setActiveChild(child: CodeLayoutPanelInternal) {
+  setActiveChild(child: CodeLayoutPanelInternal|null) {
     this.activePanel = child;
   }
   /**
@@ -354,7 +355,7 @@ export class CodeLayoutPanelInternal extends LateClass implements CodeLayoutPane
    */
   activeSelf() {
     if (this.parentGroup)
-      this.parentGroup.activePanel = this;
+      this.parentGroup.setActiveChild(this);
   }
   /**
    * Get grid hoster container size (pixel).
