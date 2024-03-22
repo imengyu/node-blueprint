@@ -1,5 +1,5 @@
 import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
+import type { NodeGraphEditorContext, NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodeEditor } from "../Flow/NodeEditor";
@@ -7,6 +7,8 @@ import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
+import BaseNodes, { type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 
 export interface NodeEditorContextMenuContext {
   /**
@@ -43,11 +45,28 @@ export interface NodeEditorContextMenuContext {
    * @param callback 用户点击回调
    */
   showAddVariableMenu(variableName: string, callback: (action: 'get'|'set') => void) : void;
+  /**
+   * 注册节点自定义右键菜单处理器，在处理器中会返回选中节点信息，
+   * 你可以返回自定义菜单条目，这些条目会追加到最终右键菜单中
+   * @param handler 处理器
+   * @returns 返回回调用于取消注册
+   */
+  registerNodeCustomMenuHandler(handler: NodeContextMenuHandler): () => boolean;
+  /**
+   * 注册连接线自定义右键菜单处理器，在处理器中会返回选中节点信息，
+   * 你可以返回自定义菜单条目，这些条目会追加到最终右键菜单中
+   * @param handler 处理器
+   * @returns 返回回调用于取消注册
+   */
+  registerConnectorCustomMenuHandler(handler: NodeConnectorContextMenuHandler): () => boolean;
 }
 
 export interface NodeContextMenuItem extends Omit<MenuItem, "onClick"> {
   onClick?: (this: NodeEditor) => void;
 }
+
+export type NodeContextMenuHandler = (context: NodeGraphEditorContext, selectedNodes: NodeEditor[]) => MenuItem[];
+export type NodeConnectorContextMenuHandler = (context: NodeGraphEditorContext, selectedConnectors: NodeConnectorEditor[]) => MenuItem[];
 
 /**
  * 编辑器的右键菜单处理
@@ -83,6 +102,30 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       );
   }
 
+  const customNodeMenuHandler : NodeContextMenuHandler[] = [];
+  const customConnectorMenuHandler : NodeConnectorContextMenuHandler[] = [];
+
+  /**
+   * 注册节点自定义右键菜单处理器，在处理器中会返回选中节点信息，
+   * 你可以返回自定义菜单条目，这些条目会追加到最终右键菜单中
+   * @param handler 处理器
+   * @returns 返回回调用于取消注册
+   */
+  function registerNodeCustomMenuHandler(handler: NodeContextMenuHandler) {
+    customNodeMenuHandler.push(handler);
+    return () => ArrayUtils.remove(customNodeMenuHandler, handler);
+  }  
+  /**
+  * 注册连接线自定义右键菜单处理器，在处理器中会返回选中节点信息，
+  * 你可以返回自定义菜单条目，这些条目会追加到最终右键菜单中
+  * @param handler 处理器
+  * @returns 返回回调用于取消注册
+  */
+  function registerConnectorCustomMenuHandler(handler: NodeConnectorContextMenuHandler) {
+    customConnectorMenuHandler.push(handler);
+    return () => ArrayUtils.remove(customConnectorMenuHandler, handler);
+  }
+
   //Connector Menu
   function showContextMenu(options: MenuOptions) {
     ContextMenuGlobal.showContextMenu({ 
@@ -96,30 +139,35 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   function showConnectorRightMenu(screenPos : Vector2) {
     const selectedConnectors = context.getSelectConnectors();
     
+    let menuItems : MenuItem[] = [
+      { 
+        label: "断开连接", 
+        onClick: () => context.deleteSelectedConnectors()
+      },
+    ].concat(selectedConnectors.length === 1 ? [
+      { 
+        label: "按起始端位置拉直",
+        onClick: () => {
+          if (selectedConnectors[0].startPort)
+            context.straightenConnector(selectedConnectors[0].startPort as NodePortEditor, selectedConnectors[0]) 
+        },
+      },
+      { 
+        label: "按结束端位置拉直", 
+        onClick: () => {
+          if (selectedConnectors[0].endPort)
+            context.straightenConnector(selectedConnectors[0].endPort as NodePortEditor, selectedConnectors[0]) 
+        },
+      },
+    ] : []);
+
+    for (const iterator of customConnectorMenuHandler)
+      menuItems = menuItems.concat(iterator(context as NodeGraphEditorContext, selectedConnectors));
+
     context.showContextMenu({
       x: screenPos.x,
       y: screenPos.y,
-      items: [
-        { 
-          label: "断开连接", 
-          onClick: () => context.deleteSelectedConnectors()
-        },
-      ].concat(selectedConnectors.length === 1 ? [
-        { 
-          label: "按起始端位置拉直",
-          onClick: () => {
-            if (selectedConnectors[0].startPort)
-              context.straightenConnector(selectedConnectors[0].startPort as NodePortEditor, selectedConnectors[0]) 
-          },
-        },
-        { 
-          label: "按结束端位置拉直", 
-          onClick: () => {
-            if (selectedConnectors[0].endPort)
-              context.straightenConnector(selectedConnectors[0].endPort as NodePortEditor, selectedConnectors[0]) 
-          },
-        },
-      ] : []),
+      items: menuItems,
       zIndex: 100,
     });
   }
@@ -150,7 +198,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       loopMenuClick(nodeMenuSettingsMenuItems);
     }
 
-    const menuItems = (selectedCount === 1 ? (selectedNodes[0].menu?.items || []) : []).concat(
+    let menuItems = (selectedCount === 1 ? (selectedNodes[0].menu?.items || []) : []).concat(
       [
         { 
           label: "删除", 
@@ -184,12 +232,37 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           { label: "禁用", onClick: () => context.setSelectedNodeBreakpointState('disable') },
         ], divided: true },
         { 
+          label: "提升为函数", 
+          hidden: selectedCount === 1 ? (
+            selectedNodes[0].guid !== BaseNodes.getScriptBaseGraphCall().guid
+            || (selectedNodes[0].options as unknown as IGraphCallNodeOptions).callGraphType === 'function'
+          ) : false,
+          onClick: () => context.userPromoteSubgraphToFunction(selectedNodes[0]) 
+        },
+        { 
+          label: "展开子图表", 
+          hidden: selectedCount === 1 ? selectedNodes[0].guid !== BaseNodes.getScriptBaseGraphCall().guid : false,
+          onClick: () => context.userExpandSubgraph(selectedNodes[0]) 
+        },
+        { 
+          label: "折叠为子图表", 
+          onClick: () => context.userCollapseSelectedNodesTo('subgraph'),
+        },
+        { 
+          label: "折叠为函数", 
+          onClick: () => context.userCollapseSelectedNodesTo('function'),
+          divided: true,
+        },
+        { 
           label: "为选中项创建注释", 
-          disabled: selectedCount < 2,
+          disabled: selectedCount === 0,
           onClick: () => context.genCommentForSelectedNode() 
         },
       ]
     );
+
+    for (const iterator of customNodeMenuHandler)
+      menuItems = menuItems.concat(iterator(context as NodeGraphEditorContext, selectedNodes));
 
     context.showContextMenu({
       x: screenPos.x,
@@ -322,7 +395,9 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   context.showPortRightMenu = showPortRightMenu;
   context.showContextMenu = showContextMenu;
   context.showConnectorRightMenu = showConnectorRightMenu;
-
+  context.registerNodeCustomMenuHandler = registerNodeCustomMenuHandler;
+  context.registerConnectorCustomMenuHandler = registerConnectorCustomMenuHandler;
+  
   return {
     onCanvasContextMenu,
   }

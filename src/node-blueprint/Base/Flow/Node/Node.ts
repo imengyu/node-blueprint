@@ -13,6 +13,7 @@ import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
+import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 
 const TAG = 'Node';
 
@@ -35,6 +36,8 @@ export class Node extends SerializableObject<INodeDefine> {
               if (targetPort) {
                 targetPort.initialValue = port.initialValue;
                 targetPort.paramType = port.paramType;
+              } else {
+                thisArray.push(port)
               }
             }
           }
@@ -359,6 +362,13 @@ export class Node extends SerializableObject<INodeDefine> {
       port.paramDefaultValue = newType.define?.defaultValue() as ISaveableTypes;
       port.initialValue = port.paramDefaultValue;
     }
+  }
+
+  /**
+   * 获取是不是图表输入输出节点
+   */
+  public get isGraphInOutNode() {
+    return this.guid === BaseNodes.getScriptBaseGraphIn().guid || this.guid === BaseNodes.getScriptBaseGraphOut().guid
   }
 }
 

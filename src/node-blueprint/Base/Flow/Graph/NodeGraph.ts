@@ -215,6 +215,13 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
   public getOneNodeByUID(uid: string): Node | null {
     return this.nodes.get(uid) || null;
   }
+  /**
+   * 根据名称获取子图表
+   * @param name 名称
+   */
+  public getChildGraphByName(name: string): NodeGraph | null {
+    return this.children.find(g => g.name === name) || null;
+  }
 
   /**
    * 新图表初始化
@@ -337,7 +344,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
       if (this.getVariableByName(name) === null)
         return name;
     }
-    return baseName;
+    return baseName + Math.floor(Math.random() * 100);
   }
   /**
    * 获取一个可用的图表变量名称
@@ -352,7 +359,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
       if (!array.find(p => p.name === name))
         return name;
     }
-    return baseName;
+    return baseName + Math.floor(Math.random() * 100);
   }
   /**
    * 获取一个可用的图表名称
@@ -366,7 +373,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
       if (!array.find(p => p.name === name))
         return name;
     }
-    return baseName;
+    return baseName + Math.floor(Math.random() * 100);
   }
 
 

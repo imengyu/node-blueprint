@@ -7,8 +7,11 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
+import { printError } from "@/node-blueprint/Base/Logger/DevLog";
+import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -76,8 +79,27 @@ export interface NodeEditorUserControllerContext {
    * @param port 
    * @returns 
    */
-  userPromotePortToVariable(port: NodePort): void;
+  userPromotePortToVariable(port: NodePort): void; 
+  /**
+   * 提升为函数
+   */
+  userPromoteSubgraphToFunction(node: Node): void;
+  /**
+   * 折叠为函数/子图表
+   * @param to 设置折叠为函数还是子图表
+   */
+  userCollapseSelectedNodesTo(to: 'function'|'subgraph'): void;
+  /**
+   * 展开子图表
+   * @param node 选中节点
+   */
+  userExpandSubgraph(node: Node): void;
 
+  /**
+   * 展开子图表
+   * @param subgraph 子图表
+   */
+  expandSubgraph(subgraph: NodeGraph) : void;
   /**
    * 删除选中连接线
    */
@@ -118,6 +140,8 @@ export interface NodeEditorUserControllerContext {
    */
   genCommentForSelectedNode() : void;
 }
+
+const TAG = 'EditorUserController';
 
 /**
  * 流程图用户操作管理器
@@ -426,6 +450,87 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     else 
       context.deleteSelectedNodes();
   }
+  /**
+   * 提升为函数
+   */
+  function userPromoteSubgraphToFunction(node: Node) {
+
+    //将图表类型更改为函数或者静态函数
+    //移动图表至文档根
+    //更改调用节点设置
+    const options = (node.options as unknown as IGraphCallNodeOptions);
+    const callGraphName = options.callGraphName;
+    const graph = context.getCurrentGraph().getChildGraphByName(callGraphName);
+    if (!graph) {
+      printError(TAG, `Not found graph for node ${node.uid}`);
+      return;
+    }
+    const doc = graph.getParentDocunment();
+    if (!doc) {
+      printError(TAG, `Not found ParentDocunment for graph ${graph.uid}`);
+      return;
+    }
+    const mainGraph = doc.mainGraph;
+    if (!mainGraph) {
+      printError(TAG, `Not found mainGraph for doc ${doc.name}`);
+      return;
+    }
+
+    graph.type = mainGraph.type === 'class' ? 'function' : 'static';
+
+    ArrayUtils.remove((graph.parent as NodeGraph).children, graph);
+    mainGraph.children.push(graph);
+    graph.parent = mainGraph;
+
+    context.sendMessageToFilteredNodes(`GraphCall${callGraphName}`, BaseNodes.messages.GRAPH_PROMOTE, { type: 'function' });
+  }
+  /**
+   * 展开子图表
+   */
+  function userExpandSubgraph(node: Node) {
+    context.userActionConfirm(
+      'warning', 
+      '确定展开选中的图表/函数？如果有其它节点调用此子图表，将会失去调用'
+    ).then((confirm) => {
+      if (confirm) {
+        const callGraph = getGraphCallNodeGraph(context, node);
+        if (callGraph)
+          expandSubgraph(callGraph);
+        else
+          context.showSmallTip('调用图标丢失');
+      }
+    });
+  }
+  /**
+   * 添加图表变量节点
+   * @param uid 
+   * @param name 
+   * @param type 
+   */
+  function userAddVariableNode(uid: string, name: string, type: 'get'|'set', pos?: Vector2) {
+    const currentGraph = context.getCurrentGraph();
+    if (currentGraph.uid !== uid)
+      return null;
+
+    const variable = currentGraph.variables.find(v => v.name === name);
+    if (!variable) {
+      userActionAlert('error', `未找到变量 ${name}`);
+      return null;
+    }
+
+    if (type === 'get') {
+      return userAddNode(BaseNodes.getScriptBaseVariableGet(), {
+        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
+        intitalOptions: { variable: variable.name },
+      });
+    } else {
+      return userAddNode(BaseNodes.getScriptBaseVariableSet(), {
+        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
+        intitalOptions: { variable: variable.name },
+      });
+    }
+  }
+
 
   //单元位置或大小更改，刷新单元
   function updateNodeForMoveEnd(node: Node) {
@@ -464,34 +569,90 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
 
   /**
-   * 添加图表变量节点
-   * @param uid 
-   * @param name 
-   * @param type 
+   * 折叠为子图表/提升为函数
    */
-  function userAddVariableNode(uid: string, name: string, type: 'get'|'set', pos?: Vector2) {
+  function userCollapseSelectedNodesTo(to: 'function'|'subgraph') {
+    const selectedNodes = context.getSelectNodes();
+    if (selectedNodes.length < 0)
+      return;
+
+  }
+  /**
+   * 展开子图表
+   * 
+   * 移除子图表。
+   * 将子图表中的节点拷贝至当前图表（除了输入输出）。
+   * 将子图表端口与调用节点端口一一对应，重建连接
+   * 删除调用节点
+   * @param subgraph 子图表
+   */
+  function expandSubgraph(subgraph: NodeGraph) {
     const currentGraph = context.getCurrentGraph();
-    if (currentGraph.uid !== uid)
-      return null;
 
-    const variable = currentGraph.variables.find(v => v.name === name);
-    if (!variable) {
-      userActionAlert('error', `未找到变量 ${name}`);
-      return null;
-    }
+    currentGraph.children.push(...subgraph.children);
+    ArrayUtils.remove(currentGraph.children, subgraph);
 
-    if (type === 'get') {
-      return userAddNode(BaseNodes.getScriptBaseVariableGet(), {
-        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
-        intitalOptions: { variable: variable.name },
-      });
-    } else {
-      return userAddNode(BaseNodes.getScriptBaseVariableSet(), {
-        addNodeInPos: pos ?? context.getMouseInfo().mouseCurrentPosViewPort,
-        intitalOptions: { variable: variable.name },
-      });
+    const callNodes = context.filterNodes(`GraphCall${subgraph.name}`);
+    for (const callNode of callNodes) {
+      const callPos = callNode.position;
+      const copyNodeUidMapping = new Map<string, string>();
+      const filteredNodeArray : NodeEditor[] = [];
+
+      for (const node of subgraph.nodes.values()) {
+        if (!node.isGraphInOutNode)
+          filteredNodeArray.push(node as NodeEditor);
+      }
+
+      const region = context.calcNodesRegion(filteredNodeArray);
+
+      for (const node of filteredNodeArray) {
+        if (!node.isGraphInOutNode) {
+          const newNode = context.userAddNode(node.define, {
+            addNodeInPos: node.position.clone().substract(region.getPoint()).add(callPos),
+            intitalOptions: node.options,
+          });
+          if (newNode)
+            copyNodeUidMapping.set(node.uid, newNode.uid);
+        }
+      }
+      for (const connector of subgraph.connectors) {
+        if (!connector.startPort || !connector.endPort)
+          continue;
+
+        const startNodeUid = copyNodeUidMapping.get(connector.startPort.parent.uid);
+        const endNodeUid = copyNodeUidMapping.get(connector.endPort.parent.uid);
+        const startNode = startNodeUid ? currentGraph.nodes.get(startNodeUid) : undefined;
+        const endNode = endNodeUid ? currentGraph.nodes.get(endNodeUid) : undefined;
+        let startPort: NodePort|null = null;
+        let endPort: NodePort|null = null;
+
+        if (connector.startPort.parent.isGraphInOutNode) {
+          //链接入节点
+          const callerPort = callNode.getPortByGUID(connector.startPort.guid);
+          startPort = callerPort ? callerPort.connectedFromPort[0].startPort : null;
+          endPort = endNode?.getPortByGUID(connector.endPort.guid) ?? null;
+        }
+        else if(connector.endPort.parent.isGraphInOutNode) {
+          //链接出节点
+          const callerPort = callNode.getPortByGUID(connector.endPort.guid);
+          startPort = startNode?.getPortByGUID(connector.startPort.guid) ?? null;
+          endPort = callerPort ? callerPort.connectedToPort[0].endPort : null;
+        }
+        else {
+          startPort = startNode?.getPortByGUID(connector.startPort.guid) ?? null;
+          endPort = endNode?.getPortByGUID(connector.endPort.guid) ?? null;
+        }
+        
+        if (startPort && endPort)
+          context.connectConnector(startPort as NodePortEditor, endPort as NodePortEditor);
+        else
+          printError(TAG, `expandSubgraph: Failed to connect ${connector.startPort.guid} to ${connector.endPort.guid} connector uid: (${connector.uid})`);
+      }
+
+      context.userDeleteNode(callNode);
     }
   }
+
 
   let autoNodeSizeChangeCheckerTimer = 0;
 
@@ -513,11 +674,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userDelete = userDelete;
   context.userAddVariableNode = userAddVariableNode;
   context.userPromotePortToVariable = userPromotePortToVariable;
+  context.userPromoteSubgraphToFunction = userPromoteSubgraphToFunction;
+  context.userExpandSubgraph = userExpandSubgraph;
+  context.userCollapseSelectedNodesTo = userCollapseSelectedNodesTo;
 
   context.userActionConfirm = userActionConfirm;
   context.userActionAlert = userActionAlert;
   context.userInterfaceNextTick = userInterfaceNextTick;
 
+  context.expandSubgraph = expandSubgraph;
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

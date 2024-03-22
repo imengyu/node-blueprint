@@ -5,10 +5,12 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 const messages = {
   VARIABLE_UPDATE_TYPE: 0,
   VARIABLE_UPDATE_NAME: 1,
+  GRAPH_LOAD: 1,
   GRAPH_DELETE: 2,
   GRAPH_NAME_CHANGE: 3,
   GRAPH_PORT_CHANGE: 4,
   GRAPH_ONLINE: 6,
+  GRAPH_PROMOTE: 7,
 };
 
 export default { 
@@ -108,8 +110,10 @@ import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
@@ -118,6 +122,24 @@ export interface IGraphCallNodeOptions {
 export interface ICoverterNodeOptions {
   coverterFrom: string,
   coverterTo: string,
+}
+
+export function getGraphCallNodeGraph(context: NodeGraphEditorContext, node: Node) {
+  const graph = context.getCurrentGraph();
+  const options = node.options as unknown as IGraphCallNodeOptions;
+  let childGraph : NodeGraph|undefined;
+  switch (options.callGraphType) {
+    case 'function': {
+      const topGraph = graph.getParentDocunment()?.mainGraph;
+      if (topGraph)
+        childGraph = topGraph.children.find(v => v.name === options.callGraphName);
+      break;
+    }
+    case 'subgraph':
+      childGraph = graph.getChildGraphByName(options.callGraphName) || undefined;
+      break;
+  }
+  return childGraph;
 }
 
 function registerScriptBase()  {
@@ -466,100 +488,99 @@ function registerScriptGraphBase()  {
     ports: [],
     style: {
       logo: NodeIconEntryIn,
-      titleBakgroundColor: '#096288',
+      titleBakgroundColor: 'rgba(255,255,255,0.05)',
     },
     events: {
-      onEditorCreate(node, context) {
-        //在初始化时加载绑定的子图表信息
-        const graph = context.getCurrentGraph();
-        const options = node.options as unknown as IGraphCallNodeOptions;
-        let childGraph : NodeGraph|undefined;
-        switch (options.callGraphType) {
-          case 'function': {
-            const topGraph = graph.getParentDocunment()?.mainGraph;
-            if (topGraph)
-              childGraph = topGraph.children.find(v => v.name === options.callGraphName);
+      onEditorCreate(node) {
+        node.sendSelfMessage(messages.GRAPH_LOAD, {});
+      },
+      onEditorMessage(node, context, msg) {     
+        switch (msg?.message) {
+          //在初始化时加载绑定的子图表信息
+          case messages.GRAPH_LOAD: {
+            const childGraph = getGraphCallNodeGraph(context, node);
+            if (childGraph) {
+              //直接调用下方消息进行相关状态设置
+              node.sendSelfMessage(messages.GRAPH_ONLINE, {});
+              node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: childGraph.name });
+              node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
+              node.data.childGraph = childGraph;
+            } else {
+              node.sendSelfMessage(messages.GRAPH_DELETE, {});
+              node.data.childGraph = null;
+            }
             break;
           }
-          case 'subgraph':
-            childGraph = options.callGraphName ? graph.children.find(v => v.name === options.callGraphName) : undefined;
+          case messages.GRAPH_PORT_CHANGE: {
+            //子图表更改消息，重建入口端口
+            const graph = msg.data.graph as NodeGraph;
+            const inputPorts = graph.inputPorts;
+            const outputPorts = graph.outputPorts;
+  
+            //添加图表的端口至当前节点
+            inputPorts.forEach((port, index) => {
+              port.forceNoDelete = true;
+              port.direction = 'input';
+              const oldPort = node.inputPorts[index];
+              if (oldPort) {
+                oldPort.load(port);
+                oldPort.dyamicAdd = true;
+              }
+              else
+                node.addPort(port, true, port.initialValue);
+            });
+            //移除多余的端口
+            for (let i = inputPorts.length; i < node.inputPorts.length; i++) 
+              node.deletePort(node.inputPorts[i]);
+  
+            outputPorts.forEach((port, index) => {
+              port.forceNoDelete = true;
+              port.direction = 'output';
+              const oldPort = node.outputPorts[index];
+              if (oldPort) {
+                oldPort.load(port);
+                oldPort.dyamicAdd = true;
+              }
+              else
+                node.addPort(port, true, port.initialValue);
+            });
+            for (let i = outputPorts.length; i < node.outputPorts.length; i++) 
+              node.deletePort(node.outputPorts[i]);
+            node.postLateUpdateRegion();
+            node.setErrorState('');
             break;
-        }
-        if (childGraph) {
-          //直接调用下方消息进行相关状态设置
-          node.sendSelfMessage(messages.GRAPH_ONLINE, {});
-          node.sendSelfMessage(messages.GRAPH_NAME_CHANGE, { name: childGraph.name });
-          node.sendSelfMessage(messages.GRAPH_PORT_CHANGE, { graph: childGraph });
-          node.data.childGraph = childGraph;
-        } else {
-          node.sendSelfMessage(messages.GRAPH_DELETE, {});
-          node.data.childGraph = null;
-        }
-      },
-      onEditorMessage(node, context, msg) {
-        //子图表更改消息，重建入口端口
-        if (msg?.message === messages.GRAPH_PORT_CHANGE) {
-          const graph = msg.data.graph as NodeGraph;
-          const inputPorts = graph.inputPorts;
-          const outputPorts = graph.outputPorts;
-
-          //添加图表的端口至当前节点
-          inputPorts.forEach((port, index) => {
-            port.forceNoDelete = true;
-            port.direction = 'input';
-            const oldPort = node.inputPorts[index];
-            if (oldPort) {
-              oldPort.load(port);
-              oldPort.dyamicAdd = true;
-            }
-            else
-              node.addPort(port, true, port.initialValue);
-          });
-          //移除多余的端口
-          for (let i = inputPorts.length; i < node.inputPorts.length; i++) 
-            node.deletePort(node.inputPorts[i]);
-
-          outputPorts.forEach((port, index) => {
-            port.forceNoDelete = true;
-            port.direction = 'output';
-            const oldPort = node.outputPorts[index];
-            if (oldPort) {
-              oldPort.load(port);
-              oldPort.dyamicAdd = true;
-            }
-            else
-              node.addPort(port, true, port.initialValue);
-          });
-          for (let i = outputPorts.length; i < node.outputPorts.length; i++) 
-            node.deletePort(node.outputPorts[i]);
-          node.postLateUpdateRegion();
-          node.setErrorState('');
-        }
-        //子图表名称更改消息
-        else if (msg?.message === messages.GRAPH_NAME_CHANGE) 
-        {
-          const newName = msg.data.name as string;
-
-          node.tags[0] = `GraphCall${newName}`;
-          node.name = newName;
-          node.options.callGraphName = newName;
-          node.postLateUpdateRegion();
-          node.setErrorState('');
-        } 
-        //子图表移除消息
-        else if (msg?.message === messages.GRAPH_DELETE) 
-        {
-          node.name = `未知调用 ${node.options.callGraphName}`;
-          node.setErrorState('error', '调用目标图表丢失');
-          node.postLateUpdateRegion();
-        }
-        //子图表重新添加
-        else if (msg?.message === messages.GRAPH_ONLINE) 
-        {
-          node.name = node.options.callGraphName as string;
-          node.style.logo = node.options.callGraphType === 'function' ? NodeIconEntryFunction : NodeIconEntryIn;
-          node.postLateUpdateRegion();
-          node.setErrorState('');
+          }
+          case messages.GRAPH_NAME_CHANGE: {
+            //子图表名称更改消息
+            const newName = msg.data.name as string;
+            node.tags[0] = `GraphCall${newName}`;
+            node.name = newName;
+            node.options.callGraphName = newName;
+            node.postLateUpdateRegion();
+            node.setErrorState('');
+            break;
+          } 
+          case messages.GRAPH_DELETE: {
+            //子图表移除消息
+            node.name = `未知调用 ${node.options.callGraphName}`;
+            node.setErrorState('error', '调用目标图表丢失');
+            node.postLateUpdateRegion();
+            break;
+          }
+          case messages.GRAPH_ONLINE: {
+            //子图表重新添加
+            node.name = node.options.callGraphName as string;
+            node.style.logo = node.options.callGraphType === 'function' ? NodeIconEntryFunction : NodeIconEntryIn;
+            node.postLateUpdateRegion();
+            node.setErrorState('');
+            break;
+          }
+          case messages.GRAPH_PROMOTE: {
+            //子图表提升为函数
+            node.options.callGraphType = msg.data.type as string;
+            node.sendSelfMessage(messages.GRAPH_LOAD, {});
+            break;
+          }
         }
       },
       onEditorClickEvent(node, context, event) {
@@ -603,13 +624,15 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           inputPorts.forEach((port, index) => {
+            port.forceNoDelete = true;
             const oldPort = node.outputPorts[index];
             if (oldPort) {
               oldPort.load(port);
               oldPort.direction = 'output';
+              oldPort.dyamicAdd = true;
             }
             else
-              node.addPort(port, false, port.initialValue, 'output');
+              node.addPort(port, true, port.initialValue, 'output');
           });
           //移除多余的端口
           for (let i = inputPorts.length; i < node.outputPorts.length; i++) 
@@ -646,13 +669,15 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           outputPorts.forEach((port, index) => {
+            port.forceNoDelete = true;
             const oldPort = node.inputPorts[index];
             if (oldPort) {
               oldPort.load(port);
               oldPort.direction = 'input';
+              oldPort.dyamicAdd = true;
             }
             else
-              node.addPort(port, false, port.initialValue, 'input');
+              node.addPort(port, true, port.initialValue, 'input');
           });
           //移除多余的端口
           for (let i = outputPorts.length; i < node.inputPorts.length; i++) 
