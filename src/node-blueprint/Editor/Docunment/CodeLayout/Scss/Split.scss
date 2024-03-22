@@ -262,6 +262,7 @@
     position: absolute;
     content: '';
     background-color: var(--code-layout-color-background-mask-light);
+    z-index: 20;
   }
 
   &.drag-over-center {

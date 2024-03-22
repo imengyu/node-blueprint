@@ -189,6 +189,7 @@ onBeforeUnmount(() => {
     align-items: center;
     margin-left: 7px;
     font-size: 12px;
+    flex-shrink: 0;
 
     svg {
       margin: 0 3px;
