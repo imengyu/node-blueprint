@@ -172,6 +172,13 @@ export class Node extends SerializableObject<INodeDefine> {
    * 自定义单元属性供代码使用（全局）（会保存至文件中）
    */
   public options = {} as CustomStorageObject;
+  /**
+   * 获取 options 带类型封装
+   * @returns 
+   */
+  public getOptions<T = CustomStorageObject>() {
+    return this.options as unknown as T;
+  }
 
   //编辑器运行数据
   //=====================
@@ -231,7 +238,10 @@ export class Node extends SerializableObject<INodeDefine> {
       return oldData;
     }
 
-    const newPort = this.createSerializeObjectByScheme(data, 'ports') as NodePort;
+    const newPort = this.createSerializeObjectByScheme(data, 'ports')?.castTo<NodePort>();
+    if (!newPort)
+      throw new Error("Failed to create new port.");
+
     newPort.load();
     newPort.direction = forceChangeDirection || data.direction;
     newPort.dyamicAdd = isDyamicAdd;
@@ -307,7 +317,7 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public hasAnyPortConnected() {
     for (const port of this.ports) {
-      if (port.isConnected())
+      if (port.isConnected)
         return true;
     }
     return false;
@@ -601,7 +611,7 @@ export interface INodeEventSettings {
 /**
  * 单元自定义事件设置
  */
-export class NodeEventSettings extends SerializableObject<INodeEventSettings> {
+export class NodeEventSettings extends SerializableObject<INodeEventSettings, Node> {
   constructor(define?: INodeEventSettings) {
     super('NodeEventSettings', define, {
       serializeSchemes: {
@@ -737,7 +747,7 @@ export interface INodeStyleSettings {
 /**
  * 节点样式结构
  */
-export class NodeStyleSettings extends SerializableObject<INodeStyleSettings> {
+export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, Node> {
   constructor(define?: INodeStyleSettings) {
     super('NodeStyleSettings', define, {
       serializeSchemes: {
@@ -782,7 +792,7 @@ export interface INodeCompileSettings {
 /**
  * 单元编译设置
  */
-export class NodeCompileSettings extends SerializableObject<INodeCompileSettings> {
+export class NodeCompileSettings extends SerializableObject<INodeCompileSettings, Node> {
   constructor(define?: INodeCompileSettings) {
     super('NodeCompile', define, {
       serializeSchemes: {

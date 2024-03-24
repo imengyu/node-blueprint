@@ -102,6 +102,7 @@ import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
+import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
@@ -139,16 +140,22 @@ provide('NodeGraphUIModalTeleport', props.modalTeleport);
 
 //#region 设置
 
-const editorSettings = reactive<INodeGraphEditorSettings>(SettingsUtils.getSettings('NodeIdeEditorSettings', {
+const editorSettings = ref<INodeGraphEditorSettings>({
   drawDebugInfo: false,
   drawGrid: true,
   snapGrid: true,
-}));
+});
 
+function loadSettings() {
+  editorSettings.value = SettingsUtils.getSettings('NodeIdeEditorSettings', {
+    drawDebugInfo: false,
+    drawGrid: true,
+    snapGrid: true,
+  });
+}
 function saveSettings() {
   saveLayout();
-  if (SettingsUtils.getSettings('NodeIdeEditorSettings', '') !== '')
-    SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings);
+  SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings.value as IObject);
 }
 
 onBeforeUnmount(saveSettings)
@@ -240,19 +247,19 @@ const menuData = reactive<MenuOptions>({
         {
           label: '显示网格',
           divided: true,
-          checked: editorSettings.drawGrid,
+          checked: editorSettings.value.drawGrid,
           onClick() {
-            editorSettings.drawGrid = !editorSettings.drawGrid;
-            this.checked = editorSettings.drawGrid;
+            editorSettings.value.drawGrid = !editorSettings.value.drawGrid;
+            this.checked = editorSettings.value.drawGrid;
           },
         },
         {
           label: '吸附网格',
           divided: true,
-          checked: editorSettings.snapGrid,
+          checked: editorSettings.value.snapGrid,
           onClick() {
-            editorSettings.snapGrid = !editorSettings.snapGrid;
-            this.checked = editorSettings.snapGrid;
+            editorSettings.value.snapGrid = !editorSettings.value.snapGrid;
+            this.checked = editorSettings.value.snapGrid;
           },
         },
         {
@@ -279,10 +286,10 @@ const menuData = reactive<MenuOptions>({
         },
         {
           label: '绘制调试信息',
-          checked: editorSettings.drawDebugInfo,
+          checked: editorSettings.value.drawDebugInfo,
           onClick() {
-            editorSettings.drawDebugInfo = !editorSettings.drawDebugInfo;
-            this.checked = editorSettings.drawDebugInfo;
+            editorSettings.value.drawDebugInfo = !editorSettings.value.drawDebugInfo;
+            this.checked = editorSettings.value.drawDebugInfo;
           },
         },
         {
@@ -578,6 +585,7 @@ const loadTestScript = true;
 
 onMounted(() => {
   initLayout();
+  loadSettings();
   nextTick(() => {
     if (!loadTestScript) {
       newDocunment();

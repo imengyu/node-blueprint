@@ -8,7 +8,7 @@ import type { ISaveableTypes } from "../../Utils/BaseTypes";
 /**
  * 节点端口
  */
-export class NodePort extends SerializableObject<INodePortDefine> {
+export class NodePort extends SerializableObject<INodePortDefine, Node> {
 
   constructor(define: INodePortDefine, parent: Node) {
     super('NodePort', define, {
@@ -185,15 +185,6 @@ export class NodePort extends SerializableObject<INodePortDefine> {
     }
   }
   /**
-   * 获取当前端口是否连接至任意位置
-   * @returns
-   */
-  public isConnected(): boolean {
-    if (this.direction === "input") return this.connectedFromPort.length > 0;
-    else if (this.direction === "output") return this.connectedToPort.length > 0;
-    return false;
-  }
-  /**
    * 检查目标端口参数类型是否与本端口匹配
    * @param targetPort 目标端口
    */
@@ -211,6 +202,15 @@ export class NodePort extends SerializableObject<INodePortDefine> {
     return thisType.acceptable(targetType); 
   }
 
+  /**
+   * 获取当前端口是否连接至任意位置
+   * @returns
+   */
+  public get isConnected() {
+    if (this.direction === "input") return this.connectedFromPort.length > 0;
+    else if (this.direction === "output") return this.connectedToPort.length > 0;
+    return false;
+  }
   /**
    * 获取是否是输入端口
    */

@@ -74,7 +74,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, provide, ref, type PropType, type Ref, onBeforeUnmount } from 'vue';
+import { onMounted, provide, ref, type PropType, type Ref, onBeforeUnmount, watch } from 'vue';
 import BackgroundRender from './Render/BackgroundRender.vue';
 import ConnectorRender from './Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
@@ -99,6 +99,7 @@ import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
+import { NodeConnectorEditor } from './Flow/NodeConnectorEditor';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -206,11 +207,21 @@ const eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged
   emit('selectNodeOrConnectorChanged', context.getSelectNodes(), context.getSelectConnectors());
 });
 
+//Settings
+
+watch(() => props.settings.drawDebugInfo, (v) => {
+  NodeConnectorEditor.setRenderDebugInfo(v ?? false);
+})
+function loadSettings() {
+  NodeConnectorEditor.setRenderDebugInfo(props.settings?.drawDebugInfo ?? false);
+}
+
 //init
 //=========================
 
 onMounted(() => {
   initRenderer();
+  loadSettings();
   loadGraph(props.graph);
   setTimeout(() => {
     context.autoNodeSizeChangeCheckerStartStop(true);

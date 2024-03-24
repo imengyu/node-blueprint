@@ -257,6 +257,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
         graph.connectors.forEach((connector) => {
           addConnector(connector as NodeConnectorEditor);
           (connector as NodeConnectorEditor).updatePortValue();
+          connector.setConnectionState();
           context.connectorSuccessSetState(connector as NodeConnectorEditor);
         });
 

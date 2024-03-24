@@ -182,6 +182,16 @@ export class Rect extends SerializableObject<IKeyValueObject> {
   }
 
   /**
+   * 使用两个点构造当前矩形 【Construct the current rectangle with two points】
+   * @param pt1 
+   * @param pt2 
+   * @returns 
+   */
+  public setFrom2Point(pt1 : Vector2, pt2 : Vector2) {
+    return Rect.makeBy2Point(this, pt1, pt2);
+  }
+
+  /**
    * 使用两个点构造一个矩形 【Construct a rectangle with two points】
    * @param pt1 
    * @param pt2 

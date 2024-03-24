@@ -32,7 +32,7 @@ export type NodeGraphType = 'main' | 'class' | 'subgraph' | 'none' | 'static' | 
 /**
  * 图表数据
  */
-export class NodeGraph extends SerializableObject<INodeGraphDefine> implements IObjectSharedData {
+export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunment|NodeGraph> implements IObjectSharedData {
   type = 'none' as NodeGraphType;
   name = '';
   uid = RandomUtils.genNonDuplicateIDHEX(32);
@@ -123,14 +123,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine> implements I
                 
                 connector.startPort = startPortInstance;
                 connector.endPort = endPortInstance;
-           
-                if (connector.startPort.direction === 'input') {
-                  connector.startPort.connectedFromPort.push(connector);
-                  connector.endPort.connectedToPort.push(connector);
-                } else {
-                  connector.startPort.connectedToPort.push(connector);
-                  connector.endPort.connectedFromPort.push(connector);
-                }
+                connector.setConnectionState();
 
                 return {
                   parsed: true,

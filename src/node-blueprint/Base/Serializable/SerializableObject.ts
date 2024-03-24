@@ -1,12 +1,14 @@
 import type { IKeyValueObject, ISaveableTypes } from "../Utils/BaseTypes";
 import ObjectUtils from "../Utils/ObjectUtils";
+import type { IChildObject } from "./IChildObject";
+import type { ICloneable } from "./ICloneable";
 
-const createObjectFactorys = new Map<string, CreateObjectClassCallback<any>>();
+const createObjectFactorys = new Map<string, CreateObjectClassCallback<any, any>>();
 
-export type CreateObjectClassCallback<T> = (
+export type CreateObjectClassCallback<T, P> = (
   define: T,
-  parent: SerializableObject<any>, 
-) => SerializableObject<T>
+  parent: P, 
+) => SerializableObject<T, P>
 
 /**
  * SerializableObject Object Creation Factory
@@ -17,7 +19,7 @@ export const CreateObjectFactory = {
    * @param name Object Name
    * @param createFn Create callback
    */
-  addObjectFactory<T>(name : string, createFn : CreateObjectClassCallback<T>) : void {
+  addObjectFactory<T, P>(name : string, createFn : CreateObjectClassCallback<T, P>) : void {
     createObjectFactorys.set(name, createFn);
   },
   /**
@@ -26,11 +28,13 @@ export const CreateObjectFactory = {
    * @param k data Object
    * @returns 
    */
-  createSerializableObject<T>(name : string, parent: SerializableObject<any>, k : T) : SerializableObject<T>|null {
+  createSerializableObject<T, P>(name : string, parent: P|null, k ?: T|null) : SerializableObject<T, P>|null {
     const objCreate = createObjectFactorys.get(name);
     if(objCreate) {
-      const obj = objCreate(k, parent) as SerializableObject<T>;
-      return obj.load(k);
+      const obj = objCreate(k, parent) as SerializableObject<T, P>;
+      if (typeof k !== 'undefined' && k !== null)
+        return obj.load(k);
+      return obj;
     }
     return null;
   }
@@ -58,7 +62,7 @@ function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig, ch
     },
   }
 }
-export function mergeSerializableConfig<T = any>(superConfig: SerializableConfig<T>, childConfig: SerializableConfig<T>|undefined) : SerializableConfig<T>{
+export function mergeSerializableConfig<T = any, P = any>(superConfig: SerializableConfig<T, P>, childConfig: SerializableConfig<T, P>|undefined) : SerializableConfig<T, P>{
   if (!childConfig)
     return superConfig;
   const schemes : Record<string, SerializableSchemeConfig> = superConfig.serializeSchemes || {};
@@ -163,7 +167,7 @@ export interface SerializableSchemeConfig {
    */
   afterSave?: (data: unknown) => void,
 }
-export interface SerializableConfig<T> {
+export interface SerializableConfig<T, P = unknown> {
   /**
    * 序列化预设
    */
@@ -177,7 +181,7 @@ export interface SerializableConfig<T> {
    * 覆盖默认加载函数
    * @returns 
    */
-  loadOverride?: (data : T) => SerializableObject<T>;
+  loadOverride?: (data : T) => SerializableObject<T, P>;
   /**
    * 覆盖默认混合函数
    * @returns 
@@ -200,19 +204,24 @@ const SerializableObjectForceNoSerializeProps = [ 'define', 'serializeClassName'
 /**
  * Serializable Object. It can automatically recursively save class data or deserialize and load it.
  */
-export class SerializableObject<T> {
+export class SerializableObject<T, P = unknown> implements IChildObject<P>, ICloneable {
 
   /**
    * Create SerializableObject
    * @param saveClassName Class name, same as object name when register in `addObjectFactory`.
    * @param define Inittal source data
    */
-  constructor(className: string, define?: T, config?: SerializableConfig<T>) {
+  constructor(className: string, define?: T, config?: SerializableConfig<T, P>) {
     this.serializeClassName = className;
     this.define = define || null;
     if (config)
       this.serializeConfig = config;
   }
+
+  /**
+   * Parent object
+   */
+  parent: P|null = null;
 
   protected get TAG() {
     return 'SerializableObject:' + this.serializeClassName;
@@ -225,7 +234,7 @@ export class SerializableObject<T> {
   /**
    * Serialize config
    */
-  serializeConfig : SerializableConfig<T> = {};
+  serializeConfig : SerializableConfig<T, P> = {};
   /**
    * The source define data
    */
@@ -283,7 +292,7 @@ export class SerializableObject<T> {
       }
       else if (element instanceof SerializableObject) {
         //This is a SerializableObject
-        const serializableObject = element as unknown as SerializableObject<T>;
+        const serializableObject = element as unknown as SerializableObject<T, P>;
         if (
           typeof serializableObject.save === 'function'
           && typeof serializableObject.serializeClassName === 'string'
@@ -593,7 +602,45 @@ export class SerializableObject<T> {
     const forceSerializableClass = this.isForceSerializableClassProperty(config, key, '');
     if (forceSerializableClass) 
       return CreateObjectFactory.createSerializableObject(forceSerializableClass, this, define);
-    return undefined;
+    return null;
+  }
+
+  /**
+    * Cast self to other type
+    * @returns The casted object
+    */
+  castTo<U extends SerializableObject<any>>(): U {
+    return this as unknown as U;
+  }
+  /**
+   * 获取当前对象指定名称的属性值
+   * @param key 名称
+   * @returns 
+   */
+  getProperty<K>(key: string) {
+    return (this as unknown as IKeyValueObject)[key] as K;
+  }
+  /**
+   * 设置当前对象指定名称的属性值
+   * @param key 名称
+   * @param value 值
+   * @returns 
+   */
+  setProperty<K>(key: string, value: K) {
+    return ((this as unknown as IKeyValueObject)[key] as K) = value;
+  }
+
+  /**
+   * 克隆当前对象
+   * @param scheme 预设名称。默认是：default 
+   */
+  clone(scheme?: string) : typeof this {
+    const clonedObject = CreateObjectFactory.createSerializableObject<T, P>(
+      this.serializeClassName, 
+      this.parent,
+    ) as SerializableObject<T, P>;
+    clonedObject.load(this.save(), scheme);
+    return clonedObject as typeof this;
   }
 }
 

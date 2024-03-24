@@ -317,7 +317,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
     else {
       if(connectingInfo.currentHoverPort) {
-        (connectingInfo.currentHoverPort as NodePortEditor).state = connectingInfo.currentHoverPort.isConnected() ? 'active' : 'normal';
+        (connectingInfo.currentHoverPort as NodePortEditor).state = connectingInfo.currentHoverPort.isConnected ? 'active' : 'normal';
         connectingInfo.currentHoverPort = null;
       }
       successText = '连接至新的单元';
@@ -390,7 +390,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.isConnecting = false;
     
     if(connectingInfo.startPort !== null) {
-      (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected() ? 'active' : 'normal';
+      (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
   }
@@ -460,7 +460,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.isConnecting = false;
     
     if(connectingInfo.startPort !== null) {
-      (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected() ? 'active' : 'normal';
+      (connectingInfo.startPort as NodePortEditor).state = connectingInfo.startPort.isConnected ? 'active' : 'normal';
       connectingInfo.startPort = null;
     }
     return [port,connector];
@@ -528,9 +528,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       connector.startPort = startPort;
       connector.endPort = endPort;
-
-      startPort.connectedToPort.push(connector);
-      endPort.connectedFromPort.push(connector);
+      connector.setConnectionState();
 
       connectorSuccessSetState(connector);
       invokeOnPortConnect(startPort, endPort);
@@ -558,9 +556,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
       connector.startPort = endPort;
       connector.endPort = startPort;
-
-      startPort.connectedFromPort.push(connector);
-      endPort.connectedToPort.push(connector);
+      connector.setConnectionState();
 
       connectorSuccessSetState(connector);
       invokeOnPortConnect(endPort, startPort);
@@ -608,9 +604,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     if (start !== null && end !== null) {
 
       start.removeConnectToPort(end);
-      start.state = start.isConnected() ? 'active' : 'normal';
+      start.state = start.isConnected ? 'active' : 'normal';
       end.removeConnectByPort(start);
-      end.state = end.isConnected() ? 'active' : 'normal';
+      end.state = end.isConnected ? 'active' : 'normal';
 
       //更新孤立状态
       afterConnectDoIsolateCheck(start, end, startNode, endNode, false);

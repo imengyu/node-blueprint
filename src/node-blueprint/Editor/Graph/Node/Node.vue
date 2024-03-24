@@ -180,7 +180,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount } from 'vue';
+import { onMounted, ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount, watch } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';
@@ -234,6 +234,17 @@ const nodeRef = ref<HTMLDivElement>();
 //初始化
 
 onMounted(() => {
+  loadNode();
+});
+onBeforeUnmount(() => {
+  stopResizeChecker();
+});
+watch(instance, (v) => {
+  if (v) loadNode();
+});
+
+function loadNode() {
+  //加载节点
   instance.value.editorHooks.callbackGetRealSize = getRealSize;
   instance.value.editorHooks.callbackTwinkle = twinkle;
   instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
@@ -273,11 +284,8 @@ onMounted(() => {
     updateComment();
     updateRegion();
     startResizeChecker();
-  })
-});
-onBeforeUnmount(() => {
-  stopResizeChecker();
-});
+  });
+}
 
 //#region 单元大小更改后重新布局
 

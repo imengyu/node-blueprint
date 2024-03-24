@@ -7,6 +7,8 @@ import type { NodePortEditor } from "./NodePortEditor";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { threeOrderBezier } from "../../Utils/BezierUtils";
 
+let _debug = false;
+
 /**
  * 节点连接线编辑器类
  */
@@ -14,6 +16,10 @@ export class NodeConnectorEditor extends NodeConnector {
 
   constructor(define?: INodeConnectorDefine) {
     super(define);
+  }
+
+  public static setRenderDebugInfo(on: boolean) {
+    _debug = on;
   }
 
   public hover = false;
@@ -97,6 +103,7 @@ export class NodeConnectorEditor extends NodeConnector {
 
   private tempPoint1 = new Vector2();
   private tempPoint2 = new Vector2();
+  private tempRect = new Rect();
 
   public render(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
 
@@ -149,5 +156,11 @@ export class NodeConnectorEditor extends NodeConnector {
 
     //绘制
     this.drawer.drawConnectorBezierCurve(ctx, this.tempPoint1.x, this.tempPoint1.y, this.tempPoint2.x, this.tempPoint2.y, this.hover, this.dotPos, false);
+ 
+    //绘制调试信息
+    if (_debug) {
+      this.tempRect.setFrom2Point(this.tempPoint1, this.tempPoint2);
+      ctx.fillText(this.uid, this.tempRect.x + this.tempRect.w / 2, this.tempRect.y - 50);
+    }
   }
 }
