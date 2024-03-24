@@ -223,6 +223,8 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
   public get isOutput() {
     return this.direction === 'output';
   }
+
+  isCallingDelete = false;
 }
 
 /**

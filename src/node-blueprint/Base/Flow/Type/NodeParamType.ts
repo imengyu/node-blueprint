@@ -3,7 +3,6 @@ import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "../Node/NodePort";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
-import { devWarning } from "../../Logger/DevLog";
 
 /**
  * Base types
@@ -125,13 +124,25 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
   /**
    * 从名称获取类型实例
    * @param typeString 
+   * @param autoCreateGeneric 
    */
-  public static FromString(typeString: string) {
+  public static FromString(typeString: string, autoCreateGeneric = true) {
     if (!typeString)
       throw new Error('typeString is empty! ');
-    const newType = NodeParamTypeRegistry.getInstance().getTypeByString(typeString) as NodeParamType;
-    if (!newType)
-      devWarning('NodeParamType',`Not found type ${typeString}!`);
+    const registry = NodeParamTypeRegistry.getInstance();
+    let newType = registry.getTypeByString(typeString) as NodeParamType;
+    if (!newType) {
+
+      //尝试创建新的泛型类型
+      if (autoCreateGeneric && typeString.includes('<')) {
+        const baseType = registry.getTypeByString(typeString.split('<')[0]);
+        if (!baseType)
+          throw new Error('Try create a new generic type failed! Base type not found!');
+        newType = registry.registerType(typeString, baseType.define!);
+        return newType;
+      }
+      throw new Error(`Not found type ${typeString}!`);
+    }
     return newType;
   }
 
@@ -159,6 +170,10 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
    * 内置类型 执行
    */
   public static Execute = new NodeParamType();
+  /**
+   * 内置类型 对象
+   */
+  public static Object: NodeParamType;
   /**
    * 内置类型 数组
    */

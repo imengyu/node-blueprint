@@ -1,6 +1,15 @@
-import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
+import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 
 const messages = {
   VARIABLE_UPDATE_TYPE: 0,
@@ -105,15 +114,6 @@ import NodeIconConvert from '../NodeIcon/convert.svg';
 import NodeIconConvert2 from '../NodeIcon/convert-number.svg';
 import NodeIconConvert3 from '../NodeIcon/convert-number-2.svg';
 import NodeIconType from '../NodeIcon/cpu.svg';
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
@@ -1460,7 +1460,7 @@ function registerConnNode() {
           node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 
         }
       },
-      onEditorCreate: (node) => {
+      onEditorCreate: (node, context) => {
         node.addClass('node-block-extended-line');
         return {
           editorProp: [
@@ -1470,6 +1470,7 @@ function registerConnNode() {
               getValue: () => node.options['type'] as string === 'execute',
               onUpdateValue(newValue) {
                 node.options['type'] = newValue ? 'execute' : 'any';
+                context.unConnectNodeConnectors(node);
                 const paramType = newValue ? NodeParamType.Execute : NodeParamType.Any;
                 node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 
                 node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 

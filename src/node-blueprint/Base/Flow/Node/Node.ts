@@ -3,7 +3,7 @@ import ArrayUtils from "../../Utils/ArrayUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Serializable/SerializableObject";
 import { printError, printWarning } from "../../Logger/DevLog";
-import { NodeParamType } from "../Type/NodeParamType";
+import { NodeParamType, type NodeParamEditorCreateCallback } from "../Type/NodeParamType";
 import type { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
 import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
@@ -14,6 +14,7 @@ import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeG
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 
 const TAG = 'Node';
 
@@ -266,8 +267,8 @@ export class Node extends SerializableObject<INodeDefine> {
    * @param guid 端口GUID
    * @param direction 端口方向
    */
-  public deletePort(guid : string|NodePort, direction ?: NodePortDirection) : void {
-    const oldData = typeof guid === 'string' ? this.getPort(guid, direction) : guid;
+  public deletePort(guid : string|NodePort) : void {
+    const oldData = typeof guid === 'string' ? this.getPort(guid) : guid;
     if(oldData === null || oldData === undefined) {
       printWarning(this.name + ".deletePort", guid + " port not exist !", {
         srcNode: this,
@@ -281,9 +282,9 @@ export class Node extends SerializableObject<INodeDefine> {
     const deleteGuid = typeof guid === 'string' ? guid : guid.guid;
     
     ArrayUtils.removeBy(this.ports, (p) => p.guid === deleteGuid, true);
-    if(direction === 'input')
+    if(oldData.direction === 'input')
       ArrayUtils.removeBy(this.inputPorts, (p) => p.guid === deleteGuid, true);
-    else if(direction === 'output')
+    else if(oldData.direction === 'output')
       ArrayUtils.removeBy(this.outputPorts, (p) => p.guid === deleteGuid, true);
   }
   /**
@@ -475,7 +476,8 @@ export type NodeEditorEventCallback<R = void, T = undefined> = (srcNode : NodeEd
 export type NodeEditorContextEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, context: NodeGraphEditorContext, data?: T) => R;
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
-export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined, node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
+export type NodePortCreateEditorFunction = ( port: NodePortEditor, context: NodeGraphEditorContext) => NodeParamEditorCreateCallback|undefined;
+export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined,node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
 export type NodeEditorMoseEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "move" | "down" | "up" | "leave" | "enter", e: MouseEvent) => boolean;
 export type NodeEditorMoseClickEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "click" | "dblclick", e: MouseEvent) => void;
 export type NodeEditorEventFunction = (node: NodeEditor, context: NodeGraphEditorContext, event: "select" | "unselect") => void;
@@ -535,6 +537,13 @@ export interface INodeEventSettings {
    * * 在parentEle不为空时，此时此函数为原生dom创建回调，此时返回vnode无效。
    */
   onCreateCustomEditor ?: NodeCreateEditorFunction,
+  /**
+   * 单元创建自定义端口编辑器区域时的回调。
+   * 如果返回了一个函数，那么系统会调用这个函数来创建一个自定义的编辑器，否则使用端口对应类型的默认编辑器。
+   * 
+   * (port: NodePortEditor, context: NodeGraphEditorContext) => NodeParamEditorCreateCallback|undefined
+   */
+  onCreatePortCustomEditor ?: NodePortCreateEditorFunction,
   /**
    * 单元鼠标事件回调。
    */
@@ -617,6 +626,17 @@ export interface INodeEventSettings {
    * @param port 当前端口
    */
   onPortUnConnect ?: NodePortEventCallback;
+  /**
+   * 用户添加端口时触发
+   */
+  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>, {
+    direction : NodePortDirection,
+    type : 'execute'|'param',
+  }>;
+  /**
+   * 用户删除端口时触发
+   */
+  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>, NodePort>;
 }
 /**
  * 单元自定义事件设置
@@ -640,15 +660,17 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
   onSave ?: NodeEventCallback;
   onAddToEditor ?: NodeEventCallback;
   onCreateCustomEditor ?: NodeCreateEditorFunction;
+  onCreatePortCustomEditor ?: NodePortCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
   onEditorClickEvent ?: NodeEditorMoseClickEventFunction;
   onEditorShowContextMenu ?: NodeEditorContextEventCallback<NodeEditorShowContextMenuReturnData>;
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;
-  onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
+  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>, {
     direction : NodePortDirection,
     type : 'execute'|'param',
   }>;
+  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>, NodePort>;
   onRemoveFormEditor ?: NodeEventCallback;
   onEditorCreate ?: NodeEditorContextEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>;
   onPortAdd ?: NodePortEventCallback;

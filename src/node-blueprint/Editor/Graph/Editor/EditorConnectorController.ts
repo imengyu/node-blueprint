@@ -766,7 +766,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     function prevLoopNodeTreeAndGetHasNoIsolateNode(node: NodeEditor) {
       if (visitedNodes.includes(node))
         return !node.isolateState;
-      visitedNodes.includes(node);
+      visitedNodes.push(node);
 
       if (node.style.noIsolate)
         return true;
@@ -795,8 +795,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       } else {
         node.isolateState = false;
       }
-      
-      visitedNodes.includes(node);
+
+      visitedNodes.push(node);
 
       for (const port of node.outputPorts) {
         for (const connector of port.connectedToPort) {

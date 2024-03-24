@@ -100,13 +100,15 @@ import Icon from '../Nana/Icon.vue';
 import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
-
-import TestScript from '../../../../test-scripts/graph-variable.json';
 import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
+
+import TestScript from '../../../../test-scripts/flexport.json';
+const loadTestScript = false;
+
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
-const config = reactive<CodeLayoutConfig>({
+const config = ref<CodeLayoutConfig>({
   primarySideBarSwitchWithActivityBar: true,
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
@@ -147,15 +149,13 @@ const editorSettings = ref<INodeGraphEditorSettings>({
 });
 
 function loadSettings() {
-  editorSettings.value = SettingsUtils.getSettings('NodeIdeEditorSettings', {
-    drawDebugInfo: false,
-    drawGrid: true,
-    snapGrid: true,
-  });
+  editorSettings.value = SettingsUtils.getSettings('NodeIdeEditorSettings', editorSettings.value);
+  config.value = SettingsUtils.getSettings('NodeIdeEditorCodeLayoutSettings', config.value);
 }
 function saveSettings() {
   saveLayout();
   SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings.value as IObject);
+  SettingsUtils.setSettings('NodeIdeEditorCodeLayoutSettings', config.value as IObject);
 }
 
 onBeforeUnmount(saveSettings)
@@ -580,8 +580,6 @@ function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
     }
   }
 }
-
-const loadTestScript = true;
 
 onMounted(() => {
   initLayout();

@@ -101,6 +101,11 @@ export interface NodeEditorUserControllerContext {
    */
   expandSubgraph(subgraph: NodeGraph) : void;
   /**
+   * Deletes a dynamic port from the editor.
+   * @param port - The dynamic port to delete.
+   */
+  deleteDynamicPort(port: NodePort) : void;
+  /**
    * 删除选中连接线
    */
   deleteSelectedConnectors() : void;
@@ -144,9 +149,10 @@ export interface NodeEditorUserControllerContext {
 const TAG = 'EditorUserController';
 
 /**
- * 流程图用户操作管理器
- * @param options 
- * @returns 
+ * Custom hook for the Editor User Controller.
+ * This hook provides various utility functions for manipulating the editor nodes and connectors.
+ *
+ * @param context The internal context of the Node Graph Editor.
  */
 export function useEditorUserController(context: NodeGraphEditorInternalContext) {
 
@@ -298,18 +304,41 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
 
   /**
+   * Deletes a dynamic port from the editor.
+   * @param port - The dynamic port to delete.
+   */
+  function deleteDynamicPort(port: NodePort) {
+    if (!port.dyamicAdd)
+      throw new Error('The port is not a dynamic port.');
+    const parent = port.parent as NodeEditor;
+    parent.deletePort(port.guid);
+    for (let i = parent.connectors.length - 1; i >= 0; i--) {
+      const connector = parent.connectors[i];
+      if (connector.startPort === port || connector.endPort === port)
+        context.unConnectConnector(connector as NodeConnectorEditor);
+    }
+  }
+
+  /**
    * 用户删除端口
    * @param port 
    */
   function userDeletePort(port: NodePort) {
     if (port.dyamicAdd) {
-      const parent = port.parent as NodeEditor;
-      parent.deletePort(port.guid);
-
-      for (let i = parent.connectors.length - 1; i >= 0; i--) {
-        const connector = parent.connectors[i];
-        if (connector.startPort === port || connector.endPort === port)
-          context.unConnectConnector(connector as NodeConnectorEditor);
+      if (port.isCallingDelete) {
+        context.deleteDynamicPort(port as NodePortEditor);
+      } else {
+        port.isCallingDelete = true;
+        const ret = port.parent.events.onUserDeletePort?.(port.parent as NodeEditor, context, port);
+        port.isCallingDelete = false;
+        if (!ret) {
+          context.deleteDynamicPort(port as NodePortEditor);
+          return;
+        }
+        ret.then((result) => {
+          if (result)
+            context.deleteDynamicPort(port as NodePortEditor);
+        });
       }
     }
   }
@@ -895,6 +924,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.userInterfaceNextTick = userInterfaceNextTick;
 
   context.expandSubgraph = expandSubgraph;
+  context.deleteDynamicPort = deleteDynamicPort;
   context.deleteSelectedNodes = deleteSelectedNodes;
   context.deleteSelectedConnectors = deleteSelectedConnectors;
   context.unConnectSelectedNodeConnectors = unConnectSelectedNodeConnectors;

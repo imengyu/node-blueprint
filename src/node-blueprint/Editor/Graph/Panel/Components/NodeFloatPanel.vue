@@ -9,6 +9,7 @@
       height: `${size.y}px`
     }"
     @wheel="$event.stopPropagation()"
+    @contextmenu="$event.preventDefault()"
   >
     <div v-if="title" class="title">
       <span>{{ title }}</span>

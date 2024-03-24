@@ -64,6 +64,14 @@ export function registerInternalTypes(registry: NodeParamTypeRegistry) {
     typeDescription: '',
     typeTitle: '通配符',
   });
+  NodeParamType.Object = registry.registerType('object', {
+    baseType: 'object',
+    inheritType: null,
+    defaultValue: () => false,
+    typeColor: '#0660f0',
+    typeDescription: '',
+    typeTitle: '对象',
+  });
   NodeParamType.Array = registry.registerType('array', {
     baseType: 'object',
     inheritType: null,

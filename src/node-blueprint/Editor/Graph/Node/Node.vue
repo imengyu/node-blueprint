@@ -158,12 +158,12 @@
       <div v-if="instance.inputPortCount > 0 || instance.outputPortCount > 0" class="node-block-base">
         <div class="node-block-ports">
           <div class="left">
-            <NodePort v-for="port in instance.inputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
+            <NodePort v-for="port in instance.inputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="onUserDeletePort" />
             <SmallButton v-if="instance.define.userCanAddInputExecute" icon="icon-add-behavor-port" @click="onUserAddPort('input', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddInputParam" icon="icon-add-bold" @click="onUserAddPort('input', 'param')">添加参数</SmallButton>
           </div>
           <div class="right">
-            <NodePort v-for="port in instance.outputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="(p) => $emit('deletePort', p)" />
+            <NodePort v-for="port in instance.outputPorts" :key="port.guid" :instance="(port as NodePortEditor)" @deletePort="onUserDeletePort" />
             <SmallButton v-if="instance.define.userCanAddOutputExecute" icon="icon-add-behavor-port" iconPlace="after" @click="onUserAddPort('output', 'execute')">添加引脚</SmallButton>
             <SmallButton v-if="instance.define.userCanAddOutputParam" icon="icon-add-bold" iconPlace="after" @click="onUserAddPort('output', 'param')">添加参数</SmallButton>
           </div>
@@ -221,8 +221,6 @@ const {
   viewPort,
   chunkedPanel,
 } = toRefs(props);
-
-defineEmits([ 'deletePort' ]);
 
 const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
 
@@ -693,19 +691,26 @@ function onContextmenu(e : MouseEvent) {
 
 //#endregion
 
-//#region 添加端口
+//#region 添加/删除端口
 
+//添加端口
 async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
-  //添加端口
-  const ret = props.instance.events.onUserAddPort?.(props.instance, { direction, type });
+  const ret = props.instance.events.onUserAddPort?.(props.instance, context, { direction, type });
   if (!ret) {
     printWarning(TAG, `Faild to execute onUserAddPort, events.onUserAddPort configue not right.`);
     return;
   }
-  const port = await ret;
-  if (port)
-    props.instance.addPort(port, true);
+  const ports = await ret;
+  if (ports) {
+    for (const port of ports)
+      props.instance.addPort(port, true);
+  }
 }
+//删除端口
+async function onUserDeletePort(port : NodePortEditor) {
+  context.userDeletePort(port);
+}
+
 //#endregion 
 
 </script>

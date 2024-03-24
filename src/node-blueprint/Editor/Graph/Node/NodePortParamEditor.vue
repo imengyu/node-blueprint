@@ -2,18 +2,38 @@
 import { defineComponent, type PropType } from 'vue';
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject, ISaveableTypes } from '@/node-blueprint/Base/Utils/BaseTypes';
+import type { NodePortEditor } from '../Flow/NodePortEditor';
+import type { NodeGraphEditorContext } from '../NodeGraphEditor';
+import type { NodeParamEditorCreateCallback } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 
 export default defineComponent({
+  inject: [
+    'NodeGraphEditorContext'
+  ],
   props: {
     port: {
       type: Object as PropType<NodePort>,
       required: true,
     },
   },
+  data() {
+    return {
+      customEditor: null as NodeParamEditorCreateCallback|null,
+    };
+  },
+  mounted() {
+    if (this.port.parent.events.onCreatePortCustomEditor) {
+      this.customEditor = this.port.parent.events.onCreatePortCustomEditor(
+        this.port as NodePortEditor, 
+        this.NodeGraphEditorContext as NodeGraphEditorContext,
+      ) || null;
+    }
+  },
   render() {
-    if (this.port.paramType.define?.typeEditor)
+    const componentRender = this.customEditor || this.port.paramType.define?.typeEditor;
+    if (componentRender)
       return [
-        this.port.paramType.define.typeEditor({
+        componentRender({
           customData: this.port.parent.options[`port_${this.port.guid}_custom_data`] || {},
           port: this.port,
           value: this.port.getValue(),

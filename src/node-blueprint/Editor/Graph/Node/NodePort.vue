@@ -18,8 +18,8 @@
         @mousedown="onPortMouseDown($event)"
       >
         <!--删除端口按扭-->
-        <Tooltip v-if="instance.dyamicAdd && !instance.forceNoDelete" content="删除参数">
-          <Icon class="delete" icon="icon-close" @click="onDeleteParam" />
+        <Tooltip v-if="instance.dyamicAdd && !instance.forceNoDelete && instance.direction === 'output'" content="删除参数">
+          <Icon class="delete node-editor-no-move" icon="icon-close" @click="onDeleteParam" />
         </Tooltip>
         <!--标题-->
         <span 
@@ -48,8 +48,16 @@
         >
           {{ instance.name }}
         </span>
+        <!--删除端口按扭-->
+        <Tooltip v-if="instance.dyamicAdd && !instance.forceNoDelete && instance.direction === 'input'" content="删除参数">
+          <Icon class="delete node-editor-no-move" icon="icon-close" @click="onDeleteParam" />
+        </Tooltip>
       </div>
-      <div v-if="!instance.forceNoEditorControl && instance.direction === 'input' && !instance.isConnected" class="editor node-custom-editor">
+      <div 
+        v-if="!instance.forceNoEditorControl && instance.direction === 'input' 
+          && (!instance.isConnected || instance.forceEditorControlOutput)" 
+        class="editor node-custom-editor"
+      >
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
