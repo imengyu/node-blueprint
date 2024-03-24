@@ -376,6 +376,31 @@ function registerScriptVariableBase()  {
           node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: variable.type });
         }
       },
+      onEditorShowContextMenu(node, context) {
+        const graph = context.getCurrentGraph();
+        const variableName = node.options.variable as string;
+        const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
+        if (variable) {
+          return {
+            menu: {
+              items: [
+                {
+                  label: '替换变量',
+                  children: graph.variables.filter(v => v.type.equal(variable.type)).map(v => ({
+                    label: v.name,
+                    checked: v.name === variableName,
+                    onClick() {
+                      //直接调用下方消息进行相关状态设置
+                      node.sendSelfMessage(messages.VARIABLE_UPDATE_NAME, { name: v.name });
+                      node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: v.type });
+                    },
+                  })),
+                }
+              ],
+            }
+          }
+        }
+      },
       onEditorMessage(node, context, msg) {
         //变量类型更改消息
         if (msg?.message === messages.VARIABLE_UPDATE_TYPE) {
@@ -444,6 +469,31 @@ function registerScriptVariableBase()  {
           //直接调用下方消息进行相关状态设置
           node.sendSelfMessage(messages.VARIABLE_UPDATE_NAME, { name: variableName });
           node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: variable.type });
+        }
+      },
+      onEditorShowContextMenu(node, context) {
+        const graph = context.getCurrentGraph();
+        const variableName = node.options.variable as string;
+        const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
+        if (variable) {
+          return {
+            menu: {
+              items: [
+                {
+                  label: '替换变量',
+                  children: graph.variables.filter(v => v.type.equal(variable.type)).map(v => ({
+                    label: v.name,
+                    checked: v.name === variableName,
+                    onClick() {
+                      //直接调用下方消息进行相关状态设置
+                      node.sendSelfMessage(messages.VARIABLE_UPDATE_NAME, { name: v.name });
+                      node.sendSelfMessage(messages.VARIABLE_UPDATE_TYPE, { type: v.type });
+                    },
+                  })),
+                }
+              ],
+            }
+          }
         }
       },
       onEditorMessage(node, context, msg) {

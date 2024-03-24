@@ -9,6 +9,7 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
 import BaseNodes, { type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import { ConcatableArray } from "@/node-blueprint/Base/Utils/Array/ConcatableArray";
 
 export interface NodeEditorContextMenuContext {
   /**
@@ -178,27 +179,18 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     const selectedCount = context.getSelectNodeCount();
     const selectedNodes = context.getSelectNodes();
 
-    let nodeMenuSettingsMenuItems : NodeContextMenuItem[]|null = null;
+    const menuItems = new ConcatableArray<NodeContextMenuItem>();
 
     if(selectedCount === 1) {
-      nodeMenuSettingsMenuItems = selectedNodes[0].menu?.items || [];
-
-      const loopMenuClick = (items : NodeContextMenuItem[]) => {
-        items.forEach((item) => {
-          if(item.children) 
-            loopMenuClick(item.children);
-          if(typeof item.onClick === 'function') {
-            const old = item.onClick;
-            item.onClick = function() {
-              old.call(selectedNodes[0]);
-            };
-          }
-        })
-      }
-      loopMenuClick(nodeMenuSettingsMenuItems);
+      //获取节点的右键菜单
+      const ret = selectedNodes[0].events.onEditorShowContextMenu?.(selectedNodes[0], context);
+      if (ret && ret.menu?.items)
+        menuItems.concat(ret.menu.items);
+      if (selectedNodes[0].menu?.items)
+        menuItems.concat(selectedNodes[0].menu.items);
     }
 
-    let menuItems = (selectedCount === 1 ? (selectedNodes[0].menu?.items || []) : []).concat(
+    menuItems.concat(
       [
         { 
           label: "删除", 
@@ -261,13 +253,30 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
       ]
     );
 
+    //追加通用处理器的菜单项
     for (const iterator of customNodeMenuHandler)
-      menuItems = menuItems.concat(iterator(context as NodeGraphEditorContext, selectedNodes));
+      menuItems.concat(iterator(context as NodeGraphEditorContext, selectedNodes));
+
+    //重新设置菜单项的点击事件，使其可以接受到当前节点参数
+    const finalMenuItems = menuItems.getArray()!;
+    const loopMenuClick = (items : NodeContextMenuItem[]) => {
+      items.forEach((item) => {
+        if(item.children) 
+          loopMenuClick(item.children);
+        if(typeof item.onClick === 'function') {
+          const old = item.onClick;
+          item.onClick = function() {
+            old.call(selectedNodes[0]);
+          };
+        }
+      })
+    }
+    loopMenuClick(finalMenuItems);
 
     context.showContextMenu({
       x: screenPos.x,
       y: screenPos.y,
-      items: menuItems,
+      items: finalMenuItems,
       zIndex: 100,
     });
   }

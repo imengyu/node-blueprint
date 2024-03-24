@@ -501,6 +501,12 @@ export interface NodeEditorCreateReturnData {
    */
   menu ?: { items: NodeContextMenuItem[] },
 }
+export interface NodeEditorShowContextMenuReturnData {
+  /**
+   * [仅编辑器可用] 单元的右键菜单操作
+   */
+  menu ?: { items: NodeContextMenuItem[] },
+}
 
 /**
  * 单元自定义事件设置
@@ -557,6 +563,10 @@ export interface INodeEventSettings {
    * 编辑器中的消息回调
    */
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>,
+  /**
+   * 编辑器中用户右键菜单回调
+   */
+  onEditorShowContextMenu ?: NodeEditorContextEventCallback<NodeEditorShowContextMenuReturnData|undefined>,
   /**
    * 用户添加了一个端口时的回调。
    */
@@ -632,6 +642,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
   onCreateCustomEditor ?: NodeCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
   onEditorClickEvent ?: NodeEditorMoseClickEventFunction;
+  onEditorShowContextMenu ?: NodeEditorContextEventCallback<NodeEditorShowContextMenuReturnData>;
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;
   onUserAddPort ?: NodeEventCallback<Promise<INodePortDefine|null>, {
