@@ -1306,20 +1306,29 @@ function registerCommentNode() {
           }
         }
       },
+      onEditorMoveEvent(node, context, movedScaledDistance) {
+        if(node.data.mouseDown && node.getCurrentSizeType() === 0 && movedScaledDistance) {
+          const list = node.data['list'] as NodeEditor[];
+          //移动包括在注释内的单元
+          list.forEach((v) => {
+            if (v !== node) {
+              const pos = new Vector2(v.lastBlockPos);
+              pos.add(movedScaledDistance);
+              v.position.set(pos)
+              v.updateRegion();
+            }
+          })
+        }
+      },
       onEditorMoseEvent: (node, context, event, e) => {
         if (e.button === 0) {
           const list = node.data['list'] as NodeEditor[];
           const rect = node.data['rect'] as Rect;
-          const mouseDownPos = node.data['mouseDownPos'] as { x: number, y: number};
 
           switch(event) {
             case 'down':
               if (node.getCurrentSizeType() === 0) {
                 node.data.mouseDown = true;
-        
-                mouseDownPos.x = e.x;
-                mouseDownPos.y = e.y;
-          
                 //保存鼠标按下时区域内的所有单元
                 rect.set(node.getRect());
                 ArrayUtils.clear(list);
@@ -1329,21 +1338,6 @@ function registerCommentNode() {
                     list.push(v);
                   }
                 });
-              }
-              break;
-            case 'move':
-              if(node.data.mouseDown && node.getCurrentSizeType() === 0) {
-      
-                //移动包括在注释内的单元
-                const viewPort = context.getViewPort();
-                const offX = e.x - mouseDownPos.x, offY =  e.y - mouseDownPos.y;
-                list.forEach((v) => {
-                  if (v !== node) {
-                    v.position.x = v.getLastPos().x + (viewPort.scaleScreenSizeToViewportSize(offX));
-                    v.position.y = v.getLastPos().y + (viewPort.scaleScreenSizeToViewportSize(offY));
-                    v.updateRegion();
-                  }
-                })
               }
               break;
             case 'up':

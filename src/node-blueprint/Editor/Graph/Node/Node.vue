@@ -189,6 +189,7 @@ import NodeIconImageRender from './NodeIconImageRender.vue';
 import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import NodeCustomEditorWrapper from './NodeCustomEditorWrapper.vue';
+import PropControl from '../../Components/PropControl/PropControl.vue';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
@@ -199,8 +200,8 @@ import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
-import PropControl from '../../Components/PropControl/PropControl.vue';
 import { useResizeChecker } from '../../Docunment/CodeLayout/Composeable/ResizeChecker';
+import { moveNodeSolveSnap } from '../Composeable/NodeMove';
 
 const props = defineProps({
   instance: {
@@ -563,7 +564,6 @@ const resizeMouseHandler = createMouseDragHandler({
 
 let mouseDown = false;
 let lastMovedBlock = false;
-let snapGridSize = 10;
 
 const mouseInfo = context.getMouseInfo();
 
@@ -590,11 +590,7 @@ const dragMouseHandler = createMouseDragHandler({
       pos.add(context.getViewportMovedPosition());
 
       //吸附最小刻度
-      if (context.getSettings().snapGrid)
-        pos.set(
-          pos.x - pos.x % (snapGridSize - instance.value.style.snapGridOffsetX), 
-          pos.y - pos.y % (snapGridSize - instance.value.style.snapGridOffsetY)
-        );
+      moveNodeSolveSnap(context, instance.value, pos);
 
       if(pos.x !== instance.value.position.x || pos.y !== instance.value.position.y) {
 
@@ -609,14 +605,18 @@ const dragMouseHandler = createMouseDragHandler({
             if (node !== instance.value) {
               const posOfThisBlock = new Vector2((node as NodeEditor).lastBlockPos);
               posOfThisBlock.add(movedScaledDistance);
+              posOfThisBlock.add(context.getViewportMovedPosition());
+              moveNodeSolveSnap(context, node, posOfThisBlock);
               node.position.set(posOfThisBlock)
+              node.events.onEditorMoveEvent?.(instance.value, context, posOfThisBlock.substract((node as NodeEditor).lastBlockPos));
             }
           }
         }
 
         //移动
         lastMovedBlock = true;
-        instance.value.position = pos;
+        instance.value.position.set(pos);
+        instance.value.events.onEditorMoveEvent?.(instance.value, context, pos.substract(instance.value.lastBlockPos));
 
         //同时更新连接到节点的连接线位置
         instance.value.connectors.forEach((c) => {

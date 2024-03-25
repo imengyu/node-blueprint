@@ -549,6 +549,10 @@ export interface INodeEventSettings {
    */
   onEditorMoseEvent ?: NodeEditorMoseEventFunction,
   /**
+   * 单元移动事件回调。
+   */
+  onEditorMoveEvent ?: NodeEditorContextEventCallback<void, Vector2>,
+  /**
    * 单元鼠标点击事件回调。
    */
   onEditorClickEvent ?: NodeEditorMoseClickEventFunction,
@@ -663,6 +667,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
   onCreatePortCustomEditor ?: NodePortCreateEditorFunction;
   onEditorMoseEvent ?: NodeEditorMoseEventFunction;
   onEditorClickEvent ?: NodeEditorMoseClickEventFunction;
+  onEditorMoveEvent ?: NodeEditorContextEventCallback<void, Vector2>;
   onEditorShowContextMenu ?: NodeEditorContextEventCallback<NodeEditorShowContextMenuReturnData>;
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;

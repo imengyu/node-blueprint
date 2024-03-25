@@ -68,6 +68,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
   //扩展函数
 
   const BORDER_SIZE = 25;
+  const BORDER_SIZE_DOWN = 45;
   const MOVE_SIZE = 10;
 
   /**
@@ -97,10 +98,6 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
   function getViewportMovedPosition() {
     return tempViewPortPos.set(viewPort.value.position as Vector2).substract(recordViewPortPos);
   }
-  /**
-   * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
-   * @param pos 
-   */
   function moveViewportWithCursorPosition(pos: Vector2) {
     if (pos.x < BORDER_SIZE)
       viewPort.value.position.x -= MOVE_SIZE;
@@ -109,7 +106,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
     
     if (pos.y < BORDER_SIZE)
       viewPort.value.position.y -= MOVE_SIZE;
-    else if (pos.y > viewPort.value.size.y - BORDER_SIZE) 
+    else if (pos.y > viewPort.value.size.y - BORDER_SIZE_DOWN) 
       viewPort.value.position.y += MOVE_SIZE;
   }
 
