@@ -4,13 +4,14 @@ import { NodeGraph, type INodeGraphDefine } from "./Graph/NodeGraph";
 import { NodeVariable, type INodeVariableDefine } from "./Graph/NodeVariable";
 import { NodeCompileSettings, NodeStyleSettings, NodeEventSettings, Node, type INodeDefine, type INodeCompileSettings, type INodeEventSettings, type INodeStyleSettings } from "./Node/Node";
 import { NodeConnector, type INodeConnectorDefine } from "./Node/NodeConnector";
-import { NodePort, type INodePortDefine } from "./Node/NodePort";
+import { NodePort, type INodePortDefine, NodePortStyle, type INodePortStyleDefine } from "./Node/NodePort";
 import { NodeParamType, type NodeParamTypeDefine } from "./Type/NodeParamType";
 
 //Register CreateObject class
 export function registerObjects() {
   CreateObjectFactory.addObjectFactory('Node', (define: INodeDefine) => new Node(define));
   CreateObjectFactory.addObjectFactory('NodePort', (define: INodePortDefine, parent) => new NodePort(define, parent as Node));
+  CreateObjectFactory.addObjectFactory('NodePortStyle', (define: INodePortStyleDefine) => new NodePortStyle(define));
   CreateObjectFactory.addObjectFactory('NodeConnector', (define: INodeConnectorDefine) => new NodeConnector(define));
   CreateObjectFactory.addObjectFactory('NodeCompileSettings', (define: INodeCompileSettings) => new NodeCompileSettings(define));
   CreateObjectFactory.addObjectFactory('NodeEventSettings', (define: INodeEventSettings) => new NodeEventSettings(define));

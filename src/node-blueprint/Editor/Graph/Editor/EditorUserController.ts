@@ -311,7 +311,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     if (!port.dyamicAdd)
       throw new Error('The port is not a dynamic port.');
     const parent = port.parent as NodeEditor;
-    parent.deletePort(port.guid);
+    parent.deletePort(port);
     for (let i = parent.connectors.length - 1; i >= 0; i--) {
       const connector = parent.connectors[i];
       if (connector.startPort === port || connector.endPort === port)
@@ -789,11 +789,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
 
     //创建外部节点的端口
     for (const inputPort of childGraph.inputPorts) {
-      inputPort.forceNoDelete = true;
+      if (!inputPort.style) 
+        inputPort.style = {};
+      inputPort.style.forceNoDelete = true;
       callNode?.addPort(inputPort, true, undefined, 'input');
     }
     for (const outputPort of childGraph.outputPorts) {
-      outputPort.forceNoDelete = true;
+      if (!outputPort.style) 
+        outputPort.style = {};
+      outputPort.style.forceNoDelete = true;
       callNode?.addPort(outputPort, true, undefined, 'output');
     }
 

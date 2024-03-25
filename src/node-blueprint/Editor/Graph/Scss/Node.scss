@@ -404,6 +404,9 @@
   min-height: 22px;
   cursor: crosshair;
 
+  &.space {
+    cursor: initial;
+  }
   > .editor {
     display: inline-block;
     vertical-align: top;

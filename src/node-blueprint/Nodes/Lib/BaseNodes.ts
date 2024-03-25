@@ -114,6 +114,7 @@ import NodeIconConvert from '../NodeIcon/convert.svg';
 import NodeIconConvert2 from '../NodeIcon/convert-number.svg';
 import NodeIconConvert3 from '../NodeIcon/convert-number-2.svg';
 import NodeIconType from '../NodeIcon/cpu.svg';
+import ObjectUtils from "@/node-blueprint/Base/Utils/ObjectUtils";
 
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
@@ -313,7 +314,6 @@ function registerScriptBase()  {
         direction: 'input',
         guid: 'STOP',
         defaultConnectPort: false,
-        forceNoCycleDetection: true,
         paramType: NodeParamType.Execute,
       },
       {
@@ -569,7 +569,8 @@ function registerScriptGraphBase()  {
   
             //添加图表的端口至当前节点
             inputPorts.forEach((port, index) => {
-              port.forceNoDelete = true;
+              ObjectUtils.assignIfUndefined(port, 'style', {});
+              port.style!.forceNoDelete = true;
               port.direction = 'input';
               const oldPort = node.inputPorts[index];
               if (oldPort) {
@@ -584,7 +585,8 @@ function registerScriptGraphBase()  {
               node.deletePort(node.inputPorts[i]);
   
             outputPorts.forEach((port, index) => {
-              port.forceNoDelete = true;
+              ObjectUtils.assignIfUndefined(port, 'style', {});
+              port.style!.forceNoDelete = true;
               port.direction = 'output';
               const oldPort = node.outputPorts[index];
               if (oldPort) {
@@ -674,7 +676,8 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           inputPorts.forEach((port, index) => {
-            port.forceNoDelete = true;
+            ObjectUtils.assignIfUndefined(port, 'style', {});
+            port.style!.forceNoDelete = true;
             const oldPort = node.outputPorts[index];
             if (oldPort) {
               oldPort.load(port);
@@ -719,7 +722,8 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           outputPorts.forEach((port, index) => {
-            port.forceNoDelete = true;
+            ObjectUtils.assignIfUndefined(port, 'style', {});
+            port.style!.forceNoDelete = true;
             const oldPort = node.inputPorts[index];
             if (oldPort) {
               oldPort.load(port);
@@ -1013,7 +1017,7 @@ function registerTypeBase() {
     description: '此节点用于定义一个通配符参数为另一个类型，如果输入类型是目标类型，则它会正确返回；反之则会抛出异常',
     author: 'imengyu',
     version: 1,
-    category: '基础/类型',
+    category: '基础/转换',
     ports: [
       {
         direction: 'input',
@@ -1047,7 +1051,10 @@ function registerTypeBase() {
 
         if (node.options.type)
           changeOutParamType(NodeParamType.FromString(node.options.type as string));
-
+        else {
+          node.options.type = NodeParamType.Any.toString();
+          node.updateRegion();
+        }
         return {
           nodeProp: {
             before: [
@@ -1070,7 +1077,7 @@ function registerTypeBase() {
     description: '此节点用于强制转换一个通配符参数为另一个类型，如果输入类型是目标类型，则它会原样返回；反之，它会尝试可能的转换，如果无法转换，执行异常',
     author: 'imengyu',
     version: 1,
-    category: '基础/类型',
+    category: '基础/转换',
     ports: [
       {
         direction: 'input',
@@ -1432,15 +1439,19 @@ function registerConnNode() {
         isFlexible: 'auto',
         direction: 'input',
         defaultConnectPort: true,
-        forceNoEditorControl: true,
+        style: {
+          forceNoEditorControl: true,
+        },
       },
       {
         guid: 'OUTPUT',
         paramType: NodeParamType.Any,
         isFlexible: 'auto',
         isRefPassing: true,
-        forceNoEditorControl: true,
-        direction: 'output'
+        direction: 'output',
+        style: {
+          forceNoEditorControl: true,
+        },
       },
     ],
     style: {

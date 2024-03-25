@@ -1,12 +1,18 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <Tooltip>
+  <!--顶部占位-->
+  <template v-if="instance?.style.topSpace">
+    <NodePort v-for="k of instance.style.topSpace" :key="k" /> 
+  </template>
+  <Tooltip v-if="instance">
     <!--端口-->
     <div 
-      v-if="instance" 
-      :class="'node-port '+instance.state"
+      :class="[
+        'node-port',
+        instance.state
+      ]"
     >
-      <div v-if="instance.direction === 'output' && instance.forceEditorControlOutput" class="editor node-custom-editor">
+      <div v-if="instance.direction === 'output' && instance.style.forceEditorControlOutput" class="editor node-custom-editor">
         <!-- 编辑器 -->
         <NodePortParamEditor :port="instance" />
       </div>
@@ -18,7 +24,7 @@
         @mousedown="onPortMouseDown($event)"
       >
         <!--删除端口按扭-->
-        <Tooltip v-if="instance.dyamicAdd && !instance.forceNoDelete && instance.direction === 'output'" content="删除参数">
+        <Tooltip v-if="instance.dyamicAdd && !instance.style.forceNoDelete && instance.direction === 'output'" content="删除参数">
           <Icon class="delete node-editor-no-move" icon="icon-close" @click="onDeleteParam" />
         </Tooltip>
         <!--标题-->
@@ -49,13 +55,13 @@
           {{ instance.name }}
         </span>
         <!--删除端口按扭-->
-        <Tooltip v-if="instance.dyamicAdd && !instance.forceNoDelete && instance.direction === 'input'" content="删除参数">
+        <Tooltip v-if="instance.dyamicAdd && !instance.style.forceNoDelete && instance.direction === 'input'" content="删除参数">
           <Icon class="delete node-editor-no-move" icon="icon-close" @click="onDeleteParam" />
         </Tooltip>
       </div>
       <div 
-        v-if="!instance.forceNoEditorControl && instance.direction === 'input' 
-          && (!instance.isConnected || instance.forceEditorControlOutput)" 
+        v-if="!instance.style.forceNoEditorControl && instance.direction === 'input' 
+          && (!instance.isConnected || instance.style.forceEditorControlOutput)" 
         class="editor node-custom-editor"
       >
         <!-- 编辑器 -->
@@ -83,6 +89,11 @@
       </span>
     </template>
   </Tooltip>
+  <!--空白占位符-->
+  <div 
+    v-else 
+    class="node-port space" 
+  />
 </template>
 
 <script lang="ts" setup>
@@ -102,7 +113,7 @@ import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 const props = defineProps({
   instance: {
     type: Object as PropType<NodePortEditor>,
-    required: true,
+    default: null,
   },
 });
 const {
@@ -118,16 +129,17 @@ const portDot = ref<HTMLElement>();
 
 const dotPos = new Vector2();
 
-instance.value.getPortPositionRelative = function() {
-  const dot = portDot.value;
-  if (!dot)
+if (instance.value)
+  instance.value.getPortPositionRelative = function() {
+    const dot = portDot.value;
+    if (!dot)
+      return dotPos;
+    dotPos.set(
+      HtmlUtils.getLeft(dot, 'node-block') + dot.offsetWidth / 2,  
+      HtmlUtils.getTop(dot, 'node-block') + dot.offsetHeight / 2 + 4
+    );
     return dotPos;
-  dotPos.set(
-    HtmlUtils.getLeft(dot, 'node-block') + dot.offsetWidth / 2,  
-    HtmlUtils.getTop(dot, 'node-block') + dot.offsetHeight / 2 + 4
-  );
-  return dotPos;
-};
+  };
 
 //#endregion
 

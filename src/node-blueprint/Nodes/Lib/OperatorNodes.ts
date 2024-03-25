@@ -189,12 +189,15 @@ function registerOperatorBase() {
         direction: 'output',
         description: '键值0的字段',
         paramType: NodeParamType.Any,
+        style: {
+          topSpace: 1,
+        },
       },
     ],
     events: {
       onUserAddPort: async (node) => {
         const options = node.getOptions<IOtherDynamicPortNodeOptions>();
-        options.portCount = options.portCount || 0;
+        options.portCount = options.portCount ?? 0;
         options.portCount++;
         return [
           {
@@ -210,25 +213,39 @@ function registerOperatorBase() {
             paramType: NodeParamType.Any,
             name: '键值' + options.portCount,
             description: '键值' + options.portCount + '的字段',
+            style: {
+              forceNoDelete: true,
+            },
           },
         ]
       },
       onUserDeletePort: async (node, context, port) => {
         if (!port)
           return undefined;
-        const options = node.getOptions<IOtherDynamicPortNodeOptions>();
-        options.portCount--;
+        if (port.guid.startsWith('VALUE'))
+          return true;
         if (port.guid.startsWith('KEY')) {
           const id = port.guid.substr(3);
           const port2 = node.getPortByGUID('VALUE' + id);
           if (port2)
             context.userDeletePort(port2 as NodePortEditor);
-        } else if (port.guid.startsWith('VALUE')) {
-          const id = port.guid.substr(5);
-          const port2 = node.getPortByGUID('KEY' + id);
-          if (port2)
-            context.userDeletePort(port2 as NodePortEditor);
+          return true;
         }
+      },
+      onCreatePortCustomEditor: (port) => {
+        if (port.guid.startsWith('KEY')) 
+          return (props) => h('div', [ 
+              h(StringEditor, {
+                ...props,
+                'onUpdate:value': (newV) => {
+                  port.description = '键为 ' + newV + ' 的值';
+                  port.define.description = port.description;
+                  (props['onUpdate:value'] as any)(newV);
+                }
+              }) ,
+              h('span', '键 = '),
+            ]
+          );
       },
     },
   };

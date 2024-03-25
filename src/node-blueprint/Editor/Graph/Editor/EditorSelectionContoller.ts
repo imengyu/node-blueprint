@@ -128,6 +128,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       e.preventDefault();
       e.stopPropagation();
       context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
+      context.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
       doSelectNodes();
     },
     onUp(e) {

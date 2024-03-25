@@ -23,6 +23,9 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
             'pos',
             'parent',
           ],
+          forceSerializableClassProperties: {
+            style: 'NodePortStyle',
+          },
           afterLoad: () => {
             if (this.paramDefaultValue !== undefined)
               this.initialValue = this.paramDefaultValue;
@@ -115,21 +118,9 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
    */
   isFlexible : NodePortFlex = false;
   /**
-   * 是否强制不显示编辑参数控件
+   * 端口样式
    */
-  forceNoEditorControl = false;
-  /**
-   * 是否强制在输出端口显示编辑参数控件
-   */
-  forceEditorControlOutput = false;
-  /**
-   * 强制不检查循环调用
-   */
-  forceNoCycleDetection = false;
-  /**
-   * 强制禁止用户删除此端口
-   */
-  forceNoDelete = false;
+  style = new NodePortStyle({});
 
   public getValue() : unknown {
     return this.initialValue;
@@ -226,6 +217,28 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
 
   isCallingDelete = false;
 }
+/**
+ * 端口样式
+ */
+export class NodePortStyle extends SerializableObject<INodePortStyleDefine, NodePort> {
+  constructor(define?: INodePortStyleDefine) {
+    super('NodePortStyle', define, {
+      serializeSchemes: {
+        default: {
+          serializeAll: true,
+          noSerializableProperties: [
+            'parent',
+          ],
+        }
+      }
+    });
+  }
+
+  forceNoEditorControl = false;
+  forceEditorControlOutput = false;
+  forceNoDelete = false;
+  topSpace?: number;
+}
 
 /**
  * 端口的方向
@@ -242,7 +255,6 @@ export type NodePortState = "normal" | "active" | "error" | "success";
  * 状态
  */
 export type NodePortFlex = 'auto'|'custom'|undefined|false;
-
 
 /**
  * 端口定义
@@ -304,19 +316,29 @@ export interface INodePortDefine {
    */
   initialValue ?: ISaveableTypes|null,
   /**
-   * 是否强制不显示编辑参数控件
+   * 端口样式
+   */
+  style?: INodePortStyleDefine;
+}
+
+/**
+ * 端口样式定义
+ */
+export interface INodePortStyleDefine {
+  /**
+   * 端口顶部空间（格），默认为0
+   */
+  topSpace?: number;
+  /**
+   * 是否强制不显示编辑参数控件, 默认为 false
    */
   forceNoEditorControl?: boolean;
   /**
-   * 是否强制在输出端口显示编辑参数控件
+   * 是否强制在输出端口显示编辑参数控件, 默认为 false
    */
   forceEditorControlOutput?: boolean;
   /**
-   * 强制不检查循环调用
-   */
-  forceNoCycleDetection?: boolean;
-  /**
-   * 强制禁止用户删除此端口
+   * 强制禁止用户删除此端口, 默认为 false
    */
   forceNoDelete?: boolean;
 }

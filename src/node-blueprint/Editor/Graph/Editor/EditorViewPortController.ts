@@ -3,6 +3,7 @@ import { NodeGraphEditorViewport, type NodeGraphEditorInternalContext } from "..
 import { ChunkedPanel } from "../Cast/ChunkedPanel";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { NodeEditor } from "../Flow/NodeEditor";
+import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 
 export interface NodeEditorViewPortControllerContext {
   /**
@@ -10,6 +11,11 @@ export interface NodeEditorViewPortControllerContext {
    * @param nodes 要计算的单元
    */
   calcNodesRegion(nodes: NodeEditor[]): Rect;
+  /**
+   * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
+   * @param pos 
+   */
+  moveViewportWithCursorPosition(pos: Vector2): void;
 }
 
 /**
@@ -53,6 +59,9 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
 
   //扩展函数
 
+  const BORDER_SIZE = 15;
+  const MOVE_SIZE = 10;
+
   /**
    * 计算一些单元的矩形区域
    * @param nodes 要计算的单元
@@ -70,8 +79,24 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
     })
     return new Rect(x, y, r - x, b - y);
   }
+  /**
+   * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
+   * @param pos 
+   */
+  function moveViewportWithCursorPosition(pos: Vector2) {
+    if (pos.x < BORDER_SIZE)
+      viewPort.value.position.x -= MOVE_SIZE;
+    else if (pos.x > viewPort.value.size.x - BORDER_SIZE) 
+      viewPort.value.position.x += MOVE_SIZE;
+    
+    if (pos.y < BORDER_SIZE)
+      viewPort.value.position.y -= MOVE_SIZE;
+    else if (pos.y > viewPort.value.size.y - BORDER_SIZE) 
+      viewPort.value.position.y += MOVE_SIZE;
+  }
 
   context.calcNodesRegion = calcNodesRegion;
+  context.moveViewportWithCursorPosition = moveViewportWithCursorPosition;
 
   onMounted(() => {
     context.getMouseHandler().pushMouseWhellHandlers(mouseWhellEvent);
