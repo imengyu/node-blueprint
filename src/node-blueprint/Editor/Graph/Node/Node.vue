@@ -565,10 +565,13 @@ let mouseDown = false;
 let lastMovedBlock = false;
 let snapGridSize = 10;
 
+const mouseInfo = context.getMouseInfo();
+
 const dragMouseHandler = createMouseDragHandler({
   onDown() {
     lastResized = false;
     mouseDown = true;
+    context.recordViewportPosition();
     return true;
   },
   onMove(downPos, movedPos, e) {
@@ -576,16 +579,22 @@ const dragMouseHandler = createMouseDragHandler({
       return;
     
     if(e.buttons === 1) {
+      context.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
+
       const movedScaledDistance = new Vector2(
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.x)),
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.y))
       );
       const pos = new Vector2(instance.value.lastBlockPos);
       pos.add(movedScaledDistance);
+      pos.add(context.getViewportMovedPosition());
 
       //吸附最小刻度
       if (context.getSettings().snapGrid)
-        pos.set(pos.x - pos.x % snapGridSize, pos.y - pos.y % snapGridSize);
+        pos.set(
+          pos.x - pos.x % (snapGridSize - instance.value.style.snapGridOffsetX), 
+          pos.y - pos.y % (snapGridSize - instance.value.style.snapGridOffsetY)
+        );
 
       if(pos.x !== instance.value.position.x || pos.y !== instance.value.position.y) {
 

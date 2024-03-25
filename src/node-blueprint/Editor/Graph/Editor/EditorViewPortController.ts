@@ -3,7 +3,7 @@ import { NodeGraphEditorViewport, type NodeGraphEditorInternalContext } from "..
 import { ChunkedPanel } from "../Cast/ChunkedPanel";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { NodeEditor } from "../Flow/NodeEditor";
-import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 
 export interface NodeEditorViewPortControllerContext {
   /**
@@ -16,6 +16,14 @@ export interface NodeEditorViewPortControllerContext {
    * @param pos 
    */
   moveViewportWithCursorPosition(pos: Vector2): void;
+  /**
+   * 记录视口位置
+   */
+  recordViewportPosition(): void;
+  /**
+   * 获取自上次记录以来视口移动的位置
+   */
+  getViewportMovedPosition(): Vector2;
 }
 
 /**
@@ -59,7 +67,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
 
   //扩展函数
 
-  const BORDER_SIZE = 15;
+  const BORDER_SIZE = 25;
   const MOVE_SIZE = 10;
 
   /**
@@ -79,6 +87,16 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
     })
     return new Rect(x, y, r - x, b - y);
   }
+
+  const recordViewPortPos = new Vector2();
+  const tempViewPortPos = new Vector2();
+
+  function recordViewportPosition() {
+    recordViewPortPos.set(viewPort.value.position as Vector2);
+  }
+  function getViewportMovedPosition() {
+    return tempViewPortPos.set(viewPort.value.position as Vector2).substract(recordViewPortPos);
+  }
   /**
    * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
    * @param pos 
@@ -97,6 +115,8 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
 
   context.calcNodesRegion = calcNodesRegion;
   context.moveViewportWithCursorPosition = moveViewportWithCursorPosition;
+  context.recordViewportPosition = recordViewportPosition;
+  context.getViewportMovedPosition = getViewportMovedPosition;
 
   onMounted(() => {
     context.getMouseHandler().pushMouseWhellHandlers(mouseWhellEvent);

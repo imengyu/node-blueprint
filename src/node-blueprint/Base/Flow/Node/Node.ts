@@ -776,6 +776,14 @@ export interface INodeStyleSettings {
    * 出端口的文字最窄宽度。规定此宽度用于美观
    */
   outputPortMinWidth ?: number|string,
+  /**
+   * 指定单元拖拽吸附网格的偏移量X
+   */
+  snapGridOffsetX ?: number,
+  /**
+   * 指定单元拖拽吸附网格的偏移量Y
+   */
+  snapGridOffsetY ?: number,
 }
 /**
  * 节点样式结构
@@ -814,6 +822,8 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, No
   public outputPortMinWidth = '';
   public layer : 'normal'|'background' = 'normal';
   public customClassNames = "";
+  public snapGridOffsetX = 0;
+  public snapGridOffsetY = 0;
 }
 
 /**
