@@ -30,21 +30,29 @@
           <img :src="item.define.style?.logo || DefaultLogo">
           {{ item.define.name }}
         </span>
-        <SmallButton 
-          v-if="isAddDirectly"
-          icon="icon-add-bold"
-          title="添加到鼠标位置"
-          class="add-button"
-          @click.stop="onAddClick(item)" 
-        />
-        <span v-else />
+        <span>
+          <Tooltip content="将节点添加到收藏">
+            <SmallButton
+              icon="icon-star"
+              :color="favoriteList.includes(item.define.guid) ? 'yellow' : 'white'"
+              @click.stop="setNodeFav(item.define.guid, !favoriteList.includes(item.define.guid))" 
+            />
+          </Tooltip>
+          <SmallButton 
+            v-if="isAddDirectly"
+            icon="icon-add-bold"
+            title="添加到鼠标位置"
+            class="add-button"
+            @click.stop="onAddClick(item)" 
+          />
+        </span>
       </div>
     </Tooltip>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { inject, type PropType } from 'vue'
+import { inject, type PropType, type Ref } from 'vue'
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
@@ -65,6 +73,8 @@ const props = defineProps({
   },
 });
 
+const favoriteList = inject('favoriteList') as Ref<string[]>;
+const setNodeFav = inject('setNodeFav') as (nodeGuid: string, add: boolean) => void;
 const addNode = inject('addNode') as (node: INodeDefine) => void;
 
 function onDrag(item: CategoryDataItem, e: DragEvent) {

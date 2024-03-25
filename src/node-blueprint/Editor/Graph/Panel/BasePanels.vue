@@ -31,6 +31,7 @@
       class="node-editor-no-move"
       :isAddDirectly="isAddDirectly"
       :allNodesGrouped="(allNodesGrouped as CategoryData[])"
+      :allNodesFlat="(allNodesFlat as Map<string, CategoryDataItem>)"
       :filterByPortDirection="filterByPortDirection"
       :filterByPortType="filterByPortType"
       :position="(addNodePanelPosition as Vector2)"
@@ -57,7 +58,7 @@ import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
+import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
@@ -138,6 +139,8 @@ const addNodePos = ref<Vector2>();
 const filterByPortType = ref<NodeParamType>();
 const filterByPortDirection = ref<NodePortDirection>();
 const allNodesGrouped = ref<CategoryData[]>([]); 
+const allNodesFlat = ref(new Map<string, CategoryDataItem>()); 
+
 
 function showAddNodePanel(screenPos: Vector2, _filterByPortType ?: NodeParamType|undefined, _filterByPortDirection ?: NodePortDirection|undefined, _addNodePos ?: Vector2, showAddDirectly ?: boolean): void {
   isAddDirectly.value = showAddDirectly ?? false;
@@ -154,7 +157,7 @@ function closeAddNodePanel() {
 
 function onAddNode(node: INodeDefine) {
   isShowAddNodePanel.value = false;
-  context?.userAddNode(node, addNodePos.value);
+  context?.userAddNode(node, { addNodeInPos: addNodePos.value });
 }
 
 watch(isShowAddNodePanel, (show) => {
@@ -200,6 +203,7 @@ function onSelectType(type: NodeParamType) {
 
 onMounted(() => {
   allNodesGrouped.value = NodeRegistry.getInstance().getAllNodesGrouped();
+  allNodesFlat.value = NodeRegistry.getInstance().getAllNodesFlat();
 
   //鼠标未拖拽未选择情况下，弹出添加单元菜单
   context.getMouseHandler().pushMouseUpHandlers((info, e) => {

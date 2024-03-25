@@ -40,6 +40,12 @@ export class NodeRegistry extends Singleton {
   }>()
 
   /**
+   * 获取所有单元列表
+   */
+  public getAllNodesFlat() : Map<string, CategoryDataItem>  {
+    return this.allNodes;
+  }
+  /**
    * 获取所有单元（已分类）列表
    */
   public getAllNodesGrouped() :Array<CategoryData>  {

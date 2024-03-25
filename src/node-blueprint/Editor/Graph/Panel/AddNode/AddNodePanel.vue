@@ -12,6 +12,17 @@
       <SmallButton v-if="searchValue != ''" icon="icon-close-bold" text="清空筛选" @click="searchValue=''" />
     </Row>
 
+    <CollapseItem
+      v-show="nodesFavorite.show && nodesFavorite.filterShow && nodesFavorite.category!=''"
+      v-model:open="nodesFavorite.open"
+      :title="nodesFavorite.category"
+    >
+      <NodeCategory
+        :categoryData="(nodesFavorite as CategoryData)"
+        :isAddDirectly="isAddDirectly"
+      />
+    </CollapseItem>
+
     <NodeList 
       :allNodesGrouped="allNodesGrouped"
       :isAddDirectly="isAddDirectly"
@@ -30,17 +41,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type PropType, onMounted, watch, provide } from 'vue';
+import { computed, ref, type PropType, onMounted, watch, provide, onBeforeUnmount } from 'vue';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
 import Row from '../../../Nana/Layout/Row';
 import NodeList from './NodeList.vue';
 import NodeCategory from './NodeCategory.vue';
 import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
-import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
+import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
+import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
+import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import CollapseItem from '@/node-blueprint/Editor/Components/List/CollapseItem.vue';
 
 const emit = defineEmits([ 
   'update:show',
@@ -67,6 +81,13 @@ const props = defineProps({
    */
   allNodesGrouped: {
     type: Object as PropType<Array<CategoryData>>,  
+    default: null,
+  },
+  /**
+   * 所有单元数组
+   */
+  allNodesFlat: {
+    type: Object as PropType<Map<string, CategoryDataItem>>,  
     default: null,
   },
   /**
@@ -99,11 +120,20 @@ const size = computed(() => {
   );
 })
 
+const nodesFavorite = ref<CategoryData>({
+  category: '我的收藏',
+  childCategories: [],
+  nodes: [],
+  open: false,
+  show: true,
+  filterShow: true,
+});
 const nodesGroupedMostOut = ref<CategoryData|null>(null);
 const filterText = ref('所有可用单元');
 const searchValue = ref('');
 const currentShowCount = ref(0);
 const currentFilterCount = ref(0);
+const favoriteList = ref<string[]>([]);
 
 //加载最外层单元
 function loadMostOutNodes() {
@@ -113,6 +143,28 @@ function loadMostOutNodes() {
       break;
     }        
   }
+}
+//加载收藏单元
+function loadFavorite() {
+  favoriteList.value = SettingsUtils.getSettings('NodeGraphEditorFavoriteNodes', []) || [];
+  flushFavorite();
+}
+function flushFavorite() {
+  nodesFavorite.value.nodes = favoriteList.value
+    .map((guid) => props.allNodesFlat.get(guid))
+    .filter(b => b !== undefined) as CategoryDataItem[];
+}
+//保存收藏单元
+function saveFavorite() {
+  SettingsUtils.setSettings('NodeGraphEditorFavoriteNodes', favoriteList.value);
+}
+//添加/移除收藏单元
+function setNodeFav(nodeGuid: string, add: boolean) {
+  if(add)
+    favoriteList.value.push(nodeGuid);
+  else
+    ArrayUtils.removeBy(favoriteList.value, b => b !== nodeGuid, true);
+  flushFavorite();
 }
 
 //搜索与筛选
@@ -208,6 +260,8 @@ function addNode(node: INodeDefine) {
 }
 
 provide('addNode', addNode);
+provide('setNodeFav', setNodeFav);
+provide('favoriteList', favoriteList);
 
 watch(() => props.allNodesGrouped, () => {
   loadMostOutNodes();
@@ -227,7 +281,13 @@ watch(searchValue, (newV) => {
 });
 
 onMounted(() => {
-  setTimeout(loadMostOutNodes, 1000);
+  setTimeout(() => {
+    loadMostOutNodes() ;
+    loadFavorite();
+  }, 1000);
+});
+onBeforeUnmount(() => {
+  saveFavorite();
 });
 </script>
 

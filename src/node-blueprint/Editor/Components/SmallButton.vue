@@ -5,11 +5,15 @@
       text ? 'text' : '',
       disabled ? 'disabled' : '',
     ]"
+    :style="{
+      color: color,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+    }"
   >
-    <Icon v-if="icon && iconPlace === 'before'" :icon="icon" />
+    <Icon v-if="icon && iconPlace === 'before'" :icon="icon" :fill="color" />
     {{ text }}
     <slot />
-    <Icon v-if="icon && iconPlace === 'after'" :icon="icon" />
+    <Icon v-if="icon && iconPlace === 'after'" :icon="icon" :fill="color" />
   </div>
 </template>
 
@@ -28,6 +32,10 @@ defineProps({
   text: {
     type: String,
     default: ""
+  },
+  color: {
+    type: String,
+    default: undefined
   },
   disabled: {
     type: Boolean,
