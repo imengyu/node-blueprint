@@ -230,7 +230,7 @@ export class Node extends SerializableObject<INodeDefine> {
    * @param data 端口数据
    * @param isDyamicAdd 是否是动态添加。动态添加的端口会被保存至文件中。
    */
-  public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null = null, forceChangeDirection ?: NodePortDirection) : NodePort {
+  public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null|undefined = undefined, forceChangeDirection ?: NodePortDirection) : NodePort {
     const oldData = this.getPort(data.guid, data.direction);
     if(oldData !== null && oldData !== undefined) {
       printWarning(this.name + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
@@ -246,7 +246,7 @@ export class Node extends SerializableObject<INodeDefine> {
     newPort.load();
     newPort.direction = forceChangeDirection || data.direction;
     newPort.dyamicAdd = isDyamicAdd;
-    newPort.initialValue = initialValue;
+    newPort.initialValue = initialValue ?? newPort.paramDefaultValue ?? data.paramType.define?.defaultValue() as ISaveableTypes;
 
     if(newPort.direction === 'input')
       this.inputPorts.push(newPort);
@@ -331,6 +331,21 @@ export class Node extends SerializableObject<INodeDefine> {
     if(this.mapPorts.has(guid))
       return this.mapPorts.get(guid) || null;
     return null;
+  }
+  /**
+   * Generates a unique port GUID based on the provided base name.
+   * If a port with the generated GUID already exists, it appends a number to the base name and checks again until a unique GUID is found.
+   * @param baseName - The base name for the port GUID.
+   * @returns A unique port GUID.
+   */
+  public getUseablePortGuid(baseName: string) {
+    let guid = baseName;
+    let index = 1;
+    while(this.getPortByGUID(guid) !== null) {
+      guid = baseName + index;
+      index++;
+    }
+    return guid;
   }
   /**
    * 获取当前单元中与指定方向和类型匹配的第一个端口
@@ -475,6 +490,7 @@ export type NodeEventCallback<R = void, T = undefined> = (srcNode : Node, data?:
 export type NodeEditorEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, data?: T) => R;
 export type NodeEditorContextEventCallback<R = void, T = undefined> = (srcNode : NodeEditor, context: NodeGraphEditorContext, data?: T) => R;
 export type NodePortEventCallback = (srcNode : Node, srcPort : NodePort) => void;
+export type NodePortEditorEventCallback<T = undefined> = (srcNode : Node, srcPort : NodePort, context: NodeGraphEditorContext, data?: T) => void;
 export type NodePortRequestCallback = (srcNode : Node, srcPort : NodePort, context: unknown) => any;
 export type NodePortCreateEditorFunction = ( port: NodePortEditor, context: NodeGraphEditorContext) => NodeParamEditorCreateCallback|undefined;
 export type NodeCreateEditorFunction = (parentEle: HTMLElement|undefined,node: NodeEditor, context: NodeGraphEditorContext) => VNode|VNode[]|undefined;
@@ -589,6 +605,10 @@ export interface INodeEventSettings {
    */
   onPortRemove ?: NodePortEventCallback,
   /**
+   * 端口被弹性更改类型时触发的回调。
+   */
+  onPortFlexUpdate ?: NodePortEditorEventCallback<NodeParamType>,
+  /**
    * 自定义检查回调，在用户添加某个单元至图表中时触发。
    * @param node 当前用户添加的某个单元
    * @param graph 添加目标图表
@@ -611,13 +631,13 @@ export interface INodeEventSettings {
    */
   onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
   /**
-   * 弹性端口连接时触发。
+   * 自定义弹性端口连接时触发(仅custom模式下触发)。
    * @param node 当前用户操作的单元
    * @param thisPort 当前端口
    * @param anotherPort 另外一个端口
    * @returns 返回你修改过类型的其他弹性端口，将会递归触发其他节点的弹性端口事件。
    */
-  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
+  onPortFlexConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => void;
   /**
    * 在用户连接端口时触发。
    * @param node 当前用户操作的单元
@@ -633,14 +653,14 @@ export interface INodeEventSettings {
   /**
    * 用户添加端口时触发
    */
-  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>, {
+  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>|INodePortDefine[], {
     direction : NodePortDirection,
     type : 'execute'|'param',
   }>;
   /**
    * 用户删除端口时触发
    */
-  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>, NodePort>;
+  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>|boolean|undefined, NodePort>;
 }
 /**
  * 单元自定义事件设置
@@ -671,19 +691,20 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
   onEditorShowContextMenu ?: NodeEditorContextEventCallback<NodeEditorShowContextMenuReturnData>;
   onEditorMessage ?: NodeEditorContextEventCallback<void, NodeEditorMessageData>;
   onEditorEvent?: NodeEditorEventFunction;
-  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>, {
+  onUserAddPort ?: NodeEditorContextEventCallback<Promise<INodePortDefine[]|undefined>|INodePortDefine[], {
     direction : NodePortDirection,
     type : 'execute'|'param',
   }>;
-  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>, NodePort>;
+  onUserDeletePort ?: NodeEditorContextEventCallback<Promise<boolean|undefined>|boolean|undefined, NodePort>;
   onRemoveFormEditor ?: NodeEventCallback;
   onEditorCreate ?: NodeEditorContextEventCallback<NodeEditorCreateReturnData|undefined|void, HTMLDivElement>;
   onPortAdd ?: NodePortEventCallback;
   onPortRemove ?: NodePortEventCallback;
+  onPortFlexUpdate ?: NodePortEditorEventCallback<NodeParamType>;
   onAddCheck ?: (node: INodeDefine, graph: NodeGraph) => string|null;
   onDeleteCheck ?: (node: Node, graph: NodeGraph|null) => string|null;
   onPortConnectCheck ?: (node: Node, startPort: NodePort, endPort: NodePort) => string|null;
-  onFlexPortConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => NodePort[];
+  onPortFlexConnect ?: (node: Node, thisPort: NodePort, anotherPort: NodePort) => NodePort[];
   onPortConnect ?: NodePortEventCallback;
   onPortUnConnect ?: NodePortEventCallback;
 }

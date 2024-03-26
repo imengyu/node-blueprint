@@ -34,7 +34,9 @@
           <Tooltip content="将节点添加到收藏">
             <SmallButton
               icon="icon-star"
-              :color="favoriteList.includes(item.define.guid) ? 'yellow' : 'white'"
+              :color="favoriteList.includes(item.define.guid) ? 
+                'var(--mx-editor-yellow-text-color)' : 
+                'var(--mx-editor-text-color)'"
               @click.stop="setNodeFav(item.define.guid, !favoriteList.includes(item.define.guid))" 
             />
           </Tooltip>

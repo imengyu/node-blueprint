@@ -335,10 +335,13 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
           context.deleteDynamicPort(port as NodePortEditor);
           return;
         }
-        ret.then((result) => {
-          if (result)
-            context.deleteDynamicPort(port as NodePortEditor);
-        });
+        if (ret instanceof Promise)
+          ret.then((result) => {
+            if (result)
+              context.deleteDynamicPort(port as NodePortEditor);
+          });
+        else if (ret === true)
+          context.deleteDynamicPort(port as NodePortEditor);
       }
     }
   }

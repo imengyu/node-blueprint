@@ -307,7 +307,7 @@ export interface INodePortDefine {
    * 端口后，可以触发本单元其他端口改变类型。
    * 
    * * false: 非弹性端口，其他弹性端口不会影响到本端口
-   * * 'custom': 它在连接时会触发单元的 onFlexPortConnect 事件，可由你自定义处理。
+   * * 'custom': 它在连接时会触发单元的 onPortFlexConnect 事件，可由你自定义处理。
    * * 'auto': 默认模式，在任意一个设置了auto的端口连接后，会触发其他auto端口改变类型。
    */
   isFlexible?: NodePortFlex;

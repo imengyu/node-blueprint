@@ -12,6 +12,7 @@
       <SmallButton v-if="searchValue != ''" icon="icon-close-bold" text="清空筛选" @click="searchValue=''" />
     </Row>
 
+    <!--收藏-->
     <CollapseItem
       v-show="nodesFavorite.show && nodesFavorite.filterShow && nodesFavorite.category!=''"
       v-model:open="nodesFavorite.open"
@@ -23,6 +24,7 @@
       />
     </CollapseItem>
 
+    <!--所有类别-->
     <NodeList 
       :allNodesGrouped="allNodesGrouped"
       :isAddDirectly="isAddDirectly"
@@ -163,7 +165,7 @@ function setNodeFav(nodeGuid: string, add: boolean) {
   if(add)
     favoriteList.value.push(nodeGuid);
   else
-    ArrayUtils.removeBy(favoriteList.value, b => b !== nodeGuid, true);
+    ArrayUtils.removeBy(favoriteList.value, b => b === nodeGuid, true);
   flushFavorite();
 }
 
@@ -272,8 +274,10 @@ watch(() => props.show, (newV) => {
       document.addEventListener('click', onDocClick);
       doFilter();
     }, 100); } 
-  else 
+  else {
     document.removeEventListener('click', onDocClick);
+    saveFavorite();
+  }
 });
 watch(searchValue, (newV) => {
   if(newV === '') clearSearch();

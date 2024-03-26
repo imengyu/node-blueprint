@@ -7,7 +7,7 @@ function remove<T>(array: T[], item: T) {
   return false;
 }
 function removeBy<T>(array: T[], checkFunction: (item: T, index: number) => boolean, onlyOne = false) {
-  for (let i = array.length - 1; i > 0; i--) {
+  for (let i = array.length - 1; i >= 0; i--) {
     if (checkFunction(array[i], i)) {
       array.splice(i, 1);
       if (onlyOne)

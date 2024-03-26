@@ -662,13 +662,14 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
         if (thisPort.isFlexible === 'custom') 
           //custom 模式下用户自己处理
-          changedPorts = thisPort.parent.events.onFlexPortConnect?.(thisPort.parent, thisPort, anotherPort);
+          changedPorts = thisPort.parent.events.onPortFlexConnect?.(thisPort.parent, thisPort, anotherPort);
         else if (thisPort.isFlexible === 'auto') {
           changedPorts = [];
           //auto 模式下变换其他弹性端口为指定类型
           for (const port of thisPort.parent.ports) {
             if (port.isFlexible) {
               node.changePortParamType(port, type);
+              node.events.onPortFlexUpdate?.(node, port, context, type);
               (port as NodePortEditor).updatePortValue();
               if (port !== thisPort)
                 changedPorts.push(port);
@@ -699,8 +700,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   function doFlexPortUnConnect(node: NodeEditor) {
     if (!node.hasAnyPortConnected()) {
       node.ports.forEach((port) => {
-        if (port.isFlexible)
+        if (port.isFlexible) {
           node.changePortParamType(port, NodeParamType.Any);
+          node.events.onPortFlexUpdate?.(node, port, context, NodeParamType.Any);
+        }
       });
     }
   }

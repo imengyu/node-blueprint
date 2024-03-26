@@ -1,7 +1,10 @@
-import type { INodeDefine, NodeEventCallback } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { INodeDefine, NodeEventCallback, INodeEventSettings } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePackage } from "@/node-blueprint/Base/Flow/Registry/NodePackage";
 import type { INodePortDefine } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import { h } from "vue";
+import StringEditor from "@/node-blueprint/Editor/Graph/TypeEditor/StringEditor.vue";
 
 export default { 
   register() {
@@ -17,9 +20,14 @@ import NodeIconAdd from '../NodeIcon/add.svg';
 import NodeIconSub from '../NodeIcon/sub.svg';
 import NodeIconMul from '../NodeIcon/multiply.svg';
 import NodeIconDiv from '../NodeIcon/divide.svg';
-import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
-import StringEditor from "@/node-blueprint/Editor/Graph/TypeEditor/StringEditor.vue";
-import { h } from "vue";
+import NodeIconAbs from '../NodeIcon/abs.svg';
+import NodeIconMin from '../NodeIcon/min.svg';
+import NodeIconMax from '../NodeIcon/max.svg';
+import NodeIconAvg from '../NodeIcon/avg.svg';
+import NodeIconRound from '../NodeIcon/round.svg';
+import NodeIconSqrt from '../NodeIcon/sqrt.svg';
+import NodeIconExp from '../NodeIcon/exp.svg';
+import NodeIconModulo from '../NodeIcon/modulo.svg';
 
 export interface ICalcScalarOptions {
   opType: string;
@@ -52,7 +60,7 @@ function registerCalcBase() {
       isFlexible: 'auto',
     },
   ];
-  const CalcBaseOnCreate : NodeEventCallback<void, undefined> = (node) => {
+  const CalcBaseOnCreate : INodeEventSettings['onCreate'] = (node) => {
     const options = node.getOptions<ICalcScalarOptions>();
     if (typeof options.opType === 'undefined') {
       options.opType = 'any';
@@ -62,6 +70,22 @@ function registerCalcBase() {
         if (!port.paramType.isExecute)
           node.changePortParamType(port, NodeParamType.FromString(options.opType));
       });
+    }
+  };
+  const CalcBaseOnUserAddPort : INodeEventSettings['onUserAddPort'] = (node) => {
+    const options = node.getOptions<ICalcScalarOptions>();
+    options.opType = options.opType ?? 'any';
+    return [{
+      guid: node.getUseablePortGuid('INPUT'),
+      paramType: NodeParamType.FromString(options.opType),
+      direction: 'input',
+      isFlexible: 'auto',
+    }];
+  };
+  const CalcBaseOnPortFlexUpdate : INodeEventSettings['onPortFlexUpdate'] = (node, port, context, type) => {
+    if (port.guid === 'OUTPUT') {
+      const options = node.getOptions<ICalcScalarOptions>();
+      options.opType = type?.toString() ?? 'any';
     }
   };
 
@@ -76,13 +100,16 @@ function registerCalcBase() {
       logo: NodeIconAdd,
       logoBackground: NodeIconAdd,
       titleState: 'hide',
+      inputPortMinWidth: 0,
+      snapGridOffsetY: -5,
     },
     events: {
       onCreate: CalcBaseOnCreate,
+      onUserAddPort: CalcBaseOnUserAddPort,
+      onPortFlexUpdate: CalcBaseOnPortFlexUpdate,
     },
     ports: CalcBaseCommonPorts,
     userCanAddInputParam: true,
-    userCanAddOutputParam: true,
   };
   const blockSubstract : INodeDefine = {
     guid: '1B0A8EDC-D8FE-C6D1-0DD6-803BC08562EB',
@@ -95,13 +122,16 @@ function registerCalcBase() {
       logo: NodeIconSub,
       logoBackground: NodeIconSub,
       titleState: 'hide',
+      inputPortMinWidth: 0,
+      snapGridOffsetY: -5,
     },
     events: {
       onCreate: CalcBaseOnCreate,
+      onUserAddPort: CalcBaseOnUserAddPort,
+      onPortFlexUpdate: CalcBaseOnPortFlexUpdate,
     },
     ports: CalcBaseCommonPorts,
     userCanAddInputParam: true,
-    userCanAddOutputParam: true,
   };
   const blockMultiply : INodeDefine = {
     guid: "49984155-77D8-3C54-AEB1-24F4695C0609",
@@ -114,13 +144,16 @@ function registerCalcBase() {
       logo: NodeIconMul,
       logoBackground: NodeIconMul,
       titleState: 'hide',
+      inputPortMinWidth: 0,
+      snapGridOffsetY: -5,
     },
     events: {
       onCreate: CalcBaseOnCreate,
+      onUserAddPort: CalcBaseOnUserAddPort,
+      onPortFlexUpdate: CalcBaseOnPortFlexUpdate,
     },
     ports: CalcBaseCommonPorts,
     userCanAddInputParam: true,
-    userCanAddOutputParam: true,
   };
   const blockDivide : INodeDefine = {
     guid: "FFCA28BB-B182-0D05-5ECE-AF2F7B549B6B",
@@ -133,20 +166,308 @@ function registerCalcBase() {
       logo: NodeIconDiv,
       logoBackground: NodeIconDiv,
       titleState: 'hide',
+      inputPortMinWidth: 0,
+      snapGridOffsetY: -5,
     },
     events: {
       onCreate: CalcBaseOnCreate,
+      onUserAddPort: CalcBaseOnUserAddPort,
+      onPortFlexUpdate: CalcBaseOnPortFlexUpdate,
     },
     ports: CalcBaseCommonPorts,
     userCanAddInputParam: true,
-    userCanAddOutputParam: true,
   };
 
   return [blockAddition, blockSubstract, blockMultiply, blockDivide];
 }
 
 function registerCalcScalar() {
-  return []
+
+  const CalcScalar_onUserAddPort : INodeEventSettings['onUserAddPort'] = async (node, context, data) => {
+    return [{
+      guid: node.getUseablePortGuid('PI'),
+      paramType: data?.type === 'execute' ? NodeParamType.Execute : NodeParamType.Number,
+      direction: data?.direction ?? 'input',
+    }];
+  };
+
+  const CalcScalarCommonPorts : INodePortDefine[] = [
+    {
+      direction: 'input',
+      guid: 'BI',
+      paramType: NodeParamType.Execute,
+    },
+    {
+      direction: 'output',
+      guid: 'BO',
+      paramType: NodeParamType.Execute,
+    }
+  ];
+  const CalcScalarCommonParamPorts : INodePortDefine[] = [
+    {
+      direction: 'input',
+      guid: 'PI1',
+      paramType: NodeParamType.Number,
+      paramDefaultValue: 0,
+    },
+    {
+      direction: 'input',
+      guid: 'PI2',
+      paramType: NodeParamType.Number,
+      paramDefaultValue: 0,
+    },
+    {
+      direction: 'output',
+      guid: 'PO1',
+      paramType: NodeParamType.Number,
+      paramDefaultValue: 0,
+    },
+  ];
+
+  const blockAbsolute : INodeDefine = { 
+    guid: "24CC6573-C39B-915C-5356-AAEB8EEF9CAF", 
+    name: '绝对值', 
+    description: '求一个数的绝对值', 
+    category: '运算',
+    version: 1,
+    ports: CalcScalarCommonPorts.concat([
+      {
+        description: '需要取绝对值的数',
+        direction: 'input',
+        paramDefaultValue: 0,
+        guid: 'PI1',
+        paramType: NodeParamType.Number,
+      },
+      {
+        description: '绝对值',
+        direction: 'output',
+        guid: 'PO1',
+        paramType: NodeParamType.Number,
+      },
+    ]),
+    style: {
+      logo: NodeIconAbs,
+      inputPortMinWidth: 0,
+    },
+  };
+  const blockExponentiate : INodeDefine = { 
+    guid: "3279E42C-0A2D-38B2-9B46-5E1BD444A817", 
+    name: '指数',  
+    description: '求一个数的n次方', 
+    category: '运算',
+    version: 1,
+    ports: CalcScalarCommonPorts.concat([
+      {
+        name: "x",
+        description: '底数',
+        paramDefaultValue: 2,
+        direction: 'input',
+        guid: 'PI1',
+        paramType: NodeParamType.Number,
+      },
+      {
+        name: "n",
+        description: '指数',
+        paramDefaultValue: 3,
+        direction: 'input',
+        guid: 'PI2',
+        paramType: NodeParamType.Number,
+      },
+      {
+        name: "xⁿ",
+        description: 'x的n次方',
+        direction: 'output',
+        guid: 'PO1',
+        paramType: NodeParamType.Number,
+      },
+    ]),
+    style: {
+      logo: NodeIconExp,
+      inputPortMinWidth: 0,
+    },
+  };
+  const blockRoot : INodeDefine = { 
+    guid: "83AB5460-07E1-6F55-CE3E-841DD117D891", 
+    name: '开方',  
+    description: '开一个数的n次方', 
+    category: '运算',
+    version: 1,
+    ports: CalcScalarCommonPorts.concat([
+      {
+        name: "x",
+        description: '被开方数',
+        direction: 'input',
+        paramDefaultValue: 9,
+        guid: 'PI1',
+        paramType: NodeParamType.Number,
+      },
+      {
+        name: "n",
+        description: '开方次数',
+        direction: 'input',
+        paramDefaultValue: 2,
+        guid: 'PI2',
+        paramType: NodeParamType.Number,
+      },
+      {
+        name: "ⁿ√x",
+        description: 'x的n次根',
+        direction: 'output',
+        guid: 'PO1',
+        paramType: NodeParamType.Number,
+      },
+    ]),
+    style: {
+      logo: NodeIconSqrt,
+      inputPortMinWidth: 0,
+    },
+  };
+  const blockRound : INodeDefine = { 
+    guid: "ACE2AF65-C644-9B68-C3E0-92484F60301A", 
+    name: '取整',  
+    description: '将一个数取整', 
+    category: '运算',
+    version: 1,
+    ports: [
+      {
+        direction: 'input',
+        guid: 'IN',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'input',
+        guid: 'MIN',
+        name: '最小值',
+        paramType: NodeParamType.Number,
+        paramDefaultValue: 0,
+      },
+      {
+        direction: 'input',
+        guid: 'MAX',
+        name: '最大值',
+        paramType: NodeParamType.Number,
+        paramDefaultValue: 10,
+      },
+      {
+        direction: 'output',
+        guid: 'VALUE',
+        paramType: NodeParamType.Number,
+      },
+    ],
+    style: {
+      logo: NodeIconRound,
+      inputPortMinWidth: 0,
+    },
+  };
+  const blockAverage : INodeDefine = { 
+    guid: "C71EB51A-A0D8-9C12-A5F2-0D3CAE3111FC", 
+    name: '平均值',  
+    description: '求一些数的平均值', 
+    category: '运算',
+    version: 1,
+    userCanAddInputParam: true,
+    ports: CalcScalarCommonPorts.concat(CalcScalarCommonParamPorts),
+    style: {
+      logo: NodeIconAvg,
+      inputPortMinWidth: 0,
+    },
+    events: {
+      onUserAddPort: CalcScalar_onUserAddPort,
+    },
+  };
+  const blockMaximum : INodeDefine = { 
+    guid: "62FCF10F-1891-9DD7-1C53-129F5F580E18", 
+    name: '最大值',  
+    description: '获取一些数中的最大值', 
+    category: '运算',
+    version: 1,
+    userCanAddInputParam: true,
+    ports: CalcScalarCommonPorts.concat(CalcScalarCommonParamPorts),
+    style: {
+      logo: NodeIconMax,
+      inputPortMinWidth: 0,
+    },
+    events: {
+      onUserAddPort: CalcScalar_onUserAddPort,
+    },
+  };
+  const blockMinimum  : INodeDefine = { 
+    guid: "FA97A675-A872-0967-715D-57F0E0FFB75B", 
+    name: '最小值',  
+    description: '获取一些数中的最小值', 
+    category: '运算',
+    version: 1,
+    userCanAddInputParam: true,
+    ports: CalcScalarCommonPorts.concat(CalcScalarCommonParamPorts),
+    style: {
+      logo: NodeIconMin,
+      inputPortMinWidth: 0,
+    },
+    events: {
+      onUserAddPort: CalcScalar_onUserAddPort,
+    },
+  };
+  const blockModulo : INodeDefine = { 
+    guid: "ECD228AA-D88D-E02D-51FB-DAEE67ABA31C", 
+    name: "求余",  
+    description: '求余单元，对两个参数求余', 
+    category: '运算',
+    version: 1,
+    ports: CalcScalarCommonPorts.concat(CalcScalarCommonParamPorts),
+    style: {
+      logo: NodeIconModulo,
+      inputPortMinWidth: 0,
+    },
+  };
+  const blockRandom : INodeDefine = { 
+    guid: "2076EDF9-91D4-5C77-28A1-D6390ECD5BFC", 
+    name: "随机数",  
+    description: '生成指定范围的随机数', 
+    category: '运算',
+    version: 1,
+    ports: [
+      {
+        direction: 'input',
+        guid: 'IN',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'output',
+        guid: 'OUT',
+        paramType: NodeParamType.Execute,
+      },
+      {
+        direction: 'input',
+        guid: 'MIN',
+        name: '最小值',
+        paramType: NodeParamType.Number,
+        paramDefaultValue: 0,
+      },
+      {
+        direction: 'input',
+        guid: 'MAX',
+        name: '最大值',
+        paramType: NodeParamType.Number,
+        paramDefaultValue: 10,
+      },
+      {
+        direction: 'output',
+        guid: 'VALUE',
+        paramType: NodeParamType.Number,
+      },
+    ],
+  };
+
+  return [
+    blockAbsolute, blockExponentiate, blockRoot,
+    blockRound, blockAverage, blockMaximum, 
+    blockMinimum, blockModulo, blockRandom
+  ];
 }
 
 function registerOperatorBase() {

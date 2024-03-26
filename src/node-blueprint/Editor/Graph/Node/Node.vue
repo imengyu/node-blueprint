@@ -705,11 +705,11 @@ function onContextmenu(e : MouseEvent) {
 //添加端口
 async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
   const ret = props.instance.events.onUserAddPort?.(props.instance, context, { direction, type });
-  if (!ret) {
+  if (typeof ret === 'undefined') {
     printWarning(TAG, `Faild to execute onUserAddPort, events.onUserAddPort configue not right.`);
     return;
   }
-  const ports = await ret;
+  const ports = ret instanceof Promise ? await ret : ret;
   if (ports) {
     for (const port of ports)
       props.instance.addPort(port, true);

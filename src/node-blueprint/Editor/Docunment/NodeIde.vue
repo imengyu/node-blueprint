@@ -102,7 +102,7 @@ import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 
-import TestScript from '../../../../test-scripts/flexport.json';
+import TestScript from '../../../../test-scripts/calc-base.json';
 const loadTestScript = false;
 
 
