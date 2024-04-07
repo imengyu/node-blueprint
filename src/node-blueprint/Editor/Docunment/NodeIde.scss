@@ -5,23 +5,43 @@
   --mx-editor-background-second-color: #252526;
   --mx-editor-background-third-color: #2a2a2a;
   --mx-editor-background-four-color: #3c3c3c;
+  --mx-editor-background-yellow-color: #d48a00;
+  --mx-editor-background-red-color: #df4600;
+  --mx-editor-background-green-color: #30a100;
+  --mx-editor-background-blue-color: #205dad;
+  --mx-editor-background-white-color: #fff;
+  --mx-editor-background-white-half-color: rgba(255, 255, 255, 0.6);
+  --mx-editor-background-light-color: #cfcfcf;
+  --mx-editor-background-light-second-color: #5e5e5e;
+  --mx-editor-background-light-third-color: #4b4b4b;
+  --mx-editor-background-light-four-color: #7e7e7e;
   --mx-editor-border-color: #3b3b3b;
   --mx-editor-border-color-dark: #111216;
   --mx-editor-border-color-light: #fff;
-  --mx-editor-border-radius-small: 5px;
+  --mx-editor-border-radius-small: 3px;
+  --mx-editor-border-radius-normal: 5px;
+  --mx-editor-border-radius-clickable: 6px;
   --mx-editor-shadow-color: rgba(0,0,0,0.8);
 
   --mx-editor-font-size: 13px;
+  --mx-editor-font-size-content: 12px;
   --mx-editor-font-size-small: 11.5px;
 
   --mx-editor-list-item-background-color: transparent;
   --mx-editor-list-item-hover-color: #414344;
+  --mx-editor-list-item-hover-second-color: rgba(183, 219, 232, 0.3);
+  
   --mx-editor-clickable-background-color: rgba(104, 104, 104, 0.5);
   --mx-editor-clickable-hover-color: #fff;
   --mx-editor-clickable-disabled-color: rgba(75, 75, 75, 0.514);
+  
+  --mx-editor-outline-clickable-color: #5a5a5a;
+  --mx-editor-outline-active-color: rgb(231, 157, 0);
 
   --mx-editor-text-color: #fff;
+  --mx-editor-black-text-color: #000;
   --mx-editor-light-text-color:#d6d6d6;
+  --mx-editor-placeholder-text-color:#bbbbbb;
   --mx-editor-active-text-color:#ffffff;
   --mx-editor-drak-text-color: #505050;
   --mx-editor-hover-text-color: #000;
@@ -33,6 +53,7 @@
   --mx-editor-green-light-text-color: #7ce64f;
   --mx-editor-blue-text-color: #307bdd;
   --mx-editor-blue-light-text-color: #74a4e4;
+  
 }
 
 .node-menu-logo {

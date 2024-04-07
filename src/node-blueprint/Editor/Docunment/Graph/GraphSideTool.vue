@@ -46,7 +46,7 @@
     cursor: pointer;
     font-size: 15px;
     user-select: none;
-    color: #b6b6b6;
+    color: var(--mx-editor-light-text-color);
     justify-content: center;
     align-items: center;
     overflow: visible;
@@ -71,7 +71,7 @@
     }
 
     &:hover {
-      color: #fff;
+      color: var(--mx-editor-active-text-color);
     }
     &.active {
       border-top: 1px solid var(--mx-editor-border-color-dark);

@@ -10,6 +10,7 @@ import { onBeforeMount, onMounted, ref, type PropType } from 'vue';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { ChunkedPanel } from '../Cast/ChunkedPanel';
+import { getNodeCSSColor } from '../Composeable/EditorColors';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -43,15 +44,13 @@ const props = defineProps({
   gridColorSmall: {
     type: String,
     default: () => {
-      const computedStyle = window.getComputedStyle(document.body);
-      return computedStyle.getPropertyValue('--node-graph-line-secondary')
+      return getNodeCSSColor('--node-graph-line-secondary')
     },
   },
   gridColorBig: {
     type: String,
     default: () => {
-      const computedStyle = window.getComputedStyle(document.body);
-      return computedStyle.getPropertyValue('--node-graph-line-primary')
+      return getNodeCSSColor('--node-graph-line-primary')
     },
   },
 });

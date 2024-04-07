@@ -4,8 +4,7 @@
     :value="value" 
     class="custom-editor param-editor"
     :style="{
-      minHeight: '20px',
-      minWidth: '40px',
+      minWidth: '30px',
       resize: 'both',
       display: 'inline-block',
     }" 

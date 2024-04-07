@@ -112,7 +112,7 @@ function onAddClick(item: CategoryDataItem) {
     margin-left: -8px;
     margin-top: 1px;
     cursor: default;
-    border-radius: 4px;
+    border-radius: var(--mx-editor-border-radius-small);
     user-select: none;
 
     img, .logo {
@@ -132,12 +132,12 @@ function onAddClick(item: CategoryDataItem) {
       justify-content: space-between;
       align-items: center;
       font-size: 0.8rem;
-      color: #888;
+      color: var(--mx-editor-drak-text-color);
 
       &.badge {
         margin-left: 5px;
         padding: 2px 5px;
-        border-radius: 3px;
+        border-radius: var(--mx-editor-border-radius-small);
         background-color: var(--mx-editor-yellow-text-color);
         color: var(--mx-editor-light-text-color);
         font-size: 0.7rem;
@@ -145,7 +145,7 @@ function onAddClick(item: CategoryDataItem) {
     }
 
     &:hover {
-      background-color: rgba(183, 219, 232, 0.3);
+      background-color: var(--mx-editor-list-item-hover-third-color);
     }
     &:active {
       opacity: 0.7;
@@ -155,6 +155,6 @@ function onAddClick(item: CategoryDataItem) {
 .nodes-select-list-empty {
   padding: 3px;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--mx-editor-font-size-small);
 }
 </style>

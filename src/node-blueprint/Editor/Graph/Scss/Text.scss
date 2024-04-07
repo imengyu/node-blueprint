@@ -1,40 +1,40 @@
 
 .text-danger {
-  color: #e94200;
+  color: var(--mx-editor-red-text-color);
 }
 .text-warning {
-  color: #c5a100;
+  color: var(--mx-editor-yellow-text-color);
 }
 .text-secondary {
-  color: #969696;
+  fill: var(--mx-editor-drak-text-color);
 }
 .text-success {
-  color:#05aa37;
+  color: var(--mx-editor-green-text-color);
 }
 .text-white {
-  color: #fff;
+  color: var(--mx-editor-text-color);
 }
 .text-info {
-  color: #006faf;
+  color: var(--mx-editor-blue-text-color);
 }
 
 svg {
   &.text-info {
-    fill: #006faf;
+    fill: var(--mx-editor-blue-text-color);
   }
   &.text-white {
-    fill: #fff;
+    color: var(--mx-editor-text-color);
   }
   &.text-success {
-    fill: #0eac3e;
+    fill: var(--mx-editor-green-text-color);
   }
   &.text-danger {
-    fill: #e94200;
+    fill: var(--mx-editor-red-text-color);
   }
   &.text-warning {
-    fill: #c5a100;
+    fill: var(--mx-editor-yellow-text-color);
   }
   &.text-secondary {
-    fill: #969696;
+    fill: var(--mx-editor-drak-text-color);
   }
 }

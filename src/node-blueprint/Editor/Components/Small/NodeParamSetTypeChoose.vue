@@ -143,7 +143,7 @@ function updateType(type: NodeParamType) {
   display: flex;
   cursor: pointer;
   padding: 2px 2px 2px 0;
-  text-shadow: 0px 0px 3px rgb(0, 0, 0);
+  text-shadow: 0px 0px 3px var(--mx-editor-shadow-color);
 }
 .node-float-set-selector {
   display: flex;
@@ -153,8 +153,8 @@ function updateType(type: NodeParamType) {
   top: 20px;
   width: 22px;
   padding: 4px 0;
-  border: 1px solid #000;
-  background: #fff;
+  border: 1px solid var(--mx-editor-border-color-dark);
+  background: var(--mx-editor-background-white-color);
   z-index: 200;
 
   > .nana-icon {
@@ -166,8 +166,8 @@ function updateType(type: NodeParamType) {
     text-align: center;
 
     &:hover, &:active {
-      background-color: #6b6b6b;
-      fill: #fff;
+      background-color: var(--mx-editor-list-item-hover-color);
+      fill: var(--mx-editor-text-color);
     }
   }
 }

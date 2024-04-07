@@ -9,11 +9,11 @@
   color: var(--mx-editor-text-color);
   cursor: pointer;
   padding: 2px 4px;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--mx-editor-border-radius-clickable);
+  font-size: var(--mx-editor-font-size);
 
   &:hover:not(.disabled) {
-    background-color: #7e7e7e;
+    background-color: var(--mx-editor-background-light-four-color);
     color: var(--mx-editor-text-color);
   }
 
@@ -34,34 +34,29 @@
 .node-small-input {
   display: inline-block;
   padding: 4px 6px;
-  background-color: #686868;
-  color: #fff;
+  background-color: var(--mx-editor-background-light-second-color);
+  color: var(--mx-editor-text-color);
   outline: none;
   border: none;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--mx-editor-border-radius-clickable);
+  font-size: var(--mx-editor-font-size);
 
   &.fill {
     flex: 1;
   }
 
   &::-webkit-input-placeholder {
-    color: #bbbbbb;
+    color: var(--mx-editor-placeholder-text-color);
   }
 
   &:disabled {
-    background-color: #4b4b4b;
-    color: #919191;
-
-    &:hover , &:active {
-      background-color: #686868;
-      color: #e7e7e7;
-    }
+    background-color: var(--mx-editor-background-light-third-color);
+    color: var(--mx-editor-light-text-color);
   }
 
   &:hover, &:active, &:focus {
-    background-color: #ffffff;
-    color: #000;
+    background-color: var(--mx-editor-background-white-color);
+    color: var(--mx-editor-text-color);
   }
 }
 .nana-tooltip {

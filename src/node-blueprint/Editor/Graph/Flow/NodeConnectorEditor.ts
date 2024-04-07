@@ -6,6 +6,7 @@ import type { ChunkInstance } from "../Cast/ChunkedPanel";
 import type { NodePortEditor } from "./NodePortEditor";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { threeOrderBezier } from "../../Utils/BezierUtils";
+import { getNodeCSSColor } from "../Composeable/EditorColors";
 
 let _debug = false;
 
@@ -33,8 +34,8 @@ export class NodeConnectorEditor extends NodeConnector {
   private rect = new Rect();
   private startPos = new Vector2();
   private endPos = new Vector2();
-  private startColor = '#efefef';
-  private endColor = '#efefef';
+  private startColor = getNodeCSSColor('--node-connector-default-color');
+  private endColor = getNodeCSSColor('--node-connector-default-color');
   private colorGradient : null|CanvasGradient = null;
   private colorGradientNeedCreate = true;
   private dotPos = 0;
@@ -103,6 +104,7 @@ export class NodeConnectorEditor extends NodeConnector {
 
   private tempPoint1 = new Vector2();
   private tempPoint2 = new Vector2();
+  private tempPoint3 = new Vector2();
   private tempRect = new Rect();
 
   public render(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
@@ -122,8 +124,7 @@ export class NodeConnectorEditor extends NodeConnector {
         this.dotPos = 0;
     } else if(this.state === 'error') {
       this.dotPos = -1;
-
-      ctx.strokeStyle = '#d71345';
+      ctx.strokeStyle = getNodeCSSColor('--node-border-error-color');
       ctx.fillStyle = ctx.strokeStyle;
 
     } else if(this.state === 'normal') {
@@ -132,6 +133,11 @@ export class NodeConnectorEditor extends NodeConnector {
       //设置绘制颜色
       if(this.startPort !== null) {
 
+        //视口移动后也需要重新创建渐变
+        if (this.colorGradient && !this.tempPoint3.equal(this.tempPoint1)) {
+          this.tempPoint3.set(this.tempPoint1);
+          this.colorGradientNeedCreate = true;
+        }
         //渐变的创建
         if(this.colorGradientNeedCreate) {
           this.colorGradientNeedCreate = false;
@@ -139,7 +145,7 @@ export class NodeConnectorEditor extends NodeConnector {
             this.tempPoint1.x, this.tempPoint1.y, 
             this.tempPoint2.x, this.tempPoint2.y, 
           );
-          this.colorGradient.addColorStop(0.2,this.startColor);
+          this.colorGradient.addColorStop(0.2, this.startColor);
           this.colorGradient.addColorStop(0.8, this.endColor);
         } else if(this.colorGradient) {
           ctx.strokeStyle = this.colorGradient;

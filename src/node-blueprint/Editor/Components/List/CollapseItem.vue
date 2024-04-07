@@ -53,15 +53,15 @@ defineProps({
     }
 
     &:hover {
-      color: rgb(69,180,245);
+      color: var(--mx-editor-blue-text-color);
 
       i {
-        color: rgb(69,180,245);
+        color: var(--mx-editor-blue-text-color);
       }
     }
   }
   .collapse-arrow {
-    fill: #fff;
+    fill: var(--mx-editor-text-color);
     margin-right: 3px;
     transition: transform ease-in-out 0.1s;
   }
