@@ -1,6 +1,6 @@
 <template>
   <Tooltip 
-    v-if="instance" 
+    v-if="instance"
     :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
     <template #content>
@@ -9,6 +9,7 @@
       <p>{{ instance.description }}</p>
     </template>
     <div 
+      v-show="!nodeExclusionEnable || !instance.exclusionState"
       ref="nodeRef"
       tabindex="-1"
       :class="['node-block',
@@ -215,6 +216,10 @@ const props = defineProps({
   chunkedPanel: {
     type: Object as PropType<ChunkedPanel>,
     default: null,
+  },
+  nodeExclusionEnable: {
+    type: Boolean,
+    default: true,
   },
 });
 const {

@@ -116,8 +116,22 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * @param nodes 
    */
   function pushNodes(...nodes: NodeEditor[]) {
+    //当节点非常多时，分步添加
+    if (nodes.length > 32) {
+      const arrays : NodeEditor[][] = [];
+      while (nodes.length > 0)
+        arrays.push(nodes.splice(0, 32));
+      return Promise.all(arrays.map((nodesSplited) => {
+        return new Promise<void>((resolve, reject) => {
+          setTimeout(() => {
+            pushNodes(...nodesSplited)
+              .then(() => resolve())
+              .catch(reject);
+          }, 200);
+        });
+      }))
+    }
     return new Promise<void>((resolve) => {
-
       for (const node of nodes) {
         switch(node.style.layer) {
           case 'normal':
@@ -132,7 +146,6 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
         }        
         allNodes.set(node.uid, node);
       }
-
       context.userInterfaceNextTick(() => {
         for (const node of nodes) {
           node.editorHooks.callbackOnAddToEditor?.();
@@ -158,7 +171,7 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
 
     allConnectors.set(connector.uid, connector);
     if (currentGraph.value)
-     ArrayUtils.addOnce(currentGraph.value.connectors, connector);
+      ArrayUtils.addOnce(currentGraph.value.connectors, connector);
     ArrayUtils.addOnce((connector.startPort.parent as NodeEditor).connectors, connector);
     ArrayUtils.addOnce((connector.endPort.parent as NodeEditor).connectors, connector);
 
@@ -245,25 +258,23 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
    * @param graph 
    */
   function loadGraph(graph: NodeGraph) {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       closeGraph();
-      graph.nodes.forEach((node) => {
-        pushNodes(node as NodeEditor);
-      });
-      graph.activeEditor = context;
-      currentGraph.value = graph;
-
-      context.userInterfaceNextTick(() => {
-        graph.connectors.forEach((connector) => {
-          addConnector(connector as NodeConnectorEditor);
-          (connector as NodeConnectorEditor).updatePortValue();
-          connector.setConnectionState();
-          context.connectorSuccessSetState(connector as NodeConnectorEditor);
+      pushNodes(...(Array.from(graph.nodes.values()) as NodeEditor[])).then(() => {
+        graph.activeEditor = context;
+        currentGraph.value = graph;
+        context.userInterfaceNextTick(() => {
+          graph.connectors.forEach((connector) => {
+            addConnector(connector as NodeConnectorEditor);
+            (connector as NodeConnectorEditor).updatePortValue();
+            connector.setConnectionState();
+            context.connectorSuccessSetState(connector as NodeConnectorEditor);
+          });
+  
+          context.startGlobalIsolateCheck();
+          resolve();
         });
-
-        context.startGlobalIsolateCheck();
-        resolve();
-      });
+      }).catch(reject);
     });
   }
   function addNodes(nodes: NodeEditor[]) {

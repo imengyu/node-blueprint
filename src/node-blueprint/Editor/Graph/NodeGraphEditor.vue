@@ -37,6 +37,7 @@
         :instance="(node as NodeEditor)"
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel" 
+        :nodeExclusionEnable="nodeExclusionEnable"
       />
     </NodeContainer>
     <ConnectorRender
@@ -61,6 +62,7 @@
         :instance="(node as NodeEditor)"
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel" 
+        :nodeExclusionEnable="nodeExclusionEnable"
       />
     </NodeContainer>
     <ZoomTool
@@ -70,6 +72,10 @@
     <BasePanels
       :viewPort="(viewPort as NodeGraphEditorViewport)"
     />
+    <div v-if="graphLoading" class="node-graph-loading">
+      <Spin />
+      请稍后，文档正在加载中...
+    </div>
   </div>
 </template>
 
@@ -81,6 +87,7 @@ import NodeComponent from './Node/Node.vue';
 import NodeContainer from './Node/NodeContainer.vue';
 import ZoomTool from './SubComponents/ZoomTool.vue';
 import BasePanels from './Panel/BasePanels.vue';
+import Spin from '../Nana/Common/Spin.vue';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
@@ -100,6 +107,7 @@ import type { NodeEditor } from './Flow/NodeEditor';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
 import { NodeConnectorEditor } from './Flow/NodeConnectorEditor';
+import Alert from '../Nana/Modal/Alert';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -125,10 +133,13 @@ const editorHost = ref<HTMLElement>();
 const context = props.context;
 const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
 
+const graphLoading = ref(false);
+
 const {
   viewPort,
   cursor,
   chunkedPanel,
+  nodeExclusionEnable,
 } = useEditorViewPortController(context);
 
 //Base context functions
@@ -222,7 +233,16 @@ function loadSettings() {
 onMounted(() => {
   initRenderer();
   loadSettings();
-  loadGraph(props.graph);
+  graphLoading.value = true;
+  loadGraph(props.graph).then(() => {
+    graphLoading.value = false;
+  }).catch((e) => {
+    Alert.error({
+      title: 'Error loading graph',
+      content: e.message,
+    });
+    graphLoading.value = false;
+  })
   setTimeout(() => {
     context.autoNodeSizeChangeCheckerStartStop(true);
   }, 1999);

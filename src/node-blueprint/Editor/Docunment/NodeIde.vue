@@ -103,7 +103,6 @@ import PropItem from '../Components/PropList/PropItem.vue';
 import TestScript from '../../../../test-scripts/compiler-test-1.json';
 const loadTestScript = true;
 
-
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
 const config = ref<CodeLayoutConfig>({

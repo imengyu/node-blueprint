@@ -1,4 +1,4 @@
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { NodeGraphEditorViewport, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { ChunkedPanel } from "../Cast/ChunkedPanel";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
@@ -33,8 +33,9 @@ export interface NodeEditorViewPortControllerContext {
  */
 export function useEditorViewPortController(context: NodeGraphEditorInternalContext) {
   
-  const chunkedPanel = new ChunkedPanel()
+  const chunkedPanel = new ChunkedPanel();
   const cursor = ref('default');
+  const nodeExclusionEnable = ref(false);
   const viewPort = ref<NodeGraphEditorViewport>(new NodeGraphEditorViewport());
 
   //缩放功能
@@ -115,13 +116,46 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
   context.recordViewportPosition = recordViewportPosition;
   context.getViewportMovedPosition = getViewportMovedPosition;
 
+  const currentShowNodes : NodeEditor[] = [];
+
+  /**
+   * 进行节点显示剔除
+   */
+  function doNodeExclusion() {
+    const nodesMap = context.getNodes();
+    if (nodesMap.size > 64) {
+      nodeExclusionEnable.value = true;
+      for (const node of currentShowNodes)
+        node.exclusionState = true;
+      currentShowNodes.splice(0);
+      //从区块检测器中选出当前显示在屏幕中的节点
+      const instances = chunkedPanel.testRectCastTag(viewPort.value.rect(), 'node');
+      //对比当前显示的节点和新的节点，进行隐藏和显示
+      for (const instance of instances) {
+        const node = nodesMap.get(instance.data as string);
+        if (node) {
+          node.exclusionState = false;
+          currentShowNodes.push(node);
+        }
+      }
+    } else if (nodeExclusionEnable.value) {
+      nodeExclusionEnable.value = false;
+    }
+  }
+
   onMounted(() => {
     context.getMouseHandler().pushMouseWhellHandlers(mouseWhellEvent);
+    setTimeout(() => doNodeExclusion(), 300);
   });
+
+  watch(() => viewPort.value.position.x, doNodeExclusion);
+  watch(() => viewPort.value.position.y, doNodeExclusion);
+  watch(() => viewPort.value.scale, doNodeExclusion);
 
   return {
     chunkedPanel,
     cursor,
     viewPort,
+    nodeExclusionEnable,
   }
 }

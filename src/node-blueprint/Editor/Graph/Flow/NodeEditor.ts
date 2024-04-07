@@ -60,6 +60,7 @@ export class NodeEditor extends Node {
   public lastBlockPos = new Vector2();
   public lastBlockSize = new Vector2();
   public isolateState = true;
+  public exclusionState = true;
   public nodeProp ?: { 
     before?: PropControlItem[],
     after?: PropControlItem[],

@@ -34,6 +34,22 @@
     pointer-events: all;
   }
 }
+//加载中
+.node-graph-loading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 20;
+  background-color: var(--mx-editor-background-white-half-color);
+  color: var(--mx-editor-background-blue-color);
+  font-size: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
 //调整缩放工具
 .node-graph-editorzoom-tool {
