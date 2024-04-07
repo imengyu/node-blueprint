@@ -1,21 +1,23 @@
 <template>
   <div class="console-base">
-    <div ref="list" class="list">
-      <div v-for="(i, k) in outputs" v-show="showItem(i)" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')">
-        <Icon v-if="i.hasWarp" icon="icon-arrow-right-filling" :class="'switch iconfont' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
+    <CodeLayoutScrollbar>
+      <div ref="list" class="list">
+        <div v-for="(i, k) in outputs" v-show="showItem(i)" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')">
+          <Icon v-if="i.hasWarp" icon="icon-arrow-right-filling" :class="'switch iconfont' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
 
-        <Icon v-if="i.level==='error'" icon="icon-delete-filling" class="icon iconfont text-danger" />
-        <Icon v-else-if="i.level==='warning'" icon="icon-warning-filling" class="icon text-warning" />
-        <Icon v-else-if="i.level==='info'" icon="icon-prompt-filling" class="icon text-info" />
+          <Icon v-if="i.level==='error'" icon="icon-delete-filling" class="icon iconfont text-danger" />
+          <Icon v-else-if="i.level==='warning'" icon="icon-warning-filling" class="icon text-warning" />
+          <Icon v-else-if="i.level==='info'" icon="icon-prompt-filling" class="icon text-info" />
 
-        <span class="tag mr-2">{{ i.tag }}</span>
-        
-        <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
-        <ConsoleRefShower v-else :value="i.content" :isTop="true" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
+          <span class="tag mr-2">{{ i.tag }}</span>
+          
+          <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
+          <ConsoleRefShower v-else :value="i.content" :isTop="true" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
 
-        <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)">{{ i.srcText }}</a>
+          <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)">{{ i.srcText }}</a>
+        </div>
       </div>
-    </div>
+    </CodeLayoutScrollbar>
   </div>
 </template>
 
@@ -27,7 +29,7 @@ import Icon from "../Nana/Icon.vue";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import logger from '@/node-blueprint/Base/Logger/Logger';
 import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
-import type { CodeLayoutPanelInternal } from '../Docunment/CodeLayout/CodeLayout';
+import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
 
 interface LogItem {
   tag: string,

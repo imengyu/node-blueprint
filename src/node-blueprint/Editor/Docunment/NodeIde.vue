@@ -81,13 +81,11 @@ import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import CodeLayout from './CodeLayout/CodeLayout.vue';
-import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
+import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal } from './CodeLayout/CodeLayout';
-import type { CodeLayoutSplitNInstance } from './CodeLayout/SplitLayout/SplitN';
+import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
@@ -95,20 +93,21 @@ import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
+import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import Alert from '../Nana/Modal/Alert';
 import Icon from '../Nana/Icon.vue';
 import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
-import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 
-import TestScript from '../../../../test-scripts/calc-base.json';
-const loadTestScript = false;
+import TestScript from '../../../../test-scripts/compiler-test-1.json';
+const loadTestScript = true;
 
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
 const config = ref<CodeLayoutConfig>({
+  ...defaultCodeLayoutConfig,
   primarySideBarSwitchWithActivityBar: true,
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,
@@ -463,7 +462,7 @@ function openDocunment(doc: NodeDocunmentEditor) {
   currentActiveDocunment.value = doc;
   onCurrentActiveDocunmentChanged();
 
-  splitLayout.value?.getActiveGird().addPanel({
+  splitLayout.value?.getActiveGird()?.addPanel({
     name: `NodeEditor${doc.uid}`,
     title: doc.name,
     closeType: 'close',

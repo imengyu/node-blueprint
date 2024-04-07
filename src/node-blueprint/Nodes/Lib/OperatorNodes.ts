@@ -1,4 +1,4 @@
-import type { INodeDefine, NodeEventCallback, INodeEventSettings } from "@/node-blueprint/Base/Flow/Node/Node";
+import type { INodeDefine, INodeEventSettings } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePackage } from "@/node-blueprint/Base/Flow/Registry/NodePackage";
 import type { INodePortDefine } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
@@ -68,7 +68,7 @@ function registerCalcBase() {
       //更换数据类型
       node.ports.forEach((port) => {
         if (!port.paramType.isExecute)
-          node.changePortParamType(port, NodeParamType.FromString(options.opType));
+          node.changePortParamType(port, NodeParamType.FromString(options.opType), false);
       });
     }
   };

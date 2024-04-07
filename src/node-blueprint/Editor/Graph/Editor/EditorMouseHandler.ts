@@ -228,7 +228,7 @@ export class NodeGraphEditorMouseInfo {
    */
   mouseDownPosViewPort = new Vector2();
   /**
-   * 获取当前鼠标是否按下
+   * 获取当前鼠标是否移动
    */
   get mouseMoved() {
     return Math.abs(this.mouseDownPosScreen.x - this.mouseCurrentPosScreen.x) > 2 || 

@@ -200,7 +200,7 @@ import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
-import { useResizeChecker } from '../../Docunment/CodeLayout/Composeable/ResizeChecker';
+import { useResizeChecker } from 'vue-code-layout';
 import { moveNodeSolveSnap } from '../Composeable/NodeMove';
 
 const props = defineProps({

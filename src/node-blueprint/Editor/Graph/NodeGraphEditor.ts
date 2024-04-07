@@ -67,6 +67,7 @@ export interface INodeGraphEditorSettings {
   drawDebugInfo?: boolean;
   drawGrid?: boolean;
   snapGrid?: boolean;
+  snapGridSize?: number;
 }
 
 export type NodeGraphEditorBaseEventCallback =  (...args: unknown[]) => void;

@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from './router'
 
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css';
+import 'vue-code-layout/lib/vue-code-layout.css';
 import TooltipDirective from './node-blueprint/Editor/Nana/Tooltip/TooltipDirective';
 import { initEditor } from './node-blueprint/Editor/Init';
 

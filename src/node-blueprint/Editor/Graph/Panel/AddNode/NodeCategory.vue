@@ -13,7 +13,7 @@
     />
   </CollapseItem>
 
-  <div class="nodes-select-list">
+  <div v-if="categoryData.nodes.length > 0" class="nodes-select-list">
     <Tooltip
       v-for="(item, index) in categoryData.nodes"
       :key="index"
@@ -31,6 +31,7 @@
           {{ item.define.name }}
         </span>
         <span>
+          <span v-if="item.define.preprocessor" class="badge">预处理</span>
           <Tooltip content="将节点添加到收藏">
             <SmallButton
               icon="icon-star"
@@ -51,6 +52,7 @@
       </div>
     </Tooltip>
   </div>
+  <div v-else class="nodes-select-list-empty">此分类下暂无可用节点</div>
 </template>
 
 <script lang="ts" setup>
@@ -131,6 +133,15 @@ function onAddClick(item: CategoryDataItem) {
       align-items: center;
       font-size: 0.8rem;
       color: #888;
+
+      &.badge {
+        margin-left: 5px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background-color: var(--mx-editor-yellow-text-color);
+        color: var(--mx-editor-light-text-color);
+        font-size: 0.7rem;
+      }
     }
 
     &:hover {
@@ -140,5 +151,10 @@ function onAddClick(item: CategoryDataItem) {
       opacity: 0.7;
     }
   }
+}
+.nodes-select-list-empty {
+  padding: 3px;
+  text-align: center;
+  font-size: 12px;
 }
 </style>

@@ -41,13 +41,11 @@
 <script setup lang="ts">
 import IconFile from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconFile.vue';
 import IconSearch from '@/node-blueprint/Editor/Docunment/Editor/Icons/IconSearch.vue';
-import type { CodeLayoutConfig, CodeLayoutInstance, CodeLayoutPanelInternal } from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout';
-import CodeLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/CodeLayout.vue';
-import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
+import { CodeLayout, CodeLayoutScrollbar, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import { ref, reactive, onMounted, nextTick, h, onBeforeUnmount } from 'vue';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import type { CodeLayoutSplitNGridInternal, CodeLayoutSplitNInstance } from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitN';
-import SplitLayout from '@/node-blueprint/Editor/Docunment/CodeLayout/SplitLayout/SplitLayout.vue';
+import type { CodeLayoutConfig, CodeLayoutInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
+import type { CodeLayoutSplitNGridInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
 
 const colors = [
   '#fb0',
@@ -61,6 +59,7 @@ const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
 
 const config = reactive<CodeLayoutConfig>({
+  ...defaultCodeLayoutConfig,
   primarySideBarSwitchWithActivityBar: true,
   primarySideBarPosition: 'left',
   primarySideBarWidth: 20,

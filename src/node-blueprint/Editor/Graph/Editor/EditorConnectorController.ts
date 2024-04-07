@@ -15,6 +15,7 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import BaseNodes, { type ICoverterNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
+import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
 /**
  * 节点连接上下文函数
@@ -173,7 +174,9 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   let lastSelectAtDown : NodeConnectorEditor|null = null;
 
   context.getMouseHandler().pushMouseDownHandler(createMouseDownAndUpHandler({
-    onDown: () => {
+    onDown: (e) => {
+      if (HtmlUtils.isEventInControl(e))
+        return false;
       const connector = selectOneConnector();
       if (connector) {
         lastSelectAtDown = connector;

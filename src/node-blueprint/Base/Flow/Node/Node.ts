@@ -455,6 +455,10 @@ export interface INodeDefine {
    */
   canNotDelete ?: boolean;
   /**
+   * 指定当前单元是不是预处理器单元，默认：false
+   */
+  preprocessor ?: boolean;
+  /**
    * [仅编辑器可用] 指示用户是否可以手动添加入执行端口。默认为 false
    */
   userCanAddInputExecute ?: boolean;

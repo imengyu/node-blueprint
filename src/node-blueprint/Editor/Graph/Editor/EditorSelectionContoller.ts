@@ -226,7 +226,11 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     }
     notifySelectNodeOrConnectorChanged();
   }
-  //选择指定的单元
+  /**
+   * 选择指定的单元
+   * @param nodes 
+   * @param append 是否是追加选择，否则将会清空之前的选择
+   */
   function selectSomeNodes(nodes: NodeEditor[], append = false) {
     if (append) {
       nodes.forEach(node => {

@@ -59,9 +59,8 @@ import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
-import SplitLayout from './CodeLayout/SplitLayout/SplitLayout.vue';
-import type { CodeLayoutSplitNInstance } from './CodeLayout/SplitLayout/SplitN';
-import type { CodeLayoutPanelInternal } from './CodeLayout/CodeLayout';
+import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
+import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
 
 interface OpenedGraphsData {

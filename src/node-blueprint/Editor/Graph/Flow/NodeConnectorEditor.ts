@@ -36,7 +36,7 @@ export class NodeConnectorEditor extends NodeConnector {
   private startColor = '#efefef';
   private endColor = '#efefef';
   private colorGradient : null|CanvasGradient = null;
-  private colorGradientNeedCreate = false;
+  private colorGradientNeedCreate = true;
   private dotPos = 0;
 
   public forceSetPos(_startPos: Vector2|undefined, _endPos: Vector2|undefined) {

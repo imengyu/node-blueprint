@@ -166,6 +166,7 @@ function registerScriptBase()  {
     ],
     oneNodeOnly: true,
     canNotDelete: true,
+    hideInAddPanel: true,
     style: {
       logo: NodeIconEntryGo,
       titleBakgroundColor: "rgba(25,25,112,0.6)",
@@ -197,15 +198,13 @@ function registerScriptBase()  {
         paramType: NodeParamType.Execute,
       },
     ],
-    oneNodeOnly: true,
-    canNotDelete: true,
     style: {
       logo: NodeIconEntryExit,
       titleBakgroundColor: "rgba(112,30,133,0.6)",
     },
     events: {
       onAddCheck(node, graph) {
-        if(graph.type !== 'none')
+        if(graph.type !== 'main')
           return '只能在主图表中添加脚本开始单元';
         return null;
       },
@@ -220,7 +219,7 @@ function registerScriptBase()  {
     typeDescription: '用于描述当前运行平台的类型',
     typeTitle: '基础平台类型',
     baseType: 'enum',
-    options: [ 'all', 'electron', 'nodejs', 'cnative' ],
+    options: [ 'js:dev', 'js:web', 'js:node', 'native:c' ],
     defaultValue: () => 'unknow',
   });
 
@@ -702,8 +701,6 @@ function registerScriptGraphBase()  {
     author: 'imengyu',
     version: 1,
     category: '基础',
-    hideInAddPanel: true,
-    canNotDelete: true,
     tags: [ 'GraphEntry' ],
     ports: [],
     style: {
@@ -1040,17 +1037,17 @@ function registerTypeBase() {
     },
     events: {
       onEditorCreate(node) {
-        function changeOutParamType(newType: NodeParamType) {
+        function changeOutParamType(newType: NodeParamType, resetIntitalValue = true) {
           const outNode = node.getPortByGUID('OUT');
           if (outNode) {
             node.options.type = newType.toString();
-            node.changePortParamType(outNode, newType);
+            node.changePortParamType(outNode, newType, resetIntitalValue);
             outNode.name = `作为 ${newType.toUserFriendlyName()}`;
           }
         }
 
         if (node.options.type)
-          changeOutParamType(NodeParamType.FromString(node.options.type as string));
+          changeOutParamType(NodeParamType.FromString(node.options.type as string), false);
         else {
           node.options.type = NodeParamType.Any.toString();
           node.updateRegion();
@@ -1119,17 +1116,17 @@ function registerTypeBase() {
       onEditorCreate(node) {
 
         if (node.options.type)
-          changeOutParamType(NodeParamType.FromString(node.options.type as string));
+          changeOutParamType(NodeParamType.FromString(node.options.type as string), false);
         else {
           node.options.type = NodeParamType.Any.toString();
           node.updateRegion();
         }
 
-        function changeOutParamType(newType: NodeParamType) {
+        function changeOutParamType(newType: NodeParamType, resetIntitalValue = true) {
           const outNode = node.getPortByGUID('OUT');
           if (outNode) {
             node.options.type = newType.toString();
-            node.changePortParamType(outNode, newType);
+            node.changePortParamType(outNode, newType, resetIntitalValue);
             outNode.name = `转为 ${newType.toUserFriendlyName()}`;
           }
           node.updateRegion();
@@ -1461,8 +1458,8 @@ function registerConnNode() {
         const type = node.options['type'] as string;
         if(!StringUtils.isNullOrEmpty(type)) {
           const paramType = NodeParamType.FromString(type);
-          node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 
-          node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 
+          node.changePortParamType(node.getPortByGUID('INPUT')!, paramType, false); 
+          node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType, false); 
         }
       },
       onEditorCreate: (node, context) => {

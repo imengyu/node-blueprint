@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import CodeLayoutScrollbar from '@/node-blueprint/Editor/Docunment/CodeLayout/Components/CodeLayoutScrollbar.vue';
+import CodeLayoutScrollbar from 'vue-code-layout';
 
 </script>
 

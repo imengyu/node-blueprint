@@ -1,21 +1,10 @@
-@import '../Nana/Scss/Scroll.scss';
-
 .console-base {
   position: relative;
   height: 100%;
 
   .list {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-    overflow-y: scroll;
     font-size: 13px;
     font-family: Consolas, 'Courier New', monospace;
-
-    @include pc-fix-scrollbar();
 
     .item {
       display: flex;

@@ -15,6 +15,7 @@
     "@imengyu/vue3-context-menu": "^1.3.8",
     "pinia": "^2.0.28",
     "vue": "^3.2.45",
+    "vue-code-layout": "^1.0.2",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {
