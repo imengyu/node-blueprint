@@ -56,6 +56,7 @@
       color: var(--mx-editor-active-text-color);
       
       svg {
+        color: var(--mx-editor-active-text-color);
         fill: var(--mx-editor-active-text-color);
       }
     }
@@ -106,6 +107,7 @@
           color: var(--mx-editor-#{$key}-light-text-color);
           
           svg {
+            color: var(--mx-editor-#{$key}-light-text-color);
             fill: var(--mx-editor-#{$key}-light-text-color);
           }
         }
@@ -118,7 +120,8 @@
       background-color: transparent!important;
 
       svg {
-        fill: var(--mx-editor-drak-text-color);
+        color: var(--mx-editor-drak-text-color)!important;
+        fill: var(--mx-editor-drak-text-color)!important;
       }
     }
   }

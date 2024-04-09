@@ -436,6 +436,11 @@
   font-size: 0.8rem;
   min-height: var(--node-port-min-height);
 
+  .node-checkbox {
+    width: var(--node-port-min-height);
+    height: var(--node-port-min-height);
+  }
+
   &.space {
     cursor: initial;
   }

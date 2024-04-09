@@ -208,7 +208,7 @@ function registerScriptBase()  {
           return '只能在主图表中添加脚本开始单元';
         return null;
       },
-    }
+    },
   };
 
   //运行库平台
@@ -362,6 +362,7 @@ function registerScriptVariableBase()  {
       titleState: 'hide',
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
+      snapGridOffsetY: -1,
     },
     events: {
       onEditorCreate(node, context) {
@@ -498,8 +499,9 @@ function registerScriptVariableBase()  {
       onEditorMessage(node, context, msg) {
         //变量类型更改消息
         if (msg?.message === messages.VARIABLE_UPDATE_TYPE) {
-          node.changePortParamType('INPUT', msg.data.type);
-          node.changePortParamType('OUTPUT', msg.data.type);
+          node.changePortParamType('INPUT', msg.data.type, false);
+          node.changePortParamType('OUTPUT', msg.data.type, false);
+          context.doFlexPortUpdateConnected(node, [ 'INPUT', 'OUTPUT' ]);
         } 
         //变量名称更改消息
         else if (msg?.message === messages.VARIABLE_UPDATE_NAME) 

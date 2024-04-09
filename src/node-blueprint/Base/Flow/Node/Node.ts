@@ -15,6 +15,7 @@ import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
+import type { INodeCompileSettings } from "../../Compiler/NodeCompileSettings";
 
 const TAG = 'Node';
 
@@ -80,7 +81,6 @@ export class Node extends SerializableObject<INodeDefine> {
             ports: 'NodePort',
             style: 'NodeStyleSettings',
             events: 'NodeEventSettings',
-            compile: 'NodeCompileSettings',
           },
         },
         graph: {
@@ -440,7 +440,7 @@ export interface INodeDefine {
   /**
    * 单元编译设置
    */
-  compile ?: INodeCompileSettings;
+  compile ?: INodeCompileSettingsEntry;
   /**
    * 单元筛选标签
    */
@@ -859,25 +859,8 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, No
 /**
  * 单元编译设置
  */
-export interface INodeCompileSettings {
-  
-}
-/**
- * 单元编译设置
- */
-export class NodeCompileSettings extends SerializableObject<INodeCompileSettings, Node> {
-  constructor(define?: INodeCompileSettings) {
-    super('NodeCompile', define, {
-      serializeSchemes: {
-        default: {
-          serializeAll: true,
-          noSerializableProperties: [
-            'parent',
-          ],
-        },
-      }
-    });
-  }
+export interface INodeCompileSettingsEntry {
+  [index: string]: INodeCompileSettings;
 }
 
 export class CustomStorageObject implements IKeyValueObject {

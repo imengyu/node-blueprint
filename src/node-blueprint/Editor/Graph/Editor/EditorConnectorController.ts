@@ -80,6 +80,12 @@ export interface NodeGraphEditorConnectorContext {
    */
   doFlexPortConnect(thisPort: NodePort, anotherPort: NodePort): void
   /**
+   * 当本节点的端口类型更改后，触发与之相连的弹性端口更改事件
+   * @param node 本节点
+   * @param changedPorts 更改类型的端口
+   */
+  doFlexPortUpdateConnected(node: NodeEditor, changedPorts: string[]) : void;
+  /**
    * 对整个图表进行孤立节点检查
    */
   startGlobalIsolateCheck(): void;
@@ -671,7 +677,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
           //auto 模式下变换其他弹性端口为指定类型
           for (const port of thisPort.parent.ports) {
             if (port.isFlexible) {
-              node.changePortParamType(port, type);
+              node.changePortParamType(port, type, false);
               node.events.onPortFlexUpdate?.(node, port, context, type);
               (port as NodePortEditor).updatePortValue();
               if (port !== thisPort)
@@ -695,6 +701,20 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       } 
     }
     doPort(_thisPort, _anotherPort);
+  }
+  /**
+   * 当本节点的端口类型更改后，触发与之相连的弹性端口更改事件
+   */
+  function doFlexPortUpdateConnected(node: NodeEditor, changedPorts: string[]) {
+    const ports = changedPorts.map(guid => node.getPort(guid));
+    for (const port of ports) {
+      if (port) {
+        for (const connector of port.connectedToPort)
+          doFlexPortConnect(connector.endPort!, port);
+        for (const connector of port.connectedFromPort)
+          doFlexPortConnect(connector.startPort!, port);
+      }
+    }
   }
   /**
    * 在断开连接后取消弹性端口。
@@ -738,7 +758,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     function loopNodeTree(node: NodeEditor) {
       if (visitedNodes.includes(node))
         return;
-      visitedNodes.includes(node);
+      visitedNodes.push(node);
       node.isolateState = false;
       
       for (const port of node.outputPorts) {
@@ -855,6 +875,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   context.getConnectingInfo = getConnectingInfo;
   context.startGlobalIsolateCheck = startGlobalIsolateCheck;
   context.doFlexPortConnect = doFlexPortConnect;
+  context.doFlexPortUpdateConnected = doFlexPortUpdateConnected;
 
   return {
     connectingInfo,

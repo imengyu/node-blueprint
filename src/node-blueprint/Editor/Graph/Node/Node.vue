@@ -1,6 +1,6 @@
 <template>
   <Tooltip 
-    v-if="instance"
+    v-if="instance && !nodeExclusionEnable || !instance.exclusionState"
     :enable="!instance.style.noTooltip && instance.style.titleState === 'hide'"
   >
     <template #content>
@@ -8,8 +8,7 @@
       <p v-if="instance.errorState">{{ instance.errorMessage }}</p>
       <p>{{ instance.description }}</p>
     </template>
-    <div 
-      v-show="!nodeExclusionEnable || !instance.exclusionState"
+    <div
       ref="nodeRef"
       tabindex="-1"
       :class="['node-block',

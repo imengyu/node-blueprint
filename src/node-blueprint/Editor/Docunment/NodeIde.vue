@@ -17,6 +17,7 @@
               :editorSettings="editorSettings"
               @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g)"
               @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
+              @compileDoc="() => onCompileDocunment((panel.data as NodeDocunmentEditor))"
             />
           </template>
           <template v-else>
@@ -101,6 +102,7 @@ import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
 import TestScript from '../../../../test-scripts/compiler-test-1.json';
+import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 const loadTestScript = true;
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
@@ -411,6 +413,12 @@ function onActiveGraphSelectionChange(doc: NodeDocunmentEditor, graphUid: string
     currentActiveNodes.value = selectedNodes;
     currentActiveConnectors.value = selectedConnectors;
   }
+}
+/**
+ * 编译按钮
+ */
+function onCompileDocunment(doc: NodeDocunmentEditor) {
+  console.log(NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, true));
 }
 /**
  * 新文档

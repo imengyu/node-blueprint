@@ -132,7 +132,7 @@ function onAddClick(item: CategoryDataItem) {
       justify-content: space-between;
       align-items: center;
       font-size: 0.8rem;
-      color: var(--mx-editor-drak-text-color);
+      color: var(--mx-editor-text-color);
 
       &.badge {
         margin-left: 5px;
@@ -145,7 +145,7 @@ function onAddClick(item: CategoryDataItem) {
     }
 
     &:hover {
-      background-color: var(--mx-editor-list-item-hover-third-color);
+      background-color: var(--mx-editor-list-item-hover-second-color);
     }
     &:active {
       opacity: 0.7;

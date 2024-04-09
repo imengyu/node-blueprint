@@ -101,7 +101,7 @@ function registerCalcBase() {
       logoBackground: NodeIconAdd,
       titleState: 'hide',
       inputPortMinWidth: 0,
-      snapGridOffsetY: -5,
+      snapGridOffsetY: -1,
     },
     events: {
       onCreate: CalcBaseOnCreate,
@@ -123,7 +123,7 @@ function registerCalcBase() {
       logoBackground: NodeIconSub,
       titleState: 'hide',
       inputPortMinWidth: 0,
-      snapGridOffsetY: -5,
+      snapGridOffsetY: -1,
     },
     events: {
       onCreate: CalcBaseOnCreate,
@@ -145,7 +145,7 @@ function registerCalcBase() {
       logoBackground: NodeIconMul,
       titleState: 'hide',
       inputPortMinWidth: 0,
-      snapGridOffsetY: -5,
+      snapGridOffsetY: -1,
     },
     events: {
       onCreate: CalcBaseOnCreate,
@@ -167,7 +167,7 @@ function registerCalcBase() {
       logoBackground: NodeIconDiv,
       titleState: 'hide',
       inputPortMinWidth: 0,
-      snapGridOffsetY: -5,
+      snapGridOffsetY: -1,
     },
     events: {
       onCreate: CalcBaseOnCreate,

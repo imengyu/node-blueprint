@@ -99,6 +99,8 @@ export interface NodeGraphEditorGraphControllerContext {
 
 const TAG = 'EditorGraphController';
 
+const MAX_NODES_PER_FRAME = 2048;
+
 /**
  * 流程图信息（节点、连接、文件）管理器
  * @param options 
@@ -135,10 +137,16 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       for (const node of nodes) {
         switch(node.style.layer) {
           case 'normal':
-            foregroundNodes.value.push(node);
+            if (foregroundNodes.value.length > MAX_NODES_PER_FRAME)
+              printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
+            else
+              foregroundNodes.value.push(node);
             break;
           case 'background':
-            backgroundNodes.value.push(node);
+            if (backgroundNodes.value.length > MAX_NODES_PER_FRAME)
+              printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
+            else
+              backgroundNodes.value.push(node);
             break;
           default:
             printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
@@ -260,9 +268,9 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   function loadGraph(graph: NodeGraph) {
     return new Promise<void>((resolve, reject) => {
       closeGraph();
+      currentGraph.value = graph;
+      graph.activeEditor = context;
       pushNodes(...(Array.from(graph.nodes.values()) as NodeEditor[])).then(() => {
-        graph.activeEditor = context;
-        currentGraph.value = graph;
         context.userInterfaceNextTick(() => {
           graph.connectors.forEach((connector) => {
             addConnector(connector as NodeConnectorEditor);

@@ -2,7 +2,7 @@ import { CreateObjectFactory } from "../Serializable/SerializableObject";
 import type { NodeDocunment } from "./Graph/NodeDocunment";
 import { NodeGraph, type INodeGraphDefine } from "./Graph/NodeGraph";
 import { NodeVariable, type INodeVariableDefine } from "./Graph/NodeVariable";
-import { NodeCompileSettings, NodeStyleSettings, NodeEventSettings, Node, type INodeDefine, type INodeCompileSettings, type INodeEventSettings, type INodeStyleSettings } from "./Node/Node";
+import { NodeStyleSettings, NodeEventSettings, Node, type INodeDefine, type INodeEventSettings, type INodeStyleSettings } from "./Node/Node";
 import { NodeConnector, type INodeConnectorDefine } from "./Node/NodeConnector";
 import { NodePort, type INodePortDefine, NodePortStyle, type INodePortStyleDefine } from "./Node/NodePort";
 import { NodeParamType, type NodeParamTypeDefine } from "./Type/NodeParamType";
@@ -13,7 +13,6 @@ export function registerObjects() {
   CreateObjectFactory.addObjectFactory('NodePort', (define: INodePortDefine, parent) => new NodePort(define, parent as Node));
   CreateObjectFactory.addObjectFactory('NodePortStyle', (define: INodePortStyleDefine) => new NodePortStyle(define));
   CreateObjectFactory.addObjectFactory('NodeConnector', (define: INodeConnectorDefine) => new NodeConnector(define));
-  CreateObjectFactory.addObjectFactory('NodeCompileSettings', (define: INodeCompileSettings) => new NodeCompileSettings(define));
   CreateObjectFactory.addObjectFactory('NodeEventSettings', (define: INodeEventSettings) => new NodeEventSettings(define));
   CreateObjectFactory.addObjectFactory('NodeStyleSettings', (define: INodeStyleSettings) => new NodeStyleSettings(define));
   CreateObjectFactory.addObjectFactory('NodeGraph', (define: INodeGraphDefine, parent) => new NodeGraph(define, parent as NodeDocunment, false));

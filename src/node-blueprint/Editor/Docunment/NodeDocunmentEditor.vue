@@ -4,11 +4,12 @@
       <GraphSideToolItem />
       <GraphSideToolItem />
       <GraphSideToolSeparator />
-      <GraphSideToolItem ref="addButtonRef" icon="icon-add-bold" @click="onAdd" />
-      <GraphSideToolItem icon="icon-trash" @click="onDelete" />
+      <GraphSideToolItem ref="addButtonRef" icon="icon-add-bold" tooltip="添加" @click="onAdd" />
+      <GraphSideToolItem icon="icon-trash" tooltip="删除" @click="onDelete" />
       <GraphSideToolSeparator />
-      <GraphSideToolItem icon="icon-Play" color="green" />
-      <GraphSideToolItem icon="icon-Next" color="blue" />
+      <GraphSideToolItem icon="icon-microchip" tooltip="编译" @click="$emit('compileDoc')" />
+      <GraphSideToolItem icon="icon-Play" color="green" tooltip="调试" :enable="false" />
+      <GraphSideToolItem icon="icon-Next" color="blue" tooltip="单步执行" :enable="false" />
     </GraphSideTool>
     <SplitLayout
       ref="splitLayoutRef"
@@ -82,6 +83,7 @@ const props = defineProps({
 const emit = defineEmits([ 
   'activeGraphEditorChange',
   'activeGraphSelectionChange',
+  'compileDoc',
 ])
 
 const addButtonRef = ref();

@@ -1,4 +1,6 @@
+import { NodeGraphCompiler } from "../Base/Compiler/NodeGraphCompiler";
 import { NodeRegistry } from "../Base/Flow/Registry/NodeRegistry";
+import { LibJsCompilerData } from "./Compiler/LibJs/LibJs";
 import BaseNodes from "./Lib/BaseNodes";
 import ControlNodees from "./Lib/ControlNodes";
 import LogicNodes from "./Lib/LogicNodes";
@@ -11,4 +13,5 @@ export function initLib() {
   NodeRegistry.getInstance().registerNodePack(PreprocessorNodees);
   NodeRegistry.getInstance().registerNodePack(ControlNodees);
   NodeRegistry.getInstance().registerNodePack(LogicNodes);
+  NodeGraphCompiler.getInstance().registerCompilePackage(LibJsCompilerData);
 }

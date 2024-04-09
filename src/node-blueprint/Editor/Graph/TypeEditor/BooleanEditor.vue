@@ -17,7 +17,7 @@ export default defineComponent({
   components: { Icon },
   props: {
     value: {
-      type: [Number,Object],
+      type: [Number,Object,Boolean],
       default: null
     },
     port: {

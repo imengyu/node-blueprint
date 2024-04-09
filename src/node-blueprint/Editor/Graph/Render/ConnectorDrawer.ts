@@ -25,8 +25,8 @@ export class ConnectorDrawer {
     if(xAbs <= 1 && yAbs <= 1)
       return;
 
-    if(yAbs==0) yAbs=1;
-    if(xAbs==0) xAbs=1;
+    if(yAbs === 0) yAbs=1;
+    if(xAbs === 0) xAbs=1;
 
     const yOff = ((x2 < x1 && yAbs < 100) ? (100 / yAbs * 2) : 0);
     let xOff = xAbs > 200 ? 200 : xAbs;
