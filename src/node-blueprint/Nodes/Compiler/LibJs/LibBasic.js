@@ -1,10 +1,19 @@
 /* eslint-disable */
 
 const _DEBUG_CONNECTOR = {
-  console(type, tag, msg) {},
+  console(type, tag, msg) {
+    switch (type) {
+      case 'log': console.log(`[${tag}] ${msg}`); break;
+      case 'warn': console.warn(`[${tag}] ${msg}`); break;
+      case 'error': console.error(`[${tag}] ${msg}`); break;
+      case 'info': console.info(`[${tag}] ${msg}`); break;
+    }
+  },
 };
-const _CC_CONNECTOR = {
+const _CORE_CONNECTOR = {
+  begin() {},
   exit() {},
+  platform() { return 'js:web' },
 };
 
 function _createCallContext(parent) {
@@ -28,6 +37,12 @@ function _createCallContext(parent) {
       if (!parent)
         throw new Error(`Failed to get temp var ${n}`);
       return parent.getTemp(n);
+    },
+    getVariable(n) {
+
+    },
+    setVariable(n, v) {
+      return v;
     },
     makeNestCall(cb, dbg) {
       const newContext = _createCallContext(this);

@@ -101,7 +101,7 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/compiler-test-0.json';
+import TestScript from '../../../../test-scripts/compiler-test-1.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 const loadTestScript = true;

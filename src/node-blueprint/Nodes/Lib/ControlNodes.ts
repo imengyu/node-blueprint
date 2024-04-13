@@ -96,13 +96,6 @@ function register() {
         direction: 'input'
       },
       {
-        guid: 'PIBREAK',
-        paramType: NodeParamType.Execute,
-        direction: 'input',
-        name: '终止',
-        description: '终止循环',
-      },
-      {
         guid: 'PICON',
         paramType: NodeParamType.Boolean,
         paramDefaultValue: true,
@@ -139,13 +132,6 @@ function register() {
         guid: 'PI',
         paramType: NodeParamType.Execute,
         direction: 'input'
-      },
-      {
-        guid: 'PIBREAK',
-        paramType: NodeParamType.Execute,
-        direction: 'input',
-        name: '终止',
-        description: '终止循环',
       },
       {
         guid: 'PICON',
@@ -206,13 +192,6 @@ function register() {
         name: '步长',
         description: '循环自增步长。可以为负数，但 结束索引值 必须 小于 起始索引值',
         paramDefaultValue: 1,
-      },
-      {
-        guid: 'PIBREAK',
-        paramType: NodeParamType.Execute,
-        direction: 'input',
-        name: '终止',
-        description: '终止循环',
       },
       {
         guid: 'POEXIT',
@@ -438,6 +417,25 @@ function register() {
       inputPortMinWidth: 0,
     },
   };
+  const blockBreak : INodeDefine = {
+    guid: "2C75DB8A-1061-ABE0-B7E9-09953C335050", 
+    name: "终止循环",
+    description: '终止当前调用栈上的一层For或者While循环',
+    author: 'imengyu',
+    version: 1,
+    category: '控制',
+    ports: [
+      {
+        guid: 'PI',
+        paramType: NodeParamType.Execute,
+        direction: 'input'
+      },
+    ],
+    style: {
+      logo: NodeIconGate,
+      inputPortMinWidth: 0,
+    },
+  };
 
   return [
     blockBranch,
@@ -451,5 +449,6 @@ function register() {
     blockDoN,
     blockFlipFlop,
     blockToggle,
+    blockBreak,
   ];
 }

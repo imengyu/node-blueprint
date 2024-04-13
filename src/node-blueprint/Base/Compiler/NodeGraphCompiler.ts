@@ -13,6 +13,8 @@ const TAG = 'NodeGraphCompiler';
 export interface INodeGraphCompiler {
   getTarget() : string;
   setBasic(data: INodeCompileBasicSetting) : void;
+  buildValue(name: string, value: any): any;
+
   /**
    * 清除编译缓存
    */
