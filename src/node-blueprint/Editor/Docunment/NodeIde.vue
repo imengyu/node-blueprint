@@ -101,8 +101,9 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/compiler-test-1.json';
+import TestScript from '../../../../test-scripts/compiler-test-0.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
+import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 const loadTestScript = true;
 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
@@ -418,7 +419,12 @@ function onActiveGraphSelectionChange(doc: NodeDocunmentEditor, graphUid: string
  * 编译按钮
  */
 function onCompileDocunment(doc: NodeDocunmentEditor) {
-  console.log(NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, true));
+  try {
+    const result = NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, true);
+    console.log(result);
+  } catch (e) {
+    printError('CompileDocunment', e)
+  }
 }
 /**
  * 新文档

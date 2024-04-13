@@ -2,7 +2,7 @@ import type { NodeDocunment } from "../Flow/Graph/NodeDocunment";
 import { NodeRegistry } from "../Flow/Registry/NodeRegistry";
 import { printWarning } from "../Logger/DevLog";
 import { Singleton } from "../Singleton/Singleton";
-import { NodeGraphCompilerJS } from "./Implementation/NodeGraphCompilerJS";
+import { NodeGraphCompilerJS } from "./Implementation/JavaScript/NodeGraphCompilerJS";
 import type { INodeCompileBasicSetting, INodeCompilePackage } from "./NodeCompileSettings";
 
 const TAG = 'NodeGraphCompiler';
@@ -111,4 +111,13 @@ export class NodeGraphCompiler extends Singleton {
 export function registerInternalCompilers() {
   const ins = NodeGraphCompiler.getInstance();
   ins.registerCompiler('js', new NodeGraphCompilerJS())
+}
+
+export class NodeGraphCompilerError extends Error {
+  constructor(code: number, message: string) {
+    super(message);
+    this.code = code;
+  }
+
+  readonly code: number;
 }

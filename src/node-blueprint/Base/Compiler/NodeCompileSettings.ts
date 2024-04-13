@@ -1,7 +1,3 @@
-import type { ast } from "./Common/AstDef";
-
-
-
 export interface INodeCompileBasicSetting {
   basicHelperCode?: string,
 }
@@ -15,9 +11,13 @@ export interface INodeCompilePackage {
 }
 
 export interface INodeCompileFunctionGenerator {
-  type: 'singleCall'|'contextNode',
-  code: string|ast.BlockStatement
+  type: 'simpleCall'|'contextNode',
+  code: string|object
 }
 export interface INodeCompileSettings {
   functionGenerator?: INodeCompileFunctionGenerator;
+  callGenerator?: {
+    type: 'simpleCall'|'immediateStatement'|'branchStatement',
+    generate?: (params: any, branchs?: any[]) => any,
+  },
 }

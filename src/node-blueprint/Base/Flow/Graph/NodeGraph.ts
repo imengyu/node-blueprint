@@ -209,6 +209,13 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
     return this.nodes.get(uid) || null;
   }
   /**
+   * 根据单元GUID获取当前文档单元
+   * @param guid 单元GUID
+   */
+  public getOneNodeByGUID(guid: string): Node | null {
+    return this.getNodesByGUID(guid)[0] || null;
+  }
+  /**
    * 根据名称获取子图表
    * @param name 名称
    */
