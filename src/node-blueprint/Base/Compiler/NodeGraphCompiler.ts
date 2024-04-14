@@ -14,6 +14,7 @@ export interface INodeGraphCompiler {
   getTarget() : string;
   setBasic(data: INodeCompileBasicSetting) : void;
   buildValue(name: string, value: any): any;
+  buildVariableName(name: string): string;
 
   /**
    * 清除编译缓存

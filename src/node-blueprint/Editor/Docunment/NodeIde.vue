@@ -423,6 +423,7 @@ function onCompileDocunment(doc: NodeDocunmentEditor) {
     const result = NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, true);
     console.log(result);
   } catch (e) {
+    console.log(e);
     printError('CompileDocunment', e)
   }
 }

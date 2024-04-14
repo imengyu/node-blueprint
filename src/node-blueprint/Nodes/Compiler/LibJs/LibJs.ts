@@ -136,23 +136,28 @@ export const LibJsCompilerData : INodeCompilePackage = {
               b.variableDeclaration('let', [ b.variableDeclarator(b.identifier('index'), params[0]) ]),
               b.binaryExpression('<', b.identifier('index'), params[1]),
               b.assignmentExpression('+=', b.identifier('index'), params[2]),
-              branchs[0].blockStatement
+              branchs[1].blockStatement
             ),
-            branchs[1].blockStatement
+            ...branchs[0].blockStatement.body
           ]
         },
       },
     },
     '04414FD9-45A2-980B-813C-2957849BEF47': {
-      functionGenerator: {
-        type: 'simpleCall',
-        code: (node) => `return context.getVariable(${node.options.variable})`,
+      callGenerator: {
+        type: 'immediateStatement',
+        generateImmediate: (compiler, node) => b.identifier(compiler.buildVariableName(node.options.variable as string)),
       }
     },
     'C9E5A4F2-B7FC-D2C4-724B-DB770A1AFBA6': {
-      functionGenerator: {
-        type: 'simpleCall',
-        code: (node) => `return context.setVariable(${node.options.variable}, INPUT)`,
+      callGenerator: {
+        type: 'simpleStatement',
+        simpleStatementNeedRetuen: true,
+        generateSimpleStatement: (compiler, node, params) => b.assignmentExpression(
+          '=',
+          b.identifier(compiler.buildVariableName(node.options.variable as string)),
+          params[0]
+        ),
       }
     },
   },

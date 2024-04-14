@@ -38,12 +38,6 @@ function _createCallContext(parent) {
         throw new Error(`Failed to get temp var ${n}`);
       return parent.getTemp(n);
     },
-    getVariable(n) {
-
-    },
-    setVariable(n, v) {
-      return v;
-    },
     makeNestCall(cb, dbg) {
       const newContext = _createCallContext(this);
       newContext.dbg = dbg;
@@ -52,7 +46,7 @@ function _createCallContext(parent) {
     makeSimpleCall(rps, cb) {
       const ret = cb();
       if (typeof ret !== 'undefined')
-        this.makeTemp(rps[0]);
+        this.makeTemp(rps[0], ret);
     },
   };
 }

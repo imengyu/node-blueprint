@@ -21,6 +21,7 @@ export interface INodeCompileFunctionGenerator {
 export interface INodeCompileCallGenerator {
   type: 'simpleCall'|'immediateStatement'|'branchStatement'|'simpleStatement',
   simpleBinaryImmediate?: string,
+  simpleStatementNeedRetuen?: boolean,
   generateSimpleStatement?: (compiler: INodeGraphCompiler, node: Node, params: any) => any,
   generateImmediate?: (compiler: INodeGraphCompiler, node: Node, params: any) => any,
   generateBranch?: (compiler: INodeGraphCompiler, node: Node, isPre: boolean, params: any, branchs: { 

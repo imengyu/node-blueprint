@@ -168,6 +168,7 @@ const connectDragHandler = createMouseDragHandler({
     if(e.button === 0) {
       const parent = instance.value.parent as NodeEditor;
       parent.mouseConnectingPort = true;
+      context?.moveViewportWithCursorPosition(context.getMouseInfo().mouseCurrentPosEditor);
       context?.updateConnectEnd(new Vector2(e.x, e.y));
     }
   },
