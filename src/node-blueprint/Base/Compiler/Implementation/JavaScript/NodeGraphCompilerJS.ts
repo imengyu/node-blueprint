@@ -177,6 +177,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       //TODO: 缓存处理
     }
 
+    cache.mainAst.body.splice(0);
     //是否是调试编译
     cache.mainAst.body.push(b.variableDeclaration('const', [ b.variableDeclarator(b.identifier('_DEBUG_BUILD'), b.booleanLiteral(data.dev)) ]));
     //基础帮助库
@@ -354,7 +355,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         //如果此立即节点有多个链接，则缓存到临时变量中方便下次直接获取
         if (anotherPort.connectedToPort.length > 1) {
           result = b.callExpression(
-            b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier('setTemp')),
+            b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeTemp)),
             [ 
               b.stringLiteral(this.getNodePortTempKey(anotherPort)) ,
               result
@@ -412,7 +413,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         default:
         case 'simpleCall': {
           //简单调用，只需要生成调用语句
-          inputParams.push(b.identifier(this.internalKeywordMap.context));
+          inputParams.unshift(b.identifier(this.internalKeywordMap.context));
           if (compileSettings.functionGenerator?.type === 'contextNode') {
             statement.body.push(
               b.variableDeclaration('const', [ b.variableDeclarator(
@@ -522,7 +523,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
                       null, 
                       [ b.identifier(this.internalKeywordMap.context), ], 
                       branch.blockStatement, 
-                      data.dev ? true : undefined
+                      data.dev
                     ) 
                   ]
                 ))
@@ -562,7 +563,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
      * if (_DEBUG_CONNECTOR.debugNode(context, graphUid, node.uid))
      *    yield { uid: node.uid, graphUid: graphUid, type: _DEBUG_BREAK };
      */
-    return [ 
+    return data.dev ? [ 
       b.ifStatement(b.callExpression(
         b.memberExpression(b.identifier('_DEBUG_CONNECTOR'), b.identifier('debugNode')),
         [ 
@@ -575,7 +576,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         b.property('init', b.identifier('uid'), b.stringLiteral(node.uid)),
         b.property('init', b.identifier('graphUid'),  b.stringLiteral(graph.uid)),
       ]))))
-    ];
+    ] : [];
   }
   private buildDevFunctionEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph) : StatementKind[] {
     //函数调试插入代码
@@ -583,7 +584,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
      * if (_DEBUG_CONNECTOR.debugFunction(graph.uid))
      *    yield { uid: graph.uid, type: _DEBUG_BREAK };
      */
-    return [ 
+    return data.dev ? [ 
       b.ifStatement(b.callExpression(
         b.memberExpression(b.identifier('_DEBUG_CONNECTOR'), b.identifier('debugFunction')),
         [ b.stringLiteral(graph.uid) ] 
@@ -591,7 +592,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         b.property('init', b.identifier('type'), b.identifier('_DEBUG_BREAK')),
         b.property('init', b.identifier('uid'), b.stringLiteral(graph.uid)),
       ]))))
-    ];
+    ] : [];
   }
 
   private compileGraph(graph: NodeGraph, data: NodeDocunmentCompileData, cache: NodeGraphCompileCache|undefined, topCache: NodeDocunmentCompileCache) {
@@ -645,7 +646,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             this.buildDevFunctionEnterCode(data, graph);
             this.buildGraphVariables(data, graph, statement);
           }), 
-          data.dev ? true : undefined
+          data.dev
         ));
 
         cache.ast.push(b.expressionStatement(b.callExpression(

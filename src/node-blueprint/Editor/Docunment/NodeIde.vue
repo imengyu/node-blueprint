@@ -84,7 +84,7 @@ import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
-import { openJsonFile, saveJsonFile } from './Tools/IOUtils';
+import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
@@ -305,6 +305,27 @@ const menuData = reactive<MenuOptions>({
       label: '调试',
       children: [
         {
+          label: '编译',
+          children: [
+            {
+              label: '编译',
+              shortcut: 'F4',
+              onClick() {
+                if (currentActiveDocunment.value)
+                  onCompileDocunment(currentActiveDocunment.value as NodeDocunment);
+              },
+            },
+            {
+              label: '编译并导出',
+              onClick() {
+                if (currentActiveDocunment.value)
+                  onCompileDocunment(currentActiveDocunment.value as NodeDocunment, true);
+              },
+            },
+          ],
+          divided: true,
+        },
+        {
           label: '启动调试',
           shortcut: 'F5',
         },
@@ -418,10 +439,14 @@ function onActiveGraphSelectionChange(doc: NodeDocunmentEditor, graphUid: string
 /**
  * 编译按钮
  */
-function onCompileDocunment(doc: NodeDocunmentEditor) {
+function onCompileDocunment(doc: NodeDocunmentEditor, exportFile = false) {
   try {
-    const result = NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, true);
-    console.log(result);
+    const result = NodeGraphCompiler.getInstance().getCompiler('js').compileDocunment(doc, !exportFile);
+    if (exportFile) {
+      saveJsFile(`${doc.name}.js`, result);
+    } else {
+      console.log(result);
+    }
   } catch (e) {
     console.log(e instanceof Error ? e.stack : e);
     printError('CompileDocunment', e)

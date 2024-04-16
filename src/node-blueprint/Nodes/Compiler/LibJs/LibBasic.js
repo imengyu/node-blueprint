@@ -1,6 +1,9 @@
 /* eslint-disable */
 
-const _DEBUG_CONNECTOR = {
+
+var _CORE_CONNECTOR = undefined;
+if (!_CORE_CONNECTOR) _CORE_CONNECTOR = {};
+var _DEBUG_CONNECTOR = {
   console(type, tag, msg) {
     switch (type) {
       case 'log': console.log(`[${tag}] ${msg}`); break;
@@ -11,10 +14,7 @@ const _DEBUG_CONNECTOR = {
   },
   reportError(e) {}
 };
-if (!_CORE_CONNECTOR)
-  _CORE_CONNECTOR = {
-  };
-const _LIB_INTERNAL = {
+var _LIB_INTERNAL = {
   idMaker: 0,
   _createCallContext(parent) {
     return {
@@ -48,9 +48,10 @@ const _LIB_INTERNAL = {
       },
       makeNestCall(cb, dbg) {
         const newContext = _LIB_INTERNAL._createCallContext(this);
-        newContext.dbg = dbg ? makeDbgDefaults(dbg) : this.dbg;
-        if (_DEBUG_BUILD) 
+        if (_DEBUG_BUILD) {
+          newContext.dbg = dbg ? makeDbgDefaults(dbg) : this.dbg;
           debugRunFunction(cb, newContext);
+        }
         else
           cb(newContext);
       },
@@ -65,8 +66,9 @@ const _LIB_INTERNAL = {
 
 function startRunFunction(fun, dbg) {
   const newContext = _LIB_INTERNAL._createCallContext();
-  newContext.dbg = makeDbgDefaults(dbg);
-  if (_DEBUG_BUILD) 
+  if (_DEBUG_BUILD) {
+    newContext.dbg = makeDbgDefaults(dbg);
     return debugRunFunction(dbg.uid, fun(newContext));
+  }
   return fun(newContext);
 }
