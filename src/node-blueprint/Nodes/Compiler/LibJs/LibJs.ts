@@ -1,11 +1,11 @@
 import type { INodeCompileCallGenerator, INodeCompilePackage } from "@/node-blueprint/Base/Compiler/NodeCompileSettings";
 import LibBasicHelperCode from "./LibBasic.js?raw";
+import LibDebugHelperCode from "./LibDebug.js?raw";
 import { builders as b } from "ast-types";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 
 const TypeEntryNode : INodeCompileCallGenerator = {
   type: 'immediateStatement',
-  generateImmediate(compiler, node, params) {
+  generateImmediate(compiler, data, node, params) {
     return params[0];
   },
 };
@@ -14,6 +14,7 @@ export const LibJsCompilerData : INodeCompilePackage = {
   target: 'js',
   basic: {
     basicHelperCode: LibBasicHelperCode,
+    basicDebugCode: LibDebugHelperCode,
   },
   nodes: {
     '0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F': {
@@ -37,7 +38,7 @@ export const LibJsCompilerData : INodeCompilePackage = {
     '6C01D858-CF4D-D9EF-C18E-DE5DAE400702': {
       callGenerator: {
         type: 'branchStatement',
-        generateBranch(_, node, isPre, params, branchs) {
+        generateBranch(_, data, node, isPre, params, branchs) {
           if (isPre) {
             branchs[0].needNewContext = true;
             return;
@@ -95,7 +96,7 @@ export const LibJsCompilerData : INodeCompilePackage = {
     'E8DB1B75-FDBD-1A0A-6D99-F91FAEAB3131': {
       callGenerator: {
         type: 'branchStatement',
-        generateBranch(compiler, node, isPre, params, branchs) {
+        generateBranch(compiler, data, node, isPre, params, branchs) {
           if (isPre)
             return;
           if (branchs[0].blockStatement.body.length > 0 && branchs[1].blockStatement.body.length > 0)
@@ -120,6 +121,7 @@ export const LibJsCompilerData : INodeCompilePackage = {
     '2C75DB8A-1061-ABE0-B7E9-09953C335050': {
       callGenerator: {
         type: 'simpleStatement',
+        debugStatemenGenerateBefore: true,
         generateSimpleStatement() {
           return b.breakStatement();
         },
@@ -128,7 +130,7 @@ export const LibJsCompilerData : INodeCompilePackage = {
     '949F91AA-D35E-E9E8-8B4B-36EDBD5B1AAD': {
       callGenerator: {
         type: 'branchStatement',
-        generateBranch(compiler, node, isPre, params, branchs) {
+        generateBranch(compiler, data, node, isPre, params, branchs) {
           if (isPre)
             return;
           return [ 
@@ -146,14 +148,14 @@ export const LibJsCompilerData : INodeCompilePackage = {
     '04414FD9-45A2-980B-813C-2957849BEF47': {
       callGenerator: {
         type: 'immediateStatement',
-        generateImmediate: (compiler, node) => b.identifier(compiler.buildVariableName(node.options.variable as string)),
+        generateImmediate: (compiler, data, node) => b.identifier(compiler.buildVariableName(node.options.variable as string)),
       }
     },
     'C9E5A4F2-B7FC-D2C4-724B-DB770A1AFBA6': {
       callGenerator: {
         type: 'simpleStatement',
         simpleStatementNeedRetuen: true,
-        generateSimpleStatement: (compiler, node, params) => b.assignmentExpression(
+        generateSimpleStatement: (compiler, data, node, params) => b.assignmentExpression(
           '=',
           b.identifier(compiler.buildVariableName(node.options.variable as string)),
           params[0]

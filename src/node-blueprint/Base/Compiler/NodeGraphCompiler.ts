@@ -27,6 +27,20 @@ export interface INodeGraphCompiler {
 }
 
 /**
+ * 图表编译器定义
+ */
+export interface NodeDocunmentCompileData {
+  /**
+   * 表示当前正在编译的文档
+   */
+  doc: NodeDocunment, 
+  /**
+   * 表示当前是不是调试版本编译
+   */
+  dev: boolean,
+}
+
+/**
  * 图表编译器调用类
  */
 export class NodeGraphCompiler extends Singleton {

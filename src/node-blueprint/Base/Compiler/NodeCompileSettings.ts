@@ -1,9 +1,10 @@
 import type { Node } from "../Flow/Node/Node";
 import type { NodePort } from "../Flow/Node/NodePort";
-import type { INodeGraphCompiler } from "./NodeGraphCompiler";
+import type { INodeGraphCompiler, NodeDocunmentCompileData } from "./NodeGraphCompiler";
 
 export interface INodeCompileBasicSetting {
   basicHelperCode?: string,
+  basicDebugCode?: string,
 }
 
 export interface INodeCompilePackage {
@@ -16,15 +17,16 @@ export interface INodeCompilePackage {
 
 export interface INodeCompileFunctionGenerator {
   type: 'simpleCall'|'contextNode',
-  code: string|((node: Node, fun: any) => any)
+  code: string|((data: NodeDocunmentCompileData, node: Node, fun: any) => any)
 }
 export interface INodeCompileCallGenerator {
   type: 'simpleCall'|'immediateStatement'|'branchStatement'|'simpleStatement',
   simpleBinaryImmediate?: string,
   simpleStatementNeedRetuen?: boolean,
-  generateSimpleStatement?: (compiler: INodeGraphCompiler, node: Node, params: any) => any,
-  generateImmediate?: (compiler: INodeGraphCompiler, node: Node, params: any) => any,
-  generateBranch?: (compiler: INodeGraphCompiler, node: Node, isPre: boolean, params: any, branchs: { 
+  debugStatemenGenerateBefore?: boolean,
+  generateSimpleStatement?: (compiler: INodeGraphCompiler, data: NodeDocunmentCompileData, node: Node, params: any) => any,
+  generateImmediate?: (compiler: INodeGraphCompiler, data: NodeDocunmentCompileData, node: Node, params: any) => any,
+  generateBranch?: (compiler: INodeGraphCompiler, data: NodeDocunmentCompileData, node: Node, isPre: boolean, params: any, branchs: { 
     port: NodePort,
     needNewContext: boolean,
     blockStatement: any,

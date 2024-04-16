@@ -5,7 +5,7 @@ import type { Node } from "../../../Flow/Node/Node";
 import type { INodeCompileBasicSetting, INodeCompileFunctionGenerator } from "../../NodeCompileSettings";
 import { NodeGraphCompilerError, type INodeGraphCompiler } from "../../NodeGraphCompiler";
 import { printWarning } from "@/node-blueprint/Base/Logger/DevLog";
-import { parse, print } from "recast";
+import { parse, prettyPrint } from "recast";
 import { namedTypes as n, builders as b } from "ast-types";
 import type { ExpressionKind, StatementKind } from "ast-types/lib/gen/kinds";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
@@ -18,11 +18,6 @@ import { SerializableObject } from "@/node-blueprint/Base/Serializable/Serializa
     按节点上的编译设置筛选所有的需要生成静态函数的节点
     生成其对应的静态函数
 
-    静态函数定义
-
-    function guid(context, ...args) {
-
-    }
 
     调用上下文定义 context
 
@@ -32,6 +27,18 @@ import { SerializableObject } from "@/node-blueprint/Base/Serializable/Serializa
     编译AST树
 
  3. 从AST树生成最终代码
+
+
+    静态函数定义
+    function fGUID(context, ...args) {
+
+    }
+    有上下文节点函数定义
+    function cGUID(context, ...args) {
+
+    }
+    变量定义
+    var vHASH = inititalValue
  
 */
 
@@ -51,6 +58,16 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
   private compileCache = new Map<string, NodeDocunmentCompileCache>();
   private target = 'js';
   private settings : INodeCompileBasicSetting = {};
+  
+  private internalKeywordMap = {
+    _DEBUG_BUILD: '_DEBUG_BUILD',
+    context: 'context',
+    makeTemp: 'makeTemp',
+    getTemp: 'getTemp',
+    makeSimpleCall: 'makeSimpleCall',
+    makeNestCall: 'makeNestCall',
+    startRunFunction: 'startRunFunction',
+  };
 
   getTarget(): string {
     return this.target;
@@ -85,7 +102,11 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
    * @returns 
    */
   private compileDocunmentString(data: NodeDocunmentCompileData, cache: NodeDocunmentCompileCache) {
-    return print(cache.mainAst).code;
+    return prettyPrint(cache.mainAst, data.dev ? {} : {
+      tabWidth: 0,
+      lineTerminator: '',
+      reuseWhitespace: false,
+    }).code;
   }
 
   private getNodeCompile(node: Node) {
@@ -152,19 +173,31 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         mainUsingNodeBasicFunction: new Map<string, NodeGraphCompileNodeBasic>(),
         mainAst: b.program([]),
       };
+    else {
+      //TODO: 缓存处理
+    }
 
+    //是否是调试编译
+    cache.mainAst.body.push(b.variableDeclaration('const', [ b.variableDeclarator(b.identifier('_DEBUG_BUILD'), b.booleanLiteral(data.dev)) ]));
+    //基础帮助库
     if (this.settings.basicHelperCode)
       cache.mainAst.body.push(...parse(this.settings.basicHelperCode).program.body);
+    //调试基础库
+    if (data.dev && this.settings.basicDebugCode)
+      cache.mainAst.body.push(...parse(this.settings.basicDebugCode).program.body);
 
+    //图表
     if (data.doc.mainGraph)
       cache.mainGraph = this.compileGraph(data.doc.mainGraph, data, cache.mainGraph, cache);
 
+    //节点库函数
     for (const [,fun] of cache.mainUsingNodeBasicFunction)
-      cache.mainAst.body.push(this.generateNodeBaseFunction(fun));
+      cache.mainAst.body.push(this.buildNodeBaseFunction(data, fun));
 
     return cache;
   }
-  private generateNodeBaseFunction(fun: NodeGraphCompileNodeBasic) : n.FunctionDeclaration {
+
+  private buildNodeBaseFunction(data: NodeDocunmentCompileData, fun: NodeGraphCompileNodeBasic) : n.FunctionDeclaration {
     try {
       switch (fun.functionGenerator.type) {
         case 'contextNode':
@@ -174,7 +207,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           return b.functionDeclaration(
             b.identifier(`c${fun.name}`),
             [ 
-              b.identifier('context'),
+              b.identifier(this.internalKeywordMap.context),
               ...fun.params.map(name => b.identifier(name))
             ],
             b.blockStatement([]), //TODO
@@ -195,29 +228,30 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
 
           let functionBody = typeof fun.functionGenerator.code === 'string' ? 
             parse(fun.functionGenerator.code).program.body[0] : 
-            fun.functionGenerator.code(fun.node, fun);
+            fun.functionGenerator.code(data, fun.node, fun);
           if (typeof functionBody === 'string')
             functionBody = b.blockStatement([ parse(functionBody).program.body[0] ])  //string code
           if (!n.BlockStatement.check(functionBody))
             functionBody = b.blockStatement([ functionBody ]);
 
+          //主方法调用
+          functionBody = b.blockStatement([
+            b.returnStatement(b.callExpression(
+              b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeSimpleCall)),
+              [
+                b.arrayExpression(fun.outputParams.map(p => b.stringLiteral(`${fun.node.uid}:${p}`))),
+                b.functionExpression(null, [], functionBody) 
+              ] 
+            )),
+          ]);
+
           return b.functionDeclaration(
               b.identifier(`f${fun.name}`),
               [ 
-                b.identifier('context'),
+                b.identifier(this.internalKeywordMap.context),
                 ...fun.params.map(name => b.identifier(name))
               ],
-              b.blockStatement([
-                b.expressionStatement(
-                  b.callExpression(
-                    b.memberExpression(b.identifier('context'), b.identifier('makeSimpleCall')),
-                    [
-                      b.arrayExpression(fun.outputParams.map(p => b.stringLiteral(`${fun.node.uid}:${p}`))),
-                      b.functionExpression(null, [], functionBody) 
-                    ] 
-                  ),
-                ),
-              ])
+              functionBody
             );
           }
         default:
@@ -229,9 +263,21 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_PARSE_AST, `Failed generate node ${this.getNodeStringInfo(fun.node)}, error: ${(e as Error).stack || e}`);
     }
   }
+  private buildGraphVariables(data: NodeDocunmentCompileData, graph: NodeGraph, blockStatement: n.BlockStatement) {
+    //构建变量
+    for (const variable of graph.variables) {
+      const vName = this.buildVariableName(variable.name);
+      blockStatement.body.push(b.variableDeclaration('var', [ b.variableDeclarator(
+        b.identifier(vName),
+        this.buildValue(`variable ${variable}`, variable.defaultValue),
+      ) ]));
+      //调试变量注入
+      if (data.dev)
+        blockStatement.body.push(...parse(`_DEBUG_CONNECTOR.addDebugVariable(context, '${vName}', () => ${vName})`).program.body);
+    }
+  }
 
-
-  private buildNodeParamPortTree(visitTree: NodeGraphCompileTreeVisitedNodesTree, inputParams : ExpressionKind[], port: NodePort) {
+  private buildNodeParamPortTree(data: NodeDocunmentCompileData, graph: NodeGraph, visitTree: NodeGraphCompileTreeVisitedNodesTree, inputParams : ExpressionKind[], port: NodePort) {
 
     if (port.connectedFromPort[0]?.startPort) {
 
@@ -253,7 +299,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         //反向递归循环构建参数列表,只循环参数链接
         for (const port2 of anotherNode.inputPorts) {
           if (!port2.paramType.isExecute) 
-            this.buildNodeParamPortTree(visitTree, nestInputParams, port2);
+            this.buildNodeParamPortTree(data, graph, visitTree, nestInputParams, port2);
         }
 
         let result : ExpressionKind;
@@ -299,7 +345,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             //自定义生成
             if (!compileSettings.callGenerator.generateImmediate)
               throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_BAD_PARAM, `Node ${this.getNodeStringInfo(anotherNode)} does not have callGenerator.generate function.`);
-            result = compileSettings.callGenerator.generateImmediate(this, anotherNode, nestInputParams);
+            result = compileSettings.callGenerator.generateImmediate(this, data, anotherNode, nestInputParams);
             break;
           }
         }
@@ -308,7 +354,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         //如果此立即节点有多个链接，则缓存到临时变量中方便下次直接获取
         if (anotherPort.connectedToPort.length > 1) {
           result = b.callExpression(
-            b.memberExpression(b.identifier('context'), b.identifier('setTemp')),
+            b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier('setTemp')),
             [ 
               b.stringLiteral(this.getNodePortTempKey(anotherPort)) ,
               result
@@ -322,7 +368,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         //直接从栈中获取数据 context.getTemp('NODEUID:PORTGUID')
         inputParams.push(
           b.callExpression(
-            b.memberExpression(b.identifier('context'), b.identifier('getTemp')),
+            b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.getTemp)),
             [ b.stringLiteral(this.getNodePortTempKey(anotherPort)) ]
           )
         )
@@ -332,7 +378,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       inputParams.push(this.buildValue(`Port ${this.getNodePortStringInfo(port)} initialValue`, port.initialValue));
     }
   }
-  private buildNodeTree(visitTree: NodeGraphCompileTreeVisitedNodesTree, statement: n.BlockStatement, node: Node) {
+  private buildNodeTree(data: NodeDocunmentCompileData, graph: NodeGraph, visitTree: NodeGraphCompileTreeVisitedNodesTree, statement: n.BlockStatement, node: Node) {
     const compileSettings = this.getNodeCompile(node);
     if (!compileSettings) {
       printWarning(TAG, `Node ${this.getNodeStringInfo(node)} does not have compile settings but in call line.`);
@@ -344,8 +390,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       if (compileSettings.functionGenerator?.type !== 'contextNode')
         throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_CYCLICALLY_NO_CONTEXT, `Attempting to cyclically call a node without context ${this.getNodeStringInfo(node)}`);
 
-
-
+      //TODO: 上下文节点复调用
       return;
     }
     visitTree.pushVisited(node);
@@ -356,11 +401,10 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     //反向递归循环构建参数列表,只循环参数链接
     for (const port of node.inputPorts) {
       if (!port.paramType.isExecute) 
-        this.buildNodeParamPortTree(visitTree, inputParams, port);
+        this.buildNodeParamPortTree(data, graph, visitTree, inputParams, port);
     }
 
     try {
-
       const outPorts =  node.outputPorts.filter(p => p.paramType.isExecute);
 
       //构建调用
@@ -368,7 +412,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         default:
         case 'simpleCall': {
           //简单调用，只需要生成调用语句
-          inputParams.push(b.identifier('context'));
+          inputParams.push(b.identifier(this.internalKeywordMap.context));
           if (compileSettings.functionGenerator?.type === 'contextNode') {
             statement.body.push(
               b.variableDeclaration('const', [ b.variableDeclarator(
@@ -383,11 +427,15 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
               )
             );
           }
+
+          //调试进入节点
+          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+
           //递归构建下一链接的节点,只循环执行链接
           for (const port of outPorts) {
             for (const connector of port.connectedToPort) {
               if (connector.endPort)
-                this.buildNodeTree(visitTree, statement, connector.endPort.parent);
+                this.buildNodeTree(data, graph, visitTree, statement, connector.endPort.parent);
             }
           }
           break;
@@ -398,23 +446,32 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_BAD_PARAM, `Node ${node.uid} does not have callGenerator.generateSimpleStatement function.`);
 
           //生成语句
-          let result = compileSettings.callGenerator.generateSimpleStatement(this, node, inputParams);
+          let result = compileSettings.callGenerator.generateSimpleStatement(this, data, node, inputParams);
           //语句存在返回值
           const outParamPorts = node.outputPorts.filter(p => !p.paramType.isExecute);
           if (outParamPorts.length > 0 && compileSettings.callGenerator.simpleStatementNeedRetuen) {
             result = b.expressionStatement(b.callExpression(
-              b.memberExpression(b.identifier('context'), b.identifier('makeTemp')), 
+              b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeTemp)), 
               [ b.stringLiteral(this.getNodePortTempKey(outParamPorts[0])), result ]
             ))
           }
+          //调试进入节点
+          if (compileSettings.callGenerator.debugStatemenGenerateBefore)
+            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
 
           statement.body.push(result);
           
+          if (!compileSettings.callGenerator.debugStatemenGenerateBefore)
+            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+
           //递归构建下一链接的节点,只循环执行链接
           for (const port of outPorts) {
             for (const connector of port.connectedToPort) {
               if (connector.endPort)
-                this.buildNodeTree(visitTree, statement, connector.endPort.parent);
+                this.buildNodeTree(
+                  data, graph, visitTree, 
+                  statement, connector.endPort.parent
+                );
             }
           }
           break;
@@ -439,7 +496,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           });
 
           //预先确定信息，确定是否需要新上下文
-          compileSettings.callGenerator.generateBranch(this, node, true, inputParams, outBranchs);
+          compileSettings.callGenerator.generateBranch(this, data, node, true, inputParams, outBranchs);
 
           //提前按分支递归构建下一链接的节点,只循环执行链接
           for (const branch of outBranchs) {
@@ -447,22 +504,36 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             //构建下一链接的节点
             for (const connector of branch.port.connectedToPort) {
               if (connector.endPort)
-                this.buildNodeTree(new NodeGraphCompileTreeVisitedNodesTree(visitTree), branch.blockStatement, connector.endPort.parent);
+                this.buildNodeTree(data, graph, new NodeGraphCompileTreeVisitedNodesTree(visitTree), branch.blockStatement, connector.endPort.parent);
             }
         
-            //生成新上下文
+            /**
+             * 生成新上下文
+             * context.makeNestCall(function() {
+             *    //blockStatement
+             * })
+             */
             if (branch.needNewContext)
               branch.blockStatement = b.blockStatement([
                 b.expressionStatement(b.callExpression(
-                  b.memberExpression(b.identifier('context'), b.identifier('makeNestCall')), 
-                  [ b.functionExpression(null,[ b.identifier('context'), ], branch.blockStatement) ]
+                  b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeNestCall)), 
+                  [ 
+                    b.functionExpression(
+                      null, 
+                      [ b.identifier(this.internalKeywordMap.context), ], 
+                      branch.blockStatement, 
+                      data.dev ? true : undefined
+                    ) 
+                  ]
                 ))
               ]);
           }
 
+          //调试进入节点
+          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
           //节点自行控制每个分支的调用情况
           statement.body.push(
-            ...compileSettings.callGenerator.generateBranch(this, node, false, inputParams, outBranchs)
+            ...compileSettings.callGenerator.generateBranch(this, data, node, false, inputParams, outBranchs)
           );
           break;
         }
@@ -474,30 +545,53 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     }
   }
 
-  private buildTreeFunction(startNode: Node, cb: (statement: n.BlockStatement) => void) : n.BlockStatement {
+  private buildTreeFunction(data: NodeDocunmentCompileData, graph: NodeGraph, startNode: Node, cb: (statement: n.BlockStatement) => void) : n.BlockStatement {
     //递归构建函数
     const body = b.blockStatement([]);
     cb(body);
-    this.buildNodeTree(new NodeGraphCompileTreeVisitedNodesTree(), body, startNode);
-    return b.blockStatement([
-      b.expressionStatement(
-        b.callExpression(b.identifier('createCallContext'), [
-          b.functionExpression(null,[
-            b.identifier('context'),
-          ], body)
-        ])
-      )
-    ]);
+   
+    //构建主树
+    this.buildNodeTree(data, graph, new NodeGraphCompileTreeVisitedNodesTree(), body, startNode);
+    return body;
   }
 
-  private buildGraphVariablesFunction(graph: NodeGraph, blockStatement: n.BlockStatement) {
-    //构建变量
-    for (const variable of graph.variables) {
-      blockStatement.body.push(b.variableDeclaration('var', [ b.variableDeclarator(
-        b.identifier(this.buildVariableName(variable.name)),
-        this.buildValue(`variable ${variable}`, variable.defaultValue),
-      ) ]))
-    }
+
+  private buildDevNodeEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph, node: Node) : StatementKind[] {
+    //节点调试插入代码
+    /**
+     * if (_DEBUG_CONNECTOR.debugNode(context, graphUid, node.uid))
+     *    yield { uid: node.uid, graphUid: graphUid, type: _DEBUG_BREAK };
+     */
+    return [ 
+      b.ifStatement(b.callExpression(
+        b.memberExpression(b.identifier('_DEBUG_CONNECTOR'), b.identifier('debugNode')),
+        [ 
+          b.identifier(this.internalKeywordMap.context), 
+          b.stringLiteral(graph.uid), 
+          b.stringLiteral(node.uid),
+        ] 
+      ), b.expressionStatement(b.yieldExpression(b.objectExpression([
+        b.property('init', b.identifier('type'), b.identifier('_DEBUG_BREAK')),
+        b.property('init', b.identifier('uid'), b.stringLiteral(node.uid)),
+        b.property('init', b.identifier('graphUid'),  b.stringLiteral(graph.uid)),
+      ]))))
+    ];
+  }
+  private buildDevFunctionEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph) : StatementKind[] {
+    //函数调试插入代码
+    /**
+     * if (_DEBUG_CONNECTOR.debugFunction(graph.uid))
+     *    yield { uid: graph.uid, type: _DEBUG_BREAK };
+     */
+    return [ 
+      b.ifStatement(b.callExpression(
+        b.memberExpression(b.identifier('_DEBUG_CONNECTOR'), b.identifier('debugFunction')),
+        [ b.stringLiteral(graph.uid) ] 
+      ), b.expressionStatement(b.yieldExpression(b.objectExpression([
+        b.property('init', b.identifier('type'), b.identifier('_DEBUG_BREAK')),
+        b.property('init', b.identifier('uid'), b.stringLiteral(graph.uid)),
+      ]))))
+    ];
   }
 
   private compileGraph(graph: NodeGraph, data: NodeDocunmentCompileData, cache: NodeGraphCompileCache|undefined, topCache: NodeDocunmentCompileCache) {
@@ -505,8 +599,13 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       cache = {
         uid: graph.uid,
         ast: [],
+        lastCompileGraphHash: '',
         children: [] 
       };
+    else {
+      //TODO: 缓存处理
+    }
+
     cache.ast.splice(0);
 
     //递归构建子集
@@ -539,12 +638,25 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         if (!entryNode)
           throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_NO_ENTRY, 'No main entry node');
 
-        cache.ast.push(b.functionDeclaration(b.identifier('main'), [], 
-          this.buildTreeFunction(entryNode, (statement) => { 
-            this.buildGraphVariablesFunction(graph, statement);
-          })
+        cache.ast.push(b.functionDeclaration(
+          b.identifier('main'), 
+          [ b.identifier(this.internalKeywordMap.context) ], 
+          this.buildTreeFunction(data, graph, entryNode, (statement) => { 
+            this.buildDevFunctionEnterCode(data, graph);
+            this.buildGraphVariables(data, graph, statement);
+          }), 
+          data.dev ? true : undefined
         ));
-        cache.ast.push(b.expressionStatement(b.callExpression(b.identifier('main'), [])));
+
+        cache.ast.push(b.expressionStatement(b.callExpression(
+          b.identifier(this.internalKeywordMap.startRunFunction), 
+          ([ b.identifier('main') ] as ExpressionKind[])
+          .concat(data.dev ?[
+            b.objectExpression([
+              b.property('init', b.identifier('uid'), b.stringLiteral(graph.uid))
+            ])
+          ] : [])
+        )));
         topCache.mainAst.body.push(...cache.ast);
         break;
       }
@@ -590,6 +702,7 @@ interface NodeDocunmentCompileCache {
 }
 interface NodeGraphCompileCache {
   uid: string,
+  lastCompileGraphHash: string,
   children: NodeGraphCompileCache[],
   ast: StatementKind[],
 }
