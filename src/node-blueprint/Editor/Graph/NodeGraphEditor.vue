@@ -76,6 +76,10 @@
       <Spin />
       请稍后，文档正在加载中...
     </div>
+    <div v-if="graphLoadError" class="node-graph-error">
+      <Icon icon="icon-delete-filling" />
+      {{ graphLoadError }}
+    </div>
   </div>
 </template>
 
@@ -88,6 +92,9 @@ import NodeContainer from './Node/NodeContainer.vue';
 import ZoomTool from './SubComponents/ZoomTool.vue';
 import BasePanels from './Panel/BasePanels.vue';
 import Spin from '../Nana/Common/Spin.vue';
+import Icon from '../Nana/Icon.vue';
+import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import { NodeConnectorEditor } from './Flow/NodeConnectorEditor';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
@@ -99,18 +106,16 @@ import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
 import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
 import { useEditorViewPortController } from './Editor/EditorViewPortController';
-import type { INodeGraphEditorSettings, NodeGraphEditorViewport } from './NodeGraphEditor';
+import type { INodeGraphEditorSettings, NodeGraphEditorBaseEventListener, NodeGraphEditorViewport } from './NodeGraphEditor';
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
-import { NodeConnectorEditor } from './Flow/NodeConnectorEditor';
-import Alert from '../Nana/Modal/Alert';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
+  'postUpMessage',
 ])
 
 const props = defineProps({
@@ -134,6 +139,7 @@ const context = props.context;
 const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
 
 const graphLoading = ref(false);
+const graphLoadError = ref('');
 
 const {
   viewPort,
@@ -188,7 +194,7 @@ const {
   foregroundNodes,
   allConnectors,
   loadGraph,
-} = useEditorGraphController(context);
+} = useEditorGraphController(context, (m, d) => emit('postUpMessage', m, d));
 
 const {
   multiSelectRect,
@@ -214,9 +220,7 @@ const {
 useEditorUserController(context);
 useEditorClipBoardControllerController(context);
 
-const eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged', () => {
-  emit('selectNodeOrConnectorChanged', context.getSelectNodes(), context.getSelectConnectors());
-});
+let eventSelectNodeChanged : NodeGraphEditorBaseEventListener|null = null;
 
 //Settings
 
@@ -234,21 +238,27 @@ onMounted(() => {
   initRenderer();
   loadSettings();
   graphLoading.value = true;
+  eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged', () => {
+    emit('selectNodeOrConnectorChanged', context.getSelectNodes(), context.getSelectConnectors());
+  });
   loadGraph(props.graph).then(() => {
     graphLoading.value = false;
+    graphLoadError.value = '';
   }).catch((e) => {
-    Alert.error({
-      title: 'Error loading graph',
-      content: e.message,
-    });
+    graphLoadError.value = 'Graph load failed: ' + e;
+    props.graph.readyDispatcher.setErrorState(e);
     graphLoading.value = false;
   })
   setTimeout(() => {
     context.autoNodeSizeChangeCheckerStartStop(true);
-  }, 1999);
+    props.graph.readyDispatcher.setReadyState();
+  }, 1000);
 });
 onBeforeUnmount(() => {
-  eventSelectNodeChanged.unListen();
+  if (eventSelectNodeChanged) {
+    eventSelectNodeChanged.unListen();
+    eventSelectNodeChanged = null;
+  }
   context.autoNodeSizeChangeCheckerStartStop(false);
 })
 

@@ -730,11 +730,15 @@ export interface INodeStyleSettings {
    */
   logoBottom ?: string;
   /**
-   * 单元背景的图标 16x16
+   * 单元背景的图标 55x55
    * * 如果设置为 “title:xxxxx” 那么将会显示为文字 xxxxx
    * * 如果设置为 “icon:xxxxx” 那么将会显示为文字 xxxxx
    */
   logoBackground ?: string;
+  /**
+   * 单元背景的图标大小像素，默认大小是 55
+   */
+  logoBackgroundSize ?: number;
   /**
    * 单元标题背景颜色
    */
@@ -836,6 +840,7 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, No
   public logoRight = "";
   public logoBottom = "";
   public logoBackground = "";
+  public logoBackgroundSize = 55;
   public titleBakgroundColor = 'rgba(255,255,255,0.3)';
   public titleColor = '#fff';
   public titleState : 'normal'|'small'|'hide'|false = 'normal';

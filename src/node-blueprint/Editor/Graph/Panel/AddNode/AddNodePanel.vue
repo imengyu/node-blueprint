@@ -46,7 +46,7 @@
 import { computed, ref, type PropType, onMounted, watch, provide, onBeforeUnmount } from 'vue';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
-import Row from '../../../Nana/Layout/Row';
+import Row from '../../../Nana/Layout/RowView.vue';
 import NodeList from './NodeList.vue';
 import NodeCategory from './NodeCategory.vue';
 import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';

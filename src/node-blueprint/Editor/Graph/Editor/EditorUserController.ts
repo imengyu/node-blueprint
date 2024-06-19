@@ -12,6 +12,7 @@ import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
 import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeGraph, type INodeGraphDefine } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -273,8 +274,15 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * 设置选中单元断点状态
    */
   function setSelectedNodeBreakpointState(state : NodeBreakPoint) {
-    context.getSelectNodes().forEach((b) => b.breakpoint = state);
+    context.getSelectNodes().forEach((n) => setNodeBreakpointState(n, state));
     context.markGraphChanged();
+  }
+  /**
+   * 设置选中单元断点状态
+   */
+  function setNodeBreakpointState(node: Node, state : NodeBreakPoint) {
+    node.breakpoint = state;
+    context.postUpMessage(NodeGraphEditorInternalMessages.NodeBreakpointStateChanged, { node });
   }
 
   /**
@@ -912,7 +920,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     if (start) {
       autoNodeSizeChangeCheckerTimer = setInterval(() => {
         context.getSelectNodes().forEach((n) => n.editorHooks.callbackDoAutoResizeCheck?.())
-      }, 1000);
+      }, 1000) as any as number;
     }
   }
 

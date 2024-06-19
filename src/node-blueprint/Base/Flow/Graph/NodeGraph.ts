@@ -12,6 +12,8 @@ import { CreateObjectFactory } from "../../Serializable/SerializableObject";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData";
+import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
+import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
 
 /**
  * 流图类型
@@ -32,7 +34,7 @@ export type NodeGraphType = 'main' | 'class' | 'subgraph' | 'none' | 'static' | 
 /**
  * 图表数据
  */
-export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunment|NodeGraph> implements IObjectSharedData {
+export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunment|NodeGraph> implements IObjectSharedData, IWaitReady {
   type = 'none' as NodeGraphType;
   name = '';
   uid = RandomUtils.genNonDuplicateIDHEX(32);
@@ -86,6 +88,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                 const shadowSettings = nodeInstance.loadShadow(node, 'graph');
                 nodeInstance.mergeShadow(shadowSettings);
                 nodeInstance.isLoad = true;
+                nodeInstance.parent = this;
                 nodeInstance.events.onCreate?.(nodeInstance);
 
                 return {
@@ -124,7 +127,8 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                 connector.startPort = startPortInstance;
                 connector.endPort = endPortInstance;
                 connector.setConnectionState();
-
+                connector.parent = this;
+                
                 return {
                   parsed: true,
                   return: connector
@@ -177,6 +181,13 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
     return (this.isEditor ? 
       CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
       CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;
+  }
+
+
+  readyDispatcher = new ReadyDispatcher();
+
+  waitReady(): Promise<void> {
+    return this.readyDispatcher.waitReadyState();
   }
 
   /**

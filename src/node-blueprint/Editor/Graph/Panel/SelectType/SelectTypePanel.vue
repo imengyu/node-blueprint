@@ -32,7 +32,7 @@ import { computed, ref, type PropType, watch } from 'vue';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { NodeParamTypeRegistry } from '@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
-import Row from '../../../Nana/Layout/Row';
+import Row from '../../../Nana/Layout/RowView.vue';
 import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
 import NodeParamTypeRender from '../../../Components/Small/NodeParamTypeRender.vue';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';

@@ -5,6 +5,7 @@ import type { NodeGraph } from '../Flow/Graph/NodeGraph';
 import ArrayUtils from '../Utils/ArrayUtils';
 
 export type EditorDebugRunnerContextState = 'inactive'|'active'|'paused'|'completed';
+export type EditorDebugRunnerState = 'idle'|'running'|'paused';
 
 interface EditorDebugRunnerContext {
   dbg: {
@@ -43,8 +44,9 @@ export interface EditorDebugRunnerPauseInfo {
 }
 
 interface EditorDebugRunnerHooks {
-  runnerStateChanged(newState: 'idle'|'running'|'paused'): void;
+  runnerStateChanged(newState: EditorDebugRunnerState): void;
   alertNoActiveContext(): void;
+  getGlobalBreakPointDisableState() : boolean;
   pauseWithNode(info: EditorDebugRunnerPauseInfo): void;
   pauseWithException(info: EditorDebugRunnerPauseInfo, e: unknown): void;
 }
@@ -101,6 +103,8 @@ export class EditorDebugRunner {
         this.hooks.runnerStateChanged('paused');
       },
       checkBreakNode: (graphUid: string, nodeUid: string) => {
+        if (this.hooks.getGlobalBreakPointDisableState())
+          return false;
         const node = this.currentGraphMap.get(graphUid)?.nodes.get(nodeUid);
         if (!node)
           return false;
@@ -108,6 +112,8 @@ export class EditorDebugRunner {
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       checkDebugFunction: (graphUid: string) => {
+        if (this.hooks.getGlobalBreakPointDisableState())
+          return false;
         //TODO: 函数断点
         return false;
       },

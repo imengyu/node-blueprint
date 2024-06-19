@@ -1,8 +1,10 @@
 <template>
   <CodeLayout
     ref="codeLayout"
-    :layout-config="config"
-    :main-menu-config="menuData"
+    :layoutConfig="config"
+    :mainMenuConfig="(menuData as MenuOptions)"
+    @canLoadLayout="initLayout"
+    @canSaveLayout="saveLayout"
   >
     <template #centerArea>
       <SplitLayout
@@ -11,18 +13,15 @@
         @panelActive="onActiveTabChange"
       >
         <template #tabContentRender="{ panel }">
-          <template v-if="panel.name.startsWith('NodeEditor')">
-            <NodeDocunmentEditorComponent
-              :docunment="(panel.data as NodeDocunmentEditor)"
-              :editorSettings="editorSettings"
-              @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g)"
-              @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
-              @compileDoc="() => onCompileDocunment((panel.data as NodeDocunmentEditor))"
-            />
-          </template>
-          <template v-else>
-            <h2 :style="{ margin: 0 }">Grid {{ panel.name }}</h2>
-          </template>
+          <NodeDocunmentEditorComponent
+            v-if="panel.name.startsWith('NodeEditor')"
+            :docunment="(panel.data as NodeDocunmentEditor)"
+            :editorSettings="editorSettings"
+            :debugController="debugController"
+            @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g)"
+            @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
+            @compileDoc="() => onCompileDocunment((panel.data as NodeDocunmentEditor))"
+          />
         </template>
         <template #tabEmptyContentRender="{ grid }">
           <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
@@ -40,7 +39,11 @@
     <template #panelRender="{ panel }">
       <template v-if="panel.name==='NodeProps'">
         <PropBox class="node-custom-editor">
-          <NodeNodeProp v-if="currentActiveNodes.length > 0" :nodes="(currentActiveNodes as NodeEditor[])" />
+          <NodeNodeProp 
+            v-if="currentActiveNodes.length > 0"
+            :nodes="(currentActiveNodes as NodeEditor[])"
+            :context="(currentActiveGraph?.activeEditor as NodeGraphEditorContext)"
+          />
           <PropItem v-else>
             在图表选中单元来编辑其属性
           </PropItem>
@@ -66,12 +69,15 @@
       <template v-else-if="panel.name==='Console'">
         <Console :panel="panel" />
       </template>
+      <template v-else-if="panel.name==='DebugBreakPoints'">
+        <DebugBreakPoints :panel="panel" :debugController="debugController" />
+      </template>
     </template>
   </CodeLayout>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide, h } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, provide, h, type Ref } from 'vue';
 import NodeDocunmentEditorComponent from './NodeDocunmentEditor.vue';
 import NodeDocunmentProp from './Prop/NodeDocunmentProp.vue';
 import NodeConnectorProp from './Prop/NodeConnectorProp.vue';
@@ -82,12 +88,12 @@ import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
-import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
-import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
+import type { MenuOptions } from '@imengyu/vue3-context-menu';
+import type { INodeGraphEditorSettings, NodeGraphEditorContext } from '../Graph/NodeGraphEditor';
 import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
@@ -101,11 +107,14 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/compiler-test-1.json';
+import TestScript from '../../../../test-scripts/compiler-test-2.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
-const loadTestScript = true;
+import { useEditorDebugController } from './Editor/EditorDebugController';
+import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
 
+const loadTestScript = true;
+ 
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
 const config = ref<CodeLayoutConfig>({
@@ -125,17 +134,17 @@ const config = ref<CodeLayoutConfig>({
   titleBar: true,
   titleBarShowCustomizeLayout: true,
   activityBar: true,
-  primarySideBar: true,
+  primarySideBar: true, 
   secondarySideBar: true,
   bottomPanel: true,
   statusBar: true,
-  menuBar: true,
+  menuBar: true, 
 });
 
 const props = defineProps({
   modalTeleport: {
     type: String,
-    default: '#app',
+    default: 'body',
   },
 });
 
@@ -166,6 +175,16 @@ window.addEventListener('beforeunload', saveSettings);
 
 //#region 菜单管理
 
+function wrapperAsyncFunction(prom : Promise<any>, message = '') {
+  const loading = Alert.loading('加载中');
+  prom.then(() => {
+    loading.close();
+  }).catch((e) => {
+    loading.close();
+    Alert.error({ content: message + ' ' + e });
+  }) 
+}
+
 const menuData = reactive<MenuOptions>({
   x: 0,
   y: 0,
@@ -176,13 +195,13 @@ const menuData = reactive<MenuOptions>({
         {
           label: '新建',
           shortcut: 'Ctrl+N',
-          onClick: newDocunment,
+          onClick: () => wrapperAsyncFunction(newDocunment()),
         },
         {
           label: '打开',
           shortcut: 'Ctrl+O',
           divided: true,
-          onClick: loadDocunment,
+          onClick: () => wrapperAsyncFunction(loadDocunment()),
         },
         {
           label: '保存',
@@ -382,9 +401,9 @@ const menuData = reactive<MenuOptions>({
 const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
 const currentActiveDocunment = ref<NodeDocunment|null>(null);
 const currentActiveGraph = ref<NodeGraph|null>(null);
-const currentActiveNodes = ref<NodeEditor[]>([]);
+const currentActiveNodes = ref<NodeEditor[]>([]) as Ref<NodeEditor[]>;
 const currentActiveConnectors = ref<NodeConnectorEditor[]>([]);
-
+ 
 /**
  * 获取激活的文档编辑器
  */
@@ -453,9 +472,21 @@ function onCompileDocunment(doc: NodeDocunmentEditor, exportFile = false) {
   }
 }
 /**
+ * 快速跳转
+ */
+async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor) {
+  if (!doc.activeEditor)
+    await openDocunment(doc);
+  if (graph) {
+    await doc.activeEditor?.switchActiveGraph(graph);
+    if (node)
+      graph.activeEditor?.moveViewportToNode(node);
+  }
+}
+/**
  * 新文档
  */
-function newDocunment() {
+async function newDocunment() {
   const doc = new NodeDocunmentEditor({
     name: '新文档',
     version: '1.0',
@@ -464,8 +495,7 @@ function newDocunment() {
   });
   doc.load();
   doc.initNew();
-  openDocunment(doc);
-  return doc;
+  return await openDocunment(doc);
 }
 /**
  * 关闭已打开文档
@@ -487,46 +517,56 @@ function closeAllDocunment() {
   const openedUids = Array.from(opendDocunment.value.values()).map(p => p.uid);
   for (const uid of openedUids)
     closeDocunment(uid, true);
+  if (splitLayout.value)
+    splitLayout.value.clearLayout();
 }
 /**
  * 打开文档
  * @param doc 
  */
-function openDocunment(doc: NodeDocunmentEditor) {
-  if (opendDocunment.value.has(doc.uid))
-    return;
+
+async function openDocunment(doc: NodeDocunmentEditor) { 
+  if (opendDocunment.value.has(doc.uid)) 
+    return doc;
   
   //添加文档至界面
   opendDocunment.value.set(doc.uid, doc);
   currentActiveDocunment.value = doc;
-  onCurrentActiveDocunmentChanged();
 
-  splitLayout.value?.getActiveGird()?.addPanel({
-    name: `NodeEditor${doc.uid}`,
-    title: doc.name,
-    closeType: 'close',
-    data: doc,
-  });
-  splitLayout.value?.activePanel(`NodeEditor${doc.uid}`);
+  //加载文档
+  debugController.loadAllBreakPoints(doc);
+
+  if (splitLayout.value) {
+    splitLayout.value.getActiveGird()?.addPanel({
+      name: `NodeEditor${doc.uid}`,
+      title: doc.name,
+      closeType: 'close',
+      data: doc,
+    });
+    splitLayout.value.activePanel(`NodeEditor${doc.uid}`);
+  }
+
+  onCurrentActiveDocunmentChanged();
+  await doc.waitReady();
+
+  return doc;
 }
 /**
  * 加载文档
  */
-function loadDocunment() {
-  openJsonFile((content) => {
-    let json = {};
-    try {
-      json = JSON.parse(content);
-    } catch {
-      Alert.error({ content: '加载文档失败，无效的文件' });
-      return;
-    }
+async function loadDocunment() {
+  let content = '';
+  try {
+    content = await openJsonFile();
+  } catch {
+    return;
+  }
 
-    const doc = new NodeDocunmentEditor();
-    doc.load(json);
+  const json = JSON.parse(content);
+  const doc = new NodeDocunmentEditor();
+  doc.load(json);
 
-    openDocunment(doc);
-  })
+  await openDocunment(doc);
 }
 /**
  * 保存文档
@@ -544,7 +584,7 @@ function saveDocunment() {
 function initLayout() {
   nextTick(() => {
     if (!codeLayout.value)
-      return;
+      return; 
 
     const layoutData = SettingsUtils.getSettings<any>('NodeIdeEditorLayout', null) || DefaultLayoutData;
     codeLayout.value.loadLayout(layoutData, (panel) => {
@@ -578,6 +618,34 @@ function initLayout() {
           panel.tooltip = panel.title;
           panel.iconSmall = () => h(Icon, { icon: 'icon-shapes-2' });
           break;
+        case 'DebugVariables':
+          panel.title = '堆栈变量';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-coins' });
+          break;
+        case 'DebugStacks':
+          panel.title = '调用栈';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-cards' });
+          break;
+        case 'DebugBreakPoints':
+          panel.title = '断点';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-breakpoint-active' });
+          break;
+        case 'DebugGroup':
+          panel.title = '调试器';
+          panel.tooltip = panel.title;
+          panel.tabStyle = 'single';
+          panel.iconSmall = () => h(Icon, { icon: 'icon-bug-fill' });
+          panel.iconLarge = () => h(Icon, { icon: 'icon-bug-fill', size: 20 });
+          break;
+        case 'ExplorerGroup':
+          panel.title = '资源管理器';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-folder-close' });
+          panel.iconLarge = () => h(Icon, { icon: 'icon-folder-close', size: 20 });
+          break;
       }
       return panel;
     });
@@ -594,6 +662,8 @@ function saveLayout() {
 }
 
 //#endregion
+
+//#region 面板事件
 
 function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
   if (panel.name.startsWith('NodeEditor'))  {
@@ -619,23 +689,29 @@ function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
   }
 }
 
+//#endregion 
+
+//#region 加载与卸载
+
 onMounted(() => {
-  initLayout();
-  loadSettings();
+  loadSettings(); 
   nextTick(() => {
     if (!loadTestScript) {
       newDocunment();
     } else {
       const doc = new NodeDocunmentEditor();
       doc.load(TestScript as any);
-      openDocunment(doc);
+      openDocunment(doc); 
     }
-  });
+  })
 });
 onBeforeUnmount(() => {
-  saveLayout();
   closeAllDocunment();
 });
+
+//#endregion 
+
+//#region 上下文
 
 const context = reactive({
   newDocunment,
@@ -645,9 +721,18 @@ const context = reactive({
   getOtherGraphEditor,
   getDocunmentByUid,
   getCurrentActiveDocunmentEditor,
+  jumpToDocunment,
 } as NodeIdeControlContext);
 
 provide('NodeIdeControlContext', context);
+
+//#endregion 
+
+//#region 调试控制器
+
+const debugController = useEditorDebugController(context);
+
+//#endregion
 
 defineExpose({
   getContext() { return context },

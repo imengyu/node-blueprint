@@ -134,7 +134,7 @@
       <NodeIconImageRender 
         class="background"
         :imageUrlOrIcon="instance.style.logoBackground"
-        :size="55"
+        :size="instance.style.logoBackgroundSize ?? 55"
         :noContainerSize="true"
       >
         <span 

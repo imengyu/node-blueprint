@@ -40,7 +40,7 @@ const props = defineProps({
   },
 });
 
-const teleport = inject('NodeGraphUIModalTeleport') as string;
+const teleport = inject<string>('NodeGraphUIModalTeleport', 'body');
 const emit = defineEmits([ 'update:type' ]);
 
 const dot = ref<HTMLDivElement>();

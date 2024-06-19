@@ -4,27 +4,27 @@
     dragSortable
     :items="graphList"
     :emptyText="showEmpty ? '没有数据，可点击右上角按钮添加' : ''"
-    :childExpandable="(childGraph) => (childGraph as NodeGraph).children.length > 0"
-    :childDragable="(childGraph, index) => ((childGraph as NodeGraph).type !== 'subgraph' || activeGraph?.children?.includes((childGraph as NodeGraph))) && !graphRenameState[index]"
+    :childExpandable="(childGraph) => childGraph.children.length > 0"
+    :childDragable="(childGraph, index) => (childGraph.type !== 'subgraph' || activeGraph?.children?.includes(childGraph)) && !graphRenameState[index]"
     :childMouseEvent="onChildGraphMouseEvent"
-    :childStartDrag="(childGraph, index, event) => onChildGraphDrag(childGraph as NodeGraph, event)"
+    :childStartDrag="(childGraph, index, event) => onChildGraphDrag(childGraph, event)"
     @drag-sort="onChildDragSort"
     @add="onAddChildGraph"
   >
     <template #rowHorizontal="{ item: childGraph, index }">
       <GraphChildrenIcon
-        :graph="(childGraph as NodeGraph)"
+        :graph="childGraph"
       />
       <PropEditTextItem 
         :renameState="graphRenameState[index] ?? false"
-        :model-value="(childGraph as NodeGraph).name"
-        @update:model-value="(v: string) => onChildGraphNameUpdate((childGraph as NodeGraph), v as string)"
+        :model-value="childGraph.name"
+        @update:model-value="(v: string) => onChildGraphNameUpdate(childGraph, v)"
         @update:renameState="(v: boolean) => graphRenameState[index] = v"
       />
-      <GraphChildrenActiveDot v-if="(childGraph as NodeGraph) === activeGraph" />
+      <GraphChildrenActiveDot v-if="childGraph === activeGraph" />
     </template>
     <template #rowExtend="{ item: childGraph }">
-      <GraphChildrenList :graph="(childGraph as NodeGraph)" :activeGraph="activeGraph" type="subgraph" />
+      <GraphChildrenList :graph="childGraph" :activeGraph="activeGraph" type="subgraph" />
     </template>
   </PropList>
 </template>

@@ -2,11 +2,14 @@ import { inject } from "vue";
 import type { NodeDocunmentEditor } from "../Graph/Flow/NodeDocunmentEditor";
 import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
 import type { NodeDocunmentEditorContext } from "./NodeDocunmentEditor";
+import type { NodeEditor } from "../Graph/Flow/NodeEditor";
+import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 
 export interface NodeIdeControlContext {
-  newDocunment() : NodeDocunmentEditor; 
+  newDocunment() : Promise<NodeDocunmentEditor>; 
   closeDocunment(uid: string): void;
-  openDocunment(doc: NodeDocunmentEditor): void;
+  openDocunment(doc: NodeDocunmentEditor): Promise<NodeDocunmentEditor>;
+  jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor): Promise<void>; 
   getDocunmentByUid(uid: string): NodeDocunmentEditor | undefined;
   getCurrentActiveGraphEditor(): NodeGraphEditorContext | null;
   getCurrentActiveDocunmentEditor(): NodeDocunmentEditorContext | null;

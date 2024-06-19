@@ -6,7 +6,54 @@
     "visible": true,
     "showBadge": true,
     "size": 0,
-    "children": []
+    "children": [
+      {
+        "name": "ExplorerGroup",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "DebugGroup",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": [
+          {
+            "name": "DebugVariables",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "DebugStacks",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "DebugBreakPoints",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          }
+        ]
+      }
+    ]
   },
   "secondary": {
     "name": "secondarySideBar",
@@ -30,7 +77,7 @@
             "resizeable": true,
             "visible": true,
             "showBadge": true,
-            "size": 346,
+            "size": 0,
             "children": []
           },
           {
@@ -39,7 +86,7 @@
             "resizeable": false,
             "visible": true,
             "showBadge": true,
-            "size": 364,
+            "size": 0,
             "children": []
           }
         ]

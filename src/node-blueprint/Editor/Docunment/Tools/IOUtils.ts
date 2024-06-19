@@ -1,21 +1,23 @@
-export function openJsonFile(cb: (content: string) => void) {
+export async function openJsonFile() {
   const input = document.createElement('input');
   input.setAttribute('type', 'file');
   input.setAttribute('style', 'opacity:0;height:0;');
   input.setAttribute('accept', 'application/json');
   document.body.appendChild(input);
 
-  input.addEventListener('change', () => {
-    if (input.files && input.files.length > 0) {
-      const reader = new FileReader();
-      reader.onload = function() {
-        cb(reader.result as string);
-      };
-      reader.readAsText(input.files[0]);
-    }
-    document.body.removeChild(input);
+  return new Promise<string>((resolve) => {
+    input.addEventListener('change', () => {
+      if (input.files && input.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          resolve(reader.result as string);
+        };
+        reader.readAsText(input.files[0]);
+      }
+      document.body.removeChild(input);
+    });
+    input.click();
   });
-  input.click();
 }
 
 export function saveJsonFile(fileName: string, content: string) {

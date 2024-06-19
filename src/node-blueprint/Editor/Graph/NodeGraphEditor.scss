@@ -34,8 +34,8 @@
     pointer-events: all;
   }
 }
-//加载中
-.node-graph-loading {
+//加载中 错误
+.node-graph-loading, .node-graph-error {
   position: absolute;
   left: 0;
   right: 0;

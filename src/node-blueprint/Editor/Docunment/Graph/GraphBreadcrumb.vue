@@ -176,6 +176,7 @@ onBeforeUnmount(() => {
   user-select: none;
   cursor: pointer;
   color: var(--mx-editor-light-text-color);
+  background-color: var(--mx-editor-background-color);
 
   .spliter {
     background-color: var(--mx-editor-border-color-dark);

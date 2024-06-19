@@ -3,11 +3,13 @@ import { SerializableObject } from "../../Serializable/SerializableObject";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
 import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
 import { NodeParamTypeRegistry } from "../Type/NodeParamTypeRegistry";
+import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
+import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
 
 /**
  * 蓝图文档定义
  */
-export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
+export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> implements IWaitReady {
   constructor(define?: INodeDocunmentDefine, isEditor?: boolean) {
     super('NodeDocunment', define, {
       serializeSchemes: {
@@ -148,6 +150,12 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> {
     if(this.mainGraph.uid === uid)
       return this.mainGraph;
     return loopChild(this.mainGraph);
+  }
+
+  readyDispatcher = new ReadyDispatcher();
+
+  waitReady(): Promise<void> {
+    return this.readyDispatcher.waitReadyState();
   }
 }
 

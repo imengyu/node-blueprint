@@ -9,32 +9,32 @@
         class="prop-list-dragger" 
         :style="{ backgroundImage: `url(${DraggerBg})` }"
         draggable="true"
-        @dragstart="onGraphVariableDrag(variable as NodeVariable, $event)"
+        @dragstart="onGraphVariableDrag(variable, $event)"
       >
         <Icon icon="icon-back1" />
       </div>
-      <div v-tooltip="'删除变量'" class="prop-delete" @click="onDeleteGraphVariable(variable as NodeVariable)">
+      <div v-tooltip="'删除变量'" class="prop-delete" @click="onDeleteGraphVariable(variable)">
         <Icon icon="icon-close" />
       </div>
       <PropItem title="变量名称">
         <Input 
-          :model-value="(variable as NodeVariable).name" 
+          :model-value="variable.name" 
           :update-at="'blur'"
-          @update:model-value="(v) => onGraphVariableNameUpdate((variable as NodeVariable), v as string)"
+          @update:model-value="(v) => onGraphVariableNameUpdate(variable, v as string)"
         />
       </PropItem>
       <PropItem title="变量类型">
         <NodeParamTypePicker
           canChangeSetType
-          :model-value="(variable as NodeVariable).type" 
-          @update:model-value="(v) => onGraphVariableTypeUpdate((variable as NodeVariable), v as NodeParamType)"
+          :model-value="variable.type" 
+          @update:model-value="(v) => onGraphVariableTypeUpdate(variable, v as NodeParamType)"
         />
       </PropItem>
       <PropItem title="变量默认值">
-        <GraphVaraibleParamEditor :variable="(variable as NodeVariable)" />
+        <GraphVaraibleParamEditor :variable="variable" />
       </PropItem>
       <PropItem title="静态">
-        <BaseCheck v-model="(variable as NodeVariable).static" />
+        <BaseCheck v-model="variable.static" />
       </PropItem>
     </template> 
     <template #add>

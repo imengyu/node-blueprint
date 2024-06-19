@@ -11,32 +11,32 @@
         <PropEditTextItem
           placeholder="端口名称"
           :renameState="true"
-          :model-value="(item as INodePortDefine).name"
-          @update:model-value="(v: string) => onPortNameUpdate(item as INodePortDefine, v)"
+          :model-value="item.name"
+          @update:model-value="(v: string) => onPortNameUpdate(item, v)"
         />
         <NodeParamTypePicker 
-          :model-value="(item as INodePortDefine).paramType" 
+          :model-value="item.paramType" 
           canBeAny
           canBeExecute
           canBeArrayOrSetOrDict
           canChangeSetType
-          @update:model-value="(v: NodeParamType) => onPortTypeUpdate(item as INodePortDefine, v)"
+          @update:model-value="(v: NodeParamType) => onPortTypeUpdate(item, v)"
         />
-        <SmallButton title="上移" @click="onMovePort(item as INodePortDefine, false)">
+        <SmallButton title="上移" @click="onMovePort(item, false)">
           <Icon icon="icon-decline-filling" :rotate="180" />
         </SmallButton>
-        <SmallButton title="下移" @click="onMovePort(item as INodePortDefine, true)">
+        <SmallButton title="下移" @click="onMovePort(item, true)">
           <Icon icon="icon-decline-filling" />
         </SmallButton>
-        <SmallButton title="删除" @click="onDeletPort(item as INodePortDefine)">
+        <SmallButton title="删除" @click="onDeletPort(item)">
           <Icon icon="icon-close" />
         </SmallButton>
       </PropItem>
       <PropItem 
-        v-if="!(item as INodePortDefine).paramType.isExecute && !(item as INodePortDefine).paramType.isAny" 
+        v-if="!item.paramType.isExecute && !item.paramType.isAny" 
         :title="(input ? '输入' : '输出') + '默认值'"
       >
-        <GraphPortParamEditor :port="(item as NodePort)" />
+        <GraphPortParamEditor :port="item" />
       </PropItem>
     </template>
   </PropList>
@@ -50,7 +50,7 @@ import Icon from '../../Nana/Icon.vue';
 import SmallButton from '../../Components/SmallButton.vue';
 import GraphPortParamEditor from './GraphPortParamEditor.vue';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { INodePortDefine, NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
+import type { INodePortDefine } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';

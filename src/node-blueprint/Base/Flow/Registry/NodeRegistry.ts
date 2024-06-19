@@ -255,15 +255,16 @@ export class NodeRegistry extends Singleton {
    * 获取基础单元定义
    * @param name 
    */
-  public getBaseNode(name : string) : INodeDefine|null {
+  public getBaseNode(name : string) : INodeDefine {
     switch(name) {
       case 'BaseIn': return BaseNodes.getScriptBaseNodeIn();
       case 'BaseOut': return BaseNodes.getScriptBaseNodeOut();
       case 'Comment': return BaseNodes.getScriptBaseCommentNode();
-      case 'Convert': return BaseNodes.getScriptBaseConvertNode();
+      case 'ConvertToString': return BaseNodes.getScriptBaseConvertToStringNode();
+      case 'ConvertToNumber': return BaseNodes.getScriptBaseConvertToNumberNode();
       case 'VariableGet': return BaseNodes.getScriptBaseVariableGet();
       case 'VariableSet': return BaseNodes.getScriptBaseVariableSet();
     }
-    return null;
+    throw new Error(`Unknown baseNode type ${name}!`);
   }
 }

@@ -7,7 +7,7 @@ export interface NodeDocunmentEditorContext {
    * @param graph 
    * @param noStackHistory 是否不保存导航栏历史记录，默认：false 
    */
-  openGraph(graph: NodeGraph, noStackHistory?: boolean) : void;
+  openGraph(graph: NodeGraph, noStackHistory?: boolean) : Promise<void>;
   /**
    * 关播指定的图表
    * @param graph 
@@ -18,7 +18,7 @@ export interface NodeDocunmentEditorContext {
     * @param graph 
     * @param noStackHistory 是否不保存导航栏历史记录，默认：false 
     */
-  switchActiveGraph(graph: NodeGraph, noStackHistory?: boolean) : void;
+  switchActiveGraph(graph: NodeGraph, noStackHistory?: boolean) : Promise<void>;
   /**
     * 获取当前激活的图表
     * @param graph 

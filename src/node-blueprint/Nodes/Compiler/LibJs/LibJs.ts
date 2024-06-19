@@ -162,5 +162,37 @@ export const LibJsCompilerData : INodeCompilePackage = {
         ),
       }
     },
+    '8C7DA763-05C1-61AF-DCD2-174CB6C2C273': {
+      callGenerator: {
+        type: 'immediateStatement',
+        generateImmediate(compiler, data, node, params) {
+          return b.binaryExpression('+', b.stringLiteral(''), params[0]);
+        },
+      },
+    },
+    '8C7DA763-05C1-61AF-DCD2-174CB6C2C275': {
+      callGenerator: {
+        type: 'immediateStatement',
+        generateImmediate(compiler, data, node, params) {
+          return b.callExpression(b.identifier('parseInt'), params);
+        },
+      },
+    },
+    '8C7DA763-05C1-61AF-DCD2-174CB6C2C279': {
+      callGenerator: {
+        type: 'immediateStatement',
+        generateImmediate(compiler, data, node, params) {
+          return b.callExpression(b.identifier('parseFloat'), params);
+        },
+      },
+    },
+    '48F82F9A-F6F2-886F-C8CC-0EB7079D3F42': {
+      callGenerator: {
+        type: 'immediateStatement',
+        generateImmediate(compiler, data, node, params) {
+          return b.callExpression(b.identifier('Boolean'), params);
+        },
+      },
+    }
   },
 }

@@ -4,6 +4,8 @@ import { Singleton } from "../../Singleton/Singleton";
 import { createEnumInternalEditor, registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
 import type { IObject } from "../../Utils/BaseTypes";
+import type { INodeDefine } from "../Node/Node";
+import { NodeRegistry } from "../Registry/NodeRegistry";
 
 const TAG = 'NodeParamTypeRegistry';
 
@@ -168,36 +170,18 @@ export class NodeParamTypeRegistry extends Singleton {
    * 创建枚举类型的转换器，
    * 默认支持 ：
    * * 字符串转换 string->enum /enum->string
-   * * 索引转换 number->enum /enum->number
+   * * //TODO: 索引转换 number->enum /enum->number
    */
   private createEnumDefaultConverter(newType: NodeParamType) {
     this.registerTypeCoverter({
       fromType: NodeParamType.String,
       toType: newType,
-      converter(source) { return source; },
-    });
-    this.registerTypeCoverter({
-      fromType: NodeParamType.Number,
-      toType: newType,
-      converter(source) {
-        if (newType.define?.options)
-          return newType.define.options[source]; 
-        return null;
-      },
+      converterNode: NodeRegistry.getInstance().getBaseNode('ConvertToString'),
     });
     this.registerTypeCoverter({
       fromType: newType,
       toType: NodeParamType.String,
-      converter(source) { return source; },
-    });
-    this.registerTypeCoverter({
-      fromType: newType,
-      toType: NodeParamType.Number,
-      converter(source) { 
-        if (newType.define?.options)
-          return newType.define.options.indexOf(source); 
-        return 0;
-      },
+      converterNode: NodeRegistry.getInstance().getBaseNode('ConvertToString'),
     });
   }
 
@@ -247,9 +231,7 @@ export interface NodeTypeCoverter {
    */
   toType : NodeParamType,
   /**
-   * 
-   * @param source 转换器函数
-   * @returns 
+   * 转换器
    */
-  converter : (source : any) => any;
+  converterNode : INodeDefine;
 }

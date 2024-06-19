@@ -98,10 +98,11 @@ function logListener(tag : string, level : LogLevel, content : string|number|boo
   if(level === 'warning') waringCount.value++;
   if(level === 'error') errorCount.value++;
 
-
-
   if(autoScroll.value && list) 
     list.value?.scrollTo(0, list.value.scrollHeight);
+  if (extendObj) {
+    //TODO: Log extendObj
+  }
 }
 function clearLogs() {
   waringCount.value = 0;
@@ -164,7 +165,7 @@ watch(() => props.panel, initToolbar);
 
 onMounted(() => {
   logger.addListener(logListener);
-  logger.reSendTemparyLogs();
+  logger.reSendLogs();
   initToolbar();
 });
 onBeforeUnmount(() => {

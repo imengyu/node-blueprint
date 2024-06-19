@@ -242,8 +242,6 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
   
   protected saveProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: unknown) : unknown {
     
-    if (key === 'customSize')
-    console.log('!');
     if (config.saveProp) {
       const ret = config.saveProp(key, parentKey, element);
       if (ret?.parsed)

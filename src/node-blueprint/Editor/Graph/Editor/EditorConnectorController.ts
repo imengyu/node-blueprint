@@ -13,7 +13,7 @@ import { createMouseDownAndUpHandler } from "./MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import BaseNodes, { type ICoverterNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import type { ICoverterNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
@@ -419,7 +419,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     //创建转换器节点
     //新的节点在两个端口的中心位置
     const convertNode = context.userAddNode<ICoverterNodeOptions>(
-      BaseNodes.getScriptBaseConvertNode(), 
+      converter.converterNode, 
       {
         addNodeInPos: Rect.makeBy2Point(
           new Rect(), 

@@ -1,6 +1,8 @@
 const _DEBUG_BUILD = false;
 /* eslint-disable */ var _CORE_CONNECTOR = undefined;
 if (!_CORE_CONNECTOR) _CORE_CONNECTOR = {};
+if (!_CORE_CONNECTOR.begin) _CORE_CONNECTOR.begin = function () {};
+if (!_CORE_CONNECTOR.exit) _CORE_CONNECTOR.exit = function () {};
 var _DEBUG_CONNECTOR = {
   console(type, tag, msg) {
     switch (type) {
@@ -53,8 +55,9 @@ var _LIB_INTERNAL = {
         if (_DEBUG_BUILD) {
           newContext.dbg = dbg ? makeDbgDefaults(dbg) : this.dbg;
           debugRunFunction(cb, newContext);
+        } else {
+          cb(newContext);
         }
-        elsecb(newContext);
       },
       makeSimpleCall(rps, cb) {
         const ret = cb();
@@ -72,48 +75,35 @@ function startRunFunction(fun, dbg) {
   return fun(newContext);
 }
 function main(context) {
-  var v8241859104825823 = 0;
   f0324C0ECCE4405B8A62D0ECE0D19DC9F(context);
   f2076EDF991D45C7728A1D6390ECD5BFC(context, 0, 10);
   f4B6EA7379702A383A268AADC332038DF(
     context,
-    "TEST",
-    context.makeTemp(
-      "36346573633033:OUTPUT",
-      context.getTemp("6f68676f6c646f:VALUE") + (2 + (1 + 0))
-    ),
+    null,
+    "Hello:" + ("" + context.getTemp("617462377a30746c:VALUE")),
     "log"
   );
-  if (context.getTemp("36346573633033:OUTPUT") > 5) {
-    f4B6EA7379702A383A268AADC332038DF(context, null, ">5", "log");
-    f7788580292C8569B1E7F48938943A549(context);
-  } else {
-    setTimeout(function () {
-      context.makeNestCall(function (context) {
-        for (let index = 0; index < 10; index += 1) {
-          context.makeTemp(
-            "36396f7a796776:OUTPUT",
-            (v8241859104825823 = v8241859104825823 + 2)
-          );
-          if (!(context.getTemp("36396f7a796776:OUTPUT") < 6)) {
-            break;
-          }
-        }
-        f4B6EA7379702A383A268AADC332038DF(context, null, "<= 5", "log");
-        f7788580292C8569B1E7F48938943A549(context);
-      });
-    }, 1000);
-  }
+  setTimeout(function () {
+    context.makeNestCall(function (context) {
+      f4B6EA7379702A383A268AADC332038DF(
+        context,
+        null,
+        "world:" + ("" + (context.getTemp("617462377a30746c:VALUE") + 2)),
+        "log"
+      );
+      f7788580292C8569B1E7F48938943A549(context);
+    });
+  }, 1000);
 }
 startRunFunction(main);
 function f0324C0ECCE4405B8A62D0ECE0D19DC9F(context) {
   return context.makeSimpleCall([], function () {
-    //_CORE_CONNECTOR.begin();
+    _CORE_CONNECTOR.begin();
   });
 }
 function f7788580292C8569B1E7F48938943A549(context) {
   return context.makeSimpleCall([], function () {
-    //_CORE_CONNECTOR.exit();
+    _CORE_CONNECTOR.exit();
   });
 }
 function f4B6EA7379702A383A268AADC332038DF(context, TAG, PRINT, LEVEL) {
@@ -122,7 +112,7 @@ function f4B6EA7379702A383A268AADC332038DF(context, TAG, PRINT, LEVEL) {
   });
 }
 function f2076EDF991D45C7728A1D6390ECD5BFC(context, MIN, MAX) {
-  return context.makeSimpleCall(["6f68676f6c646f:VALUE"], function () {
+  return context.makeSimpleCall(["617462377a30746c:VALUE"], function () {
     return Math.floor(Math.random() * (MAX - MIN)) + MIN;
   });
 }

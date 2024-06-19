@@ -8,8 +8,37 @@
       <GraphSideToolItem icon="icon-trash" tooltip="删除" @click="onDelete" />
       <GraphSideToolSeparator />
       <GraphSideToolItem icon="icon-microchip" tooltip="编译" @click="$emit('compileDoc')" />
-      <GraphSideToolItem icon="icon-Play" color="green" tooltip="调试" :enable="false" />
-      <GraphSideToolItem icon="icon-Next" color="blue" tooltip="单步执行" :enable="false" />
+      <GraphSideToolItem 
+        v-if="debugController.state.value !== 'running'"
+        icon="icon-Play"
+        color="green" 
+        tooltip="调试"
+        :enable="!debugController.busyState.value"
+        @click="debugController.run()"
+      />
+      <GraphSideToolItem 
+        v-else
+        icon="icon-Pause"
+        color="green"
+        tooltip="暂停"
+        :enable="!debugController.busyState.value"
+        @click="debugController.pause()"
+      />
+      <GraphSideToolItem 
+        icon="icon-Next"
+        color="blue"
+        tooltip="单步执行"
+        :enable="!debugController.busyState.value"
+        @click="debugController.step()"
+      />
+      <GraphSideToolItem 
+        v-if="debugController.state.value !== 'idle'" 
+        icon="icon-sphere"
+        color="red"
+        tooltip="结束"
+        :enable="!debugController.busyState.value"
+        @click="debugController.stop()"
+      />
     </GraphSideTool>
     <SplitLayout
       ref="splitLayoutRef"
@@ -34,10 +63,8 @@
           :graph="(panel.data as OpenedGraphsData).graph"
           :settings="editorSettings"
           @selectNodeOrConnectorChanged="(p, p2) => onSelectNodeChanged((panel.data as OpenedGraphsData).graph.uid, p, p2)"
+          @postUpMessage="(p, p2) => onPostUpMessage((panel.data as OpenedGraphsData).graph.uid, p, p2)"
         />
-      </template>
-      <template #tabEmptyContentRender="{ grid }">
-        <h2 :style="{ margin: 0 }">Empty Grid {{ grid.name }} {{ grid.direction }}</h2>
       </template>
     </SplitLayout>
   </RowView>
@@ -61,8 +88,11 @@ import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
 import type { NodeEditor } from '../Graph/Flow/NodeEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
+import type { EditorDebugController } from './Editor/EditorDebugController';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
+import { NodeGraphEditorInternalMessages } from '../Graph/Meaasges/EditorInternalMessages';
+import type { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 
 interface OpenedGraphsData {
   graph: NodeGraph,
@@ -78,11 +108,16 @@ const props = defineProps({
     type: Object as PropType<INodeGraphEditorSettings>,
     default: null,
   },
+  debugController: {
+    type: Object as PropType<EditorDebugController>,
+    default: null,
+  },
 });
 
 const emit = defineEmits([ 
   'activeGraphEditorChange',
   'activeGraphSelectionChange',
+  'postUpMessage',
   'compileDoc',
 ])
 
@@ -150,7 +185,7 @@ const context = {
       pushStack(graph.uid, '');
     emit('activeGraphEditorChange', graph);
   },
-  openGraph(graph, noStackHistory = false) {
+  async openGraph(graph, noStackHistory = false) {
     currentGraph.value = graph;
     emit('activeGraphEditorChange', graph);
     if (openedGraphs.value.find((g) => g.graph === graph)) {
@@ -172,6 +207,7 @@ const context = {
     openedGraphs.value.push(data);
     if (!noStackHistory)
       pushStack(graph.uid, '');
+    await graph.waitReady();
   },
   closeGraph(graph) {
     const editorPanel = splitLayoutRef.value?.getPanelByName(graph.uid);
@@ -200,25 +236,45 @@ function onDelete() {
 function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: NodeConnectorEditor[]) {
   emit('activeGraphSelectionChange', graphUid, nodes, connectors);
 }
+function onPostUpMessage(graphUid: string, message: string, data: any) {
+  switch (message) {
+    case NodeGraphEditorInternalMessages.NodeBreakpointStateChanged:
+      props.debugController?.onNodeBreakPointStateChanged(data.node);
+      break;
+    case NodeGraphEditorInternalMessages.NodeRemoved:
+      props.debugController?.onNodeDelete(data.node);
+      break;
+  }
+  emit('postUpMessage', graphUid, message, data);
+}
+
+//打开主图表
+function openMainGraph() {
+  const doc = props.docunment as NodeDocunmentEditor;
+  if (doc.mainGraph)
+    context.openGraph(doc.mainGraph)
+      .then(() => doc.readyDispatcher.setReadyState())
+      .catch((e) => doc.readyDispatcher.setErrorState(e));
+  else
+    doc.readyDispatcher.setReadyState();
+}
 
 watch(() => props.docunment, (doc) => {
   context.closeAllGraph();
-  if (doc && doc.mainGraph)
-    context.openGraph(doc.mainGraph);
+  if (doc)
+    openMainGraph();
 });
 onMounted(() => {
   const doc = props.docunment;
   if (doc) {
     doc.activeEditor = context;
-
-    //打开主图表
-    if (doc.mainGraph)
-      context.openGraph(doc.mainGraph);
+    openMainGraph();
   }
 });
 onBeforeUnmount(() => {
   context.closeAllGraph();
   const doc = props.docunment;
+
   doc.activeEditor = null;
-});
+}); 
 </script>

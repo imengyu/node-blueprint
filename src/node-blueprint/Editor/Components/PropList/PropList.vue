@@ -34,7 +34,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { ref, type PropType } from 'vue';
 import Icon from '../../Nana/Icon.vue';
 import PropListItem from './PropListItem.vue';
@@ -43,7 +43,7 @@ const emit = defineEmits([ 'add', 'dragSort' ])
 
 const props = defineProps({
   items: {
-    type: Object as PropType<unknown[]>,
+    type: Object as PropType<T[]>,
     default: null,
   },
   emptyText: {
@@ -59,19 +59,19 @@ const props = defineProps({
     default: false,
   },
   childExpandable: {
-    type: Function as PropType<(item: unknown, index: number) => boolean>,
+    type: Function as PropType<(item: T, index: number) => boolean>,
     default: null,
   },
   childDragable: {
-    type: Function as PropType<(item: unknown, index: number) => boolean>,
+    type: Function as PropType<(item: T, index: number) => boolean>,
     default: null,
   },
   childStartDrag: {
-    type: Function as PropType<(item: unknown, index: number, e: DragEvent) => void>,
+    type: Function as PropType<(item: T, index: number, e: DragEvent) => void>,
     default: null,
   },
   childMouseEvent: {
-    type: Function as PropType<(item: unknown, index: number, type: 'click'|'dblclick'|'contextmenu', e: MouseEvent) => void>,
+    type: Function as PropType<(item: T, index: number, type: 'click'|'dblclick'|'contextmenu', e: MouseEvent) => void>,
     default: null,
   },
   rowClass: {
@@ -83,7 +83,7 @@ const props = defineProps({
 const expandState = ref<boolean[]>([]);
 const draggingItemIndex = ref(-1);
 
-function onDragStart(item: unknown, index: number, e: DragEvent) {
+function onDragStart(item: T, index: number, e: DragEvent) {
   if (props.dragSortable)
     draggingItemIndex.value = index;
   props.childStartDrag?.(item, index, e);
@@ -91,7 +91,7 @@ function onDragStart(item: unknown, index: number, e: DragEvent) {
 function onDragEnd() {
   draggingItemIndex.value = -1;
 }
-function onDrop(item: unknown, index: number, e: DragEvent, pos: string) {
+function onDrop(item: T, index: number, e: DragEvent, pos: string) {
   if (draggingItemIndex.value >= 0) {
     e.preventDefault();
     e.stopPropagation();

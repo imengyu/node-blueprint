@@ -9,6 +9,7 @@ import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
@@ -95,6 +96,12 @@ export interface NodeGraphEditorGraphControllerContext {
    * @param data 消息数据
    */
   dispstchMessage(message: string, data: any) : void;
+  /**
+   * 向顶级编辑器分发消息
+   * @param message 消息
+   * @param data 消息数据
+   */
+  postUpMessage(message: string, data: any) : void;
 }
 
 const TAG = 'EditorGraphController';
@@ -106,7 +113,10 @@ const MAX_NODES_PER_FRAME = 2048;
  * @param options 
  * @returns 
  */
-export function useEditorGraphController(context: NodeGraphEditorInternalContext) {
+export function useEditorGraphController(
+  context: NodeGraphEditorInternalContext,
+  onUpMessage: (msg: string, data: any) => void,
+) {
   const foregroundNodes = ref<Node[]>([]);
   const backgroundNodes = ref<Node[]>([]);
   const allNodes = new Map<string, NodeEditor>();
@@ -251,6 +261,8 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
           ArrayUtils.remove(backgroundNodes.value, node);
           break;
       }
+
+      context.postUpMessage(NodeGraphEditorInternalMessages.NodeRemoved, { node, byUser });
     }
     return true;
   }
@@ -288,8 +300,11 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   function addNodes(nodes: NodeEditor[]) {
     if (currentGraph.value) {
       pushNodes(...nodes);
-      for (const node of nodes)
+      for (const node of nodes) {
+        node.parent = currentGraph.value;
         currentGraph.value.nodes.set(node.uid, node);
+        context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
+      }
     } else {
       printWarning('Graph', 'addNode fail: no currentGraph');
     }
@@ -297,7 +312,9 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
   function addNode(node: NodeEditor) {
     if (currentGraph.value) {
       pushNodes(node);
+      node.parent = currentGraph.value;
       currentGraph.value.nodes.set(node.uid, node);
+      context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
     } else {
       printWarning('Graph', 'addNode fail: no currentGraph');
     }
@@ -378,12 +395,21 @@ export function useEditorGraphController(context: NodeGraphEditorInternalContext
       default: devWarning(TAG, `dispstchMessage failed: Unkown message ${message}`); break;
     }
   }
+  /**
+   * 向顶级编辑器分发消息
+   * @param message 消息
+   * @param data 消息数据
+   */
+  function postUpMessage(message: string, data: any) {
+    onUpMessage(message, data);
+  }
 
   context.filterNodes = filterNodes;
   context.sendMessageToNode = sendMessageToNode;
   context.sendMessageToNodes = sendMessageToNodes;
   context.sendMessageToFilteredNodes = sendMessageToFilteredNodes;
   context.dispstchMessage = dispstchMessage;
+  context.postUpMessage = postUpMessage;
 
   context.closeGraph = closeGraph;
   context.clearAll = clearAll;

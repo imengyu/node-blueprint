@@ -2,6 +2,8 @@
   <div 
     class="nana-flex-row"
     :style="({
+      position: relative ? 'relative' : undefined,
+      display: inline ? 'flex-inline' : 'flex',
       flexWrap: wrap,
       flex: fill ? 1 : undefined,
       flexGrow: flexGrow,
@@ -9,6 +11,8 @@
       alignItems: align,
       alignSelf: alignSelf,
       justifyContent: justify,
+      width: typeof width === 'number' ? `${width}px` : width,
+      height: typeof height === 'number' ? `${height}px` : height,
     } as any)"
   >
     <slot />
@@ -74,6 +78,25 @@ export default defineComponent({
      */
     flexShrink: {
       type: Number,
+      default: undefined
+    },
+    /**
+     * 是否内联，默认 false
+     */
+    inline: {
+      type: Boolean,
+      default: false
+    },
+    relative: {
+      type: Boolean,
+      default: false
+    },
+    width: {
+      type: [Number, String],
+      default: undefined
+    },
+    height: {
+      type: [Number, String],
       default: undefined
     },
   },

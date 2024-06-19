@@ -4,10 +4,10 @@ import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import ObjectUtils from "@/node-blueprint/Base/Utils/ObjectUtils";
 import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 
@@ -32,18 +32,15 @@ export default {
   getScriptBaseVariableGet() { return variableGet;  },
   getScriptBaseVariableSet() { return variableSet;  },
   getScriptBaseCommentNode() { return commentNode;  },
-  getScriptBaseConvertNode() { return convertNode;  },
+  getScriptBaseConvertToNumberNode() { return convertToNumberNode; },
+  getScriptBaseConvertToStringNode() { return convertToStringNode; },
   messages,
   packageName: 'Base',
   version: 1,
 }
 
 function register() {
-
-  //注册转换方法
-  registerBaseConverters();
-
-  return registerScriptBase().concat(
+  const result = registerScriptBase().concat(
     registerScriptGraphBase(),
     registerScriptVariableBase(),
     registerDebugBase(),
@@ -53,36 +50,40 @@ function register() {
     registerConvertNode(),
     registerConnNode(),
   );
+
+  //注册转换方法
+  registerBaseConverters();
+
+  return result;
 }
 
 function registerBaseConverters() {
   const NodeParamTypeRegistryInstance = NodeParamTypeRegistry.getInstance();
-  const anyStringConverter = (v : any) => { return '' + v };
 
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.Number,
     toType: NodeParamType.String, 
-    converter: anyStringConverter
+    converterNode: convertToStringNode,
   });
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.Boolean,
     toType: NodeParamType.String, 
-    converter: anyStringConverter
+    converterNode: convertToStringNode,
   });
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.String,
     toType: NodeParamType.Number,
-    converter: (v) => parseFloat(v)
+    converterNode: convertToNumberNode,
   });
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.String,
     toType: NodeParamType.Boolean,
-    converter: (v : string) => !StringUtils.isNullOrEmpty(v) && (v.toLowerCase() === 'true')
+    converterNode: convertToBooleanNode
   });
   NodeParamTypeRegistryInstance.registerTypeCoverter({
     fromType: NodeParamType.Any,
     toType: NodeParamType.String,
-    converter: (v : any) => v + ''
+    converterNode: convertToNumberNode,
   });
 }
 
@@ -94,7 +95,9 @@ let graphCall : INodeDefine;
 let variableGet : INodeDefine;
 let variableSet : INodeDefine;
 let commentNode : INodeDefine;
-let convertNode : INodeDefine;
+let convertToNumberNode : INodeDefine;
+let convertToStringNode : INodeDefine;
+let convertToBooleanNode : INodeDefine;
 
 import NodeIconSwith from '../NodeIcon/switch.svg';
 import NodeIconClock from '../NodeIcon/clock.svg';
@@ -110,11 +113,12 @@ import NodeIconEntryString from '../NodeIcon/string.svg';
 import NodeIconEntryBoolean from '../NodeIcon/boolean.svg';
 import NodeIconInfo from '../NodeIcon/info.svg';
 import NodeIconInfo2 from '../NodeIcon/info2.svg';
-import NodeIconConvert from '../NodeIcon/convert.svg';
+import NodeIconConnector from '../NodeIcon/connector.svg';
+import NodeIconConvert0 from '../NodeIcon/convert-bg.svg';
+import NodeIconConvert1 from '../NodeIcon/convert.svg';
 import NodeIconConvert2 from '../NodeIcon/convert-number.svg';
 import NodeIconConvert3 from '../NodeIcon/convert-number-2.svg';
 import NodeIconType from '../NodeIcon/cpu.svg';
-import ObjectUtils from "@/node-blueprint/Base/Utils/ObjectUtils";
 
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
@@ -1364,58 +1368,106 @@ function registerCommentNode() {
   return [ documentCommentNode, commentNode ];
 }
 function registerConvertNode() {
-  convertNode = {
-    guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C279',
-    name: '转换器',
+
+  const style : INodeDefine['style'] = {
+    logo: NodeIconConvert1,
+    logoBackground: NodeIconConvert0,
+    logoBackgroundSize: 30,
+    minWidth: 0,
+    inputPortMinWidth: 0,
+    titleState: 'hide',
+    titleBakgroundColor: "rgba(250,250,250,0.6)",
+  };
+  const convertToIntNode : INodeDefine = {
+    guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C275',
+    name: '转换为整形数字',
     author: 'imengyu',
     version: 1,
     category: '基础/转换',
-    hideInAddPanel: true,
     ports: [
       {
         guid: 'INPUT',
         paramType: NodeParamType.Any,
         direction: 'input',
+        isFlexible: 'auto',
         defaultConnectPort: true,
       },
       {
         guid: 'OUTPUT',
-        paramType: NodeParamType.Any,
+        paramType: NodeParamType.Number,
         direction: 'output'
       },
     ],
-    events: {
-      onCreate: (node) => {
-        const options = node.options as unknown as ICoverterNodeOptions;
-
-        if (
-          !StringUtils.isNullOrEmpty(options.coverterFrom) && 
-          !StringUtils.isNullOrEmpty(options.coverterTo)
-        ) {
-          const fromType = NodeParamType.FromString(options.coverterFrom);
-          const toType = NodeParamType.FromString(options.coverterTo);
-
-          const fromPort = node.getPortByGUID('INPUT') as NodePort;
-          const toPort = node.getPortByGUID('OUTPUT') as NodePort;
-    
-          node.changePortParamType(fromPort, fromType);
-          node.changePortParamType(toPort, toType);
-          
-          node.description = node.define.description = '转换 ' + fromType.toUserFriendlyName() + 
-            ' 至 ' + toType.toUserFriendlyName();
-        }
+    style,
+  }; 
+  convertToNumberNode = {
+    guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C279',
+    name: '转换为浮点数字',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/转换',
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+        direction: 'input',
+        isFlexible: 'auto',
+        defaultConnectPort: true,
       },
-    },
-    style: {
-      logo: NodeIconEntryString,
-      minWidth: 0,
-      inputPortMinWidth: 0,
-      titleState: 'hide',
-      titleBakgroundColor: "rgba(250,250,250,0.6)",
-    },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.Number,
+        direction: 'output'
+      },
+    ],
+    style,
+  }; 
+  convertToStringNode = {
+    guid: '8C7DA763-05C1-61AF-DCD2-174CB6C2C273',
+    name: '转换为字符串',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/转换',
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+        direction: 'input',
+        isFlexible: 'auto',
+        defaultConnectPort: true,
+      },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.String,
+        direction: 'output'
+      },
+    ],
+    style,
+  }; 
+  convertToBooleanNode = {
+    guid: '48F82F9A-F6F2-886F-C8CC-0EB7079D3F42',
+    name: '转换为布尔值',
+    author: 'imengyu',
+    version: 1,
+    category: '基础/转换',
+    ports: [
+      {
+        guid: 'INPUT',
+        paramType: NodeParamType.Any,
+        direction: 'input',
+        isFlexible: 'auto',
+        defaultConnectPort: true,
+      },
+      {
+        guid: 'OUTPUT',
+        paramType: NodeParamType.String,
+        direction: 'output'
+      },
+    ],
+    style,
   }; 
 
-  return [ convertNode ];
+  return [ convertToNumberNode, convertToStringNode, convertToIntNode, convertToBooleanNode ];
 }
 function registerConnNode() {
   const connNode : INodeDefine = {
@@ -1448,7 +1500,7 @@ function registerConnNode() {
       },
     ],
     style: {
-      logo: NodeIconConvert,
+      logo: NodeIconConnector,
       titleState: 'hide',
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',
@@ -1507,7 +1559,7 @@ function registerConnNode() {
       },
     ],
     style: {
-      logo: NodeIconConvert,
+      logo: NodeIconConnector,
       titleState: 'hide',
       inputPortMinWidth: '0',
       outputPortMinWidth: '0',

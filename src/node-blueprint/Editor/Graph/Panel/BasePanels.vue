@@ -62,12 +62,12 @@ import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
-import Alert from '../../Nana/Modal/Alert';
+import Alert, { type AlertProps } from '../../Nana/Modal/Alert';
 import { SimpleTimer } from '@/node-blueprint/Base/Utils/Timer/Timer';
 import TooltipContent from '../../Nana/Tooltip/TooltipContent.vue';
 
-const context = inject('NodeGraphEditorContext') as NodeGraphEditorInternalContext;
-const teleport = inject('NodeGraphUIModalTeleport') as string;
+const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
+const teleport = inject<string>('NodeGraphUIModalTeleport', 'body');
 
 defineProps({
   viewPort: {
@@ -96,12 +96,12 @@ function closeSmallTip() {
 
 //#region 对话框
 
-context.showModal = (options) => {
+function showModal(options: AlertProps) {
   Alert.alert(options);
-};
-context.showConfirm = (options) => {
+}
+function showConfirm(options: AlertProps) {
   return Alert.confirm(options);
-};
+}
 
 //#endregion
 
@@ -114,19 +114,19 @@ const editorHoverInfoTip = reactive({
 });
 const editorHoverInfoTooltipPos = ref(new Vector2());
 const updateMousePointTimer = new SimpleTimer(undefined, () => {
-  editorHoverInfoTooltipPos.value.set(context.getMouseInfo().mouseCurrentPosScreen);
+  if (context)
+    editorHoverInfoTooltipPos.value.set(context.getMouseInfo().mouseCurrentPosScreen);
 }, 20);
-
-context.showEditorHoverInfoTip = (text : string, status: 'success'|'failed'|'' = '') => {
+function showEditorHoverInfoTip(text : string, status: 'success'|'failed'|'' = '') {
   editorHoverInfoTip.show = true;
   editorHoverInfoTip.text = text;
   editorHoverInfoTip.status = status;
   updateMousePointTimer.start();
-};
-context.closeEditorHoverInfoTip = () => {
+}
+function closeEditorHoverInfoTip () {
   editorHoverInfoTip.show = false;
   updateMousePointTimer.stop();
-};
+}
 
 //#endregion
 
@@ -205,27 +205,32 @@ onMounted(() => {
   allNodesGrouped.value = NodeRegistry.getInstance().getAllNodesGrouped();
   allNodesFlat.value = NodeRegistry.getInstance().getAllNodesFlat();
 
-  //鼠标未拖拽未选择情况下，弹出添加单元菜单
-  context.getMouseHandler().pushMouseUpHandlers((info, e) => {
-    if (!info.mouseMoved && e.button === 2 && !context.isAnyConnectorHover()) {
-      showAddNodePanel(
-        info.mouseCurrentPosScreen, 
-        undefined,
-        undefined,
-        info.mouseCurrentPosViewPort.clone(),
-        false
-      );
-      return true;
-    }
-    return false;
-  })
-
-  context.showSelectTypePanel = showSelectTypePanel;
-  context.closeSelectTypePanel = closeSelectTypePanel;
-  context.showAddNodePanel = showAddNodePanel;
-  context.closeAddNodePanel = closeAddNodePanel;
-  context.showSmallTip = showSmallTip;
-  context.closeSmallTip = closeSmallTip;
+  if (context) {
+    //鼠标未拖拽未选择情况下，弹出添加单元菜单
+    context.getMouseHandler().pushMouseUpHandlers((info, e) => {
+      if (!info.mouseMoved && e.button === 2 && !context.isAnyConnectorHover()) {
+        showAddNodePanel(
+          info.mouseCurrentPosScreen, 
+          undefined,
+          undefined,
+          info.mouseCurrentPosViewPort.clone(),
+          false
+        );
+        return true;
+      }
+      return false;
+    })
+    context.showModal = showModal;
+    context.showConfirm = showConfirm;
+    context.showEditorHoverInfoTip = showEditorHoverInfoTip;
+    context.closeEditorHoverInfoTip = closeEditorHoverInfoTip;
+    context.showSelectTypePanel = showSelectTypePanel;
+    context.closeSelectTypePanel = closeSelectTypePanel;
+    context.showAddNodePanel = showAddNodePanel;
+    context.closeAddNodePanel = closeAddNodePanel;
+    context.showSmallTip = showSmallTip;
+    context.closeSmallTip = closeSmallTip;
+  }
 });
 
 </script>

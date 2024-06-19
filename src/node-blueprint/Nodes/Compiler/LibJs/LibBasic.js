@@ -3,6 +3,8 @@
 
 var _CORE_CONNECTOR = undefined;
 if (!_CORE_CONNECTOR) _CORE_CONNECTOR = {};
+if (!_CORE_CONNECTOR.begin) _CORE_CONNECTOR.begin = function() {};
+if (!_CORE_CONNECTOR.exit) _CORE_CONNECTOR.exit = function() {};
 var _DEBUG_CONNECTOR = {
   console(type, tag, msg) {
     switch (type) {
@@ -52,8 +54,9 @@ var _LIB_INTERNAL = {
           newContext.dbg = dbg ? makeDbgDefaults(dbg) : this.dbg;
           debugRunFunction(cb, newContext);
         }
-        else
+        else {
           cb(newContext);
+        }
       },
       makeSimpleCall(rps, cb) {
         const ret = cb();

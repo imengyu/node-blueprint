@@ -24,11 +24,16 @@ import type { NodeEditor } from '../../Graph/Flow/NodeEditor';
 import type { NodeBreakPoint } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
 import type { BaseSelectProps } from '../../Components/PropControl/Components/BaseSelect';
+import type { NodeGraphEditorContext } from '../../Graph/NodeGraphEditor';
 
 const props = defineProps({
   nodes: {
     type: Object as PropType<NodeEditor[]>,
     required: true,
+  },
+  context: {
+    type: Object as PropType<NodeGraphEditorContext>,
+    default: null,
   },
 });
 
@@ -53,7 +58,7 @@ const nodeDefaultProps : PropControlItem[] = [
       ]
     } as BaseSelectProps,
     getValue: () => firstSelectNode.value!.breakpoint,
-    onUpdateValue: (newValue) => firstSelectNode.value!.breakpoint = newValue as NodeBreakPoint,
+    onUpdateValue: (newValue) => props.context.setCursor(newValue as NodeBreakPoint),
   },
   {
     type: 'group',
