@@ -55,8 +55,10 @@ export class EditorPlatformWorkWeb implements EditorPlatformWorkAbstract {
   }
   loadRecentList(loadRecentListToMenu : (data : any) => void) {
     let str = localStorage.getItem('recentList');
-    if(!StringUtils.isNullOrEmpty(str))
-      loadRecentListToMenu(JSON.parse(str));
+    if(!StringUtils.isNullOrEmpty(str)) {
+      let data = JSON.parse(str); 
+      loadRecentListToMenu(data.recentList);
+    }
   }
   saveRecentList(data : object) {
     localStorage.setItem('recentList', JSON.stringify(data));

@@ -131,12 +131,14 @@ export class BlockRunner {
 
     runningContext.graphBlockParamStack.empty();
     runningContext.graphParamStack.empty();
-    runningContext.childContext.forEach((c) => this.destroyContext(c));
-    runningContext.childContext.empty();
+    
+    if(runningContext.childContext != null) {
+      this.destroyContext(runningContext.childContext);
+      runningContext.childContext = null;
+    }
 
     if(runningContext.parentContext != null) {
-      runningContext.parentContext.childContext.remove(runningContext);
-
+      runningContext.parentContext.childContext = null;
       this.testContextEnd(runningContext.parentContext);//子移除了，现在再次检查父级是不是被孤立的
       runningContext.parentContext = null;
     }
@@ -214,7 +216,7 @@ export class BlockRunner {
           nextPort.active(runningContext);
         }catch(e) {
           logger.warning(BlockRunner.TAG, `Catch exception in context ${this.currentRunningContext.stackLevel} when active ` + 
-            `port ${nextPort.getName()}\nStack: ${runningContext.printCallStack(false)}`);
+            `port ${nextPort.getName()}\nException: ${e} \n${e.stack}\nStack: ${runningContext.printCallStack(false)}`);
         }
 
         this.testContextEnd(runningContext);
@@ -226,7 +228,7 @@ export class BlockRunner {
     if(runningContext.parentContext != null
       && !runningContext.loopForceInUse 
       && !this.queue.contains(runningContext)
-      && runningContext.childContext.length == 0) //没有子上下文才销毁
+      && runningContext.childContext == null) //没有子上下文才销毁
         this.destroyContext(runningContext);
   }
   private loopForReallocContexts() {
@@ -489,6 +491,22 @@ export class BlockRunner {
       runningContext.currentBlock = null;
       runningContext.runner.callNextConnectedPort(runningContext, port);
     }
+  }
+  public doGraphCall(block : Block, inPort: BlockPort, currentGraph : BlockGraphDocunment) {
+    
+    let newContext = this.push(inPort, block.currentRunningContext, 'activator');
+    newContext.graph = currentGraph;
+    newContext.outerBlock = block;
+    this.prepareGraphVariables(newContext, currentGraph);
+    this.prepareGraphStack(newContext, currentGraph);
+    this.prepareAllBlockRun(newContext, currentGraph);
+
+    //stackCalls
+    block.currentRunningContext.stackCalls.push({
+      block: null, port: null, childContext: newContext
+    });
+
+    return newContext;
   }
 
   public lastError = '';

@@ -216,6 +216,7 @@ export class BlockGraphDocunment {
 
   lastRunContext : BlockRunContextData = null;
   blockPrepared = false;
+  connectorsPrepared = false;
 }
 
 /**

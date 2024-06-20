@@ -772,12 +772,7 @@ function registerScriptGraphBase()  {
           srcBlock: block,
           srcPort: port
         });
-
-        //提示
-        if(block.isEditorBlock) {
-          if(block.data['currentGraphErrTip']) (<BlockEditor>block).deleteBottomTip(block.data['currentGraphErrTip']);
-          block.data['currentGraphErrTip'] = (<BlockEditor>block).addBottomTip('icon-error-1','子图表 ' + block.options['graph'] + ' 没有入口！','text-warning');
-        }
+        block.throwError('子图表 ' + block.options['graph'] + ' 没有入口！', port, 'error', true);
         return;
       }
       let inPort = inBlock.getPortByGUID(port.guid);
@@ -786,23 +781,13 @@ function registerScriptGraphBase()  {
           srcBlock: block,
           srcPort: port
         });
+        block.throwError('子图表 ' + block.options['graph'] + ' 未找到入端口: ' + port.guid, port, 'error', true);
         return;
       }
 
       //新建上下文
-      let runner = block.currentRunner;
-      let newContext = runner.push(inPort, block.currentRunningContext, 'activator');
-      newContext.graph = currentGraph;
-      newContext.outerBlock = block;
-      runner.prepareGraphVariables(newContext, currentGraph);
-      runner.prepareGraphStack(newContext, currentGraph);
-      runner.prepareAllBlockRun(newContext, currentGraph);
-
-      //stackCalls
-      block.currentRunningContext.stackCalls.push({
-        block: null, port: null, childContext: newContext
-      });
-
+      let newContext = block.currentRunner.doGraphCall(block, inPort, currentGraph);
+      
       //添加到集合
       (<Array<any>>block.data['currentRunningContexts']).push(newContext);
     }

@@ -1057,6 +1057,7 @@ export default class Editor extends Vue {
     this.platformWork.loadRecentList((data: any) => {
       if (data) {
         this.recentList = data || [];
+        console.log(this.recentList);
         this.recentList.forEach((s) => {
           this.menuItemRecent.childs.unshift(new MenuData(s, () => this.doLoadFile(s)));
         });

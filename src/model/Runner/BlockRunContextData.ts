@@ -61,7 +61,7 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
    * 创建运行上下文数据
    * @param runner 运行器
    * @param startPort 起始端口
-   * @param parentContext 父上下文
+   * @param parentContext 父上下文 
    * @param workType 执行连接方式
    */
   public constructor(runner : BlockRunner, startPort : BlockPort, parentContext : BlockRunContextData, 
@@ -75,7 +75,7 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
     this.parentContext = parentContext;
 
     if(this.parentContext != null) {
-      this.parentContext.childContext.addOnce(this);
+      this.parentContext.childContext = this;
       this.outerBlock = this.parentContext.outerBlock;
       this.graphParamStack = this.parentContext.graphParamStack;
       this.graphBlockStack = this.parentContext.graphBlockStack;
@@ -156,23 +156,26 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
     return this.graphBlockParamStack[this.stackPointer];
   }
 
-
+  /**
+   * 异步子上下文
+   */
+  public asynchronousChildContext : Array<BlockRunContextData> = [];
   /**
    * 子上下文
    */
-  public childContext : Array<BlockRunContextData> = [];
+  public childContext : BlockRunContextData = null;
   /**
    * 父上下文
    */
   public parentContext : BlockRunContextData = null;
 
   /**
-   * 获取上级图表的父上下文
+   * 获取最顶级图表的父上下文
    */
   public getUpperParentContext() {
     let context = <BlockRunContextData>this;
     //回到父上下文
-    if(context.parentContext.graph != context.graph) 
+    if(context.parentContext && context.parentContext.graph != context.graph) 
     //如果当前上下文和父上下文不在一个图表内，则直接回到父上下文
       return context.parentContext;
     else {
@@ -185,6 +188,15 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
       }
       return context;
     }
+  }
+  /**
+   * 获取最下级图表的上下文。如果没有子上下文，则返回当前上下文
+   */
+  public getDownerParentContext() {
+    let context = <BlockRunContextData>this;
+    while(context.childContext != null) 
+      context = context.childContext;
+    return context;
   }
 
   /**
@@ -207,11 +219,8 @@ import { BlockRunner, RunnerWorkType } from "./Runner";
         str += `${lineSpace}Child call:${lineSpace}\n${d.childContext.printCallStack(full, level + 1)}`;
     });
 
-    if(full) {
-      this.childContext.forEach((c) => {
-        str += c.printCallStack(full, level + 1);
-      });
-    }
+    if(full && this.childContext != null)
+      str += this.childContext.printCallStack(full, level + 1);
 
     return str;
   }

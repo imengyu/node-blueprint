@@ -248,11 +248,9 @@ export class BlockRegData {
     onCreatePortCustomEditor : BlockPortEditorComponentCreateFn,
     /**
      * 单元鼠标事件（仅编辑器模式调用）
-     * 
-     * (blocak : BlockEditor, event : 'move'|'down'|'up', e : MouseEvent) => boolean
      * //返回true则终止默认事件
      */
-    onBlockMouseEvent : BlockMouseEventFn,
+    onBlockMouseEvent : (block : BlockEditor, event : 'move'|'down'|'up', e : MouseEvent) => boolean,
     /**
      * 用户创建端口时的回调（仅编辑器模式调用）
      * 

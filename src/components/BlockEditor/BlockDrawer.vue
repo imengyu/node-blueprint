@@ -226,6 +226,7 @@ export default class BlockDrawer extends Vue {
           this.loadedConnectors.push(connector);
         }
       });
+      this.currentGraph.connectorsPrepared = true;
       this.blocks.forEach(element => {
 
         if(!element.created) {
@@ -243,7 +244,7 @@ export default class BlockDrawer extends Vue {
         if(a.flexableCoonIndex == b.flexableCoonIndex) return 0;
         return a.flexableCoonIndex > b.flexableCoonIndex ? 1 : -1;
       })
-      
+
       //刷新弹性端口的连接
       setTimeout(() => {
         for(let i = 0; i < this.connectors.length; i++) {
