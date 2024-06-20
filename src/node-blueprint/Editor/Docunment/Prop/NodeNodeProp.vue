@@ -58,7 +58,7 @@ const nodeDefaultProps : PropControlItem[] = [
       ]
     } as BaseSelectProps,
     getValue: () => firstSelectNode.value!.breakpoint,
-    onUpdateValue: (newValue) => props.context.setCursor(newValue as NodeBreakPoint),
+    onUpdateValue: (newValue) => props.context.setSelectedNodeBreakpointState(newValue as NodeBreakPoint),
   },
   {
     type: 'group',

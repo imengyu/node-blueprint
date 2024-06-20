@@ -1,28 +1,30 @@
 <template>
-  <PropList 
-    :items="debugController.breakpoints.value"
-    :emptyText="`没有断点`"
-  >
-    <template #rowVertical="{ item }">
-      <Row width="100%" justify="space-between" @click="onJumpToBreakpoint(item)">
-        {{ item.node.name }}
-        <Row>
-          <SmallButton title="切换状态" @click="onToggleBreakpoint(item)">
-            <Icon :icon="item.state === 'enable' ? 'icon-breakpoint-active' : 'icon-breakpoint'" :rotate="180" />
-          </SmallButton>
-          <SmallButton title="删除" @click="onDeleteBreakpoint(item)">
-            <Icon icon="icon-close" />
-          </SmallButton>
+  <CodeLayoutScrollbar scroll="vertical">
+    <PropList 
+      :items="debugController.breakpoints.value"
+      :emptyText="`没有断点`"
+    >
+      <template #rowVertical="{ item }">
+        <Row width="100%" justify="space-between" @click="onJumpToBreakpoint(item)">
+          {{ item.node.name }}
+          <Row>
+            <SmallButton title="切换状态" @click="onToggleBreakpoint(item)">
+              <Icon :icon="item.state === 'enable' ? 'icon-breakpoint-active' : 'icon-breakpoint'" :rotate="180" />
+            </SmallButton>
+            <SmallButton title="删除" @click="onDeleteBreakpoint(item)">
+              <Icon icon="icon-close" />
+            </SmallButton>
+          </Row>
         </Row>
-      </Row>
-    </template>
-  </PropList>
+      </template>
+    </PropList>
+</CodeLayoutScrollbar>
 </template>
 
 <script setup lang="ts">
 import { h, onMounted, ref, watch, type PropType } from 'vue';
 import Icon from '../../Nana/Icon.vue';
-import type { CodeLayoutPanelInternal } from 'vue-code-layout';
+import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugBreakpoint, EditorDebugController } from '../Editor/EditorDebugController';
 import PropList from '../../Components/PropList/PropList.vue';
 import SmallButton from '../../Components/SmallButton.vue';

@@ -1,21 +1,19 @@
 /* eslint-disable */
-
-
-var _CORE_CONNECTOR = undefined;
+/*var _CORE_CONNECTOR = undefined;*/
 if (!_CORE_CONNECTOR) _CORE_CONNECTOR = {};
 if (!_CORE_CONNECTOR.begin) _CORE_CONNECTOR.begin = function() {};
 if (!_CORE_CONNECTOR.exit) _CORE_CONNECTOR.exit = function() {};
-var _DEBUG_CONNECTOR = {
-  console(type, tag, msg) {
+if (!_DEBUG_CONNECTOR) _DEBUG_CONNECTOR = {};
+if (!_DEBUG_CONNECTOR.console) 
+  _DEBUG_CONNECTOR.console = function (type, tag, msg) {
     switch (type) {
       case 'log': console.log(`[${tag}] ${msg}`); break;
       case 'warn': console.warn(`[${tag}] ${msg}`); break;
       case 'error': console.error(`[${tag}] ${msg}`); break;
       case 'info': console.info(`[${tag}] ${msg}`); break;
     }
-  },
-  reportError(e) {}
-};
+  };
+
 var _LIB_INTERNAL = {
   idMaker: 0,
   _createCallContext(parent) {
@@ -71,7 +69,7 @@ function startRunFunction(fun, dbg) {
   const newContext = _LIB_INTERNAL._createCallContext();
   if (_DEBUG_BUILD) {
     newContext.dbg = makeDbgDefaults(dbg);
-    return debugRunFunction(dbg.uid, fun(newContext));
+    return debugRunFunction(fun,newContext);
   }
   return fun(newContext);
 }

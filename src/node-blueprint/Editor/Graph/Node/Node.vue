@@ -17,6 +17,7 @@
                (instance.style.customClassNames),
                (twinkleActive ? 'actived' : ''),
                (instance.isolateState ? 'isolate' : ''),
+               (instance.breakpointTriggered ? 'breakpoint-actived' : ''),
                ...appendClass
       ]"
       :style="{
@@ -128,7 +129,7 @@
         v-show="instance.breakpointTriggered"
         class="breakpoint-arrow"
       >
-        <Icon icon="icon-arrow-down-filling" />
+        <Icon icon="icon-arrow-down-filling" :size="32" />
       </div>
       <!--背景-->
       <NodeIconImageRender 
@@ -372,7 +373,7 @@ const twinkleActive = ref(false);
 function twinkle(time: number) {
   //闪烁
   if(timerTwinkle > 0) clearInterval(timerTwinkle);
-  timerTwinkle = setInterval(() => twinkleActive.value = !twinkleActive.value, 300) as unknown as number;
+  timerTwinkle = setInterval(() => twinkleActive.value = !twinkleActive.value, 200) as unknown as number;
   setTimeout(() => {
     twinkleActive.value = false;
     clearInterval(timerTwinkle);

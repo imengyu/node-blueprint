@@ -10,6 +10,7 @@ export interface NodeIdeControlContext {
   closeDocunment(uid: string): void;
   openDocunment(doc: NodeDocunmentEditor): Promise<NodeDocunmentEditor>;
   jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor): Promise<void>; 
+  focusDebuggerPanel(): void;
   getDocunmentByUid(uid: string): NodeDocunmentEditor | undefined;
   getCurrentActiveGraphEditor(): NodeGraphEditorContext | null;
   getCurrentActiveDocunmentEditor(): NodeDocunmentEditorContext | null;

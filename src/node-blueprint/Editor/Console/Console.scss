@@ -5,117 +5,125 @@
   .list {
     font-size: 13px;
     font-family: Consolas, 'Courier New', monospace;
+  }
+}
+.console-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  border-bottom: 1px solid var(--mx-editor-border-color);
+  color: var(--mx-editor-light-text-color);  
+  padding: 6px 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 
-    .item {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      position: relative;
-      border-bottom: 1px solid var(--mx-editor-border-color);
-      color: var(--mx-editor-light-text-color);  
-      padding: 6px 12px;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
+  &.tiny {  
+    padding: 3px 8px;
+    border-bottom: none;
+  }
 
-      > div {
-        display: inline-block;
-        position: relative;
-      }
+  > div {
+    display: inline-block;
+    position: relative;
+  }
 
+  > span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-      .icon {
-        font-size: 14px;
-        margin-right: 6px;
-        vertical-align: top;
-      }
-      .tag {
-        background-color: var(--mx-editor-background-light-second-color);
-        color: var(--mx-editor-text-color);
-        border-radius: 4px;
-        padding: 2px 6px;
-        margin-right: 4px;
-        display: inline-block;
-        font-size: 12px;
-        vertical-align: top;
-      }
+  .icon {
+    font-size: 14px;
+    margin-right: 6px;
+    vertical-align: top;
+  }
+  .tag {
+    background-color: var(--mx-editor-background-light-second-color);
+    color: var(--mx-editor-text-color);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 4px;
+    display: inline-block;
+    font-size: 12px;
+    vertical-align: top;
+  }
 
-      .switch {
-        display: inline-block;
-        padding: 4px;
-        font-size: 10px;
-        transition: transform ease-in-out 0.3s;
-        cursor: pointer;
-        transform: rotate(0) scale(0.8);
-        vertical-align: top;
+  .switch {
+    display: inline-block;
+    padding: 4px;
+    font-size: 10px;
+    transition: transform ease-in-out 0.3s;
+    cursor: pointer;
+    transform: rotate(0) scale(0.8);
+    vertical-align: top;
 
-        &.hidden {
-          visibility: hidden;
-        }
-        &.open {
-          transform: rotate(90deg) scale(0.8);
-        }
-      }
+    &.hidden {
+      visibility: hidden;
+    }
+    &.open {
+      transform: rotate(90deg) scale(0.8);
+    }
+  }
 
-      .speical {
-        font-style: italic;
-        color: var(--mx-editor-background-light-second-color);
-      }
-      .number {
-        color: #6186f7;
-      }
-      .keyword {
-        color: rgb(8, 94, 192);
-      }
-      .key {
-        color: #d445f1;
-      }
-      .bigint {
-        color: rgb(0, 92, 0);
-      }
-      .string {
-        color: rgb(213, 92, 89);
-      }
+  .speical {
+    font-style: italic;
+    color: var(--mx-editor-background-light-second-color);
+  }
+  .number {
+    color: #6186f7;
+  }
+  .keyword {
+    color: rgb(8, 94, 192);
+  }
+  .key {
+    color: #d445f1;
+  }
+  .bigint {
+    color: rgb(0, 92, 0);
+  }
+  .string {
+    color: rgb(213, 92, 89);
+  }
 
-      .src {
-        float: right;
-        cursor: pointer;
-        vertical-align: top;
-      }
+  .src {
+    float: right;
+    cursor: pointer;
+    vertical-align: top;
+  }
 
-      &.warp {
-        white-space: pre-wrap;
-      }
+  &.warp {
+    white-space: pre-wrap;
+  }
 
 
-      &.warning {
-        background-color: #a06800;
-        border-bottom-color: #bd7b00;
+  &.warning {
+    background-color: #a06800;
+    border-bottom-color: #bd7b00;
 
-        .tag {
-          background-color: #cf8700;
-        }
-      }
-      &.error {
-        background-color: #991700;
-        border-bottom-color: #b61b00;
+    .tag {
+      background-color: #cf8700;
+    }
+  }
+  &.error {
+    background-color: #991700;
+    border-bottom-color: #b61b00;
 
-        .tag {
-          background-color: #d32000;
-        }
-      }
-      &.info {
-        background-color: #004e83;
-        border-bottom-color: #0061a1;
+    .tag {
+      background-color: #d32000;
+    }
+  }
+  &.info {
+    background-color: #004e83;
+    border-bottom-color: #0061a1;
 
-        .tag {
-          background-color: #0372bd;
-        }
-      }
+    .tag {
+      background-color: #0372bd;
     }
   }
 }
-
 .console-obj {
   position: relative;
   margin-left: 15px;
@@ -140,7 +148,6 @@
     margin: 0 3px 0 1px;
   }
 }
-
 .console-toolbar-left {
   font-size: 12px;
   margin-left: 10px;

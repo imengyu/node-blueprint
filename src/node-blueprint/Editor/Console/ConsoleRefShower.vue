@@ -3,10 +3,20 @@ import { defineComponent, h, type VNode } from 'vue'
 
 export default defineComponent({
   name: 'ConsoleRefShower',
-  props: [ 'value', 'isTop' ],
+  props: {
+    value: {
+      type: null,
+      default: null,
+    },  
+    isTop: {
+      type: Boolean,
+      default: null,
+    },
+  },
+  emits:[ 'onGoRef' ],
   render() {
     const value = this.$props.value;
-    const isTop = this.$props.isTop as boolean;
+    const isTop = this.$props.isTop;
 
     if(typeof value === 'undefined') 
       return h('span', { class: 'speical' }, 'undefined')
@@ -67,7 +77,7 @@ export default defineComponent({
               on: { 
                 click: () => {
                   if(item.ref)
-                    this.$emit('on-go-ref', item.ref.refDoc, item.ref.refBlock, item.ref.refPort) 
+                    this.$emit('onGoRef', item.ref.refDoc, item.ref.refBlock, item.ref.refPort) 
                 }
               } 
             }, item.ref.ref))

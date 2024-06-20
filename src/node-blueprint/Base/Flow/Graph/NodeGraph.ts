@@ -63,7 +63,8 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
             'activeEditor',
             'isEditor',
             'parent',
-          ],     
+            'readyDispatcher',
+          ],
           forceSerializableClassProperties: {
             children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
             inputPorts: SerializableObjectPureObjName,

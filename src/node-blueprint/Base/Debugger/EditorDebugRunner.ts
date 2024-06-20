@@ -3,6 +3,7 @@ import type { Node } from '../Flow/Node/Node';
 import type { NodeDocunment } from '../Flow/Graph/NodeDocunment';
 import type { NodeGraph } from '../Flow/Graph/NodeGraph';
 import ArrayUtils from '../Utils/ArrayUtils';
+import { printError, printInfo, printWarning, printlog } from '../Logger/DevLog';
 
 export type EditorDebugRunnerContextState = 'inactive'|'active'|'paused'|'completed';
 export type EditorDebugRunnerState = 'idle'|'running'|'paused';
@@ -23,11 +24,15 @@ interface EditorDebugRunnerContext {
   next(step: boolean) : { returnValue: any, pauseNodeUid?: string };
 }
 
+export interface EditorDebugRunnerVariableInfo {
+  key: string;
+  value: any;
+}
 export interface EditorDebugRunnerPauseContextInfo {
   graph: NodeGraph,
   state: EditorDebugRunnerContextState,
-  variables: { key: string, value: any }[],
-  temps: { key: string, value: any }[],
+  variables: EditorDebugRunnerVariableInfo[],
+  temps: EditorDebugRunnerVariableInfo[],
   runStack?: {
     node: Node,
   }[],
@@ -47,9 +52,12 @@ interface EditorDebugRunnerHooks {
   runnerStateChanged(newState: EditorDebugRunnerState): void;
   alertNoActiveContext(): void;
   getGlobalBreakPointDisableState() : boolean;
+  reusme() : void;
   pauseWithNode(info: EditorDebugRunnerPauseInfo): void;
   pauseWithException(info: EditorDebugRunnerPauseInfo, e: unknown): void;
 }
+
+const TAG = 'EditorDebugRunner';
 
 /**
  * 调试脚本执行器
@@ -69,67 +77,7 @@ export class EditorDebugRunner {
   private currentDoc: NodeDocunment|null = null;
   private currentMainGraph: NodeGraph|null = null;
   private currentGraphMap = new Map<string, NodeGraph>()
-  private sandbox = new Compartment({
-    _DEBUG_PROVIDER: {
-      newDebuggerRunnerContext: (func: () => EditorDebugRunnerContext) => {
-        const context = func();
-        if (this.currentAllContex.length === 0)
-          this.currentActiveContex = context;
-        this.currentAllContex.push(context);
-      },
-      stateDebuggerRunnerContext: (context: EditorDebugRunnerContext) => {
-        switch (context.state) {
-          case 'active':
-            this.currentActiveContex = context;
-            this.hooks.runnerStateChanged('running');
-            break;
-          case 'completed':
-            if (this.currentActiveContex === context)
-              this.currentActiveContex = null;
-            ArrayUtils.remove(this.currentAllContex, context);
-            if (this.currentAllContex.length === 0)
-              this.stop();
-            break;
-          case 'paused':
-            if (this.currentRunning) {
-              this.hooks.pauseWithNode(this.buildPauseInfo(context));
-              this.hooks.runnerStateChanged('paused');
-            }
-            break;
-        }
-      },
-      handleDebuggerRunnerContextException: (context: EditorDebugRunnerContext, e: any) => {
-        this.hooks.pauseWithException(this.buildPauseInfo(context), e);
-        this.hooks.runnerStateChanged('paused');
-      },
-      checkBreakNode: (graphUid: string, nodeUid: string) => {
-        if (this.hooks.getGlobalBreakPointDisableState())
-          return false;
-        const node = this.currentGraphMap.get(graphUid)?.nodes.get(nodeUid);
-        if (!node)
-          return false;
-        return node.breakpoint === 'enable';
-      },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      checkDebugFunction: (graphUid: string) => {
-        if (this.hooks.getGlobalBreakPointDisableState())
-          return false;
-        //TODO: 函数断点
-        return false;
-      },
-    },
-    _CORE_CONNECTOR: {
-      begin: () => {
-        this.currentRunning = true;
-      },
-      exit: () => {
-        this.stop();
-      },
-      platform() {
-        return 'js:web'
-      },
-    },
-  });
+  private sandbox : Compartment|null = null;
 
   private buildPauseInfo(currentCountext: EditorDebugRunnerContext) : EditorDebugRunnerPauseInfo {
     const info : EditorDebugRunnerPauseInfo = { contexts: [] };
@@ -178,6 +126,82 @@ export class EditorDebugRunner {
       this.currentGraphMap.set(this.currentMainGraph.uid, this.currentMainGraph);
     }
   }
+  private initSandBox() {
+    this.sandbox = new Compartment({
+      _DEBUG_PROVIDER: {
+        newDebuggerRunnerContext: (func: () => EditorDebugRunnerContext) => {
+          const context = func();
+          if (this.currentAllContex.length === 0)
+            this.currentActiveContex = context;
+          this.currentAllContex.push(context);
+        },
+        stateDebuggerRunnerContext: (context: EditorDebugRunnerContext) => {
+          switch (context.state) {
+            case 'active':
+              this.currentActiveContex = context;
+              this.hooks.runnerStateChanged('running');
+              break;
+            case 'completed':
+              if (this.currentActiveContex === context)
+                this.currentActiveContex = null;
+              ArrayUtils.remove(this.currentAllContex, context);
+              if (this.currentAllContex.length === 0)
+                this.stop();
+              break;
+            case 'paused':
+              if (this.currentRunning) {
+                this.hooks.pauseWithNode(this.buildPauseInfo(context));
+                this.hooks.runnerStateChanged('paused');
+              }
+              break;
+          }
+        },
+        handleDebuggerRunnerContextException: (context: EditorDebugRunnerContext, e: any) => {
+          this.hooks.pauseWithException(this.buildPauseInfo(context), e);
+          this.hooks.runnerStateChanged('paused');
+        },
+        checkBreakNode: (graphUid: string, nodeUid: string) => {
+          if (this.hooks.getGlobalBreakPointDisableState())
+            return false;
+          const node = this.currentGraphMap.get(graphUid)?.nodes.get(nodeUid);
+          if (!node)
+            return false;
+          return node.breakpoint === 'enable';
+        },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        checkDebugFunction: (graphUid: string) => {
+          if (this.hooks.getGlobalBreakPointDisableState())
+            return false;
+          //TODO: 函数断点
+          return false;
+        },
+      },
+      _DEBUG_CONNECTOR: {
+        reportError(e: any) {
+          printError(TAG, e);
+        },
+        console(type: string, tag: string, msg: string) {
+          switch (type) {
+            case 'log': printlog(tag, msg); break;
+            case 'warn': printWarning(tag, msg); break;
+            case 'error': printError(tag, msg); break;
+            case 'info': printInfo(tag, msg); break;
+          }
+        },
+      },
+      _CORE_CONNECTOR: {
+        begin: () => {
+          this.currentRunning = true;
+        },
+        exit: () => {
+          this.stop();
+        },
+        platform() {
+          return 'js:web'
+        },
+      },
+    });
+  }
 
   /**
    * 加载代码至实例中运行
@@ -191,7 +215,8 @@ export class EditorDebugRunner {
     this.currentAllContex = [];
     this.currentDoc = doc;
     this.buildGraphMap();
-    this.sandbox.evaluate(code);
+    this.initSandBox();
+    this.sandbox!.evaluate(code);
   }
 
   /**
@@ -206,30 +231,48 @@ export class EditorDebugRunner {
    * 开始运行
    */
   run() {
+    printInfo(TAG, 'Start run');
     this.hooks.runnerStateChanged('running');
     this.currentRunning = true;
     this.currentMainStarted = true;
-    this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerConnected = true;
-    this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerPaused = false;
-    this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerStepMode = false;
-    if ( this.currentActiveContex)
+    if (this.currentActiveContex) {
+      this.hooks.reusme();
       this.currentActiveContex.next(false);
-    else
-      this.hooks.alertNoActiveContext();
+      return;
+    }
+    else if (this.sandbox) {
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerConnected = true;
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerPaused = false;
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerStepMode = false;
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerEntry();
+
+      if (this.currentActiveContex) {
+        this.hooks.reusme();
+        (this.currentActiveContex as EditorDebugRunnerContext).next(false);
+      }
+      else
+        this.hooks.alertNoActiveContext();
+    }
+
   }
   /**
    * 暂停运行
    */
   pause() {
-    this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerPause();
+    if (this.sandbox)
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerPause();
+    printInfo(TAG, 'Pause run');
   } 
   /**
    * 单步执行
    */
   step() {
+    printInfo(TAG, 'Step run');
     this.hooks.runnerStateChanged('running');
-    if (this.currentActiveContex)
+    if (this.currentActiveContex) {
+      this.hooks.reusme();
       this.currentActiveContex.next(true);
+    }
     else
       this.hooks.alertNoActiveContext();
   } 
@@ -237,9 +280,10 @@ export class EditorDebugRunner {
    * 停止运行
    */
   stop() {
+    printInfo(TAG, 'Stop run');
     this.currentRunning = false;
-    this.sandbox.globalThis.debugStop();
+    if (this.sandbox)
+      this.sandbox.globalThis._DEBUG_CONNECTOR.debugStop();
     this.hooks.runnerStateChanged('idle');
   }
-
 }

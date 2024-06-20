@@ -8,37 +8,39 @@
       <GraphSideToolItem icon="icon-trash" tooltip="删除" @click="onDelete" />
       <GraphSideToolSeparator />
       <GraphSideToolItem icon="icon-microchip" tooltip="编译" @click="$emit('compileDoc')" />
-      <GraphSideToolItem 
-        v-if="debugController.state.value !== 'running'"
-        icon="icon-Play"
-        color="green" 
-        tooltip="调试"
-        :enable="!debugController.busyState.value"
-        @click="debugController.run()"
-      />
-      <GraphSideToolItem 
-        v-else
-        icon="icon-Pause"
-        color="green"
-        tooltip="暂停"
-        :enable="!debugController.busyState.value"
-        @click="debugController.pause()"
-      />
-      <GraphSideToolItem 
-        icon="icon-Next"
-        color="blue"
-        tooltip="单步执行"
-        :enable="!debugController.busyState.value"
-        @click="debugController.step()"
-      />
-      <GraphSideToolItem 
-        v-if="debugController.state.value !== 'idle'" 
-        icon="icon-sphere"
-        color="red"
-        tooltip="结束"
-        :enable="!debugController.busyState.value"
-        @click="debugController.stop()"
-      />
+      <template v-if="docunment.mainGraph || debugController.debugging.value">
+        <GraphSideToolItem 
+          v-if="debugController.state.value !== 'running'"
+          icon="icon-Play"
+          color="green" 
+          tooltip="调试"
+          :enable="!debugController.busyState.value"
+          @click="debugController.run(docunment)"
+        />
+        <GraphSideToolItem 
+          v-else
+          icon="icon-Pause"
+          color="green"
+          tooltip="暂停"
+          :enable="!debugController.busyState.value"
+          @click="debugController.pause()"
+        />
+        <GraphSideToolItem 
+          icon="icon-Next"
+          color="blue"
+          tooltip="单步执行"
+          :enable="!debugController.busyState.value"
+          @click="debugController.step()"
+        />
+        <GraphSideToolItem 
+          v-if="debugController.state.value !== 'idle'" 
+          icon="icon-sphere"
+          color="red"
+          tooltip="结束"
+          :enable="!debugController.busyState.value"
+          @click="debugController.stop()"
+        />
+      </template>
     </GraphSideTool>
     <SplitLayout
       ref="splitLayoutRef"

@@ -72,6 +72,12 @@
       <template v-else-if="panel.name==='DebugBreakPoints'">
         <DebugBreakPoints :panel="panel" :debugController="debugController" />
       </template>
+      <template v-else-if="panel.name==='DebugStacks'">
+        <DebugStacks :panel="panel" :debugController="debugController" />
+      </template>
+      <template v-else-if="panel.name==='DebugVariables'">
+        <DebugVariables :panel="panel" :debugController="debugController" />
+      </template>
     </template>
   </CodeLayout>
 </template>
@@ -87,6 +93,9 @@ import NodeGraphChildrenProp from './Prop/NodeGraphChildrenProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
 import PropBox from '../Components/PropControl/Common/PropBox.vue';
 import Console from '../Console/Console.vue';
+import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
+import DebugStacks from './Debug/DebugStacks.vue';
+import DebugVariables from './Debug/DebugVariables.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
 import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
@@ -111,7 +120,6 @@ import TestScript from '../../../../test-scripts/compiler-test-2.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
-import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
 
 const loadTestScript = true;
  
@@ -479,8 +487,10 @@ async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node
     await openDocunment(doc);
   if (graph) {
     await doc.activeEditor?.switchActiveGraph(graph);
-    if (node)
+    if (node) {
       graph.activeEditor?.moveViewportToNode(node);
+      node.twinkle();
+    }
   }
 }
 /**
@@ -524,7 +534,6 @@ function closeAllDocunment() {
  * 打开文档
  * @param doc 
  */
-
 async function openDocunment(doc: NodeDocunmentEditor) { 
   if (opendDocunment.value.has(doc.uid)) 
     return doc;
@@ -534,7 +543,7 @@ async function openDocunment(doc: NodeDocunmentEditor) {
   currentActiveDocunment.value = doc;
 
   //加载文档
-  debugController.loadAllBreakPoints(doc);
+  debugController.loadDocunment(doc);
 
   if (splitLayout.value) {
     splitLayout.value.getActiveGird()?.addPanel({
@@ -722,6 +731,9 @@ const context = reactive({
   getDocunmentByUid,
   getCurrentActiveDocunmentEditor,
   jumpToDocunment,
+  focusDebuggerPanel() {
+    codeLayout.value?.getPanelByName('DebugStacks')?.activeSelf();
+  },
 } as NodeIdeControlContext);
 
 provide('NodeIdeControlContext', context);

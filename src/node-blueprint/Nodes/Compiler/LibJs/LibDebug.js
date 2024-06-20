@@ -7,10 +7,12 @@ _DEBUG_CONNECTOR.debuggerStepMode = false;
 _DEBUG_CONNECTOR.debuggerPause = function() {
   this.debuggerPaused = true;
 };
+_DEBUG_CONNECTOR.debugStop = function debugStop() {
+  _DEBUG_CONNECTOR.runnerContexts.clear();
+  _DEBUG_CONNECTOR.debuggerPause();
+}
 _DEBUG_CONNECTOR.debugNode = function(context, graphUid, nodeUid) {
-  if (!context.nodeStack)
-    context.nodeStack = [];
-  context.nodeStack.push(nodeUid);
+  context.dbg.nodeStack.unshift(nodeUid);
   if (this.debuggerPaused || this.debuggerStepMode)
     return true;
   return _DEBUG_PROVIDER.checkBreakNode(graphUid, nodeUid);
@@ -21,7 +23,7 @@ _DEBUG_CONNECTOR.debugFunction = function(graphUid) {
 _DEBUG_CONNECTOR.addDebugVariable = function(context, key, getCb) {
   context.dbg.graphVariables.push({ key, getCb }) 
 }
-_DEBUG_CONNECTOR.reunnerContexts = new Map();
+_DEBUG_CONNECTOR.runnerContexts = new Map();
 
 
 function makeDbgDefaults(dbg) {
@@ -30,11 +32,6 @@ function makeDbgDefaults(dbg) {
   if (!dbg.graphVariables) 
     dbg.graphVariables = [];
   return dbg;
-}
-
-function debugStop() {
-  _DEBUG_CONNECTOR.reunnerContexts.clear();
-  _DEBUG_CONNECTOR.debuggerPause();
 }
 
 function debugRunFunction(func, context) {
@@ -47,7 +44,7 @@ function debugRunFunction(func, context) {
     const iterator = func(context);
     const debuggerRunnerContext = {
       state: 'inactive',
-      parent: context.parent ? reunnerContexts.get(context.parent.uid) : undefined,
+      parent: context.parent ? _DEBUG_CONNECTOR.runnerContexts.get(context.parent.uid) : undefined,
       dbg,
       getLocalTemps() {
         const result = [];
@@ -93,7 +90,7 @@ function debugRunFunction(func, context) {
       _DEBUG_PROVIDER.stateDebuggerRunnerContext(debuggerRunnerContext);
     }
 
-    reunnerContexts.set(context.parent.uid, debuggerRunnerContext);
+    _DEBUG_CONNECTOR.runnerContexts.set(context.uid, debuggerRunnerContext);
     return debuggerRunnerContext;
   });
 }

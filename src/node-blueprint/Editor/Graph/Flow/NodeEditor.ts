@@ -122,7 +122,7 @@ export class NodeEditor extends Node {
    * 触发闪烁
    * @param time 闪烁时长，毫秒
    */
-  public twinkle(time = 1000) {
+  public twinkle(time = 1400) {
     this.editorHooks.callbackTwinkle?.(time);
   }
   /**

@@ -1,7 +1,10 @@
 <template>
   <div v-if="items" class="prop-list">
     <slot>
-      <template v-for="(item,i) in items" :key="i">
+      <template 
+        v-for="(item,i) in items"
+        :key="itemKey ? item[itemKey] : i"
+      >
         <PropListItem 
           :horizontal="$slots.rowHorizontal!==undefined"
           :draggable="dragSortable && (!childDragable || childDragable?.(item,i))"
@@ -47,6 +50,10 @@ const props = defineProps({
     default: null,
   },
   emptyText: {
+    type: String,
+    default: null,
+  },
+  itemKey: {
     type: String,
     default: null,
   },

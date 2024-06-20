@@ -639,6 +639,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         if (!entryNode)
           throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_NO_ENTRY, 'No main entry node');
 
+        //主函数入口
         cache.ast.push(b.functionDeclaration(
           b.identifier('main'), 
           [ b.identifier(this.internalKeywordMap.context) ], 
@@ -649,15 +650,34 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           data.dev
         ));
 
-        cache.ast.push(b.expressionStatement(b.callExpression(
-          b.identifier(this.internalKeywordMap.startRunFunction), 
-          ([ b.identifier('main') ] as ExpressionKind[])
-          .concat(data.dev ?[
-            b.objectExpression([
-              b.property('init', b.identifier('uid'), b.stringLiteral(graph.uid))
-            ])
-          ] : [])
-        )));
+        //进入入口
+        if (data.dev) {
+          cache.ast.push(
+            b.expressionStatement(b.assignmentExpression('=',
+              b.memberExpression(b.identifier('_DEBUG_CONNECTOR'), b.identifier('debuggerEntry')),
+              b.functionExpression(
+                b.identifier('debuggerEntry'), [], 
+                b.blockStatement([
+                  b.expressionStatement(b.callExpression(
+                    b.identifier(this.internalKeywordMap.startRunFunction), 
+                    [ 
+                      b.identifier('main'),
+                      b.objectExpression([
+                        b.property('init', b.identifier('uid'), b.stringLiteral(graph.uid))
+                      ])
+                    ]
+                  ))
+                ])
+              )
+            ))
+          );
+        } else {
+          cache.ast.push(b.expressionStatement(b.callExpression(
+            b.identifier(this.internalKeywordMap.startRunFunction), 
+            [ b.identifier('main') ]
+          )));
+        }
+
         topCache.mainAst.body.push(...cache.ast);
         break;
       }
@@ -669,20 +689,19 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         if (!entryNode)
           throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_NO_ENTRY, 'No graph entry node');
 
-
+        //TODO
         switch(graph.type) {
           case 'static': 
             topCache.mainAst.body.push(...cache.ast);
             break;
-
         }
         break;
       }
-      //类
+      //TODO:类
       case 'class':
         
         break;
-      //子图表
+      //TODO:子图表
       case 'subgraph':
         
         break;

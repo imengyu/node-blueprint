@@ -2,20 +2,20 @@
   <div class="console-base">
     <CodeLayoutScrollbar>
       <div ref="list" class="list">
-        <div v-for="(i, k) in outputs" v-show="showItem(i)" :key="k" :class="'item ' + i.level + (i.warpOpen?' warp':'')">
-          <Icon v-if="i.hasWarp" icon="icon-arrow-right-filling" :class="'switch iconfont' + (i.warpOpen?' open':'')" @click="i.warpOpen=!i.warpOpen" />
-
-          <Icon v-if="i.level==='error'" icon="icon-delete-filling" class="icon iconfont text-danger" />
-          <Icon v-else-if="i.level==='warning'" icon="icon-warning-filling" class="icon text-warning" />
-          <Icon v-else-if="i.level==='info'" icon="icon-prompt-filling" class="icon text-info" />
-
-          <span class="tag mr-2">{{ i.tag }}</span>
-          
-          <ConsoleObjectShower v-if="i.speicalType==='object'" :value="i.content" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
-          <ConsoleRefShower v-else :value="i.content" :isTop="true" @on-go-ref="(d: string,b: string,p: string) => onGoRef(d,b,p)" />
-
-          <a v-if="i.srcText && i.srcText!==''" class="src" @click="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)">{{ i.srcText }}</a>
-        </div>
+        <ConsoleItem 
+          v-for="(i, k) in outputs" 
+          v-show="showItem(i)"
+          :key="k" 
+          :tag="i.tag"
+          :content="i.content"
+          :level="i.level"
+          :hasWarp="i.hasWarp"
+          :warpOpen="i.warpOpen"
+          :speicalType="i.speicalType"
+          @update:warpOpen="(v) => outputs[k].warpOpen = v"
+          @goRef="(a,b,c) => onGoRef(a,b,c)" 
+          @goSrc="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)" 
+        />
       </div>
     </CodeLayoutScrollbar>
   </div>
@@ -23,15 +23,14 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, type PropType, onBeforeUnmount, watch, h } from 'vue'
-import ConsoleRefShower from "./ConsoleRefShower.vue";
-import ConsoleObjectShower from "./ConsoleObjectShower.vue";
 import Icon from "../Nana/Icon.vue";
+import ConsoleItem from './ConsoleItem.vue';
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import logger from '@/node-blueprint/Base/Logger/Logger';
-import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
 import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
+import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
 
-interface LogItem {
+export interface LogItem {
   tag: string,
   content: any,
   level: LogLevel,
@@ -43,7 +42,7 @@ interface LogItem {
   srcBlock?: string,
   srcPort?: string,
 }
-type LogSpeicalType = 'none'|'undefined'|'null'|'true'|'false'|'object'|'number';
+export type LogSpeicalType = 'none'|'undefined'|'null'|'true'|'false'|'object'|'number'|'';
 
 const props = defineProps({
   panel: {

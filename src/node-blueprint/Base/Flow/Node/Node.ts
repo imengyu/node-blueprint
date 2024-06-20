@@ -92,6 +92,7 @@ export class Node extends SerializableObject<INodeDefine> {
             'ports',
             'options',
             'tags',
+            'breakpoint',
             'markContent',
             'markOpen',
             'position',

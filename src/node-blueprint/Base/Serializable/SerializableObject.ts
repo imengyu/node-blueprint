@@ -453,7 +453,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     return (
       (
         ((config.serializableProperties && config.serializableProperties.includes(key)) || config.serializeAll === true)
-        && !(config.noSerializableProperties && config.noSerializableProperties.includes(key))
+        && (!config.noSerializableProperties || !config.noSerializableProperties.includes(key))
       )
     );
   }
