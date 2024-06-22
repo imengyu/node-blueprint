@@ -5,17 +5,20 @@
       openInner ? 'open' : '',
     ]"
   >
-    <span class="collapse-title" @click="openInner=!openInner">
-      <Icon class="collapse-arrow" icon="icon-arrow-right-bold" />
-      {{ title }}
-    </span>
-    <slot v-if="openInner" />
+    <CodeLayoutCollapseTitle
+      :title="title"
+      :actions="[]"
+      @click="openInner=!openInner"
+    />
+    <div class="content">
+      <slot v-if="openInner" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
-import Icon from '../../Nana/Icon.vue';
+import { CodeLayoutCollapseTitle } from 'vue-code-layout';
 
 const openInner = ref(false);
 
@@ -46,39 +49,42 @@ onMounted(() => {
 
 <style lang="scss">
 .collapse-item {
+  position: relative;
   display: block;
-  padding: 3px 2px 3px 7px;
+  padding: 0 0 0 8px;
+
+  .code-layout-collapse {
+    border-top: none!important;
+  }
+
+  > .content {
+    padding: 0 0 0 15px;
+  }
+
+  &::after {
+    position: absolute;
+    content: '';
+    left: 20px;
+    top: 20px;
+    bottom: 0px;
+    width: 1px;
+    opacity: 0;
+    transition: opacity ease-in-out 0.3s;
+    pointer-events: none;
+    background-color: var(--code-layout-color-border-light);
+    z-index: 20;
+  }
+
+  &:hover {
+    &::after {
+      opacity: 1;
+    }
+  }
 
   &.open {
-    > .collapse-title .collapse-arrow {
+    > .code-layout-collapse .collapse-title .arrow {
       transform: rotate(90deg);
     }
-  }
-
-  .collapse-title {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    user-select: none;
-    cursor: pointer;
-
-    i {
-      transition: transform ease-in-out 0.2s;
-    }
-
-    &:hover {
-      color: var(--mx-editor-blue-text-color);
-
-      i {
-        color: var(--mx-editor-blue-text-color);
-      }
-    }
-  }
-  .collapse-arrow {
-    fill: var(--mx-editor-text-color);
-    margin-right: 3px;
-    transition: transform ease-in-out 0.1s;
   }
 }
 </style>

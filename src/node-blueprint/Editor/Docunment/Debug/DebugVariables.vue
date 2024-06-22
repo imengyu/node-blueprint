@@ -7,6 +7,7 @@
     >
       <PropList 
         :items="debugController.currentExecuteVariableInfo.value"
+        itemSize="small"
         emptyText="暂无"
       >
         <template #rowVertical="{ item }">
@@ -20,6 +21,7 @@
               <SmallButton title="复制值" @click="onCopyValue(item.value)">
                 <Icon icon="icon-flag-" />
               </SmallButton>
+              <Width :width="10" />
             </Row>
           </Row>
         </template>
@@ -32,6 +34,7 @@
     >
       <PropList 
         :items="debugController.currentExecuteTempsInfo.value"
+        itemSize="small"
         emptyText="暂无"
       >
         <template #rowVertical="{ item }">
@@ -45,6 +48,7 @@
               <SmallButton title="复制值" @click="onCopyValue(item.value)">
                 <Icon icon="icon-flag-" />
               </SmallButton>
+              <Width :width="10" />
             </Row>
           </Row>
         </template>
@@ -65,6 +69,7 @@ import Row from '../../Nana/Layout/RowView.vue';
 import CollapseItem from '../../Components/List/CollapseItem.vue';
 import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
 import { CodeLayoutScrollbar } from 'vue-code-layout';
+import Width from '../../Nana/Layout/Width.vue';
 
 defineProps({
   panel: {

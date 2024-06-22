@@ -20,7 +20,7 @@
     "ses": "^1.4.1",
     "vue": "^3.4.23",
     "vue-clipboard3": "^2.0.0",
-    "vue-code-layout": "^1.0.2",
+    "vue-code-layout": "^1.0.5",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {

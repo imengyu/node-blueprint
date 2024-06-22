@@ -731,9 +731,7 @@ const context = reactive({
   getDocunmentByUid,
   getCurrentActiveDocunmentEditor,
   jumpToDocunment,
-  focusDebuggerPanel() {
-    codeLayout.value?.getPanelByName('DebugStacks')?.activeSelf();
-  },
+  focusDebuggerPanel() { codeLayout.value?.getPanelByName('DebugStacks')?.activeSelf(); },
 } as NodeIdeControlContext);
 
 provide('NodeIdeControlContext', context);

@@ -1,5 +1,11 @@
 <template>
-  <div v-if="items" class="prop-list">
+  <div 
+    v-if="items"
+    :class="[
+      'prop-list',
+      itemSize,
+    ]"
+  >
     <slot>
       <template 
         v-for="(item,i) in items"
@@ -48,6 +54,10 @@ const props = defineProps({
   items: {
     type: Object as PropType<T[]>,
     default: null,
+  },
+  itemSize: {
+    type: String as PropType<'normal'|'small'>,
+    default: 'normal',
   },
   emptyText: {
     type: String,

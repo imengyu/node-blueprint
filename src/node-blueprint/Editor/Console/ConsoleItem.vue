@@ -1,8 +1,16 @@
 <template>
-  <div :class="'console-item ' + level + (warpOpen?' warp':'')">
+  <div 
+    :class="[ 
+      'console-item ',
+      level,
+      warpOpen ? 'warp' : '',
+      tiny ? 'tiny' : '',
+    ]"
+  >
     <Icon 
       v-if="hasWarp" 
       icon="icon-arrow-right-filling"
+      fill="currentColor"
       :class="'switch iconfont' + (warpOpen?' open':'')"
       @click="$emit('update:warpOpen', !warpOpen)"
     />
@@ -72,7 +80,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
-
+  tiny: {
+    type: Boolean,
+    default: false,
+  },
 });
 defineEmits([ 
   'goSrc',

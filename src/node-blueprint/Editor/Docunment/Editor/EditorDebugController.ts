@@ -132,6 +132,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     if (firstNode) {
       lastTriggeredBreakpointNode = firstNode;
       firstNode.breakpointTriggered = true;
+      jumpToNode(firstNode);
     }
   }
   /**
@@ -141,6 +142,13 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
   function getStackFirstNodeName(info: EditorDebugRunnerPauseInfo) {
     const firstNode = info.contexts[0]?.runStack?.[0].node as NodeEditor;
     return firstNode? firstNode.name : '';
+  }
+  function jumpToNode(node: NodeEditor) {
+    context.jumpToDocunment(
+      (node.parent as NodeGraph).parent as NodeDocunmentEditor,
+      (node.parent as NodeGraph),
+      node as NodeEditor
+    );
   }
 
   function setDebuggerType(_type: EditorDebugType, params: Record<string, any>) {
@@ -245,14 +253,8 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     getGlobalBreakPointDisableState,
     deleteAllBreakPoint,
     deleteBreakPoint,
-    jumpToBreakPoint(breakpoint) { this.jumpToNode(breakpoint.node); },
-    jumpToNode(node) {
-      context.jumpToDocunment(
-        (node.parent as NodeGraph).parent as NodeDocunmentEditor,
-        (node.parent as NodeGraph),
-        node as NodeEditor
-      );
-    },
+    jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor); },
+    jumpToNode,
     run,
     pause,
     step,

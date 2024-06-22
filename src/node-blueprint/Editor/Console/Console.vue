@@ -1,7 +1,7 @@
 <template>
   <div class="console-base">
-    <CodeLayoutScrollbar>
-      <div ref="list" class="list">
+    <CodeLayoutScrollbar ref="list">
+      <div class="list">
         <ConsoleItem 
           v-for="(i, k) in outputs" 
           v-show="showItem(i)"
@@ -29,6 +29,8 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import logger from '@/node-blueprint/Base/Logger/Logger';
 import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
+import type { CodeLayoutScrollbarInstance } from 'vue-code-layout/lib/Components/CodeLayoutScrollbar.vue';
+import { Debounce } from '@/node-blueprint/Base/Utils/Timer/Debounce';
 
 export interface LogItem {
   tag: string,
@@ -58,7 +60,12 @@ const errorCount = ref(0);
 const filterWarning = ref(false);
 const filterError = ref(false);
 const autoScroll = ref(true);
-const list = ref<HTMLElement | null>(null);
+const list = ref<CodeLayoutScrollbarInstance | null>(null);
+const listScrollDebTask = new Debounce(1000, () => {
+  const container = list.value?.getScrollContainer();
+  if (container)
+    container.scrollTop = container.scrollHeight + container.offsetHeight;
+})
 
 function logListener(tag : string, level : LogLevel, content : string|number|boolean|unknown, extendObj ?: unknown) {
   let hasWarp = false;
@@ -97,8 +104,8 @@ function logListener(tag : string, level : LogLevel, content : string|number|boo
   if(level === 'warning') waringCount.value++;
   if(level === 'error') errorCount.value++;
 
-  if(autoScroll.value && list) 
-    list.value?.scrollTo(0, list.value.scrollHeight);
+  if(autoScroll.value) 
+    listScrollDebTask.executeWithDelay(500);
   if (extendObj) {
     //TODO: Log extendObj
   }
@@ -140,7 +147,7 @@ function initToolbar() {
     },
     {
       tooltip: '自动滚动',
-      icon: () => h(Icon, { icon: 'icon-decline-filling', class: autoScroll.value ? '' : 'text-secondary' }),
+      icon: () => h(Icon, { icon: 'icon-decline-filling', class: autoScroll.value ? 'text-success' : 'text-secondary' }),
       onClick() {
         autoScroll.value = !autoScroll.value;
       },

@@ -110,6 +110,19 @@
     fill: var(--mx-editor-text-color);
   }
 
+  &.small {
+    width: 14px;
+    height: 14px;
+
+    .checker {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 10px;
+      height: 10px;
+    }
+  }
+
   &[disabled=disabled].svg {
     background-color: var(--mx-editor-clickable-disabled-color);
     color: var(--mx-editor-light-text-color);

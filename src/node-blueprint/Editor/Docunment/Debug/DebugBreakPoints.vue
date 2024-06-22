@@ -2,15 +2,28 @@
   <CodeLayoutScrollbar scroll="vertical">
     <PropList 
       :items="debugController.breakpoints.value"
+        itemSize="small"
       :emptyText="`没有断点`"
     >
       <template #rowVertical="{ item }">
         <Row width="100%" justify="space-between" @click="onJumpToBreakpoint(item)">
-          {{ item.node.name }}
-          <Row>
-            <SmallButton title="切换状态" @click="onToggleBreakpoint(item)">
-              <Icon :icon="item.state === 'enable' ? 'icon-breakpoint-active' : 'icon-breakpoint'" :rotate="180" />
-            </SmallButton>
+          <Row align="center">
+            <Width :width="10" />
+            <Icon 
+              fill="var(--mx-editor-red-text-color)"
+              :icon="item.state === 'enable' ? 'icon-breakpoint-active' : 'icon-breakpoint'"
+              :rotate="180"
+            />
+            <Width :width="5" />
+            <BaseCheck 
+              :modelValue="item.state === 'enable'" 
+              size="small"
+              @update:modelValue="(v) => onToggleBreakpoint(item, v)"
+            />
+            <Width :width="10" />
+            {{ item.node.name }}
+          </Row>
+          <Row align="center">
             <SmallButton title="删除" @click="onDeleteBreakpoint(item)">
               <Icon icon="icon-close" />
             </SmallButton>
@@ -29,6 +42,8 @@ import type { EditorDebugBreakpoint, EditorDebugController } from '../Editor/Edi
 import PropList from '../../Components/PropList/PropList.vue';
 import SmallButton from '../../Components/SmallButton.vue';
 import Row from '../../Nana/Layout/RowView.vue';
+import BaseCheck from '../../Components/PropControl/Components/BaseCheck.vue';
+import Width from '../../Nana/Layout/Width.vue';
 
 const props = defineProps({
   panel: {
@@ -43,8 +58,8 @@ const props = defineProps({
 
 const globalBreakPointDisableState = ref(false);
 
-function onToggleBreakpoint(item: EditorDebugBreakpoint) {
-  item.state = item.state === 'enable' ? 'disable' : 'enable';
+function onToggleBreakpoint(item: EditorDebugBreakpoint, on: boolean) {
+  item.state = on ? 'disable' : 'enable';
   item.node.breakpoint = item.state;
 }
 function onDeleteBreakpoint(item: EditorDebugBreakpoint) {

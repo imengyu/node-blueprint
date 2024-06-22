@@ -109,6 +109,12 @@
       background-color: var(--mx-editor-list-item-hover-color);
     }
   }
+
+  &.small {
+    .prop-list-item {
+      padding: 1px 10px;
+    }
+  }
   
 }
 .prop-list-dragger {

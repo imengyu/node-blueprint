@@ -5,6 +5,7 @@
       v-model:warpOpen="globalErrorExpand"
       :content="debugController.currentExecuteError.value"
       hasWarp
+      tiny
       level="error"
     />
     <ConsoleItem 
@@ -12,11 +13,13 @@
       v-model:warpOpen="globalErrorExpand"
       :content="debugController.currentExecuteInfo.value"
       hasWarp
+      tiny
       level="info"
     />
     <PropList 
       v-if="debugController.currentExecutePauseInfo.value"
       :items="debugController.currentExecutePauseInfo.value?.contexts"
+      itemSize="small"
     >
       <template #rowVertical="{ item }">
         <CollapseItem
@@ -36,6 +39,7 @@
               <SmallButton title="跳转" @click="onJumpToNode(stack.node)">
                 <Icon icon="icon-route" />
               </SmallButton>
+              <Width :width="10" />
             </Row>
           </Row>
         </CollapseItem>
@@ -56,6 +60,7 @@ import CollapseItem from '../../Components/List/CollapseItem.vue';
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
 import type { EditorDebugRunnerPauseContextInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
 import ConsoleItem from '../../Console/ConsoleItem.vue';
+import Width from '../../Nana/Layout/Width.vue';
 
 const props = defineProps({
   panel: {
