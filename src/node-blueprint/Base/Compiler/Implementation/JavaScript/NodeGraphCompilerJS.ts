@@ -66,6 +66,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     getTemp: 'getTemp',
     makeSimpleCall: 'makeSimpleCall',
     makeNestCall: 'makeNestCall',
+    makeAsyncNestCall: 'makeAsyncNestCall',
     startRunFunction: 'startRunFunction',
   };
 
@@ -482,6 +483,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           const outBranchs : {
             port: NodePort,
             needNewContext: boolean,
+            asyncContextExecGenerate?: (pre: n.BlockStatement) => n.BlockStatement,
             blockStatement: n.BlockStatement,
           }[] = [];
 
@@ -492,6 +494,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             outBranchs.push({
               port,
               needNewContext: false,
+              asyncContextExecGenerate: undefined,
               blockStatement: b.blockStatement([])
             });
           });
@@ -508,26 +511,59 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
                 this.buildNodeTree(data, graph, new NodeGraphCompileTreeVisitedNodesTree(visitTree), branch.blockStatement, connector.endPort.parent);
             }
         
-            /**
-             * 生成新上下文
-             * context.makeNestCall(function() {
-             *    //blockStatement
-             * })
-             */
-            if (branch.needNewContext)
-              branch.blockStatement = b.blockStatement([
-                b.expressionStatement(b.callExpression(
-                  b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeNestCall)), 
-                  [ 
-                    b.functionExpression(
-                      null, 
-                      [ b.identifier(this.internalKeywordMap.context), ], 
-                      branch.blockStatement, 
-                      data.dev
-                    ) 
-                  ]
-                ))
-              ]);
+            //生成新上下文
+            if (branch.needNewContext) {
+              /**
+               * 异步：
+               * context.makeAsyncNestCall(function(finishCb) {
+               *    [asyncStatement]
+               * }, function() {
+               *    [blockStatement]
+               * })
+               * 
+               * 非异步：
+               * context.makeNestCall(function() {
+               *    [blockStatement]
+               * })
+               */
+
+              if (branch.asyncContextExecGenerate) {
+                //异步
+                branch.blockStatement = b.blockStatement([
+                  b.expressionStatement(b.callExpression(
+                    b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeAsyncNestCall)), 
+                    [ 
+                      b.functionExpression(
+                        null, 
+                        [ b.identifier('finishCb'), ], 
+                        branch.asyncContextExecGenerate(branch.blockStatement),
+                      ),
+                      b.functionExpression(
+                        null, 
+                        [ b.identifier(this.internalKeywordMap.context), ], 
+                        branch.blockStatement, 
+                        data.dev
+                      ),
+                    ]
+                  ))
+                ]);
+              } else {
+                //非异步
+                branch.blockStatement = b.blockStatement([
+                  b.expressionStatement(b.callExpression(
+                    b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeNestCall)), 
+                    [ 
+                      b.functionExpression(
+                        null, 
+                        [ b.identifier(this.internalKeywordMap.context), ], 
+                        branch.blockStatement, 
+                        data.dev
+                      ) 
+                    ]
+                  ))
+                ]);
+              }
+            }
           }
 
           //调试进入节点

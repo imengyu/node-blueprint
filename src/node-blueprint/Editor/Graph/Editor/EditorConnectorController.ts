@@ -584,6 +584,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         true
       );
     }
+
+    context.markGraphChanged();
     return connector;
   }
   /**
@@ -626,6 +628,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       if (start.parent.events.onPortUnConnect) start.parent.events.onPortUnConnect(start.parent, start);
       if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);
     }
+    
+    context.markGraphChanged();
   }
   //删除端口连接
   function unConnectPortConnectors(port: NodePortEditor) {

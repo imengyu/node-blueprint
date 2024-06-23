@@ -282,6 +282,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    */
   function setNodeBreakpointState(node: Node, state : NodeBreakPoint) {
     node.breakpoint = state;
+    context.markGraphChanged();
     context.postUpMessage(NodeGraphEditorInternalMessages.NodeBreakpointStateChanged, { node });
   }
 
@@ -325,6 +326,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       if (connector.startPort === port || connector.endPort === port)
         context.unConnectConnector(connector as NodeConnectorEditor);
     }
+    context.markGraphChanged();
   }
 
   /**

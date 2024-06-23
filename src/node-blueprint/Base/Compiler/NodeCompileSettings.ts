@@ -29,6 +29,7 @@ export interface INodeCompileCallGenerator {
   generateBranch?: (compiler: INodeGraphCompiler, data: NodeDocunmentCompileData, node: Node, isPre: boolean, params: any, branchs: { 
     port: NodePort,
     needNewContext: boolean,
+    asyncContextExecGenerate?: any,
     blockStatement: any,
   }[]) => any,
 }

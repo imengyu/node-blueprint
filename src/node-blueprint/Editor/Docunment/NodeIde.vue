@@ -39,6 +39,11 @@
     <template #panelRender="{ panel }">
       <template v-if="panel.name==='NodeProps'">
         <PropBox class="node-custom-editor">
+            <ConsoleItem 
+              v-if="debugController.debugging"
+              level="warning"
+              content="现在正在调试，您对文档做出的修改会在下次调试生效"
+            />
           <NodeNodeProp 
             v-if="currentActiveNodes.length > 0"
             :nodes="(currentActiveNodes as NodeEditor[])"
@@ -52,6 +57,11 @@
       </template>
       <template v-else-if="panel.name==='GraphProps'">
         <PropBox class="node-custom-editor">
+          <ConsoleItem 
+            v-if="debugController.debugging"
+            level="warning"
+            content="现在正在调试，您对文档做出的修改会在下次调试生效"
+          />
           <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
           <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
         </PropBox>
@@ -120,6 +130,7 @@ import TestScript from '../../../../test-scripts/compiler-test-2.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
+import ConsoleItem from '../Console/ConsoleItem.vue';
 
 const loadTestScript = true;
  

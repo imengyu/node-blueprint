@@ -41,16 +41,23 @@ export const LibJsCompilerData : INodeCompilePackage = {
         generateBranch(_, data, node, isPre, params, branchs) {
           if (isPre) {
             branchs[0].needNewContext = true;
+            branchs[0].asyncContextExecGenerate = () => {
+              //setTimeout(function () { finishCb() }, time)
+              return b.blockStatement([ b.expressionStatement(b.callExpression(
+                b.identifier('setTimeout'),
+                [ 
+                  b.functionExpression(null, [], b.blockStatement([
+                    b.expressionStatement(
+                      b.callExpression(b.identifier('finishCb'), [])
+                    )
+                  ])),
+                  params[0]
+                ]
+              )) ])
+            };
             return;
           }
-          //setTimeout(() => cb, time)
-          return [ b.expressionStatement(b.callExpression(
-            b.identifier('setTimeout'),
-            [ 
-              b.functionExpression(null, [], branchs[0].blockStatement),
-              params[0]
-            ]
-          )) ];
+          return branchs.map(a => a.blockStatement);
         },
       },
     },

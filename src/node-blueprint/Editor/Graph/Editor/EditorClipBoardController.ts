@@ -46,6 +46,7 @@ export function useEditorClipBoardControllerController(context: NodeGraphEditorI
   }
   function pasteNodes() {
     
+    context.markGraphChanged();
   }
   function isPasteable() {
     return false;

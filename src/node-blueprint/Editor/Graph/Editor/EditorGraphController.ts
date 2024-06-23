@@ -1,5 +1,5 @@
 
-import { ref } from "vue";
+import { ref, toRaw } from "vue";
 import { ChunkInstance } from "../Cast/ChunkedPanel";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
@@ -272,6 +272,7 @@ export function useEditorGraphController(
   function markGraphChanged() {
     if (currentGraph.value)
       currentGraph.value.fileChanged = true;
+    postUpMessage(NodeGraphEditorInternalMessages.GraphChanged, toRaw(currentGraph.value));
   }
   /**
    * 加载图表

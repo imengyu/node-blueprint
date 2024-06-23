@@ -102,11 +102,10 @@ export class EditorDebugRunner {
     
     info.contexts.push(makeContextInfo(currentCountext));
 
-    this.currentAllContex
-      .forEach((context) => {
-        if (context !== currentCountext && !context.parent && !addedContexts.includes(context))
-          info.contexts.push(makeContextInfo(context))
-      });
+    this.currentAllContex.forEach((context) => {
+      if (context !== currentCountext && !context.parent && !addedContexts.includes(context))
+        info.contexts.push(makeContextInfo(context))
+    });
 
     return info;
   }
@@ -134,6 +133,7 @@ export class EditorDebugRunner {
           if (this.currentAllContex.length === 0)
             this.currentActiveContex = context;
           this.currentAllContex.push(context);
+          return context;
         },
         stateDebuggerRunnerContext: (context: EditorDebugRunnerContext) => {
           switch (context.state) {
@@ -200,6 +200,8 @@ export class EditorDebugRunner {
           return 'js:web'
         },
       },
+      setTimeout: (cb: any, time: any) => setTimeout(cb, time),
+      setInterval: (cb: any, time: any) => setInterval(cb, time),
     });
   }
 

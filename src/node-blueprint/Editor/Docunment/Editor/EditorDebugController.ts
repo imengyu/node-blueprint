@@ -9,6 +9,7 @@ import type { NodeDocunmentEditor } from "../../Graph/Flow/NodeDocunmentEditor";
 import type { NodeEditor } from "../../Graph/Flow/NodeEditor";
 import { NodeGraphCompiler } from "@/node-blueprint/Base/Compiler/NodeGraphCompiler";
 import { printError, printInfo } from "@/node-blueprint/Base/Logger/DevLog";
+import Alert from "../../Nana/Modal/Alert";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {
@@ -35,6 +36,7 @@ export interface EditorDebugController {
   loadDocunment(doc: NodeDocunment): void,
   onNodeBreakPointStateChanged(node: Node): void,
   onNodeDelete(node: Node): void,
+  alertChangeIfIsDebugging(): void;
   run: (fromDocunment: NodeDocunment) => void,
   pause: () => void,
   step: () => void,
@@ -50,6 +52,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
 
   const type = ref<EditorDebugType>('debug');
   const debugging = ref(false);
+  const changeAlertShowed = ref(false);
   const state = ref<EditorDebugRunnerState>('idle');
   const busyState = ref(false);
   const breakpoints = ref<EditorDebugBreakpoint[]>([]);
@@ -187,6 +190,16 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       ArrayUtils.removeAt(breakpoints.value, index);
   }
 
+  //如果调试中编辑，则提示用户
+  function alertChangeIfIsDebugging() {
+    if (debugging.value && !changeAlertShowed.value) {
+      changeAlertShowed.value = true;
+      Alert.warning({
+        content: '现在正在调试，您对文档做出的修改会在下次调试生效',
+      })
+    }
+  }
+
   //加载文档信息
   function loadDocunment(doc: NodeDocunment) {
     loadAllBreakPoints(doc);
@@ -232,6 +245,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
   function stop() {
     clearStateMessages();
     debugRunner.stop();
+    changeAlertShowed.value = false;
     debugging.value = false;
   }
 
@@ -254,6 +268,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     deleteAllBreakPoint,
     deleteBreakPoint,
     jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor); },
+    alertChangeIfIsDebugging,
     jumpToNode,
     run,
     pause,

@@ -246,6 +246,9 @@ function onPostUpMessage(graphUid: string, message: string, data: any) {
     case NodeGraphEditorInternalMessages.NodeRemoved:
       props.debugController?.onNodeDelete(data.node);
       break;
+    case NodeGraphEditorInternalMessages.GraphChanged:
+      props.debugController?.alertChangeIfIsDebugging();
+      break;
   }
   emit('postUpMessage', graphUid, message, data);
 }

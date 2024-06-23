@@ -1,6 +1,6 @@
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { isMouseEventInNoDragControl } from "./EditorMouseHandler";
 import { createMouseDragHandler } from "./MouseHandler";
@@ -89,6 +89,14 @@ export interface NodeGraphEditorSelectionContext {
   getNodesInRect(rect: Rect) : NodeEditor[];
 }
 
+interface EditorSelectionContoller {
+  selectNodes: Ref<Array<NodeEditor>>;
+  selectConnectors: Ref<Array<NodeConnectorEditor>>;
+  isMulitSelect: Ref<boolean>;
+  isMultiSelected: Ref<boolean>;
+  multiSelectRect: Ref<Rect>;
+}
+
 /**
  * 选择控制器
  * @param viewPort 
@@ -96,13 +104,13 @@ export interface NodeGraphEditorSelectionContext {
  * @param mouseDownHandlers 
  * @returns 
  */
-export function useEditorSelectionContoller(context: NodeGraphEditorInternalContext) {
+export function useEditorSelectionContoller(context: NodeGraphEditorInternalContext) : EditorSelectionContoller {
 
-  const selectNodes = ref(new Array<NodeEditor>());
-  const selectConnectors = ref(new Array<NodeConnectorEditor>());
+  const selectNodes = ref(new Array<NodeEditor>()) as Ref<Array<NodeEditor>>;
+  const selectConnectors = ref(new Array<NodeConnectorEditor>()) as Ref<Array<NodeConnectorEditor>>;
   const isMulitSelect = ref(false);
   const isMultiSelected = ref(false);
-  const multiSelectRect = ref(new Rect());
+  const multiSelectRect = ref(new Rect()) as Ref<Rect>;
 
   const mouseInfo = context.getMouseInfo();
   const viewPort = context.getViewPort();
