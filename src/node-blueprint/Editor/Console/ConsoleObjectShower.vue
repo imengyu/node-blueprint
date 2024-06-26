@@ -1,25 +1,29 @@
 <template>
   <div class="console-obj">
-    <div v-if="value && typeof value === 'object'" class="console-obj-item" @click="swithValOpen">
-      <Icon 
-        icon="icon-arrow-right-filling"
-        fill="currentColor"
-        :class="'switch' + (valCanOpen?'':' hidden') + (valOpen?' open':'')" 
-        :size="12"
-      />
-      <slot class="key" />
-      <span class="sp">:</span>
+    <div v-if="value && (typeof value === 'object' && value !== null)" class="console-obj-item" @click="swithValOpen">
+      <template v-if="!isTop">
+        <Icon
+          icon="icon-arrow-right-bold"
+          fill="currentColor"
+          :class="'switch' + (valCanOpen?'':' hidden') + (valOpen?' open':'')" 
+          :size="12"
+        />
+        <slot class="key" />
+        <span class="sp">:</span>
+      </template>
       <span>{{ valName }}</span>
     </div>
     <div v-else class="console-obj-item">
-      <Icon 
-        icon="icon-arrow-right-filling"
-        class="switch hidden"
-        fill="currentColor"
-        :size="12"
-      />
-      <slot class="key" />
-      <span class="sp">:</span>
+      <template v-if="!isTop">
+        <Icon 
+          icon="icon-arrow-right-bold"
+          class="switch hidden"
+          fill="currentColor"
+          :size="12"
+        />
+        <slot class="key" />
+        <span class="sp">:</span>
+      </template>
       <ConsoleRefShower :value="value" :isTop="false" @onGoRef="(d,b,p) => $emit('onGoRef',d,b,p)" />
     </div>
     <div v-if="valOpen">
@@ -42,6 +46,10 @@ const props = defineProps({
   value: {
     type: null,
     default: null,
+  },
+  isTop: {
+    type: Boolean,
+    default: false,
   },
 });
 

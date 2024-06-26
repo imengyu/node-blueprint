@@ -1,75 +1,39 @@
 <template>
-  <CodeLayoutScrollbar scroll="vertical">
-    <CollapseItem 
-      v-if="debugController.currentExecuteVariableInfo.value"
-      open
-      title="变量"
-    >
-      <PropList 
-        :items="debugController.currentExecuteVariableInfo.value"
-        itemSize="small"
-        emptyText="暂无"
-      >
-        <template #rowVertical="{ item }">
-          <Row class="console-item tiny" width="100%" justify="space-between">
-            <Row class="console-obj-item">
-              <span class="key">{{ item.key }}</span>
-              <span class="dp">:</span>
-              <ConsoleAutoShower :value="item.value" />
-            </Row>
-            <Row>
-              <SmallButton title="复制值" @click="onCopyValue(item.value)">
-                <Icon icon="icon-flag-" />
-              </SmallButton>
-              <Width :width="10" />
-            </Row>
-          </Row>
-        </template>
-      </PropList>
-    </CollapseItem>
-    <CollapseItem 
-      v-if="debugController.currentExecuteTempsInfo.value"
-      open
-      title="临时变量"
-    >
-      <PropList 
-        :items="debugController.currentExecuteTempsInfo.value"
-        itemSize="small"
-        emptyText="暂无"
-      >
-        <template #rowVertical="{ item }">
-          <Row class="console-item tiny" width="100%" justify="space-between">
-            <Row class="console-obj-item">
-              <span class="key">{{ item.key }}</span>
-              <span class="dp">:</span>
-              <ConsoleAutoShower :value="item.value" />
-            </Row>
-            <Row>
-              <SmallButton title="复制值" @click="onCopyValue(item.value)">
-                <Icon icon="icon-flag-" />
-              </SmallButton>
-              <Width :width="10" />
-            </Row>
-          </Row>
-        </template>
-      </PropList>
-    </CollapseItem>
-  </CodeLayoutScrollbar>
+  <TreeList
+    v-if="debugController.currentExecuteVariableInfo.value"
+    :items="debugController.currentExecuteVariableInfo.value"
+    :defaultOpen="true"
+    itemClass="console-item"
+    class="console-base-font"
+  >
+    <template #itemLeft="{ level, item }">
+      <span v-if="level==0">{{ item.key }}</span>
+      <Row v-else-if="level==1" class="console-obj-item">
+        <span class="console-obj-color-key key">{{ item.key }}</span>
+        <span class="sp">:</span>
+        <ConsoleAutoShower :value="item.value.v" />
+      </Row>
+    </template>
+    <template #itemRight="{ level, item }">
+      <template v-if="level == 1">
+        <SmallButton title="复制值" @click="onCopyValue(item.value)">
+          <Icon icon="icon-flag-" />
+        </SmallButton>
+      </template>
+    </template>
+  </TreeList>
 </template>
 
 <script setup lang="ts">
 import { type PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
+import useClipboard from 'vue-clipboard3';
 import type { CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugController } from '../Editor/EditorDebugController';
-import useClipboard from 'vue-clipboard3';
-import PropList from '../../Components/PropList/PropList.vue';
 import SmallButton from '../../Components/SmallButton.vue';
 import Row from '../../Nana/Layout/RowView.vue';
-import CollapseItem from '../../Components/List/CollapseItem.vue';
+import Icon from '../../Nana/Icon.vue';
 import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
-import { CodeLayoutScrollbar } from 'vue-code-layout';
-import Width from '../../Nana/Layout/Width.vue';
+import TreeList from '../../Components/List/TreeList.vue';
 
 defineProps({
   panel: {

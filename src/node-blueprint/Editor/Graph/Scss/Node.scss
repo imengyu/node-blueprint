@@ -137,12 +137,36 @@
     top: -50px;
     left: calc(50% - 20px);
     z-index: 2;
+    animation: 1.5s ease-out 1s infinite breakpoint-arrow-anim;
+
+    &::after {
+      border-top-left-radius: 2px;
+      border-top-right-radius: 2px;
+      position: absolute;
+      content: "";
+      left: 3px;
+      top: 13px;
+      width: 25px;
+      height: 20px;
+      background-color: var(--node-breakpoint-text-color);
+    }
 
     svg {
       fill: var(--node-breakpoint-text-color);
     }
   }
+}
 
+@keyframes breakpoint-arrow-anim {
+  0% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
 }
 
 //标题

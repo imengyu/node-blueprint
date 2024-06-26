@@ -10,7 +10,7 @@ export default defineComponent({
     },  
     isTop: {
       type: Boolean,
-      default: null,
+      default: false,
     },
   },
   emits:[ 'onGoRef' ],
@@ -33,7 +33,7 @@ export default defineComponent({
     else if(typeof value === 'function') 
       return h('span', { class: 'function' }, 'f ' + value.toString())
     else if(typeof value === 'string') {
-      if(!isTop)
+      if(!isTop || !value.includes('{') || !value.includes('}'))
         return h('span', { class: 'string' }, '"' + value + '"' )
       else {
         let str = this.$props.value as string;

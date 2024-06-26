@@ -4,6 +4,8 @@ import type { NodeDocunment } from '../Flow/Graph/NodeDocunment';
 import type { NodeGraph } from '../Flow/Graph/NodeGraph';
 import ArrayUtils from '../Utils/ArrayUtils';
 import { printError, printInfo, printWarning, printlog } from '../Logger/DevLog';
+import type { ITreeListItem } from '@/node-blueprint/Editor/Components/List/TreeList';
+import RandomUtils from '../Utils/RandomUtils';
 
 export type EditorDebugRunnerContextState = 'inactive'|'active'|'paused'|'completed';
 export type EditorDebugRunnerState = 'idle'|'running'|'paused';
@@ -24,18 +26,24 @@ interface EditorDebugRunnerContext {
   next(step: boolean) : { returnValue: any, pauseNodeUid?: string };
 }
 
-export interface EditorDebugRunnerVariableInfo {
+export interface EditorDebugRunnerVariableListInfo extends ITreeListItem {
+  key: string,
+  children: EditorDebugRunnerVariableInfo[]
+}
+export interface EditorDebugRunnerVariableInfo extends ITreeListItem {
   key: string;
   value: any;
 }
-export interface EditorDebugRunnerPauseContextInfo {
+export interface EditorDebugRunnerStackInfo {
+  node: Node,
+  parent: EditorDebugRunnerPauseContextInfo;
+}
+export interface EditorDebugRunnerPauseContextInfo extends ITreeListItem {
   graph: NodeGraph,
   state: EditorDebugRunnerContextState,
   variables: EditorDebugRunnerVariableInfo[],
   temps: EditorDebugRunnerVariableInfo[],
-  runStack?: {
-    node: Node,
-  }[],
+  runStack?: EditorDebugRunnerStackInfo[],
   parent?: EditorDebugRunnerPauseContextInfo;
 }
 /**
@@ -88,16 +96,20 @@ export class EditorDebugRunner {
       const graph = this.currentGraphMap.get(context.dbg.uid);
       if (!graph)
         throw new Error(`Not found graph ${context.dbg.uid} in context`);
-      return {
+      const contextInfo : EditorDebugRunnerPauseContextInfo = {
         graph,
+        key: RandomUtils.genNonDuplicateID(10),
         state: context.state,
         variables: context.getLocalVariables(),
         temps: context.getLocalTemps(),
-        runStack: context.dbg.nodeStack.map(uid => ({
-          node: graph.nodes.get(uid)!,
-        })),
+        runStack: [],
         parent: context.parent ? makeContextInfo(context.parent) : undefined,
       };
+      contextInfo.runStack = context.dbg.nodeStack.map(uid => ({
+        node: graph.nodes.get(uid)!,
+        parent: contextInfo,
+      }));
+      return contextInfo;
     }
     
     info.contexts.push(makeContextInfo(currentCountext));
@@ -194,6 +206,7 @@ export class EditorDebugRunner {
           this.currentRunning = true;
         },
         exit: () => {
+          printInfo(TAG, "Script stopped because called exit()");
           this.stop();
         },
         platform() {
@@ -233,7 +246,6 @@ export class EditorDebugRunner {
    * 开始运行
    */
   run() {
-    printInfo(TAG, 'Start run');
     this.hooks.runnerStateChanged('running');
     this.currentRunning = true;
     this.currentMainStarted = true;
@@ -263,13 +275,11 @@ export class EditorDebugRunner {
   pause() {
     if (this.sandbox)
       this.sandbox.globalThis._DEBUG_CONNECTOR.debuggerPause();
-    printInfo(TAG, 'Pause run');
   } 
   /**
    * 单步执行
    */
   step() {
-    printInfo(TAG, 'Step run');
     this.hooks.runnerStateChanged('running');
     if (this.currentActiveContex) {
       this.hooks.reusme();
@@ -282,7 +292,6 @@ export class EditorDebugRunner {
    * 停止运行
    */
   stop() {
-    printInfo(TAG, 'Stop run');
     this.currentRunning = false;
     if (this.sandbox)
       this.sandbox.globalThis._DEBUG_CONNECTOR.debugStop();

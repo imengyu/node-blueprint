@@ -4,7 +4,10 @@
   <template v-if="instance?.style.topSpace">
     <NodePort v-for="k of instance.style.topSpace" :key="k" /> 
   </template>
-  <Tooltip v-if="instance">
+  <Tooltip 
+    v-if="instance"
+    @showed="updateDebuggingValueShow"
+  >
     <!--端口-->
     <div 
       :class="[
@@ -87,6 +90,21 @@
         <Icon icon="icon-async" />
         该端口执行是异步调用的
       </span>
+      <span v-if="instance.isAsync">
+        <br>
+        <Icon icon="icon-async" />
+        该端口执行是异步调用的
+      </span>
+      <ColumnView v-if="!instance.paramType.isExecute && debugController && debugController.debugging.value" class="console-item tiny tiny2">
+        <br>
+        <br>
+        <span class="console-tag-item">当前值：</span>
+        <ConsoleAutoShower v-if="currentPortDebugHasValue" :value="currentPortDebugValue" />
+        <RowView v-else align="center" class="console-small-info-text" title="可能是未执行到当前节点或者是当前执行堆栈已被释放">
+          <Icon  icon="icon-help-filling" class="mr-2" />
+          无法求值
+        </RowView>
+      </ColumnView>
     </template>
   </Tooltip>
   <!--空白占位符-->
@@ -109,6 +127,10 @@ import type { NodeEditor } from '../Flow/NodeEditor';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
+import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
+import RowView from '../../Nana/Layout/RowView.vue';
+import ColumnView from '../../Nana/Layout/ColumnView.vue';
 
 const props = defineProps({
   instance: {
@@ -123,6 +145,7 @@ const {
 const emit = defineEmits([ 'deletePort' ]);
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
+const debugController = inject<EditorDebugController|undefined>('NodeIdeDebugController');
 const portDot = ref<HTMLElement>();
 
 //#region 位置钩子
@@ -143,9 +166,24 @@ if (instance.value)
 
 //#endregion
 
-function onDeleteParam() {
-  emit('deletePort', instance.value);
+//#region 调试值实时显示
+
+const currentPortDebugValue = ref();
+const currentPortDebugHasValue = ref(false);
+
+function updateDebuggingValueShow() {
+  currentPortDebugValue.value = undefined;
+  currentPortDebugHasValue.value = false;
+  if (debugController && debugController.debugging.value) {
+    const { hasValue, value } = debugController.getPortValue(props.instance);
+    currentPortDebugValue.value = value;
+    currentPortDebugHasValue.value = hasValue;
+    console.log('value', value, 'hasValue', hasValue);
+    
+  }
 }
+
+//#endregion
 
 //#region 鼠标事件
 
@@ -187,10 +225,18 @@ function onPortMouseLeave() {
 function onPortMouseDown(e : MouseEvent) {
   connectDragHandler(e);
 }
+
+//#endregion
+
+//#region 操作事件
+
 function onContextMenu(e : MouseEvent) {
   e.preventDefault();
   e.stopPropagation();
   context?.showPortRightMenu(instance.value, new Vector2(e.x, e.y));
+}
+function onDeleteParam() {
+  emit('deletePort', instance.value);
 }
 
 //#endregion

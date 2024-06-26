@@ -199,12 +199,15 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     return cache;
   }
 
+  /**
+   * 构建节点库函数
+   */
   private buildNodeBaseFunction(data: NodeDocunmentCompileData, fun: NodeGraphCompileNodeBasic) : n.FunctionDeclaration {
     try {
       switch (fun.functionGenerator.type) {
         case 'contextNode':
           /**
-           * 有点无上下文
+           * 有上下文节点
            */
           return b.functionDeclaration(
             b.identifier(`c${fun.name}`),
@@ -228,6 +231,11 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           if (typeof fun.functionGenerator.code === 'object' && !n.BlockStatement.check(fun.functionGenerator.code))
             throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_BAD_PARAM, `functionGenerator.code need string type or BlockStatement type`);
 
+          /**
+           * 简单调用支持：
+           * * JS字符串代码：直接转换
+           * * BlockStatement：追加
+           */
           let functionBody = typeof fun.functionGenerator.code === 'string' ? 
             parse(fun.functionGenerator.code).program.body[0] : 
             fun.functionGenerator.code(data, fun.node, fun);
@@ -238,6 +246,11 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
 
           //主方法调用
           functionBody = b.blockStatement([
+            /**
+             * context.makeSimpleCall(() => {
+             *    [functionBody]
+             * });
+             */
             b.returnStatement(b.callExpression(
               b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeSimpleCall)),
               [
@@ -247,6 +260,11 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             )),
           ]);
 
+          /**
+           * function f{fun.name}(context, params...) {
+           *    [functionBody]
+           * }
+           */
           return b.functionDeclaration(
               b.identifier(`f${fun.name}`),
               [ 
@@ -265,8 +283,10 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       throw new NodeGraphCompilerError(NODE_GRAPH_COMPILER_ERROR_PARSE_AST, `Failed generate node ${this.getNodeStringInfo(fun.node)}, error: ${(e as Error).stack || e}`);
     }
   }
+  /**
+   * 构建变量
+   */
   private buildGraphVariables(data: NodeDocunmentCompileData, graph: NodeGraph, blockStatement: n.BlockStatement) {
-    //构建变量
     for (const variable of graph.variables) {
       const vName = this.buildVariableName(variable.name);
       blockStatement.body.push(b.variableDeclaration('var', [ b.variableDeclarator(
@@ -279,6 +299,14 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     }
   }
 
+  /**
+   * 构建参数端口反推树，此函数反向递归构建参数端口的反推编译代码。
+   * @param data 
+   * @param graph 图表
+   * @param visitTree 已访问信息
+   * @param inputParams 输入端口
+   * @param port 端口
+   */
   private buildNodeParamPortTree(data: NodeDocunmentCompileData, graph: NodeGraph, visitTree: NodeGraphCompileTreeVisitedNodesTree, inputParams : ExpressionKind[], port: NodePort) {
 
     if (port.connectedFromPort[0]?.startPort) {
@@ -352,9 +380,9 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           }
         }
 
-
         //如果此立即节点有多个链接，则缓存到临时变量中方便下次直接获取
-        if (anotherPort.connectedToPort.length > 1) {
+        //调试情况下也写入缓存方便查看
+        if (anotherPort.connectedToPort.length > 1 || data.dev) {
           result = b.callExpression(
             b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeTemp)),
             [ 
@@ -362,7 +390,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
               result
             ]
           );
-        }
+        } 
 
         inputParams.push(result);
 
@@ -376,10 +404,27 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         )
       }
     } else {
+      let result : ExpressionKind = this.buildValue(`Port ${this.getNodePortStringInfo(port)} initialValue`, port.initialValue);
+      if (data.dev) {
+        result = b.callExpression(
+          b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeTemp)),
+          [ b.stringLiteral(this.getNodePortTempKey(port)), result ]
+        );
+      } 
+
       //没有链接，使用端口默认值
-      inputParams.push(this.buildValue(`Port ${this.getNodePortStringInfo(port)} initialValue`, port.initialValue));
+      inputParams.push(result);
     }
   }
+  /**
+   * 构建调用树
+   * @param data 
+   * @param graph 图表
+   * @param visitTree 已访问信息
+   * @param statement 语句应该插入的块位置
+   * @param node 节点
+   * @returns 
+   */
   private buildNodeTree(data: NodeDocunmentCompileData, graph: NodeGraph, visitTree: NodeGraphCompileTreeVisitedNodesTree, statement: n.BlockStatement, node: Node) {
     const compileSettings = this.getNodeCompile(node);
     if (!compileSettings) {
@@ -406,8 +451,9 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         this.buildNodeParamPortTree(data, graph, visitTree, inputParams, port);
     }
 
+    //构建节点执行代码
     try {
-      const outPorts =  node.outputPorts.filter(p => p.paramType.isExecute);
+      const outPorts = node.outputPorts.filter(p => p.paramType.isExecute);
 
       //构建调用
       switch (compileSettings.callGenerator?.type) {
@@ -582,8 +628,10 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     }
   }
 
+  /**
+   * 递归构建函数
+   */
   private buildTreeFunction(data: NodeDocunmentCompileData, graph: NodeGraph, startNode: Node, cb: (statement: n.BlockStatement) => void) : n.BlockStatement {
-    //递归构建函数
     const body = b.blockStatement([]);
     cb(body);
    
@@ -592,9 +640,10 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     return body;
   }
 
-
+  /**
+   * 节点调试插入代码
+   */
   private buildDevNodeEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph, node: Node) : StatementKind[] {
-    //节点调试插入代码
     /**
      * if (_DEBUG_CONNECTOR.debugNode(context, graphUid, node.uid))
      *    yield { uid: node.uid, graphUid: graphUid, type: _DEBUG_BREAK };
@@ -614,8 +663,10 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       ]))))
     ] : [];
   }
+  /**
+   * 函数调试插入代码
+   */
   private buildDevFunctionEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph) : StatementKind[] {
-    //函数调试插入代码
     /**
      * if (_DEBUG_CONNECTOR.debugFunction(graph.uid))
      *    yield { uid: graph.uid, type: _DEBUG_BREAK };
@@ -631,6 +682,9 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
     ] : [];
   }
 
+  /**
+   * 编译图表
+   */
   private compileGraph(graph: NodeGraph, data: NodeDocunmentCompileData, cache: NodeGraphCompileCache|undefined, topCache: NodeDocunmentCompileCache) {
     if (!cache)
       cache = {

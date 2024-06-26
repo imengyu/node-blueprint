@@ -20,9 +20,10 @@
     <Icon v-else-if="level==='info'" icon="icon-prompt-filling" class="icon text-info" />
 
     <span v-if="tag" class="tag mr-2">{{ tag }}</span>
-    
+
+    <span v-if="typeof content === 'string'">{{ content }}</span>
     <ConsoleObjectShower 
-      v-if="speicalType==='object'"
+      v-else-if="speicalType==='object'"
       :value="content"
       @on-go-ref="(d: string,b: string,p: string) => $emit('goRef', d,b,p)" 
     />
@@ -69,6 +70,10 @@ defineProps({
     default: null,
   },
   content: {
+    type: null,
+    default: null,
+  },
+  showAs: {
     type: null,
     default: null,
   },

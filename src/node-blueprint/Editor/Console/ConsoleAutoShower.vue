@@ -2,6 +2,7 @@
   <ConsoleObjectShower
     v-if="typeof value ==='object'"
     :value="value"
+    :isTop="true"
     @onGoRef="(d: string,b: string,p: string) => $emit('onGoRef', d,b,p)" 
   />
   <ConsoleRefShower 

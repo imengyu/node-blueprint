@@ -1,8 +1,8 @@
 <script lang="ts">
 import { defineComponent, h, render, renderSlot, toRefs, watch, type VNode, ref, onBeforeUnmount, onMounted } from 'vue';
 import { registerTooltipDownChecker, registerTooltipMutex, unRegisterTooltipDownChecker } from './TooltipMutex';
-import TooltipContent from './TooltipContent.vue';
 import { getContainer } from './TooltipUtils';
+import TooltipContent from './TooltipContent.vue';
 
 /**
  * 工具提示弹出组件
@@ -43,7 +43,9 @@ export default defineComponent({
     },
   },
   emits: [
-    'update:show'
+    'update:show',
+    'showed',
+    'hided',
   ],
   setup(props, ctx) {
     const {
@@ -78,13 +80,17 @@ export default defineComponent({
         ctx.slots,
       ), getContainer());
 
-      if (show.value !== true)
+      if (show.value !== true) {
         ctx.emit('update:show', true);
+        ctx.emit('showed');
+      }
     }
     function hideTooltip() {
       render(null, getContainer());
-      if (show.value !== false)
+      if (show.value !== false) {
         ctx.emit('update:show', false);
+        ctx.emit('hided');
+      }
     }
 
     watch(show, (v) => {
@@ -102,7 +108,7 @@ export default defineComponent({
     return () => {
       if (ctx.slots.default) {
         let vnode = renderSlot(ctx.slots, 'default');
-        if (vnode.type.toString() === 'Symbol(Fragment)')
+        if (vnode.type.toString().startsWith('Symbol'))
           vnode = (vnode.children as VNode[])[0];
 
         if (!vnode.props)

@@ -1,3 +1,12 @@
+$console-colors: (
+  number: #6186f7,
+  keyword: rgb(8, 94, 192),
+  key: #d445f1,
+  bigint: rgb(0, 92, 0),
+  string: rgb(213, 92, 89),
+);
+
+
 .console-base {
   position: relative;
   height: 100%;
@@ -6,6 +15,11 @@
     font-size: 13px;
     font-family: Consolas, 'Courier New', monospace;
   }
+}
+
+.console-base-font {
+  font-size: 13px;
+  font-family: Consolas, 'Courier New', monospace;
 }
 .console-item {
   display: flex;
@@ -24,6 +38,9 @@
     font-size: 12px;
     border-bottom: none;
   }
+  &.tiny2 {  
+    padding: 0;
+  }
 
   > div {
     display: inline-block;
@@ -39,16 +56,6 @@
   .icon {
     font-size: 14px;
     margin-right: 6px;
-    vertical-align: top;
-  }
-  .tag {
-    background-color: var(--mx-editor-background-light-second-color);
-    color: var(--mx-editor-text-color);
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin-right: 4px;
-    display: inline-block;
-    font-size: 12px;
     vertical-align: top;
   }
 
@@ -73,20 +80,11 @@
     font-style: italic;
     color: var(--mx-editor-background-light-second-color);
   }
-  .number {
-    color: #6186f7;
-  }
-  .keyword {
-    color: rgb(8, 94, 192);
-  }
-  .key {
-    color: #d445f1;
-  }
-  .bigint {
-    color: rgb(0, 92, 0);
-  }
-  .string {
-    color: rgb(213, 92, 89);
+  
+  @each $key, $value in $console-colors {
+    .#{$key} {
+      color: $value;
+    }
   }
 
   .src {
@@ -127,7 +125,6 @@
 }
 .console-obj {
   position: relative;
-  margin-left: 15px;
   font-size: 0;
 
   a {
@@ -152,4 +149,25 @@
 .console-toolbar-left {
   font-size: 12px;
   margin-left: 10px;
+}
+.console-tag-item, .console-item .tag {
+  background-color: var(--mx-editor-background-light-second-color);
+  color: var(--mx-editor-text-color);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  display: inline-block;
+  font-size: 12px;
+  vertical-align: top;
+}
+.console-small-info-text {
+  color: var(--mx-editor-drak-text-color);
+  font-style: italic;
+  font-size: 11px;
+}
+
+@each $key, $value in $console-colors {
+  .console-obj-color-#{$key} {
+    color: $value;
+  }
 }

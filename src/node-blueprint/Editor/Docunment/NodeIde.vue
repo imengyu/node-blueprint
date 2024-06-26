@@ -753,6 +753,8 @@ provide('NodeIdeControlContext', context);
 
 const debugController = useEditorDebugController(context);
 
+provide('NodeIdeDebugController', debugController);
+
 //#endregion
 
 defineExpose({

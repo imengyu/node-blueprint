@@ -1,66 +1,54 @@
 <template>
-  <CodeLayoutScrollbar scroll="vertical">
-    <ConsoleItem 
-      v-if="debugController.currentExecuteError.value"
-      v-model:warpOpen="globalErrorExpand"
-      :content="debugController.currentExecuteError.value"
-      hasWarp
-      tiny
-      level="error"
-    />
-    <ConsoleItem 
-      v-if="debugController.currentExecuteInfo.value"
-      v-model:warpOpen="globalErrorExpand"
-      :content="debugController.currentExecuteInfo.value"
-      hasWarp
-      tiny
-      level="info"
-    />
-    <PropList 
-      v-if="debugController.currentExecutePauseInfo.value"
-      :items="debugController.currentExecutePauseInfo.value?.contexts"
-      itemSize="small"
-    >
-      <template #rowVertical="{ item }">
-        <CollapseItem
-          open
-          :title="item.graph.name"
-        >
-          <Row 
-            v-for="(stack, i) in item.runStack" 
-            :key="i"
-            width="100%"
-            justify="space-between"
-            class="console-item tiny"
-            @click="onShowStack(item)"
-          >
-            {{ stack.node.name }}
-            <Row>
-              <SmallButton title="跳转" @click="onJumpToNode(stack.node)">
-                <Icon icon="icon-route" />
-              </SmallButton>
-              <Width :width="10" />
-            </Row>
-          </Row>
-        </CollapseItem>
+  <TreeList
+    v-if="debugController.currentExecutePauseInfo.value"
+    :items="debugController.currentExecutePauseInfo.value.contexts"
+    :dsec="stackListDesc"
+    :defaultOpen="true"
+    @itemClick="onShowStack"
+  >
+    <template #prefix>
+      <ConsoleItem 
+        v-if="debugController.currentExecuteError.value"
+        v-model:warpOpen="globalErrorExpand"
+        :content="debugController.currentExecuteError.value"
+        hasWarp
+        tiny
+        level="error"
+      />
+      <ConsoleItem 
+        v-if="debugController.currentExecuteInfo.value"
+        v-model:warpOpen="globalErrorExpand"
+        :content="debugController.currentExecuteInfo.value"
+        hasWarp
+        tiny
+        level="info"
+      />
+    </template>
+    <template #itemLeft="{ level, item }">
+      <span v-if="level == 0">{{ item.graph.name }}</span>
+      <span v-else-if="level == 1">{{ item.node.name }}</span>
+    </template>
+    <template #itemRight="{ level, item }">
+      <template v-if="level == 1">
+        <SmallButton title="跳转" @click="onJumpToNode(item.node)">
+          <Icon icon="icon-route" />
+        </SmallButton>
       </template>
-    </PropList>
-  </CodeLayoutScrollbar>
+    </template>
+  </TreeList>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch, type PropType } from 'vue';
+import { type CodeLayoutPanelInternal } from 'vue-code-layout';
 import Icon from '../../Nana/Icon.vue';
-import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
-import type { EditorDebugController } from '../Editor/EditorDebugController';
-import PropList from '../../Components/PropList/PropList.vue';
 import SmallButton from '../../Components/SmallButton.vue';
-import Row from '../../Nana/Layout/RowView.vue';
-import CollapseItem from '../../Components/List/CollapseItem.vue';
-import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { EditorDebugRunnerPauseContextInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
 import ConsoleItem from '../../Console/ConsoleItem.vue';
-import Width from '../../Nana/Layout/Width.vue';
+import TreeList from '../../Components/List/TreeList.vue';
+import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
+import type { EditorDebugRunnerPauseContextInfo, EditorDebugRunnerStackInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
+import type { EditorDebugController } from '../Editor/EditorDebugController';
+import type { ITreeListDescItem } from '../../Components/List/TreeList';
 
 const props = defineProps({
   panel: {
@@ -73,17 +61,19 @@ const props = defineProps({
   },
 });
 
+const stackListDesc : ITreeListDescItem[] = [
+  { childrenKey: 'runStack' },
+];
+
 const globalErrorExpand = ref(false);
 const globalBreakPointDisableState = ref(false);
 
 function onJumpToNode(item: Node) {
   props.debugController.jumpToNode(item);
 }
-function onShowStack(item: EditorDebugRunnerPauseContextInfo) {
-  const debugController = props.debugController;
-  debugController.currentExecuteVariableInfo.value = item.variables;
+function onShowStack(item: EditorDebugRunnerStackInfo) {
+  props.debugController.showStackVariableInfo(item.parent);
 }
-
 
 function initState() {
   globalBreakPointDisableState.value = props.debugController.getGlobalBreakPointDisableState();

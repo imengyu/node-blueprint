@@ -1,4 +1,4 @@
-import { EditorDebugRunner, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, type EditorDebugRunnerVariableInfo } from "@/node-blueprint/Base/Debugger/EditorDebugRunner";
+import { EditorDebugRunner, type EditorDebugRunnerPauseContextInfo, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, type EditorDebugRunnerVariableListInfo } from "@/node-blueprint/Base/Debugger/EditorDebugRunner";
 import type { Node, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
 import { ref, type Ref } from "vue";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
@@ -10,6 +10,7 @@ import type { NodeEditor } from "../../Graph/Flow/NodeEditor";
 import { NodeGraphCompiler } from "@/node-blueprint/Base/Compiler/NodeGraphCompiler";
 import { printError, printInfo } from "@/node-blueprint/Base/Logger/DevLog";
 import Alert from "../../Nana/Modal/Alert";
+import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {
@@ -23,12 +24,12 @@ export interface EditorDebugController {
   breakpoints: Ref<EditorDebugBreakpoint[]>,
   currentExecuteError: Ref<string>,
   currentExecuteInfo: Ref<string>,
-  currentExecuteTempsInfo: Ref<EditorDebugRunnerVariableInfo[]|null>
-  currentExecuteVariableInfo: Ref<EditorDebugRunnerVariableInfo[]|null>
+  currentExecuteVariableInfo: Ref<EditorDebugRunnerVariableListInfo[]>
   currentExecutePauseInfo: Ref<EditorDebugRunnerPauseInfo | null>,
   setGlobalBreakPointDisableState(state: boolean): void,
   getGlobalBreakPointDisableState(): boolean,
   setDebuggerType(_type: EditorDebugType, params: Record<string, any>): void,
+  getPortValue(port: NodePort): { hasValue: boolean, value: any },
   deleteAllBreakPoint(): void,
   deleteBreakPoint(breakpoint: EditorDebugBreakpoint): void;
   jumpToBreakPoint(breakpoint: EditorDebugBreakpoint): void;
@@ -37,6 +38,8 @@ export interface EditorDebugController {
   onNodeBreakPointStateChanged(node: Node): void,
   onNodeDelete(node: Node): void,
   alertChangeIfIsDebugging(): void;
+  showStackVariableInfo: (info: EditorDebugRunnerPauseContextInfo) => void;
+  clearStackVariableInfo: () => void,
   run: (fromDocunment: NodeDocunment) => void,
   pause: () => void,
   step: () => void,
@@ -59,8 +62,16 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
 
   const currentExecuteError = ref('');
   const currentExecuteInfo = ref('');
-  const currentExecuteVariableInfo = ref<EditorDebugRunnerVariableInfo[]|null>(null);
-  const currentExecuteTempsInfo = ref<EditorDebugRunnerVariableInfo[]|null>(null);
+  const currentExecuteVariableInfo = ref<EditorDebugRunnerVariableListInfo[]>([ 
+    {
+      key: 'Variables',
+      children: []
+    },
+    {
+      key: 'Temps',
+      children: []
+    }
+  ]);
   const currentExecutePauseInfo = ref<EditorDebugRunnerPauseInfo|null>(null);
 
   let lastTriggeredBreakpointNode : null|NodeEditor = null;
@@ -83,8 +94,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       currentExecuteError.value = '';
       currentExecuteInfo.value = `Debugger paused`;
       currentExecutePauseInfo.value = info;
-      currentExecuteVariableInfo.value = info.contexts[0].variables;
-      currentExecuteTempsInfo.value = info.contexts[0].temps;
+      showStackVariableInfo(info.contexts[0]);
     },
     pauseWithException(info, e) {
       printError(TAG, `Debugger paused at node: ${getStackFirstNodeName(info)} with exception: ${e}`);
@@ -93,8 +103,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       currentExecuteError.value = '' + e;
       currentExecuteInfo.value = '';
       currentExecutePauseInfo.value = info;
-      currentExecuteVariableInfo.value = info.contexts[0].variables;
-      currentExecuteTempsInfo.value = info.contexts[0].temps;
+      showStackVariableInfo(info.contexts[0]);
     },
     reusme() {
       printInfo(TAG, `Debugger running`);
@@ -102,19 +111,51 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       currentExecuteError.value = '';
       currentExecuteInfo.value = 'Debugger running';
       currentExecutePauseInfo.value = null;
-      currentExecuteVariableInfo.value = null;
-      currentExecuteTempsInfo.value = null;
+      clearStackVariableInfo();
     },
   });
 
-  //清空状态信息
+  const currentPortDebugValueMap = new Map<string, any>();
+
+  /**
+   * 显示调用栈的变量信息
+   * @param info 
+   */
+  function showStackVariableInfo(info: EditorDebugRunnerPauseContextInfo) {
+    currentExecuteVariableInfo.value[0].children = [];
+    currentExecuteVariableInfo.value[1].children = [];
+    currentPortDebugValueMap.clear();
+
+    const variableArr = currentExecuteVariableInfo.value[0].children;
+    const tempsArr = currentExecuteVariableInfo.value[1].children;
+
+    let _info : EditorDebugRunnerPauseContextInfo|undefined = info;
+    while(_info) {
+      if (_info.variables)
+        variableArr.push(..._info.variables);
+      if (_info.temps)
+        tempsArr.push(..._info.temps);
+      _info = _info.parent;
+    }
+
+    tempsArr.forEach(e => currentPortDebugValueMap.set(e.key, e.value.v));
+  }
+  /**
+   * 清空变量显示信息
+   */
+  function clearStackVariableInfo() {
+    currentExecuteVariableInfo.value[0].children = [];
+    currentExecuteVariableInfo.value[1].children = [];
+  }
+  /**
+   * 清空状态信息
+   */
   function clearStateMessages() {
     clearFirstNodeLight();
     currentExecuteError.value = '';
     currentExecuteInfo.value = '';
     currentExecutePauseInfo.value = null;
-    currentExecuteVariableInfo.value = null;
-    currentExecuteTempsInfo.value = null;
+    clearStackVariableInfo();
   }
   /**
    * 清除之前高亮标记中断的节点
@@ -146,6 +187,10 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     const firstNode = info.contexts[0]?.runStack?.[0].node as NodeEditor;
     return firstNode? firstNode.name : '';
   }
+  /**
+   * 跳转到指定的节点
+   * @param node 
+   */
   function jumpToNode(node: NodeEditor) {
     context.jumpToDocunment(
       (node.parent as NodeGraph).parent as NodeDocunmentEditor,
@@ -153,7 +198,27 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       node as NodeEditor
     );
   }
+  /**
+   * 获取当前运行栈中的端口实时值
+   * @param port 
+   */
+  function getPortValue(port: NodePort, getConnectedPort = true): { hasValue: boolean, value: any } {
+    const key = `${port.parent.uid}:${port.guid}`;
+    if (currentPortDebugValueMap.has(key))
+      return {
+        hasValue: true,
+        value: currentPortDebugValueMap.get(key)
+      }
+    //如果节点连接了节点，则再获取链接节点的值
+    if (getConnectedPort && port.connectedFromPort.length > 0)
+      return getPortValue(port.connectedFromPort[0].startPort!, false);
+    return {
+      hasValue: false,
+      value: undefined
+    }
+  }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function setDebuggerType(_type: EditorDebugType, params: Record<string, any>) {
     type.value = _type;
   }
@@ -256,8 +321,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     breakpoints: breakpoints as Ref<EditorDebugBreakpoint[]>,
     currentExecuteError,
     currentExecuteInfo,
-    currentExecuteTempsInfo: currentExecuteTempsInfo as Ref<EditorDebugRunnerVariableInfo[]|null>,
-    currentExecuteVariableInfo: currentExecuteVariableInfo as Ref<EditorDebugRunnerVariableInfo[]|null>,
+    currentExecuteVariableInfo: currentExecuteVariableInfo as Ref<EditorDebugRunnerVariableListInfo[]>,
     currentExecutePauseInfo: currentExecutePauseInfo as Ref<EditorDebugRunnerPauseInfo|null>,
     onNodeBreakPointStateChanged,
     onNodeDelete,
@@ -267,8 +331,11 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     getGlobalBreakPointDisableState,
     deleteAllBreakPoint,
     deleteBreakPoint,
+    getPortValue,
     jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor); },
     alertChangeIfIsDebugging,
+    showStackVariableInfo,
+    clearStackVariableInfo,
     jumpToNode,
     run,
     pause,

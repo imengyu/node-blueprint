@@ -32,6 +32,7 @@ var _LIB_INTERNAL = {
        */
       makeTemp(n, v, c = 0) {
         this.temp.set(n, { v, c });
+        return v;
       },
       /**
        * Get temp var
