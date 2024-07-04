@@ -62,6 +62,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
   private internalKeywordMap = {
     _DEBUG_BUILD: '_DEBUG_BUILD',
     context: 'context',
+    uid: 'uid',
     makeTemp: 'makeTemp',
     getTemp: 'getTemp',
     makeSimpleCall: 'makeSimpleCall',
@@ -254,7 +255,12 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
             b.returnStatement(b.callExpression(
               b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeSimpleCall)),
               [
-                b.arrayExpression(fun.outputParams.map(p => b.stringLiteral(`${fun.node.uid}:${p}`))),
+                b.arrayExpression(
+                  fun.outputParams.map(p => b.binaryExpression('+', 
+                    b.identifier(this.internalKeywordMap.uid),
+                    b.stringLiteral(`:${p}`)
+                  ))
+                ),
                 b.functionExpression(null, [], functionBody) 
               ] 
             )),
@@ -269,6 +275,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
               b.identifier(`f${fun.name}`),
               [ 
                 b.identifier(this.internalKeywordMap.context),
+                b.identifier(this.internalKeywordMap.uid),
                 ...fun.params.map(name => b.identifier(name))
               ],
               functionBody
@@ -405,6 +412,8 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
       }
     } else {
       let result : ExpressionKind = this.buildValue(`Port ${this.getNodePortStringInfo(port)} initialValue`, port.initialValue);
+      
+      //调试情况下写入缓存方便查看
       if (data.dev) {
         result = b.callExpression(
           b.memberExpression(b.identifier(this.internalKeywordMap.context), b.identifier(this.internalKeywordMap.makeTemp)),
@@ -460,6 +469,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
         default:
         case 'simpleCall': {
           //简单调用，只需要生成调用语句
+          inputParams.unshift(b.stringLiteral(node.uid));
           inputParams.unshift(b.identifier(this.internalKeywordMap.context));
           if (compileSettings.functionGenerator?.type === 'contextNode') {
             statement.body.push(

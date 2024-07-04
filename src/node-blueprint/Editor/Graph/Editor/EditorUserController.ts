@@ -1,7 +1,7 @@
-import { nextTick } from "vue";
+import { nextTick, ref, type Ref } from "vue";
 import { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
+import { NodePortEditor } from "../Flow/NodePortEditor";
 import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
@@ -13,6 +13,8 @@ import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeGraph, type INodeGraphDefine } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
+import { SimpleDelay } from "@/node-blueprint/Base/Utils/Timer/Timer";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -138,8 +140,14 @@ export interface NodeEditorUserControllerContext {
   /**
    * 移动视口至节点中心位置
    * @param baseNode 
+   * @returns 返回是否已经移至目标位置
    */
-  moveViewportToNode(baseNode : NodeEditor) : void; 
+  moveViewportToNode(nodeOrPort : NodeEditor|NodePortEditor, showPositionIndicator ?: boolean) : boolean; 
+  /**
+   * 显示位置指示器
+   * @param rectViewPort 视口矩形坐标 
+   */
+  showPositionIndicator(rectViewPort: Rect) : void;
 
   /**
    * 为选中项创建注释
@@ -580,19 +588,64 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   }
   /**
    * 移动视口至节点中心位置
-   * @param node 
+   * @param nodeOrPort 移动至的节点或者端口 
+   * @returns 返回是否已经移至目标位置
    */
-  function moveViewportToNode(node : Node) {
+  function moveViewportToNode(nodeOrPort : NodeEditor|NodePortEditor, positionIndicator = false) : boolean
+  {
+    const node = nodeOrPort instanceof NodePortEditor ? nodeOrPort.parent as NodeEditor : nodeOrPort;
     const size = (node as NodeEditor).getRealSize();
     const viewPort = context.getViewPort();
     const offset = new Vector2(
       size.x / 2 - viewPort.size.x / 2, 
       size.y / 2 - viewPort.size.y / 2, 
     );
+    const newPos = new Vector2(node.position).add(offset);
+
     viewPort.scaleScreenSizeToViewportSize(offset);
-    viewPort.position = new Vector2(node.position).add(offset);
+
+    if (positionIndicator)
+      showNodePositionIndicator(nodeOrPort);
+
+    if (!viewPort.position.equal(newPos)) {
+      viewPort.position = newPos;
+      return false;
+    }
+    return true;
+  }
+  /**
+   * 显示元素位置高亮指示器
+   * @param nodeOrPort 移动至的节点或者端口
+   */
+  function showNodePositionIndicator(nodeOrPort : NodeEditor|NodePortEditor) {
+    if (nodeOrPort instanceof NodeEditor) {
+      const rect = nodeOrPort.getRect();
+      rect.x -= 4;
+      rect.y -= 4;
+      showPositionIndicator(rect);
+    }
+    else {
+      const pos = nodeOrPort.getPortPositionViewport();
+      showPositionIndicator(new Rect(pos.x, pos.y, 30, 50));
+    }
   }
 
+  const positionIndicatorOn = ref(false);
+  const positionIndicatorPos = ref(new Rect());
+
+  /**
+   * 显示位置指示器
+   * @param rectViewPort 视口矩形坐标 
+   */
+  function showPositionIndicator(rectViewPort: Rect) {
+    positionIndicatorPos.value = rectViewPort;
+    if (positionIndicatorOn.value) {
+      positionIndicatorOn.value = false;
+      nextTick(() => positionIndicatorOn.value = true)
+    } else {
+      positionIndicatorOn.value = true;
+    }
+  }
   /**
    * 为选中项创建注释
    */
@@ -949,9 +1002,13 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.alignSelectedNode = alignSelectedNode;
   context.setSelectedNodeBreakpointState = setSelectedNodeBreakpointState;
   context.moveViewportToNode = moveViewportToNode;
+  context.showPositionIndicator = showPositionIndicator;
   context.genCommentForSelectedNode = genCommentForSelectedNode;
 
   context.autoNodeSizeChangeCheckerStartStop = autoNodeSizeChangeCheckerStartStop;
 
-  return {}
+  return {
+    positionIndicatorOn,
+    positionIndicatorPos: positionIndicatorPos as Ref<Rect>,
+  }
 }

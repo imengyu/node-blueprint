@@ -11,6 +11,9 @@ export class SimpleDelay<T = any> {
     this.data = data;
   }
 
+  public isWaiting() {
+    return this.timer > 0;
+  }
   public start() {
     if (this.timer)
       clearTimeout(this.timer);

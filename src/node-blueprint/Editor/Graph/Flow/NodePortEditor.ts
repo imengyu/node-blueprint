@@ -12,7 +12,13 @@ export class NodePortEditor extends NodePort {
    * 【由 NodePort.vue 挂载】
    */
   public getPortPositionRelative : (() => Vector2)|null = null;
-  
+   /**
+   * 钩子，仅供编辑器使用
+   */
+  public editorHooks = {
+    callbackTwinkle: null as null|((time: number) => void),
+  };
+
   /**
    * 获取当前节点的主颜色
    */
@@ -20,6 +26,14 @@ export class NodePortEditor extends NodePort {
     return this.paramType.define?.typeColorMerger ? 
       this.paramType.define.typeColorMerger(this.paramType) : 
       (this.paramType.define?.typeColor || '');
+  }
+
+  /**
+   * 触发闪烁
+   * @param time 闪烁时长，毫秒
+   */
+  public twinkle(time = 1400) {
+    this.editorHooks.callbackTwinkle?.(time);
   }
 
   /**

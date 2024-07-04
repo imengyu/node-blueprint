@@ -336,7 +336,7 @@ function debugRunFunction(func, context, prepare = false) {
 }
 
 function* main(context) {
-    f0324C0ECCE4405B8A62D0ECE0D19DC9F(context);
+    f0324C0ECCE4405B8A62D0ECE0D19DC9F(context, "6e6a6a33616836");
 
     if (_DEBUG_CONNECTOR.debugNode(context, "6f696c72747a69", "6e6a6a33616836")) yield {
         type: _DEBUG_BREAK,
@@ -346,6 +346,7 @@ function* main(context) {
 
     f2076EDF991D45C7728A1D6390ECD5BFC(
         context,
+        "617462377a30746c",
         context.makeTemp("617462377a30746c:MIN", 0),
         context.makeTemp("617462377a30746c:MAX", 10)
     );
@@ -356,10 +357,16 @@ function* main(context) {
         graphUid: "6f696c72747a69"
     };
 
-    f4B6EA7379702A383A268AADC332038DF(context, context.makeTemp("68693773797973:TAG", null), context.makeTemp(
-        "3375666c717968:OUTPUT",
-        context.makeTemp("36e3964716a7a66:OUT", context.makeTemp("36e3964716a7a66:IN", "Hello:")) + context.makeTemp("6a626d38623461:OUTPUT", "" + context.getTemp("617462377a30746c:VALUE"))
-    ), context.makeTemp("68693773797973:LEVEL", "log"));
+    f4B6EA7379702A383A268AADC332038DF(
+        context,
+        "68693773797973",
+        context.makeTemp("68693773797973:TAG", null),
+        context.makeTemp(
+            "3375666c717968:OUTPUT",
+            context.makeTemp("36e3964716a7a66:OUT", context.makeTemp("36e3964716a7a66:IN", "Hello:")) + context.makeTemp("6a626d38623461:OUTPUT", "" + context.getTemp("617462377a30746c:VALUE"))
+        ),
+        context.makeTemp("68693773797973:LEVEL", "log")
+    );
 
     if (_DEBUG_CONNECTOR.debugNode(context, "6f696c72747a69", "68693773797973")) yield {
         type: _DEBUG_BREAK,
@@ -379,13 +386,19 @@ function* main(context) {
                 finishCb();
             }, context.makeTemp("6f64617a706579:TIME", 1000));
         }, function*(context) {
-            f4B6EA7379702A383A268AADC332038DF(context, context.makeTemp("6d346537646574:TAG", null), context.makeTemp(
-                "337a75366c766e:OUTPUT",
-                context.makeTemp("766c6778717361:OUT", context.makeTemp("766c6778717361:IN", "world:")) + context.makeTemp("6f763577797170:OUTPUT", "" + context.makeTemp(
-                    "7769686a777737:OUTPUT",
-                    context.getTemp("617462377a30746c:VALUE") + context.makeTemp("6f346634376d3469:OUT", context.makeTemp("6f346634376d3469:IN", 2))
-                ))
-            ), context.makeTemp("6d346537646574:LEVEL", "log"));
+            f4B6EA7379702A383A268AADC332038DF(
+                context,
+                "6d346537646574",
+                context.makeTemp("6d346537646574:TAG", null),
+                context.makeTemp(
+                    "337a75366c766e:OUTPUT",
+                    context.makeTemp("766c6778717361:OUT", context.makeTemp("766c6778717361:IN", "world:")) + context.makeTemp("6f763577797170:OUTPUT", "" + context.makeTemp(
+                        "7769686a777737:OUTPUT",
+                        context.getTemp("617462377a30746c:VALUE") + context.makeTemp("6f346634376d3469:OUT", context.makeTemp("6f346634376d3469:IN", 2))
+                    ))
+                ),
+                context.makeTemp("6d346537646574:LEVEL", "log")
+            );
 
             if (_DEBUG_CONNECTOR.debugNode(context, "6f696c72747a69", "6d346537646574")) yield {
                 type: _DEBUG_BREAK,
@@ -393,7 +406,7 @@ function* main(context) {
                 graphUid: "6f696c72747a69"
             };
 
-            f7788580292C8569B1E7F48938943A549(context);
+            f7788580292C8569B1E7F48938943A549(context, "796b357276746f");
 
             if (_DEBUG_CONNECTOR.debugNode(context, "6f696c72747a69", "796b357276746f")) yield {
                 type: _DEBUG_BREAK,
@@ -410,26 +423,26 @@ _DEBUG_CONNECTOR.debuggerEntry = function debuggerEntry() {
     });
 };
 
-function f0324C0ECCE4405B8A62D0ECE0D19DC9F(context) {
+function f0324C0ECCE4405B8A62D0ECE0D19DC9F(context, uid) {
     return context.makeSimpleCall([], function() {
         _CORE_CONNECTOR.begin();
     });
 }
 
-function f7788580292C8569B1E7F48938943A549(context) {
+function f7788580292C8569B1E7F48938943A549(context, uid) {
     return context.makeSimpleCall([], function() {
         _CORE_CONNECTOR.exit();
     });
 }
 
-function f4B6EA7379702A383A268AADC332038DF(context, TAG, PRINT, LEVEL) {
+function f4B6EA7379702A383A268AADC332038DF(context, uid, TAG, PRINT, LEVEL) {
     return context.makeSimpleCall([], function() {
         _DEBUG_CONNECTOR.console(LEVEL, TAG, PRINT);
     });
 }
 
-function f2076EDF991D45C7728A1D6390ECD5BFC(context, MIN, MAX) {
-    return context.makeSimpleCall(["617462377a30746c:VALUE"], function() {
+function f2076EDF991D45C7728A1D6390ECD5BFC(context, uid, MIN, MAX) {
+    return context.makeSimpleCall([uid + ":VALUE"], function() {
         return Math.floor(Math.random() * (MAX - MIN)) + MIN;
     });
 }

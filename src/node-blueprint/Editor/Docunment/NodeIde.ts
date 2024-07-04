@@ -4,12 +4,13 @@ import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
 import type { NodeDocunmentEditorContext } from "./NodeDocunmentEditor";
 import type { NodeEditor } from "../Graph/Flow/NodeEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodePortEditor } from "../Graph/Flow/NodePortEditor";
 
 export interface NodeIdeControlContext {
   newDocunment() : Promise<NodeDocunmentEditor>; 
   closeDocunment(uid: string): void;
   openDocunment(doc: NodeDocunmentEditor): Promise<NodeDocunmentEditor>;
-  jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor): Promise<void>; 
+  jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor, port?: string|NodePortEditor, showPositionIndicator ?: boolean): Promise<void>; 
   focusDebuggerPanel(): void;
   getDocunmentByUid(uid: string): NodeDocunmentEditor | undefined;
   getCurrentActiveGraphEditor(): NodeGraphEditorContext | null;

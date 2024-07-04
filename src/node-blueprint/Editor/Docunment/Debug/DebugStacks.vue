@@ -69,7 +69,7 @@ const globalErrorExpand = ref(false);
 const globalBreakPointDisableState = ref(false);
 
 function onJumpToNode(item: Node) {
-  props.debugController.jumpToNode(item);
+  props.debugController.jumpToNode(item, true);
 }
 function onShowStack(item: EditorDebugRunnerStackInfo) {
   props.debugController.showStackVariableInfo(item.parent);

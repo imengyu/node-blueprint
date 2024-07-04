@@ -131,6 +131,7 @@ import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompi
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
 import ConsoleItem from '../Console/ConsoleItem.vue';
+import type { NodePortEditor } from '../Graph/Flow/NodePortEditor';
 
 const loadTestScript = true;
  
@@ -491,16 +492,22 @@ function onCompileDocunment(doc: NodeDocunmentEditor, exportFile = false) {
   }
 }
 /**
- * 快速跳转
+ * 快速跳转到编辑器的指定位置
+ * @param doc 文档
+ * @param graph 图表
+ * @param node 节点
+ * @param port 端口
  */
-async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor) {
+async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node?: NodeEditor, port?: string|NodePortEditor, showPositionIndicator = false) {
   if (!doc.activeEditor)
     await openDocunment(doc);
   if (graph) {
     await doc.activeEditor?.switchActiveGraph(graph);
     if (node) {
-      graph.activeEditor?.moveViewportToNode(node);
-      node.twinkle();
+      if (typeof port === 'string') 
+        port = node.getPortByGUID(port) as NodePortEditor;
+      if (graph.activeEditor?.moveViewportToNode(port ?? node, showPositionIndicator)) 
+        node.twinkle();
     }
   }
 }

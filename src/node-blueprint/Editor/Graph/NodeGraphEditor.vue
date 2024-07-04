@@ -72,6 +72,11 @@
     <BasePanels
       :viewPort="(viewPort as NodeGraphEditorViewport)"
     />
+    <PositionIndicator
+      v-model:positionIndicatorOn="positionIndicatorOn"
+      :context="context"
+      :positionIndicatorPos="positionIndicatorPos"
+    />
     <div v-if="graphLoading" class="node-graph-loading">
       <Spin />
       请稍后，文档正在加载中...
@@ -112,6 +117,7 @@ import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
+import PositionIndicator from './SubComponents/PositionIndicator.vue';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -217,7 +223,11 @@ const {
   onDragOver,
 } = useEditorDragController(context);
 
-useEditorUserController(context);
+const {
+  positionIndicatorOn,
+  positionIndicatorPos,
+} = useEditorUserController(context);
+
 useEditorClipBoardControllerController(context);
 
 let eventSelectNodeChanged : NodeGraphEditorBaseEventListener|null = null;

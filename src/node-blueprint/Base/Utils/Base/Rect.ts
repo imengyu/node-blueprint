@@ -160,6 +160,13 @@ export class Rect extends SerializableObject<IKeyValueObject> {
   public getPoint() : Vector2 { 
     return new Vector2(this.x, this.y);
   }
+  /**
+   * 获取矩形大小
+   * @returns 
+   */
+  public getSize() : Vector2 { 
+    return new Vector2(this.w, this.h);
+  }
 
   private center = new Vector2();
 

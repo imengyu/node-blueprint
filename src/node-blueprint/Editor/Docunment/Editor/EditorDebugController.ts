@@ -33,7 +33,7 @@ export interface EditorDebugController {
   deleteAllBreakPoint(): void,
   deleteBreakPoint(breakpoint: EditorDebugBreakpoint): void;
   jumpToBreakPoint(breakpoint: EditorDebugBreakpoint): void;
-  jumpToNode(node: Node): void;
+  jumpToNode(node: Node, tip?: boolean): void;
   loadDocunment(doc: NodeDocunment): void,
   onNodeBreakPointStateChanged(node: Node): void,
   onNodeDelete(node: Node): void,
@@ -191,11 +191,13 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
    * 跳转到指定的节点
    * @param node 
    */
-  function jumpToNode(node: NodeEditor) {
+  function jumpToNode(node: NodeEditor, tip = false) {
     context.jumpToDocunment(
       (node.parent as NodeGraph).parent as NodeDocunmentEditor,
       (node.parent as NodeGraph),
-      node as NodeEditor
+      node as NodeEditor,
+      undefined,
+      tip,
     );
   }
   /**
@@ -332,7 +334,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     deleteAllBreakPoint,
     deleteBreakPoint,
     getPortValue,
-    jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor); },
+    jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor, true); },
     alertChangeIfIsDebugging,
     showStackVariableInfo,
     clearStackVariableInfo,

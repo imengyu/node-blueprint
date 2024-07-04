@@ -178,8 +178,6 @@ function updateDebuggingValueShow() {
     const { hasValue, value } = debugController.getPortValue(props.instance);
     currentPortDebugValue.value = value;
     currentPortDebugHasValue.value = hasValue;
-    console.log('value', value, 'hasValue', hasValue);
-    
   }
 }
 
