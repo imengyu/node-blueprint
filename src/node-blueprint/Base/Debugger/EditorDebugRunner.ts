@@ -6,6 +6,7 @@ import ArrayUtils from '../Utils/ArrayUtils';
 import { printError, printInfo, printWarning, printlog } from '../Logger/DevLog';
 import type { ITreeListItem } from '@/node-blueprint/Editor/Components/List/TreeList';
 import RandomUtils from '../Utils/RandomUtils';
+import type { NodePort } from '../Flow/Node/NodePort';
 
 export type EditorDebugRunnerContextState = 'inactive'|'active'|'paused'|'completed';
 export type EditorDebugRunnerState = 'idle'|'running'|'paused';
@@ -25,14 +26,21 @@ interface EditorDebugRunnerContext {
   getLocalVariables() : { key: string, value: any }[],
   next(step: boolean) : { returnValue: any, pauseNodeUid?: string };
 }
-
 export interface EditorDebugRunnerVariableListInfo extends ITreeListItem {
   key: string,
+  children: EditorDebugRunnerVariableGroupInfo[]
+}
+export interface EditorDebugRunnerVariableGroupInfo extends ITreeListItem {
+  node?: Node,
+  graph?: NodeGraph,
   children: EditorDebugRunnerVariableInfo[]
 }
 export interface EditorDebugRunnerVariableInfo extends ITreeListItem {
   key: string;
   value: any;
+  name?: string,
+  node?: Node,
+  port?: NodePort,
 }
 export interface EditorDebugRunnerStackInfo {
   node: Node,

@@ -8,15 +8,15 @@ export class NodePortEditor extends NodePort {
   private pos = new Vector2();
 
   /**
-   * 获取当前端口连接点的相对位置
-   * 【由 NodePort.vue 挂载】
-   */
-  public getPortPositionRelative : (() => Vector2)|null = null;
-   /**
    * 钩子，仅供编辑器使用
+   * 【由 NodePort.vue 挂载】
    */
   public editorHooks = {
     callbackTwinkle: null as null|((time: number) => void),
+    /**
+     * 获取当前端口连接点的相对位置
+     */
+    callbackGetPortPositionRelative : null as null|(() => Vector2),
   };
 
   /**
@@ -42,9 +42,9 @@ export class NodePortEditor extends NodePort {
    * @returns 
    */
   public getPortPositionViewport() : Vector2 {
-    if(this.getPortPositionRelative) {
+    if(this.editorHooks.callbackGetPortPositionRelative) {
       this.pos.set(this.parent.position);
-      this.pos.add(this.getPortPositionRelative());
+      this.pos.add(this.editorHooks.callbackGetPortPositionRelative());
     }
     return this.pos;
   }

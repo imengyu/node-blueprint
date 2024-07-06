@@ -181,7 +181,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount, watch } from 'vue';
+import { ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount } from 'vue';
 import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePort from './NodePort.vue';
@@ -203,6 +203,7 @@ import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
 import { useResizeChecker } from 'vue-code-layout';
 import { moveNodeSolveSnap } from '../Composeable/NodeMove';
+import { useComponentLoadBoundThing } from '../../Composeable/ComponentLoadBoundThing';
 
 const props = defineProps({
   instance: {
@@ -237,25 +238,19 @@ const nodeRef = ref<HTMLDivElement>();
 
 //初始化
 
-onMounted(() => {
-  loadNode();
-});
 onBeforeUnmount(() => {
   stopResizeChecker();
 });
-watch(instance, (v) => {
-  if (v) loadNode();
-});
 
-function loadNode() {
+useComponentLoadBoundThing(instance, (ins) => {
   //加载节点
-  instance.value.editorHooks.callbackGetRealSize = getRealSize;
-  instance.value.editorHooks.callbackTwinkle = twinkle;
-  instance.value.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
-  instance.value.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
-  instance.value.editorHooks.callbackUpdateComment = updateComment;
-  instance.value.editorHooks.callbackGetLastMovedBlock = () => lastMovedBlock;
-  instance.value.editorHooks.callbackDoAutoResizeCheck = function () {
+  ins.editorHooks.callbackGetRealSize = getRealSize;
+  ins.editorHooks.callbackTwinkle = twinkle;
+  ins.editorHooks.callbackGetCurrentSizeType = getCurrentSizeType;
+  ins.editorHooks.callbackUpdateNodeForMoveEnd = updateNodeForMoveEnd;
+  ins.editorHooks.callbackUpdateComment = updateComment;
+  ins.editorHooks.callbackGetLastMovedBlock = () => lastMovedBlock;
+  ins.editorHooks.callbackDoAutoResizeCheck = function () {
     if (nodeRef.value) {
       const w = nodeRef.value.offsetWidth;
       const h = nodeRef.value.offsetHeight;
@@ -263,33 +258,46 @@ function loadNode() {
         updateRegion();
     }
   };
-  instance.value.editorHooks.callbackOnAddToEditor = () => {
-    instance.value.chunkInfo.data = instance.value.uid;
-    chunkedPanel.value.addInstance(instance.value.chunkInfo);
+  ins.editorHooks.callbackOnAddToEditor = () => {
+    ins.chunkInfo.data = ins.uid;
+    chunkedPanel.value.addInstance(ins.chunkInfo);
     updateRegion();
   };
-  instance.value.editorHooks.callbackRequireContext = () => context;
-  instance.value.editorHooks.callbackUpdateRegion = updateRegion;
-  instance.value.editorHooks.callbackOnRemoveFromEditor = () => {
-    chunkedPanel.value.removeInstance(instance.value.chunkInfo);
+  ins.editorHooks.callbackRequireContext = () => context;
+  ins.editorHooks.callbackUpdateRegion = updateRegion;
+  ins.editorHooks.callbackOnRemoveFromEditor = () => {
+    chunkedPanel.value.removeInstance(ins.chunkInfo);
   };
-  instance.value.editorHooks.callbackAddClass = (cls) => {
+  ins.editorHooks.callbackAddClass = (cls) => {
     appendClass.value.push(cls);
   };
   nextTick(() => {
-    const ret = instance.value.events.onEditorCreate?.(instance.value, context, nodeRef.value);
+    const ret = ins.events.onEditorCreate?.(ins, context, nodeRef.value);
     if (ret && typeof ret === 'object') {
-      instance.value.editorProp = ret.editorProp;
-      instance.value.nodeProp = ret.nodeProp;
-      instance.value.menu = ret.menu;
+      ins.editorProp = ret.editorProp;
+      ins.nodeProp = ret.nodeProp;
+      ins.menu = ret.menu;
     }
-    if (instance.value.style.noIsolate)
-      instance.value.isolateState = false;
+    if (ins.style.noIsolate)
+      ins.isolateState = false;
     updateComment();
     updateRegion();
     startResizeChecker();
   });
-}
+}, (ins) => {
+  ins.editorHooks.callbackGetRealSize = null;
+  ins.editorHooks.callbackTwinkle = null;
+  ins.editorHooks.callbackGetCurrentSizeType = null;
+  ins.editorHooks.callbackUpdateNodeForMoveEnd = null;
+  ins.editorHooks.callbackUpdateComment = null;
+  ins.editorHooks.callbackGetLastMovedBlock = null;
+  ins.editorHooks.callbackDoAutoResizeCheck = null;
+  ins.editorHooks.callbackOnAddToEditor = null;
+  ins.editorHooks.callbackRequireContext = null;
+  ins.editorHooks.callbackUpdateRegion = null;
+  ins.editorHooks.callbackOnRemoveFromEditor = null;
+  ins.editorHooks.callbackAddClass = null;
+});
 
 //#region 单元大小更改后重新布局
 

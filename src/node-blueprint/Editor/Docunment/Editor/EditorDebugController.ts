@@ -1,4 +1,4 @@
-import { EditorDebugRunner, type EditorDebugRunnerPauseContextInfo, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, type EditorDebugRunnerVariableListInfo } from "@/node-blueprint/Base/Debugger/EditorDebugRunner";
+import { EditorDebugRunner, type EditorDebugRunnerPauseContextInfo, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, type EditorDebugRunnerVariableGroupInfo, type EditorDebugRunnerVariableInfo, type EditorDebugRunnerVariableListInfo } from "@/node-blueprint/Base/Debugger/EditorDebugRunner";
 import type { Node, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
 import { ref, type Ref } from "vue";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
@@ -13,6 +13,8 @@ import Alert from "../../Nana/Modal/Alert";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeConnectorEditor } from "../../Graph/Flow/NodeConnectorEditor";
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import MapUtils from "@/node-blueprint/Base/Utils/MapUtils";
+import type { NodePortEditor } from "../../Graph/Flow/NodePortEditor";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {
@@ -35,7 +37,7 @@ export interface EditorDebugController {
   deleteAllBreakPoint(): void,
   deleteBreakPoint(breakpoint: EditorDebugBreakpoint): void;
   jumpToBreakPoint(breakpoint: EditorDebugBreakpoint): void;
-  jumpToNode(node: Node, tip?: boolean): void;
+  jumpToNode(node: Node, port?: NodePort, tip?: boolean): void;
   loadDocunment(doc: NodeDocunment): void,
   onNodeBreakPointStateChanged(node: Node): void,
   onNodeDelete(node: Node): void,
@@ -125,23 +127,49 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
    * @param info 
    */
   function showStackVariableInfo(info: EditorDebugRunnerPauseContextInfo) {
-    currentExecuteVariableInfo.value[0].children = [];
-    currentExecuteVariableInfo.value[1].children = [];
     currentPortDebugValueMap.clear();
 
-    const variableArr = currentExecuteVariableInfo.value[0].children;
-    const tempsArr = currentExecuteVariableInfo.value[1].children;
+    const variablesMap = new Map<string, EditorDebugRunnerVariableGroupInfo>();
+    const tempsMap = new Map<string, EditorDebugRunnerVariableGroupInfo>();
+
+    function addVariable(v: EditorDebugRunnerVariableInfo) {
+      //TODO: FIX
+      const [ uid ] = v.key.split(':');
+      const group = MapUtils.getOrAddNew(variablesMap, uid, (key) => {
+        return {
+          key,
+          graph: info.graph,
+          children: [],
+        } as EditorDebugRunnerVariableGroupInfo;
+      });
+      v.name = group.graph?.getVariableByName(uid)?.name;
+      group.children.push(v);
+    }
+    function addTemp(v: EditorDebugRunnerVariableInfo) {
+      const [ uid, puid ] = v.key.split(':');
+      const group = MapUtils.getOrAddNew(tempsMap, uid, (key) => {
+        return {
+          key,
+          node: info.graph.getOneNodeByUID(key),
+          children: [],
+        } as EditorDebugRunnerVariableGroupInfo;
+      });
+      v.node = group.node;
+      v.port = group.node?.getPortByGUID(puid) ?? undefined;
+      v.name = v.port?.name || puid;
+      group.children.push(v);
+      currentPortDebugValueMap.set(v.key, v.value.v);
+    }
 
     let _info : EditorDebugRunnerPauseContextInfo|undefined = info;
     while(_info) {
-      if (_info.variables)
-        variableArr.push(..._info.variables);
-      if (_info.temps)
-        tempsArr.push(..._info.temps);
+      _info.variables?.forEach(p => addVariable(p));
+      _info.temps?.forEach(p => addTemp(p));
       _info = _info.parent;
     }
 
-    tempsArr.forEach(e => currentPortDebugValueMap.set(e.key, e.value.v));
+    currentExecuteVariableInfo.value[0].children = Array.from(variablesMap.values());
+    currentExecuteVariableInfo.value[1].children = Array.from(tempsMap.values());
   }
   /**
    * 清空变量显示信息
@@ -239,12 +267,12 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
    * 跳转到指定的节点
    * @param node 
    */
-  function jumpToNode(node: NodeEditor, tip = false) {
+  function jumpToNode(node: NodeEditor, port?: NodePort, tip = false) {
     context.jumpToDocunment(
       (node.parent as NodeGraph).parent as NodeDocunmentEditor,
       (node.parent as NodeGraph),
       node as NodeEditor,
-      undefined,
+      port as NodePortEditor,
       tip,
     );
   }
@@ -382,7 +410,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     deleteAllBreakPoint,
     deleteBreakPoint,
     getPortValue,
-    jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor, true); },
+    jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor, undefined, true); },
     alertChangeIfIsDebugging,
     activeFirstStackLineAndFirstNode,
     activeStackLineAndFirstNode,

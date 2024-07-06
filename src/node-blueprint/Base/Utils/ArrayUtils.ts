@@ -35,21 +35,21 @@ function contains<T>(array: T[], item: T) {
 function clear<T>(array: T[]) {
   return array.splice(0, array.length);
 }
-function isEmpty(array: unknown[]) {
+function isEmpty<T>(array: T[]) {
   return array.length === 0;
 }
 function addOnce<T>(array: T[], item: T) {
   if (array.indexOf(item) >= 0) return array.length;
   else return array.push(item);
 }
-
 /**
  * 交换数组两个元素
- * @param {Array} arr 数组
- * @param {Number} index1 索引1
- * @param {Number} index2 索引2
+ * @param arr 数组
+ * @param index1 索引1
+ * @param index2 索引2
+ * @returns 
  */
-function swapItems(arr : Array<any>, index1 : number, index2: number) {
+function swapItems<T>(arr : Array<T>, index1 : number, index2: number) {
   arr[index1] = arr.splice(index2,1,arr[index1])[0]
   /*
   let x = arr[index1];
@@ -60,23 +60,22 @@ function swapItems(arr : Array<any>, index1 : number, index2: number) {
 }
 /**
  * 指定数组索引位置元素向上移
- * @param {Array} arr 数组
- * @param {Number} index 索引
+ * @param arr 数组
+ * @param index 索引
  */
-function upData(arr : Array<any>, index : number) {
+function upData<T>(arr : Array<T>, index : number) {
   if (arr.length > 1 && index !== 0)
     return swapItems(arr, index, index - 1)
 }
 /**
  * 指定数组索引位置元素向下移
- * @param {Array} arr 数组
- * @param {Number} index 索引
+ * @param arr 数组
+ * @param index 索引
  */
-function downData(arr : Array<any>, index : number) {
+function downData<T>(arr : Array<T>, index : number) {
   if (arr.length > 1 && index !== (arr.length - 1))
     return swapItems(arr, index, index + 1)
 }
-
 /**
  * 将数组中某个条目重新插入数组指定索引位置，此函数适用于拖拽的场景中，
  * 此函数会自动计算移除条目之后的索引，并将其插入到指定位置中。
@@ -84,7 +83,7 @@ function downData(arr : Array<any>, index : number) {
  * @param item 条目
  * @param index 新的索引
  */
-function reInsertToArray(array: any[], item: any, index: number) {
+function reInsertToArray<T>(array: T[], item: T, index: number) {
   const oldIndex = array.indexOf(item);
   if (oldIndex < index) {
     removeAt(array, oldIndex);

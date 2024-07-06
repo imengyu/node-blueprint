@@ -626,7 +626,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     }
     else {
       const pos = nodeOrPort.getPortPositionViewport();
-      showPositionIndicator(new Rect(pos.x, pos.y, 30, 50));
+      showPositionIndicator(new Rect(pos.x - 20, pos.y - 15, 50, 23));
     }
   }
 

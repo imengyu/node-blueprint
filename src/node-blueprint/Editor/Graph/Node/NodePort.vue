@@ -120,17 +120,18 @@ import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
 import Icon from '../../Nana/Icon.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
 import NodeParamIconRender from '../../Components/Small/NodeParamIconRender.vue';
+import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
+import RowView from '../../Nana/Layout/RowView.vue';
+import ColumnView from '../../Nana/Layout/ColumnView.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodePortEditor } from '../Flow/NodePortEditor';
 import type { NodeEditor } from '../Flow/NodeEditor';
+import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
+import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
-import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
-import RowView from '../../Nana/Layout/RowView.vue';
-import ColumnView from '../../Nana/Layout/ColumnView.vue';
+import { useComponentLoadBoundThing } from '../../Composeable/ComponentLoadBoundThing';
 
 const props = defineProps({
   instance: {
@@ -148,12 +149,12 @@ const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext')
 const debugController = inject<EditorDebugController|undefined>('NodeIdeDebugController');
 const portDot = ref<HTMLElement>();
 
-//#region 位置钩子
+//#region 钩子
 
 const dotPos = new Vector2();
 
-if (instance.value)
-  instance.value.getPortPositionRelative = function() {
+useComponentLoadBoundThing(instance, (ins) => {
+  ins.editorHooks.callbackGetPortPositionRelative = function() {
     const dot = portDot.value;
     if (!dot)
       return dotPos;
@@ -163,6 +164,9 @@ if (instance.value)
     );
     return dotPos;
   };
+}, (ins) => {
+  ins.editorHooks.callbackGetPortPositionRelative = null;
+})
 
 //#endregion
 

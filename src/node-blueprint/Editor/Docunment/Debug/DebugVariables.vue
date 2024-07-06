@@ -8,14 +8,18 @@
   >
     <template #itemLeft="{ level, item }">
       <span v-if="level==0">{{ item.key }}</span>
-      <Row v-else-if="level==1" class="console-obj-item">
-        <span class="console-obj-color-key key">{{ item.key }}</span>
+      <span v-else-if="level==1">{{ item.node ? item.node.name : (item.graph ? item.graph.name : '?') }}</span>
+      <Row v-else-if="level==2" class="console-obj-item">
+        <span class="console-obj-color-key key">{{ item.name || item.key }}</span>
         <span class="sp">:</span>
         <ConsoleAutoShower :value="item.value.v" />
       </Row>
     </template>
     <template #itemRight="{ level, item }">
-      <template v-if="level == 1">
+      <template v-if="level == 2">
+        <SmallButton title="跳转" @click="onJumpToPos(item)">
+          <Icon icon="icon-route" />
+        </SmallButton>
         <SmallButton title="复制值" @click="onCopyValue(item.value)">
           <Icon icon="icon-flag-" />
         </SmallButton>
@@ -34,8 +38,9 @@ import Row from '../../Nana/Layout/RowView.vue';
 import Icon from '../../Nana/Icon.vue';
 import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
 import TreeList from '../../Components/List/TreeList.vue';
+import type { EditorDebugRunnerVariableInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
 
-defineProps({
+const props = defineProps({
   panel: {
     type: Object as PropType<CodeLayoutPanelInternal>,
     default: null,
@@ -50,6 +55,10 @@ const { toClipboard } = useClipboard();
 
 function onCopyValue(value: any) {
   toClipboard(JSON.stringify(value));
+}
+function onJumpToPos(item: EditorDebugRunnerVariableInfo) {
+  if (item.node)
+    props.debugController.jumpToNode(item.node, item.port, true)
 }
 
 </script>

@@ -46,7 +46,7 @@ import SmallButton from '../../Components/SmallButton.vue';
 import ConsoleItem from '../../Console/ConsoleItem.vue';
 import TreeList from '../../Components/List/TreeList.vue';
 import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { EditorDebugRunnerPauseContextInfo, EditorDebugRunnerStackInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
+import type { EditorDebugRunnerStackInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
 import type { EditorDebugController } from '../Editor/EditorDebugController';
 import type { ITreeListDescItem } from '../../Components/List/TreeList';
 
@@ -69,7 +69,7 @@ const globalErrorExpand = ref(false);
 const globalBreakPointDisableState = ref(false);
 
 function onJumpToNode(item: Node) {
-  props.debugController.jumpToNode(item, true);
+  props.debugController.jumpToNode(item, undefined, true);
 }
 function onShowStack(item: EditorDebugRunnerStackInfo) {
   props.debugController.activeStackLineAndFirstNode(item.parent);
