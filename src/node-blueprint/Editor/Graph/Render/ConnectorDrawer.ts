@@ -17,7 +17,7 @@ export class ConnectorDrawer {
    */
   drawConnectorBezierCurve(ctx : CanvasRenderingContext2D, 
     x1 : number, y1 : number, x2 : number, y2 : number,
-    hover = false, pointPrecent = -1, willHide = false) : void {
+    hover = false, pointPrecent = -1) : void {
     
     let yAbs = Math.abs(y2 - y1); 
     let xAbs = Math.abs(x2 - x1); 
@@ -63,24 +63,23 @@ export class ConnectorDrawer {
       ctx.globalAlpha = 1;
     }
 
+    function renderDot(dotv : number) {
+      const of = threeOrderBezier(dotv, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]);
+
+      ctx.beginPath();
+      ctx.arc(of[0], of[1], 5, 0, Math.PI*2, true);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     if(pointPrecent >= 0) {
       const allWidth = Math.abs(x2 - x1);
-      const dots = [];
+      const space = allWidth / Math.floor(allWidth / 500 * 10);
 
-      for(let i = pointPrecent * allWidth; i >= 0; i -= 46) dots.push(i / allWidth);
-      for(let i = pointPrecent * allWidth; i < allWidth; i += 46) dots.push(i / allWidth);
-
-      if(pointPrecent > 0.8 && willHide)
-        ctx.globalAlpha = (1 - pointPrecent) / 0.2;
-
-      dots.forEach((dotv) => {
-        const of = threeOrderBezier(dotv, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]);
-
-        ctx.beginPath();
-        ctx.arc(of[0], of[1], 5, 0, Math.PI*2, true);
-        ctx.closePath();
-        ctx.fill();
-      });
+      for(let i = pointPrecent * allWidth; i >= 0; i -= space) 
+        renderDot(i / allWidth);
+      for(let i = pointPrecent * allWidth; i < allWidth; i += space) 
+        renderDot(i / allWidth);
 
       ctx.globalAlpha = 1;
     }

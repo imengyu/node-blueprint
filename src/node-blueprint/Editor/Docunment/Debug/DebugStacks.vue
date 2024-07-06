@@ -72,6 +72,7 @@ function onJumpToNode(item: Node) {
   props.debugController.jumpToNode(item, true);
 }
 function onShowStack(item: EditorDebugRunnerStackInfo) {
+  props.debugController.activeStackLineAndFirstNode(item.parent);
   props.debugController.showStackVariableInfo(item.parent);
 }
 

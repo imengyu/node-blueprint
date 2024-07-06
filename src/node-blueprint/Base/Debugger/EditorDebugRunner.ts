@@ -13,8 +13,8 @@ export type EditorDebugRunnerState = 'idle'|'running'|'paused';
 interface EditorDebugRunnerContext {
   dbg: {
     uid: string,//graph uid
-    nodeStack: string[],
-    graphVariables: {
+    nodeStack: { uid: string, call: string}[], //call stack for debug
+    graphVariables: {//graph variable
       key: string,
       getCb: () => any,
     }
@@ -36,6 +36,7 @@ export interface EditorDebugRunnerVariableInfo extends ITreeListItem {
 }
 export interface EditorDebugRunnerStackInfo {
   node: Node,
+  call: string,
   parent: EditorDebugRunnerPauseContextInfo;
 }
 export interface EditorDebugRunnerPauseContextInfo extends ITreeListItem {
@@ -105,8 +106,9 @@ export class EditorDebugRunner {
         runStack: [],
         parent: context.parent ? makeContextInfo(context.parent) : undefined,
       };
-      contextInfo.runStack = context.dbg.nodeStack.map(uid => ({
+      contextInfo.runStack = context.dbg.nodeStack.map(({ uid, call }) => ({
         node: graph.nodes.get(uid)!,
+        call,
         parent: contextInfo,
       }));
       return contextInfo;

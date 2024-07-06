@@ -319,6 +319,9 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
       && (this.baseType !== 'execute' && another.baseType !== 'execute')
     )
       return true;
+    //执行
+    if (this.isExecute && another.isExecute)
+      return true;
     //检查类型
     if (
       this.baseType === another.baseType //基础类型必须一致

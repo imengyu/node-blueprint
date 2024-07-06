@@ -13,8 +13,11 @@ _DEBUG_CONNECTOR.debugStop = function debugStop() {
   _DEBUG_CONNECTOR.runnerContexts.clear();
   _DEBUG_CONNECTOR.debuggerPause();
 }
-_DEBUG_CONNECTOR.debugNode = function(context, graphUid, nodeUid) {
-  context.dbg.nodeStack.unshift(nodeUid);
+_DEBUG_CONNECTOR.debugNode = function(context, graphUid, nodeUid, call) {
+  context.dbg.nodeStack.unshift({ 
+    uid: nodeUid,
+    call: call,
+  });
   if (this.debuggerPaused || this.debuggerStepMode)
     return true;
   return _DEBUG_PROVIDER.checkBreakNode(graphUid, nodeUid);

@@ -11,6 +11,8 @@ import { NodeGraphCompiler } from "@/node-blueprint/Base/Compiler/NodeGraphCompi
 import { printError, printInfo } from "@/node-blueprint/Base/Logger/DevLog";
 import Alert from "../../Nana/Modal/Alert";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { NodeConnectorEditor } from "../../Graph/Flow/NodeConnectorEditor";
+import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {
@@ -38,6 +40,9 @@ export interface EditorDebugController {
   onNodeBreakPointStateChanged(node: Node): void,
   onNodeDelete(node: Node): void,
   alertChangeIfIsDebugging(): void;
+  activeStackLineAndFirstNode(info: EditorDebugRunnerPauseContextInfo): void,
+  activeFirstStackLineAndFirstNode(info: EditorDebugRunnerPauseInfo): void;
+  clearActiveStackLineAnNode(): void;
   showStackVariableInfo: (info: EditorDebugRunnerPauseContextInfo) => void;
   clearStackVariableInfo: () => void,
   run: (fromDocunment: NodeDocunment) => void,
@@ -74,8 +79,6 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
   ]);
   const currentExecutePauseInfo = ref<EditorDebugRunnerPauseInfo|null>(null);
 
-  let lastTriggeredBreakpointNode : null|NodeEditor = null;
-
   const debugRunner = new EditorDebugRunner({
     getGlobalBreakPointDisableState() {
       return globalBreakPointDisableState;
@@ -89,7 +92,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     },
     pauseWithNode(info) {
       printInfo(TAG, `Debugger paused at node: ${getStackFirstNodeName(info)}`);
-      jumpToStackFirstNode(info);
+      activeFirstStackLineAndFirstNode(info);
       context.focusDebuggerPanel();
       currentExecuteError.value = '';
       currentExecuteInfo.value = `Debugger paused`;
@@ -98,7 +101,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     },
     pauseWithException(info, e) {
       printError(TAG, `Debugger paused at node: ${getStackFirstNodeName(info)} with exception: ${e}`);
-      jumpToStackFirstNode(info);
+      activeFirstStackLineAndFirstNode(info);
       context.focusDebuggerPanel();
       currentExecuteError.value = '' + e;
       currentExecuteInfo.value = '';
@@ -151,32 +154,77 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
    * 清空状态信息
    */
   function clearStateMessages() {
-    clearFirstNodeLight();
     currentExecuteError.value = '';
     currentExecuteInfo.value = '';
     currentExecutePauseInfo.value = null;
+    clearActiveStackLineAnNode();
     clearStackVariableInfo();
   }
+
+  let lastTriggeredBreakpointNode : null|NodeEditor = null;
+  let lastActiveStackInfo : null|EditorDebugRunnerPauseContextInfo = null;
+  const lastActivedConnectors : NodeConnectorEditor[] = [];
+
   /**
-   * 清除之前高亮标记中断的节点
+   * 清除之前高亮标记中断的节点与连接线
    */
-  function clearFirstNodeLight() {
+  function clearActiveStackLineAnNode() {
+    lastActiveStackInfo = null;
     if (lastTriggeredBreakpointNode) {
       lastTriggeredBreakpointNode.breakpointTriggered = false;
       lastTriggeredBreakpointNode = null;
     }
+    for (const connector of lastActivedConnectors)
+      connector.state = 'normal';
+    ArrayUtils.clear(lastActivedConnectors);
   }
   /**
-   * 高亮标记当前中断的节点
+   * 激活第一个运行栈上的连接线状态和当前暂停的节点
    * @param info 
    */
-  function jumpToStackFirstNode(info: EditorDebugRunnerPauseInfo) {
-    clearFirstNodeLight();
-    const firstNode = info.contexts[0]?.runStack?.[0].node as NodeEditor;
-    if (firstNode) {
-      lastTriggeredBreakpointNode = firstNode;
-      firstNode.breakpointTriggered = true;
-      jumpToNode(firstNode);
+  function activeFirstStackLineAndFirstNode(info: EditorDebugRunnerPauseInfo) {
+    const info2 = info.contexts[0];
+    if (info2) 
+      activeStackLineAndFirstNode(info2);
+  }
+  /**
+   * 激活运行栈上的连接线状态和当前暂停的节点
+   * @param info 
+   */
+  function activeStackLineAndFirstNode(info: EditorDebugRunnerPauseContextInfo) {
+    if (lastActiveStackInfo === info)
+      return;
+    clearActiveStackLineAnNode();
+    lastActiveStackInfo = info;
+    const stack = info.runStack;
+    if (stack) {
+      //高亮标记中断的节点
+      const firstNode = stack[0].node as NodeEditor;
+      if (firstNode) {
+        lastTriggeredBreakpointNode = firstNode;
+        firstNode.breakpointTriggered = true;
+        jumpToNode(firstNode);
+      }
+      //激活调用栈上方连接线
+      let prevNode : Node|null = null;
+      for (let i = 0; i < stack.length; i++) {
+        const currentNode = stack[i].node;
+        const entryCallPortGUID = stack[i].call;
+        if (prevNode !== null) {
+          const connector = currentNode.getPortAndConnectorByType(
+            NodeParamType.Execute, 
+            'output', 
+            prevNode, 
+            entryCallPortGUID)?.connector as NodeConnectorEditor;
+          if (connector)
+            lastActivedConnectors.push(connector);
+        }
+        prevNode = currentNode;
+      }
+      for (const connector of lastActivedConnectors) {
+        connector.state = 'active';
+        connector.resetDotPos();
+      }
     }
   }
   /**
@@ -336,6 +384,9 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     getPortValue,
     jumpToBreakPoint(breakpoint) { jumpToNode(breakpoint.node as NodeEditor, true); },
     alertChangeIfIsDebugging,
+    activeFirstStackLineAndFirstNode,
+    activeStackLineAndFirstNode,
+    clearActiveStackLineAnNode,
     showStackVariableInfo,
     clearStackVariableInfo,
     jumpToNode,

@@ -16,6 +16,7 @@ import type { PropControlItem } from "../../Editor/PropDefine";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 import type { INodeCompileSettings } from "../../Compiler/NodeCompileSettings";
+import type { NodeConnector } from "./NodeConnector";
 
 const TAG = 'Node';
 
@@ -356,10 +357,27 @@ export class Node extends SerializableObject<INodeDefine> {
    * @returns 返回端口，如果没有匹配则返回null
    */
   public getPortByTypeAndDirection(type: NodeParamType, direction: NodePortDirection, includeAny = true) : NodePort|null  {
-    if(type.isExecute) 
-      return (direction === 'input' ? this.inputPorts : this.outputPorts).find(p => p.paramType.isExecute) || null;
-    else 
-      return (direction === 'input' ? this.inputPorts : this.outputPorts).find(p => type.acceptable(p.paramType), includeAny) || null;
+    return (direction === 'input' ? this.inputPorts : this.outputPorts).find(p => type.acceptable(p.paramType), includeAny) || null;
+  }
+  /**
+   * 通过端口类型检查与当前节点连接的下游节点的第一个连接线
+   * @param type 匹配类型
+   * @param direction 匹配方向
+   * @param downSideNode 与当前节点连接的下游节点
+   * @param downSideNodeFilterGuid 当匹配多个连接线时，只选择指定的下游GUID端口
+   */
+  public getPortAndConnectorByType(type: NodeParamType, direction: NodePortDirection, downSideNode: Node, downSideNodeFilterGuid?: string) : { port: NodePort, connector: NodeConnector }|null  {  
+    const ports = (direction === 'input' ? this.inputPorts : this.outputPorts);
+    for (const port of ports) {
+      if (port.paramType.acceptable(type)) {
+        const connector = direction === 'input' ? 
+          port.isConnectByNode(downSideNode, downSideNodeFilterGuid) : 
+          port.isConnectToNode(downSideNode, downSideNodeFilterGuid);
+        if (connector)
+          return { port, connector };
+      }
+    }
+    return null;
   }
   /**
    * 更改参数端口的数据类型

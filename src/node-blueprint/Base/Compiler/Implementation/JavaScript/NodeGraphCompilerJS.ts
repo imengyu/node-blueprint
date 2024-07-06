@@ -487,7 +487,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           }
 
           //调试进入节点
-          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node, ''));
 
           //递归构建下一链接的节点,只循环执行链接
           for (const port of outPorts) {
@@ -515,12 +515,12 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           }
           //调试进入节点
           if (compileSettings.callGenerator.debugStatemenGenerateBefore)
-            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node, ''));
 
           statement.body.push(result);
           
           if (!compileSettings.callGenerator.debugStatemenGenerateBefore)
-            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+            statement.body.push(...this.buildDevNodeEnterCode(data, graph, node, ''));
 
           //递归构建下一链接的节点,只循环执行链接
           for (const port of outPorts) {
@@ -623,7 +623,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           }
 
           //调试进入节点
-          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node));
+          statement.body.push(...this.buildDevNodeEnterCode(data, graph, node, ''));
           //节点自行控制每个分支的调用情况
           statement.body.push(
             ...compileSettings.callGenerator.generateBranch(this, data, node, false, inputParams, outBranchs)
@@ -653,9 +653,9 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
   /**
    * 节点调试插入代码
    */
-  private buildDevNodeEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph, node: Node) : StatementKind[] {
+  private buildDevNodeEnterCode(data: NodeDocunmentCompileData, graph: NodeGraph, node: Node, call: string) : StatementKind[] {
     /**
-     * if (_DEBUG_CONNECTOR.debugNode(context, graphUid, node.uid))
+     * if (_DEBUG_CONNECTOR.debugNode(context, graphUid, node.uid, call))
      *    yield { uid: node.uid, graphUid: graphUid, type: _DEBUG_BREAK };
      */
     return data.dev ? [ 
@@ -665,6 +665,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
           b.identifier(this.internalKeywordMap.context), 
           b.stringLiteral(graph.uid), 
           b.stringLiteral(node.uid),
+          b.stringLiteral(call),
         ] 
       ), b.expressionStatement(b.yieldExpression(b.objectExpression([
         b.property('init', b.identifier('type'), b.identifier('_DEBUG_BREAK')),

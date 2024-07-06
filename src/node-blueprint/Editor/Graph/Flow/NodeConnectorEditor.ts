@@ -7,6 +7,7 @@ import type { NodePortEditor } from "./NodePortEditor";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { threeOrderBezier } from "../../Utils/BezierUtils";
 import { getNodeCSSColor } from "../Composeable/EditorColors";
+import { calc2PointDistance } from "@/node-blueprint/Base/Utils/Base/Math";
 
 let _debug = false;
 
@@ -27,8 +28,13 @@ export class NodeConnectorEditor extends NodeConnector {
   public hoverChecked = false;
   public selected = false;
 
-  public chunkInfo : ChunkInstance|null = null;
-  public state : 'normal'|'active'|'error' = 'normal';
+  public chunkInfo: ChunkInstance | null = null;
+  public state: 'normal' | 'active' | 'error' = 'normal';
+
+  public lineWidth = 2;
+  public selectLineWidth = 3;
+  public selectRectExtend = 3;
+  public dotSpeed = 0.01;
 
   private drawer = new ConnectorDrawer();
   private rect = new Rect();
@@ -36,11 +42,14 @@ export class NodeConnectorEditor extends NodeConnector {
   private endPos = new Vector2();
   private startColor = getNodeCSSColor('--node-connector-default-color');
   private endColor = getNodeCSSColor('--node-connector-default-color');
-  private colorGradient : null|CanvasGradient = null;
-  private colorGradientNeedCreate = true;
+  private colorGradient: null | CanvasGradient = null;
   private dotPos = 0;
+  private dotSpeedCalced = 0;
 
-  public forceSetPos(_startPos: Vector2|undefined, _endPos: Vector2|undefined) {
+  private colorGradientNeedCreate = true;
+  private dotSpeedNeedRecalc = true;
+
+  public forceSetPos(_startPos: Vector2 | undefined, _endPos: Vector2 | undefined) {
     if (_startPos)
       this.startPos.set(_startPos);
     if (_endPos)
@@ -51,11 +60,11 @@ export class NodeConnectorEditor extends NodeConnector {
    * @param pos 要检查的点 (视口坐标)
    * @param screenPos 要检查的点 (视口坐标)
    */
-  public testInConnector(pos: Vector2, screenPos: Vector2) : boolean {
+  public testInConnector(pos: Vector2, screenPos: Vector2): boolean {
     const x1 = this.rect.x;
     const x2 = this.rect.getRight();
     const xPec = (pos.x - x1) / (x2 - x1);
-    if(xPec >= 0 && xPec <= 1) {
+    if (xPec >= 0 && xPec <= 1) {
       const p = this.drawer.posData2;
       const pp = threeOrderBezier(xPec, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
       const o = Math.abs(pp[1] - screenPos.y);
@@ -66,30 +75,31 @@ export class NodeConnectorEditor extends NodeConnector {
   /**
    * 更新区位信息
    */
-  public updateRegion() : Rect {
-    if(this.startPort && this.endPort) {
+  public updateRegion(): Rect {
+    if (this.startPort && this.endPort) {
       this.startPos = (this.startPort as NodePortEditor).getPortPositionViewport();
       this.endPos = (this.endPort as NodePortEditor).getPortPositionViewport();
       this.rect = Rect.makeBy2Point(this.rect, this.startPos, this.endPos);
       //扩大一些区域方便鼠标选择
-      this.rect.x -= 3;
-      this.rect.y -= 3;
-      this.rect.w += 6;
-      this.rect.h += 6;
+      this.rect.x -= this.selectRectExtend;
+      this.rect.y -= this.selectRectExtend;
+      this.rect.w += this.selectRectExtend * 2;
+      this.rect.h += this.selectRectExtend * 2;
 
       if (this.colorGradient)
         this.colorGradientNeedCreate = true;
+      this.dotSpeedNeedRecalc = true;
     }
     return this.rect;
   }
   /**
    * 当端口类型更改之后，同步更新连接线颜色
    */
-  public updatePortValue() : void {
-    if(this.startPort && this.endPort) {
+  public updatePortValue(): void {
+    if (this.startPort && this.endPort) {
       this.startColor = (this.startPort as NodePortEditor).getTypeColor();
       this.endColor = (this.endPort as NodePortEditor).getTypeColor();
-      if(this.startColor === this.endColor) {
+      if (this.startColor === this.endColor) {
         this.colorGradient = null;
         this.colorGradientNeedCreate = false;
       }
@@ -101,37 +111,50 @@ export class NodeConnectorEditor extends NodeConnector {
       this.colorGradientNeedCreate = false;
     }
   }
+  /**
+   * 重置激活点动画位置
+   */
+  public resetDotPos() {
+    this.dotPos = this.state === 'active' ? 0 : -1;
+  }
 
   private tempPoint1 = new Vector2();
   private tempPoint2 = new Vector2();
   private tempPoint3 = new Vector2();
   private tempRect = new Rect();
 
-  public render(viewPort : NodeGraphEditorViewport, ctx : CanvasRenderingContext2D) : void {
+  public render(viewPort: NodeGraphEditorViewport, ctx: CanvasRenderingContext2D): void {
 
     viewPort.viewportPointToEditorPoint(this.startPos, this.tempPoint1);
     viewPort.viewportPointToEditorPoint(this.endPos, this.tempPoint2);
 
     //鼠标悬浮时线加粗
-    if(this.hover) ctx.lineWidth = 3;
-    else if(this.selected) ctx.lineWidth = 3;
-    else ctx.lineWidth = 2;
+    if (this.hover) ctx.lineWidth = this.selectLineWidth;
+    else if (this.selected) ctx.lineWidth = this.selectLineWidth;
+    else ctx.lineWidth = this.lineWidth;
 
-    //移动线上的点
-    if(this.state === 'active') {
-      this.dotPos += 0.01;
-      if(this.dotPos >= 1) 
-        this.dotPos = 0;
-    } else if(this.state === 'error') {
+    if (this.state === 'error') {
       this.dotPos = -1;
       ctx.strokeStyle = getNodeCSSColor('--node-border-error-color');
       ctx.fillStyle = ctx.strokeStyle;
+    } else {
 
-    } else if(this.state === 'normal') {
-      this.dotPos = -1;
+      //移动线上的点
+      if (this.state === 'active') {
+        //点移动速度计算
+        if (this.dotSpeedNeedRecalc) {
+          this.dotSpeedCalced = this.dotSpeed / (calc2PointDistance(this.startPos, this.endPos) / 100);
+          this.dotSpeedNeedRecalc = false;
+        }
+        this.dotPos += this.dotSpeedCalced;
+        if (this.dotPos >= 1)
+          this.dotPos -= 1;
+      } else {
+        this.dotPos = -1;
+      }
 
       //设置绘制颜色
-      if(this.startPort !== null) {
+      if (this.startPort !== null) {
 
         //视口移动后也需要重新创建渐变
         if (this.colorGradient && !this.tempPoint3.equal(this.tempPoint1)) {
@@ -139,15 +162,15 @@ export class NodeConnectorEditor extends NodeConnector {
           this.colorGradientNeedCreate = true;
         }
         //渐变的创建
-        if(this.colorGradientNeedCreate) {
+        if (this.colorGradientNeedCreate) {
           this.colorGradientNeedCreate = false;
           this.colorGradient = ctx.createLinearGradient(
-            this.tempPoint1.x, this.tempPoint1.y, 
-            this.tempPoint2.x, this.tempPoint2.y, 
+            this.tempPoint1.x, this.tempPoint1.y,
+            this.tempPoint2.x, this.tempPoint2.y,
           );
           this.colorGradient.addColorStop(0.2, this.startColor);
           this.colorGradient.addColorStop(0.8, this.endColor);
-        } else if(this.colorGradient) {
+        } else if (this.colorGradient) {
           ctx.strokeStyle = this.colorGradient;
           ctx.fillStyle = this.colorGradient;
         } else {
@@ -157,12 +180,12 @@ export class NodeConnectorEditor extends NodeConnector {
       } else {
         ctx.strokeStyle = '#efefef';
         ctx.fillStyle = ctx.strokeStyle;
-     }
+      }
     }
 
     //绘制
-    this.drawer.drawConnectorBezierCurve(ctx, this.tempPoint1.x, this.tempPoint1.y, this.tempPoint2.x, this.tempPoint2.y, this.hover, this.dotPos, false);
- 
+    this.drawer.drawConnectorBezierCurve(ctx, this.tempPoint1.x, this.tempPoint1.y, this.tempPoint2.x, this.tempPoint2.y, this.hover, this.dotPos);
+
     //绘制调试信息
     if (_debug) {
       this.tempRect.setFrom2Point(this.tempPoint1, this.tempPoint2);

@@ -130,6 +130,34 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
   }
 
   /**
+   * 获取是否连接至指定节点
+   * @param node 指定节点
+   * @param portGuid 指定连接对应的端口GUID
+   * @returns
+   */
+  public isConnectToNode(node: Node, portGuid?: string): NodeConnector | null {
+    for (let i = this.connectedToPort.length - 1; i >= 0; i--) {
+      const port = this.connectedToPort[i].endPort;
+      if (port?.parent === node && (!portGuid || portGuid === port.guid))
+        return this.connectedToPort[i];
+    }
+    return null;
+  }
+  /**
+   * 获取是否被指定节点连接
+   * @param node 指定节点
+   * @param portGuid 指定连接对应的端口GUID
+   * @returns
+   */
+  public isConnectByNode(node: Node, portGuid?: string): NodeConnector | null {
+    for (let i = this.connectedFromPort.length - 1; i >= 0; i--) {
+      const port = this.connectedFromPort[i].startPort;
+      if (port?.parent === node && (!portGuid || portGuid === port.guid))
+        return this.connectedFromPort[i];
+    }
+    return null;
+  }
+  /**
    * 获取是否连接至指定端口
    * @param port 指定端口
    * @returns
