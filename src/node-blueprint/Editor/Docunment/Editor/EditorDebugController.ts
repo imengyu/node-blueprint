@@ -90,10 +90,10 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     },
     alertNoActiveContext() {
       context.focusDebuggerPanel();
-      printError(TAG, `Debugger stopped because: NoActiveContext`);
+      printError(TAG, null, `Debugger stopped because: NoActiveContext`);
     },
     pauseWithNode(info) {
-      printInfo(TAG, `Debugger paused at node: ${getStackFirstNodeName(info)}`);
+      printInfo(TAG, null, `Debugger paused at node: ${getStackFirstNodeName(info)}`);
       activeFirstStackLineAndFirstNode(info);
       context.focusDebuggerPanel();
       currentExecuteError.value = '';
@@ -102,7 +102,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       showStackVariableInfo(info.contexts[0]);
     },
     pauseWithException(info, e) {
-      printError(TAG, `Debugger paused at node: ${getStackFirstNodeName(info)} with exception: ${e}`);
+      printError(TAG, null, `Debugger paused at node: ${getStackFirstNodeName(info)} with exception: ${e}`);
       activeFirstStackLineAndFirstNode(info);
       context.focusDebuggerPanel();
       currentExecuteError.value = '' + e;
@@ -111,7 +111,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
       showStackVariableInfo(info.contexts[0]);
     },
     reusme() {
-      printInfo(TAG, `Debugger running`);
+      printInfo(TAG, null, `Debugger running`);
       clearStateMessages();
       currentExecuteError.value = '';
       currentExecuteInfo.value = 'Debugger running';

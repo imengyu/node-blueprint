@@ -2,19 +2,18 @@ import { nextTick, ref, type Ref } from "vue";
 import { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { NodePortEditor } from "../Flow/NodePortEditor";
+import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
+import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import { NodeGraph, type INodeGraphDefine } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { INodePortDefine, NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
-import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
-import { NodeGraph, type INodeGraphDefine } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { SimpleDelay } from "@/node-blueprint/Base/Utils/Timer/Timer";
+import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -27,9 +26,19 @@ export interface NodeEditorUserAddNodeOptions<T> {
    */
   addNodePosRefernceCenter?: boolean,
   /**
+   * 初始化单元的shadow数据
+   */
+  intitalShadow?: INodeDefine;
+  /**
    * 初始化单元的 options 数据
    */
   intitalOptions?: T|undefined,
+  /**
+   * If set to true will log error to console, failse will ALERT error with messagebox.
+   * 
+   * @default false
+   */
+  noErrorAlert?: boolean,
 }
 export interface NodeEditorUserControllerContext {
   /**
@@ -426,21 +435,31 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     const currentGraph = context.getCurrentGraph();
 
     //检查单元是否只能有一个
-    if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {     
-      userActionAlert('warning', '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
+    if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {  
+      if (options.noErrorAlert)   
+        printWarning(TAG, null, '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
+      else
+        userActionAlert('warning', '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
       return null;
     }
     //自定义检查回调
     if(typeof define.events?.onAddCheck === 'function') {
       const err = define.events.onAddCheck(define, currentGraph);
       if(err !== null) {
-        userActionAlert('warning', err);
+        if (options.noErrorAlert)   
+          printWarning(TAG, null, err);
+        else
+          userActionAlert('warning', err);
         return null;
       }
     }
 
     const newNode = new NodeEditor(define);
     newNode.load();
+    if (options.intitalShadow) {
+      const shadowSettings = newNode.loadShadow(options.intitalShadow, 'graph');
+      newNode.mergeShadow(shadowSettings);
+    }
     //配置
     if (options.intitalOptions)
       newNode.options = options.intitalOptions;
@@ -495,7 +514,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
    * 用户删除操作
    */
   function userDelete() {
-    if(context.isKeyAltDown())
+    if(context.keyboardManager.isKeyAltDown())
       context.deleteSelectedConnectors();
     else 
       context.deleteSelectedNodes();
@@ -512,17 +531,17 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     const callGraphName = options.callGraphName;
     const graph = context.getCurrentGraph().getChildGraphByName(callGraphName);
     if (!graph) {
-      printError(TAG, `Not found graph for node ${node.uid}`);
+      printError(TAG, null, `Not found graph for node ${node.uid}`);
       return;
     }
     const doc = graph.getParentDocunment();
     if (!doc) {
-      printError(TAG, `Not found ParentDocunment for graph ${graph.uid}`);
+      printError(TAG, null, `Not found ParentDocunment for graph ${graph.uid}`);
       return;
     }
     const mainGraph = doc.mainGraph;
     if (!mainGraph) {
-      printError(TAG, `Not found mainGraph for doc ${doc.name}`);
+      printError(TAG, null, `Not found mainGraph for doc ${doc.name}`);
       return;
     }
 
@@ -714,7 +733,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         childGraphParent = currentGraph;
         break;
       default:
-        printWarning(TAG, `Unknow option ${to}`);
+        printWarning(TAG, null, `Unknow option ${to}`);
         return;
     }
 
@@ -957,7 +976,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         if (startPort && endPort)
           context.connectConnector(startPort as NodePortEditor, endPort as NodePortEditor);
         else
-          printError(TAG, `expandSubgraph: Failed to connect ${connector.startPort.guid} to ${connector.endPort.guid} connector uid: (${connector.uid})`);
+          printError(TAG, null, `expandSubgraph: Failed to connect ${connector.startPort.guid} to ${connector.endPort.guid} connector uid: (${connector.uid})`);
       }
 
       context.userDeleteNode(callNode);
@@ -1006,6 +1025,52 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
   context.genCommentForSelectedNode = genCommentForSelectedNode;
 
   context.autoNodeSizeChangeCheckerStartStop = autoNodeSizeChangeCheckerStartStop;
+
+  //Register shortcuts
+  context.keyboardManager.registerShortcut({
+    key: 'Delete',
+    callback() {
+      userDelete();
+    },
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'Digit0',
+    callback() {
+      context.zoomSet(100);
+    },
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyA',
+    callback() {
+      if(context.keyboardManager.isKeyAltDown()) context.selectAllConnectors();
+      else if(context.keyboardManager.isKeyControlDown()) context.selectAllNodes();
+    },
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyZ',
+    keyControl: true,
+    callback: () => context.historyManager.undoStep(),
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyY',
+    keyControl: true,
+    callback: () => context.historyManager.redoStep(),
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyC',
+    keyControl: true,
+    callback: () => context.clipBoardManager.copySelectionNodes(),
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyX',
+    keyControl: true,
+    callback: () => context.clipBoardManager.cutSelectionNodes(),
+  });
+  context.keyboardManager.registerShortcut({
+    key: 'KeyV',
+    keyControl: true,
+    callback: () => context.clipBoardManager.pasteNodes(),
+  });
 
   return {
     positionIndicatorOn,

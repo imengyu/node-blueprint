@@ -10,6 +10,7 @@
     </template>
     <div
       ref="nodeRef"
+      :key="instance.uid"
       tabindex="-1"
       :class="['node-block',
                (instance.errorState ? `error-${instance.errorState} ` : ''),
@@ -609,7 +610,7 @@ const dragMouseHandler = createMouseDragHandler({
 
         if(!instance.value.selected) {
           //如果当前块没有选中，在这里切换选中状态
-          context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
+          context.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
         }
         else {
           //选中后，如果有选择其他块，则同时移动其他块
@@ -649,7 +650,7 @@ const dragMouseHandler = createMouseDragHandler({
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
       if (!props.instance.selected)
-        context.selectNode(instance.value, context.isKeyControlDown() ? true : false);
+        context.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
     }
   },
 })
@@ -719,7 +720,7 @@ function onContextmenu(e : MouseEvent) {
 async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'param') {
   const ret = props.instance.events.onUserAddPort?.(props.instance, context, { direction, type });
   if (typeof ret === 'undefined') {
-    printWarning(TAG, `Faild to execute onUserAddPort, events.onUserAddPort configue not right.`);
+    printWarning(TAG, null, `Faild to execute onUserAddPort, events.onUserAddPort configue not right.`);
     return;
   }
   const ports = ret instanceof Promise ? await ret : ret;

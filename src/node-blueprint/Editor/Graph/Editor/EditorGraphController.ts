@@ -10,12 +10,24 @@ import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
+import type { NodePortEditor } from "../Flow/NodePortEditor";
 
 export interface NodeGraphEditorGraphControllerContext {
   /**
    * 获取节点
    */
   getNodes(): Map<string, NodeEditor>;
+  /**
+   * 通过UID获取节点
+   * @param uid UID
+   */
+  getNodeByUid(uid: string): NodeEditor|null;
+  /**
+   * 通过UID获取节点端口
+   * @param uid UID
+   * @param pguid 端口UID
+   */
+  getNodePortByUid(uid: string, pguid: string): NodePortEditor|null;
   /**
    * 获取连接线
    */
@@ -148,18 +160,18 @@ export function useEditorGraphController(
         switch(node.style.layer) {
           case 'normal':
             if (foregroundNodes.value.length > MAX_NODES_PER_FRAME)
-              printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
+              printError(TAG, null, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
             else
               foregroundNodes.value.push(node);
             break;
           case 'background':
             if (backgroundNodes.value.length > MAX_NODES_PER_FRAME)
-              printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
+              printError(TAG, null, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: too many nodes in frame (>${MAX_NODES_PER_FRAME})`);
             else
               backgroundNodes.value.push(node);
             break;
           default:
-            printError(TAG, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
+            printError(TAG, null, `Faild to add node: ${node.name} UID: ${node.uid} (${node.guid}) because: bad style.layer: ${node.style.layer}`);
             break;
         }        
         allNodes.set(node.uid, node);
@@ -179,11 +191,11 @@ export function useEditorGraphController(
    */
   function addConnector(connector: NodeConnectorEditor) {
     if (!connector.startPort || !connector.endPort) {
-      printError(TAG, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
+      printError(TAG, null, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
       return;
     }
     if (!(connector.startPort instanceof NodePort) || !(connector.endPort instanceof NodePort)) {
-      printError(TAG, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
+      printError(TAG, null, `addConnector: Bad connector data ${connector.uid} baceuse: startPort or endPort is null`);
       return;
     }
 
@@ -237,6 +249,7 @@ export function useEditorGraphController(
         if (err) {
           printWarning(
             TAG,
+            null,
             `无法删除单元 ${node.define.name} ( ${node.uid}) : ${err}`
           );
           return false;
@@ -307,7 +320,7 @@ export function useEditorGraphController(
         context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
       }
     } else {
-      printWarning('Graph', 'addNode fail: no currentGraph');
+      printWarning('Graph', null, 'addNode fail: no currentGraph');
     }
   }
   function addNode(node: NodeEditor) {
@@ -317,9 +330,17 @@ export function useEditorGraphController(
       currentGraph.value.nodes.set(node.uid, node);
       context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
     } else {
-      printWarning('Graph', 'addNode fail: no currentGraph');
+      printWarning('Graph', null, 'addNode fail: no currentGraph');
     }
   }
+
+  function getNodeByUid(uid: string): NodeEditor|null {
+    return allNodes.get(uid) || null;
+  }
+  function getNodePortByUid(uid: string, pguid: string): NodePortEditor|null {
+    return getNodeByUid(uid)?.mapPorts.get(pguid) as NodePortEditor || null;
+  }
+
   /**
    * 关闭图表
    * @param graph 
@@ -393,7 +414,7 @@ export function useEditorGraphController(
       case 'sendMessageToNode': sendMessageToNodes(data.nodes, data.message, data.data); break;
       case 'sendMessageToNodes': sendMessageToNode(data.node, data.message, data.data); break;
       case 'emitEvent': context.emitEvent(data.message, data.data); break;
-      default: devWarning(TAG, `dispstchMessage failed: Unkown message ${message}`); break;
+      default: devWarning(TAG, null, `dispstchMessage failed: Unkown message ${message}`); break;
     }
   }
   /**
@@ -416,6 +437,8 @@ export function useEditorGraphController(
   context.clearAll = clearAll;
   context.getConnectors = () => allConnectors;
   context.getNodes = () => allNodes;
+  context.getNodeByUid = getNodeByUid;
+  context.getNodePortByUid = getNodePortByUid;
   context.removeConnector = removeConnector;
   context.addConnector = addConnector;
   context.removeNode = removeNode;

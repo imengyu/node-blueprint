@@ -62,10 +62,7 @@ export class NodeGraphCompiler extends Singleton {
    */
   registerCompiler(target: string, compiler: INodeGraphCompiler) {
     if (this.compiler.has(target)) {
-      printWarning(
-        TAG,
-        "Compiler type " + target + " alreday registered !"
-      );
+      printWarning(TAG, null, "Compiler type " + target + " alreday registered !");
       return;
     }
     this.compiler.set(target, compiler);

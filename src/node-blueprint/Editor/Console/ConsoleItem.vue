@@ -21,18 +21,22 @@
 
     <span v-if="tag" class="tag mr-2">{{ tag }}</span>
 
-    <span v-if="typeof content === 'string'">{{ content }}</span>
-    <ConsoleObjectShower 
-      v-else-if="speicalType==='object'"
-      :value="content"
-      @on-go-ref="(d: string,b: string,p: string) => $emit('goRef', d,b,p)" 
-    />
-    <ConsoleRefShower 
-      v-else 
-      :value="content"
-      :isTop="true"
-      @on-go-ref="(d: string,b: string,p: string) => $emit('goRef', d,b,p)"
-    />
+    <slot>
+      <div v-for="(content, i) in contents" :key="i" class="console-content-box">
+        <span v-if="typeof content.content === 'string'">{{ content.content }}</span>
+        <ConsoleObjectShower 
+          v-else-if="content.speicalType==='object'"
+          :value="content.content"
+          @on-go-ref="(d: string,b: string,p: string) => $emit('goRef', d,b,p)" 
+        />
+        <ConsoleRefShower 
+          v-else 
+          :value="content.content"
+          :isTop="true"
+          @on-go-ref="(d: string,b: string,p: string) => $emit('goRef', d,b,p)"
+        />
+      </div>
+    </slot>
 
     <a 
       v-if="srcText"
@@ -49,17 +53,13 @@ import { type PropType } from 'vue'
 import ConsoleRefShower from "./ConsoleRefShower.vue";
 import ConsoleObjectShower from "./ConsoleObjectShower.vue";
 import Icon from "../Nana/Icon.vue";
-import type { LogLevel } from '@/node-blueprint/Base/Logger/Logger';
+import type { LogContentType, LogLevel } from '@/node-blueprint/Base/Logger/Logger';
 import type { LogSpeicalType } from './Console.vue';
 
 defineProps({
   level: {
     type: String as PropType<LogLevel>,
     default: undefined,
-  },
-  speicalType: {
-    type: String as PropType<LogSpeicalType>,
-    default: '',
   },
   srcText: {
     type: String,
@@ -69,8 +69,11 @@ defineProps({
     type: String,
     default: null,
   },
-  content: {
-    type: null,
+  contents: {
+    type: Object as PropType<{
+      content: LogContentType,
+      speicalType: LogSpeicalType,
+    }[]>,
     default: null,
   },
   showAs: {

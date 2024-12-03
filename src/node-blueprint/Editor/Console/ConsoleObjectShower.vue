@@ -1,6 +1,6 @@
 <template>
   <div class="console-obj">
-    <div v-if="value && (typeof value === 'object' && value !== null)" class="console-obj-item" @click="swithValOpen">
+    <div v-if="value && (typeof value === 'object' && value !== null)" class="console-obj-item short" @click="swithValOpen">
       <template v-if="!isTop">
         <Icon
           icon="icon-arrow-right-bold"
@@ -11,7 +11,7 @@
         <slot class="key" />
         <span class="sp">:</span>
       </template>
-      <span>{{ valName }}</span>
+      <span v-if="!valOpen || (valChilds && valChilds?.length > 0)" class="name">{{ valName }}</span>
     </div>
     <div v-else class="console-obj-item">
       <template v-if="!isTop">
@@ -26,12 +26,13 @@
       </template>
       <ConsoleRefShower :value="value" :isTop="false" @onGoRef="(d,b,p) => $emit('onGoRef',d,b,p)" />
     </div>
-    <div v-if="valOpen">
+    <template v-if="valOpen">
+      <span v-if="valDetails" class="console-obj-detail">{{ valDetails }}</span>
       <ConsoleObjectShower v-for="(item, k) in valChilds" :key="k" :value="item.val" @on-go-ref="(d: unknown,b: unknown,p: unknown) => $emit('onGoRef',d,b,p)">
         <span class="key">{{ item.key }}</span>
       </ConsoleObjectShower>
       <a v-if="valChildHasMore" class="show-more" @click="loadObjectChilds">显示更多(还有 {{ valChildAll - valChildNowIndex }})</a>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -40,6 +41,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { ISaveableTypes } from '../../Base/Utils/BaseTypes';
 import ConsoleRefShower from './ConsoleRefShower.vue'
 import Icon from '../Nana/Icon.vue';
+import logger from '@/node-blueprint/Base/Logger/Logger';
 
 defineEmits([ 'onGoRef' ]);
 const props = defineProps({
@@ -54,6 +56,7 @@ const props = defineProps({
 });
 
 const valName = ref('');
+const valDetails = ref('');
 const valChilds = ref<{
   key?: string,
   val: ISaveableTypes
@@ -63,7 +66,7 @@ const valChildAll = ref(0);
 const valChildNowIndex = ref(0);
 const valCanOpen = ref(false);
 const valOpen = ref(false);
-const valType = ref<'Array'|'Object'|'Set'|'Map'|'WeakMap'|'WeakSet'|'Others'>('Others');
+const valType = ref<'Array'|'Object'|'Set'|'Map'|'WeakMap'|'WeakSet'|'Others'|'Error'>('Others');
 
 watch(() => props.value, () => {
   loadObject();
@@ -141,13 +144,21 @@ function loadObject() {
   valOpen.value = false;
 
   switch(str) {
+    case '[object Error]': {
+      const err = logger.formatError(obj as Error);
+      valDetails.value = "Error " + err;
+      valName.value = err.substring(0, 50) + "...";
+      valCanOpen.value = true;
+      valType.value = 'Error';
+      break;
+    } 
     case '[object Array]': {
       valName.value = `Array(${obj.length})`;
       valCanOpen.value = true;
       valType.value = 'Array';
       break;
     } 
-    case'[object Object]': {
+    case '[object Object]': {
       let keys = Object.keys(obj).slice(0, 5);
       valName.value = JSON.stringify(obj, keys);
       valCanOpen.value = true;
@@ -179,8 +190,14 @@ function loadObject() {
       break;
     } 
     default: {
-      valName.value = str.trim();
-      valCanOpen.value = false;
+      valDetails.value = str.trim();
+      if (valDetails.value.length > 150) {
+        valName.value = str.substring(150);
+        valCanOpen.value = true;
+      } else {
+        valName.value = valDetails.value;
+        valCanOpen.value = false;
+      }
       valType.value = 'Others';
       break;
     }

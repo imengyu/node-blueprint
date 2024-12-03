@@ -193,7 +193,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     onUp: () => {
       if (lastSelectAtDown) {
         //Alt按下，删除连接线
-        if (context.isKeyAltDown())
+        if (context.keyboardManager.isKeyAltDown())
           context.unConnectConnector(lastSelectAtDown);
         lastSelectAtDown = null;
       }

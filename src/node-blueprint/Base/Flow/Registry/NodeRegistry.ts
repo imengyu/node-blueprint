@@ -5,6 +5,7 @@ import { Singleton } from "../../Singleton/Singleton";
 import type { INodeDefine } from "../Node/Node";
 import type { CategoryData, CategoryDataItem } from "./NodeCategory";
 import type { NodePackage } from "./NodePackage";
+import RandomUtils from "../../Utils/RandomUtils";
 
 const TAG = 'NodeRegistry';
 
@@ -25,6 +26,7 @@ export class NodeRegistry extends Singleton {
   //所有单元（已分类）
   private allNodesGrouped: Array<CategoryData> = [
     {
+      key: "0",
       category: "",
       childCategories: [],
       nodes: [],
@@ -65,14 +67,12 @@ export class NodeRegistry extends Singleton {
   public registerNode(nodeDef: INodeDefine, updateList = true) : void {
     const oldNode = this.getRegisteredNode(nodeDef.guid);
     if (oldNode !== null && oldNode !== undefined) {
-      printWarning(
-        TAG,
-        "Node guid " + nodeDef.guid + " alreday registered !"
-      );
+      printWarning(TAG, null, "Node guid " + nodeDef.guid + " alreday registered !");
       return;
     }
 
     this.allNodes.set(nodeDef.guid, {
+      key: nodeDef.guid,
       define: nodeDef,
       show: true,
       filterShow: true,
@@ -132,7 +132,7 @@ export class NodeRegistry extends Singleton {
       pack,
       allDefineGUids: guids
     });
-    printInfo(TAG, `Register NodePack : ${pack.packageName}`);
+    printInfo(TAG, null, `Register NodePack : ${pack.packageName}`);
 
     if(updateList)
       this.updateNodesList();
@@ -145,12 +145,12 @@ export class NodeRegistry extends Singleton {
 
     const packData = this.allPacks.get(pack.packageName);
     if(!packData) {
-      printWarning(TAG, `Unregister NodePack : ${pack.packageName} failed: ${pack.packageName} not registered.`);
+      printWarning(TAG, null, `Unregister NodePack : ${pack.packageName} failed: ${pack.packageName} not registered.`);
       return;
     }
 
     this.allPacks.delete(pack.packageName);
-    printInfo(TAG, `Unregister NodePack : ${pack.packageName}`);
+    printInfo(TAG, null, `Unregister NodePack : ${pack.packageName}`);
 
     packData.allDefineGUids.forEach((guid) => {
       this.unregisterNode(guid, false);
@@ -198,6 +198,7 @@ export class NodeRegistry extends Singleton {
     //没有则创建
     if (category === null) {
       category = {
+        key: RandomUtils.genNonDuplicateID(12),
         category: categoryName,
         childCategories: [],
         nodes: [],

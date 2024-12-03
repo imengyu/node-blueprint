@@ -21,7 +21,7 @@ export class Singleton {
 
   constructor(singletonName: string) {
     if (Singleton.getSingletonInstance(singletonName) !== null) {
-      printWarning('Singleton', `An instance already exists for the current Singleton ${singletonName}.`);
+      printWarning('Singleton', null, `An instance already exists for the current Singleton ${singletonName}.`);
       return;
     }
 

@@ -1,8 +1,8 @@
 <template>
   <CollapseItem 
-    v-for="(item, index) in categoryData.childCategories" 
+    v-for="item in categoryData.childCategories"
     v-show="item.show && item.filterShow" 
-    :key="index"
+    :key="item.key"
     v-model:open="item.open" 
     :title="item.category"
   >
@@ -15,8 +15,8 @@
 
   <div v-if="categoryData.nodes.length > 0" class="nodes-select-list">
     <Tooltip
-      v-for="(item, index) in categoryData.nodes"
-      :key="index"
+      v-for="item in categoryData.nodes"
+      :key="item.key"
       :content="item.define.description"
     >
       <div

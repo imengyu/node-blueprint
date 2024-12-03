@@ -12,7 +12,26 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
       serializeSchemes: {
         default: {
           serializeAll: true,
-        }
+        },
+        graph: {
+          serializeAll: false,
+          serializableProperties: [
+            "uid", "startPort", "endPort",
+          ],
+          saveProp(key, parentKey, source) {
+            if (key === "startPort" || key === "endPort") {
+              const port = source as NodePort;
+              return {
+                parsed: true,
+                return: {
+                  nodeUid: port?.parent?.uid,
+                  portUid: port?.guid,
+                }
+              }
+            }
+            return undefined;
+          },
+        },
       },
     });
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);

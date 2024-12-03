@@ -113,7 +113,25 @@ export class Rect extends SerializableObject<IKeyValueObject> {
   }
 
   /**
-   * 将当前矩形按中心坐标，扩展指定 size 大小 [Expand the current rectangle to the specified size according to the center coordinate]
+   * 将当前前矩与另外一个矩形合并成为更大的一个矩形（会更改当前矩形）
+   * @param other 
+   */
+  public grow(other: Rect) {
+    const l = Math.min(this.x, other.x);
+    const t = Math.min(this.y, other.y);
+    const r = Math.max(this.getRight(), other.getRight());
+    const b = Math.max(this.getBottom(), other.getBottom());
+
+    this.x = l;
+    this.y = t;
+    this.w = r - l;
+    this.h = b - t;
+  }
+
+  /**
+   * 将当前矩形按中心坐标，扩展指定 size 大小
+   * 
+   * Expand the current rectangle to the specified size according to the center coordinate
    * @param size 扩展大小 
    */
   public expand(size : number) : void {
@@ -123,7 +141,9 @@ export class Rect extends SerializableObject<IKeyValueObject> {
     this.h += size * 2;
   }
   /**
-   * 将矩形坐标和大小放大指定倍数 【Enlarges the rectangular coordinates and size by a specified factor】
+   * 将矩形坐标和大小放大指定倍数
+   * 
+   * Enlarges the rectangular coordinates and size by a specified factor
    * @param v 
    */
   public multiply(v : number) : void {

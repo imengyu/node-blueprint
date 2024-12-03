@@ -1,21 +1,68 @@
 import { onBeforeUnmount, onMounted } from "vue";
-import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
+import type { NodeGraphEditorContext, NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
 /**
  * 键盘控制器上下文函数
  */
 export interface NodeEditorKeyBoardControllerContext {
+  keyboardManager: {
+    /**
+     * Register a keyboard shortcut
+     * @param callbackFn Exec callback
+     * @returns Id for unregister
+     */
+    registerShortcut: (config: ShortcutConfig) => number;
+    /**
+     * Unregister a keyboard shortcut
+     * @param id Id returns from `registerShortcut`
+     * @returns 
+     */
+    unregisterShortcut: (id: number) => void;
+    /**
+     * Retrieve whether the user has pressed the Alt key in the editor
+     * @returns 
+     */
+    isKeyAltDown: () => boolean;
+    /**
+     * Retrieve whether the user has pressed the Ctrl key in the editor
+     * @returns 
+     */
+    isKeyControlDown: () => boolean;
+  },
+}
+
+type ShortcutCallback = (context: NodeGraphEditorContext) => void;
+export interface ShortcutConfig {
+  id?: number;
   /**
-   * 获取用户是否在编辑器中按下了 Alt 键
-   * @returns 
+   * Main Key
    */
-  isKeyAltDown: () => boolean;
+  key: string;
   /**
-   * 获取用户是否在编辑器中按下了 Ctrl 键
-   * @returns 
+   * Is trigger in keydown event, otherwise in keyup event.
+   * @default false
    */
-  isKeyControlDown: () => boolean;
+  keyDown?: boolean;
+  /**
+   * Need Ctrl key be pressed
+   * @default false
+   */
+  keyControl?: boolean;
+  /**
+   * Need CAltrl key be pressed
+   * @default false
+   */
+  keyAlt?: boolean;
+  /**
+   * Need Shift key be pressed
+   * @default false
+   */
+  keyShift?: boolean;
+  /**
+   * Handler Callback
+   */
+  callback: ShortcutCallback;
 }
 
 /**
@@ -23,15 +70,23 @@ export interface NodeEditorKeyBoardControllerContext {
  * @param options 
  * @returns 
  */
-export function useEditorKeyBoardControllerController(context: NodeGraphEditorInternalContext) {
+export function useEditorKeyBoardController(context: NodeGraphEditorInternalContext) {
   
   let keyControlDown = false;
+  let keyShiftDown = false;
   let keyAltDown = false;
 
-  function onKeyDown(e : KeyboardEvent) {    
+  let shortcutsLastId = 0;
+  const shortcuts = new Map<string, ShortcutConfig>();
+
+  function onKeyDown(e : KeyboardEvent) {
     if(HtmlUtils.isEventInControl(e))
       return;
     switch(e.code) {
+      case 'ShiftRight':
+      case 'ShiftLeft':
+        keyShiftDown = true;
+        break;
       case 'ControlRight':
       case 'ControlLeft':
         keyControlDown = true;
@@ -40,15 +95,29 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
       case 'AltLeft':
         keyAltDown = true;
         break;
-      case 'Digit0':
-        context.zoomSet(100);
+      default: {
+        const shortcut = shortcuts.get(e.code);
+        if (
+          shortcut && !shortcut.keyDown
+          && (
+            (!shortcut.keyAlt || keyAltDown)
+            || (!shortcut.keyShift || keyShiftDown)
+            || (!shortcut.keyControl || keyControlDown)
+          )
+        )
+          shortcut.callback(context);
         break;
+      }
     }
   }
   function onKeyUp(e : KeyboardEvent) {
     if(HtmlUtils.isEventInControl(e))
       return;
     switch(e.code) {
+      case 'ShiftRight':
+      case 'ShiftLeft':
+        keyShiftDown = false;
+        break;
       case 'ControlRight':
       case 'ControlLeft':
         keyControlDown = false;
@@ -57,18 +126,41 @@ export function useEditorKeyBoardControllerController(context: NodeGraphEditorIn
       case 'AltLeft':
         keyAltDown = false;
         break;
-      case 'KeyA':
-        if(keyAltDown) context.selectAllConnectors();
-        else if(keyControlDown) context.selectAllNodes();
+      default: {
+        const shortcut = shortcuts.get(e.code);
+        if (
+          shortcut && shortcut.keyDown
+          && (
+            (!shortcut.keyAlt || keyAltDown)
+            || (!shortcut.keyShift || keyShiftDown)
+            || (!shortcut.keyControl || keyControlDown)
+          )
+        )
+          shortcut.callback(context);
         break;
-      case 'Delete': 
-        context.userDelete();
-        break;
+      }
     }
+
   }
 
-  context.isKeyAltDown = () => keyAltDown;
-  context.isKeyControlDown = () => keyControlDown;
+  context.keyboardManager = {
+    isKeyAltDown: () => keyAltDown,
+    isKeyControlDown: () => keyControlDown,
+    registerShortcut(config) {
+      const id = ++ shortcutsLastId;
+      config.id = id;
+      shortcuts.set(config.key, config);
+      return id;
+    },
+    unregisterShortcut(id) {
+      for (const element of shortcuts) {
+        if (element[1].id === id)  {
+          shortcuts.delete(element[0]);
+          break;
+        }
+      }
+    },
+  }
 
   onMounted(() => {
     document.addEventListener('keydown', onKeyDown);

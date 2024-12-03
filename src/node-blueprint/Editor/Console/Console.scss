@@ -22,16 +22,11 @@ $console-colors: (
   font-family: Consolas, 'Courier New', monospace;
 }
 .console-item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   position: relative;
   border-bottom: 1px solid var(--mx-editor-border-color);
   color: var(--mx-editor-light-text-color);  
   padding: 6px 12px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  word-break: break-all;
 
   &.tiny {  
     padding: 1px 8px;
@@ -42,26 +37,31 @@ $console-colors: (
     padding: 0;
   }
 
-  > div {
-    display: inline-block;
-    position: relative;
-  }
-
-  > span {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .icon {
     font-size: 14px;
     margin-right: 6px;
     vertical-align: top;
+    flex-shrink: 0;
+  }
+  .tag {
+    flex-shrink: 0;
   }
 
+  .console-obj-detail {
+    font-size: 12px;
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .name {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
   .switch {
     display: inline-block;
-    padding: 4px;
+    padding: 0 4px;
     font-size: 10px;
     transition: transform ease-in-out 0.3s;
     cursor: pointer;
@@ -123,8 +123,15 @@ $console-colors: (
     }
   }
 }
+.console-content-box {
+  display: inline-block;
+  position: relative;
+  margin-right: 10px;
+  min-width: 200px;
+}
 .console-obj {
   position: relative;
+  display: inline-block;
   font-size: 0;
 
   a {
@@ -137,6 +144,9 @@ $console-colors: (
 }
 .console-obj-item {
   position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
 
   span {
     font-size: 13px;

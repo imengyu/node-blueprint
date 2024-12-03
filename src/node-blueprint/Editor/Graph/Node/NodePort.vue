@@ -10,6 +10,7 @@
   >
     <!--端口-->
     <div 
+      :key="instance.guid"
       :class="[
         'node-port',
         instance.state

@@ -11,6 +11,7 @@ import type { NodeEditorContextMenuContext } from './Editor/EditorContextMenuHan
 import type { NodeEditorClipBoardControllerContext } from './Editor/EditorClipBoardController';
 import type { NodeGraphEditorZoomToolContext } from './SubComponents/ZoomTool';
 import type { NodeEditorViewPortControllerContext } from './Editor/EditorViewPortController';
+import type { NodeEditorHistoryControllerContext } from './Editor/EditorHistortyController';
 export * from './Editor/Viewport';
 
 /**
@@ -27,7 +28,8 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
   NodeEditorMouseControllerContext,
   NodeEditorClipBoardControllerContext,
   NodeGraphEditorZoomToolContext,
-  NodeEditorViewPortControllerContext
+  NodeEditorViewPortControllerContext,
+  NodeEditorHistoryControllerContext
 {
 }
 

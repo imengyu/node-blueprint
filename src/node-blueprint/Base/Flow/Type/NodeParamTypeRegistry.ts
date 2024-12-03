@@ -88,7 +88,7 @@ export class NodeParamTypeRegistry extends Singleton {
   public registerType(defString : string, define : NodeParamTypeDefine, autoMergeGeneric = true) : NodeParamType {
     const old = this.getTypeByString(defString);
     if(old !== null && !define.hiddenInChoosePanel) {
-      printWarning(TAG, "Type " + defString + " alreday registered !");
+      printWarning(TAG, null, "Type " + defString + " alreday registered !");
       return old;
     }
 
@@ -159,7 +159,7 @@ export class NodeParamTypeRegistry extends Singleton {
    */
   public unregisterType(name : string) : void {
     if(!this.allTypes.has(name)) {
-      printWarning(TAG, "Type " + name + " are not register !");
+      printWarning(TAG, null, "Type " + name + " are not register !");
       return;
     }
     this.allTypes.delete(name);

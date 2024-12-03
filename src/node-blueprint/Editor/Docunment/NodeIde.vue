@@ -39,11 +39,12 @@
     <template #panelRender="{ panel }">
       <template v-if="panel.name==='NodeProps'">
         <PropBox class="node-custom-editor">
-            <ConsoleItem 
-              v-if="debugController.debugging"
-              level="warning"
-              content="现在正在调试，您对文档做出的修改会在下次调试生效"
-            />
+          <ConsoleItem 
+            v-if="debugController.debugging.value"
+            level="warning"
+          >
+            现在正在调试，您对文档做出的修改会在下次调试生效
+          </ConsoleItem>
           <NodeNodeProp 
             v-if="currentActiveNodes.length > 0"
             :nodes="(currentActiveNodes as NodeEditor[])"
@@ -58,10 +59,11 @@
       <template v-else-if="panel.name==='GraphProps'">
         <PropBox class="node-custom-editor">
           <ConsoleItem 
-            v-if="debugController.debugging"
+            v-if="debugController.debugging.value"
             level="warning"
-            content="现在正在调试，您对文档做出的修改会在下次调试生效"
-          />
+          >
+            现在正在调试，您对文档做出的修改会在下次调试生效
+          </ConsoleItem>
           <NodeGraphProp v-if="currentActiveGraph" :graph="(currentActiveGraph as NodeGraph)" />
           <NodeDocunmentProp v-if="currentActiveDocunment" :doc="(currentActiveDocunment as NodeDocunment)" />
         </PropBox>
@@ -255,21 +257,21 @@ const menuData = reactive<MenuOptions>({
           label: '剪贴',
           shortcut: 'Ctrl+X',
           onClick() {
-            getCurrentActiveGraphEditor()?.cutSelectionNodes();
+            getCurrentActiveGraphEditor()?.clipBoardManager.cutSelectionNodes();
           },
         },
         {
           label: '复制',
           shortcut: 'Ctrl+C',
           onClick() {
-            getCurrentActiveGraphEditor()?.copySelectionNodes();
+            getCurrentActiveGraphEditor()?.clipBoardManager.copySelectionNodes();
           },
         },
         {
           label: '粘贴',
           shortcut: 'Ctrl+V',
           onClick() {
-            getCurrentActiveGraphEditor()?.pasteNodes();
+            getCurrentActiveGraphEditor()?.clipBoardManager.pasteNodes();
           },
         },
         {
@@ -488,7 +490,7 @@ function onCompileDocunment(doc: NodeDocunmentEditor, exportFile = false) {
     }
   } catch (e) {
     console.log(e instanceof Error ? e.stack : e);
-    printError('CompileDocunment', e)
+    printError('CompileDocunment', null, e)
   }
 }
 /**
@@ -589,7 +591,7 @@ async function loadDocunment() {
     return;
   }
 
-  const json = JSON.parse(content);
+  const json = JSON.parse(content);0
   const doc = new NodeDocunmentEditor();
   doc.load(json);
 

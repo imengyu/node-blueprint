@@ -503,6 +503,13 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     if (!data)
       throw new Error("Please provide data");
 
+    const record = data as any;
+    if (record[SerializableObjectSaveObjNameKey] && record[SerializableObjectSaveObjObjKey]) {
+      if (record[SerializableObjectSaveObjNameKey] !== this.serializeClassName)
+        throw new Error(`Try serialize ${record[SerializableObjectSaveObjNameKey]} to ${this.serializeClassName}`);
+      data = record[SerializableObjectSaveObjObjKey] as any as T;
+    }
+
     const loadOverride = this.serializeConfig.loadOverride;
     if (loadOverride) {
       this.serializeConfig.loadOverride = undefined;

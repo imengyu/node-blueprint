@@ -46,7 +46,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
         //放大
         if (Math.abs(viewPort.value.scale - 1) <= 0.01) {
           //参考ue，放大到100后停止，需要按住ctrl才能继续放大
-          if (context.isKeyControlDown()) 
+          if (context.keyboardManager.isKeyControlDown()) 
             viewPort.value.scaleAndCenter(Math.min(2, viewPort.value.scale + 0.05), mouseInfo.mouseCurrentPosScreen);
            else
             viewPort.value.scaleAndCenter(1, mouseInfo.mouseCurrentPosScreen);

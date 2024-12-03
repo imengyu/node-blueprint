@@ -3,7 +3,7 @@ import type { Node } from '../Flow/Node/Node';
 import type { NodeDocunment } from '../Flow/Graph/NodeDocunment';
 import type { NodeGraph } from '../Flow/Graph/NodeGraph';
 import ArrayUtils from '../Utils/ArrayUtils';
-import { printError, printInfo, printWarning, printlog } from '../Logger/DevLog';
+import { printError, printInfo, printWarning, printLog } from '../Logger/DevLog';
 import type { ITreeListItem } from '@/node-blueprint/Editor/Components/List/TreeList';
 import RandomUtils from '../Utils/RandomUtils';
 import type { NodePort } from '../Flow/Node/NodePort';
@@ -204,10 +204,10 @@ export class EditorDebugRunner {
         },
         console(type: string, tag: string, msg: string) {
           switch (type) {
-            case 'log': printlog(tag, msg); break;
-            case 'warn': printWarning(tag, msg); break;
-            case 'error': printError(tag, msg); break;
-            case 'info': printInfo(tag, msg); break;
+            case 'log': printLog(tag, null, msg); break;
+            case 'warn': printWarning(tag, null, msg); break;
+            case 'error': printError(tag, null, msg); break;
+            case 'info': printInfo(tag, null, msg); break;
           }
         },
       },
@@ -216,7 +216,7 @@ export class EditorDebugRunner {
           this.currentRunning = true;
         },
         exit: () => {
-          printInfo(TAG, "Script stopped because called exit()");
+          printInfo(TAG, null, "Script stopped because called exit()");
           this.stop();
         },
         platform() {

@@ -53,18 +53,21 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
    * Clone a new item
    * @returns 
    */
-  public clone() : Vector2 {
-    return new Vector2(this.x, this.y);
+  public clone() : typeof this {
+    return new Vector2(this.x, this.y) as typeof this;
   }
   /**
    * 将当前二维向量加指定数字 【Adds the specified number to the current 2D vector】
    * @param v 
    * @returns 
    */
-  public add(v : number|Vector2) : Vector2 {
+  public add(v : number|Vector2, y?: number) : Vector2 {
     if(typeof v === "number") {
       this.x += v;
-      this.y += v;
+      if (y !== undefined)
+        this.y += y;
+      else
+        this.y += v;
     }
     else if(typeof v === "object") {
       this.x += v.x;

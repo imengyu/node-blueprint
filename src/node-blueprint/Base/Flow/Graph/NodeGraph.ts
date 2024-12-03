@@ -81,7 +81,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                 } = source as INodeSaveData;
                 const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
                 if (!nodeDefine) {
-                  printWarning(this.TAG, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
+                  printWarning(this.TAG, null, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
                   return { parsed: true, ignore: true };
                 }
               
@@ -102,22 +102,22 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                 const startNode = this.nodes.get(startPort.nodeUid);
                 const endNode = this.nodes.get(endPort.nodeUid);
                 if (!startNode) {
-                  printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
+                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
                   return { parsed: true, ignore: true };
                 }
                 if (!endNode) {
-                  printWarning(this.TAG, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
+                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
                   return { parsed: true, ignore: true };
                 }
                 
                 const startPortInstance = startNode.getPortByGUID(startPort.portUid);
                 const endPortInstance = endNode.getPortByGUID(endPort.portUid);
                 if (!startPortInstance) {
-                  printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
+                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
                   return { parsed: true, ignore: true };
                 }
                 if (!endPortInstance) {
-                  printWarning(this.TAG, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
+                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
                   return { parsed: true, ignore: true };
                 }
     
@@ -155,17 +155,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                 const connector = source as NodeConnector;
                 return {
                   parsed: true,
-                  return: {
-                    uid: connector.uid,
-                    startPort: {
-                      nodeUid: connector.startPort?.parent?.uid,
-                      portUid: connector.startPort?.guid,
-                    },
-                    endPort: {
-                      nodeUid: connector.endPort?.parent?.uid,
-                      portUid: connector.endPort?.guid,
-                    },
-                  } as INodeConnectorSaveData
+                  return: connector.save('graph') as INodeConnectorSaveData
                 };
               }
             }
@@ -178,7 +168,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
     this.isEditor = isEditor;
   }
 
-  private createNode(finalNodeDefine: INodeDefine) {
+  createNode(finalNodeDefine: INodeDefine) {
     return (this.isEditor ? 
       CreateObjectFactory.createSerializableObject('NodeEditor', this, finalNodeDefine) :
       CreateObjectFactory.createSerializableObject('Node', this, finalNodeDefine)) as unknown as Node;

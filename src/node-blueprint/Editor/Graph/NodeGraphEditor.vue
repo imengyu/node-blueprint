@@ -32,8 +32,8 @@
       @contextmenu="onCanvasContextMenu"
     >
       <NodeComponent
-        v-for="(node, key) in backgroundNodes" 
-        :key="key" 
+        v-for="node in backgroundNodes" 
+        :key="node.uid" 
         :instance="(node as NodeEditor)"
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel" 
@@ -57,8 +57,8 @@
       @contextmenu="onCanvasContextMenu"
     >
       <NodeComponent
-        v-for="(node, key) in foregroundNodes" 
-        :key="key" 
+        v-for="node in foregroundNodes" 
+        :key="node.uid" 
         :instance="(node as NodeEditor)"
         :viewPort="(viewPort as NodeGraphEditorViewport)"
         :chunkedPanel="chunkedPanel" 
@@ -106,10 +106,10 @@ import { useEditorGraphController } from './Editor/EditorGraphController';
 import { useEditorContextMenuHandler } from './Editor/EditorContextMenuHandler';
 import { useEditorSelectionContoller } from './Editor/EditorSelectionContoller';
 import { useEditorConnectorController } from './Editor/EditorConnectorController';
-import { useEditorKeyBoardControllerController } from './Editor/EditorKeyBoardController';
+import { useEditorKeyBoardController } from './Editor/EditorKeyBoardController';
 import { useEditorDragController } from './Editor/EditorDragController';
 import { useEditorUserController } from './Editor/EditorUserController';
-import { useEditorClipBoardControllerController } from './Editor/EditorClipBoardController';
+import { useEditorClipBoardController } from './Editor/EditorClipBoardController';
 import { useEditorViewPortController } from './Editor/EditorViewPortController';
 import type { INodeGraphEditorSettings, NodeGraphEditorBaseEventListener, NodeGraphEditorViewport } from './NodeGraphEditor';
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
@@ -118,6 +118,8 @@ import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeEditor } from './Flow/NodeEditor';
 import type { ChunkedPanel } from './Cast/ChunkedPanel';
 import PositionIndicator from './SubComponents/PositionIndicator.vue';
+import { useEditorHistoryController } from './Editor/EditorHistortyController';
+import { TOP_CONFIG_KEY, type NodeGraphEditorStaticConfig } from './Config/ConfigManager';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -137,12 +139,18 @@ const props = defineProps({
     type: Object as PropType<INodeGraphEditorSettings>,
     default: null,
   },
+  config: {
+    type: Object as PropType<NodeGraphEditorStaticConfig>,
+    default: null,
+  },
 });
 
 const editorHost = ref<HTMLElement>();
 // eslint-disable-next-line vue/no-setup-props-destructure
 const context = props.context;
 const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
+
+provide(TOP_CONFIG_KEY, props.config);
 
 const graphLoading = ref(false);
 const graphLoadError = ref('');
@@ -176,6 +184,11 @@ context.emitEvent = (n, ...args) => {
 context.getSettings = () => props.settings;
 
 provide('NodeGraphEditorContext', context);
+
+const {
+  onKeyDown,
+  onKeyUp,
+} = useEditorKeyBoardController(context);
 
 const {
   backgroundRenderer,
@@ -212,23 +225,21 @@ const {
 } = useEditorConnectorController(context);
 
 const {
-  onKeyDown,
-  onKeyUp,
-} = useEditorKeyBoardControllerController(context);
-
-const {
   onDragEnter,
   onDragLeave,
   onDrop,
   onDragOver,
 } = useEditorDragController(context);
 
+/*const {
+} = */useEditorHistoryController(context);
+
 const {
   positionIndicatorOn,
   positionIndicatorPos,
 } = useEditorUserController(context);
 
-useEditorClipBoardControllerController(context);
+useEditorClipBoardController(context);
 
 let eventSelectNodeChanged : NodeGraphEditorBaseEventListener|null = null;
 

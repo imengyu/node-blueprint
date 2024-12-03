@@ -437,7 +437,7 @@ export class NodeGraphCompilerJS implements INodeGraphCompiler {
   private buildNodeTree(data: NodeDocunmentCompileData, graph: NodeGraph, visitTree: NodeGraphCompileTreeVisitedNodesTree, statement: n.BlockStatement, node: Node) {
     const compileSettings = this.getNodeCompile(node);
     if (!compileSettings) {
-      printWarning(TAG, `Node ${this.getNodeStringInfo(node)} does not have compile settings but in call line.`);
+      printWarning(TAG, null, `Node ${this.getNodeStringInfo(node)} does not have compile settings but in call line.`);
       return;
     }
 

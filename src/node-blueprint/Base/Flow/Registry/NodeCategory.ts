@@ -5,6 +5,7 @@ import type { INodeDefine } from "../Node/Node";
  */
 export type CategoryData = {
   category: string;
+  key: string;
   childCategories: Array<CategoryData>;
   nodes: Array<CategoryDataItem>;
   open: boolean;
@@ -13,6 +14,7 @@ export type CategoryData = {
 };
 export type CategoryDataItem = {
   define: INodeDefine;
+  key: string;
   show: boolean;
   filterShow: boolean;
   hideInAddPanel: boolean;

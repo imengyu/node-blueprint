@@ -60,7 +60,7 @@ export class Node extends SerializableObject<INodeDefine> {
             this.mapPorts.set(port.guid, port);
             this.outputPorts.push(port);
           } else {
-            printError(TAG, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
+            printError(TAG, null, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
           }
         });
       },
@@ -235,7 +235,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public addPort(data : INodePortDefine, isDyamicAdd = true, initialValue : ISaveableTypes|null|undefined = undefined, forceChangeDirection ?: NodePortDirection) : NodePort {
     const oldData = this.getPort(data.guid, data.direction);
     if(oldData !== null && oldData !== undefined) {
-      printWarning(this.name + ".addPort", data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
+      printWarning(this.name + ".addPort", null, data.direction + " port " + data.name + " (" + data.guid + ") alreday exist !", {
         srcNode: this
       });
       return oldData;
@@ -272,7 +272,7 @@ export class Node extends SerializableObject<INodeDefine> {
   public deletePort(guid : string|NodePort) : void {
     const oldData = typeof guid === 'string' ? this.getPort(guid) : guid;
     if(oldData === null || oldData === undefined) {
-      printWarning(this.name + ".deletePort", guid + " port not exist !", {
+      printWarning(this.name + ".deletePort", null, guid + " port not exist !", {
         srcNode: this,
       });
       return;
@@ -387,18 +387,18 @@ export class Node extends SerializableObject<INodeDefine> {
    */
   public changePortParamType(port: NodePort|string, newType: NodeParamType, changeIntitalValue = true) {
     if(!port) {
-      printError(this.name, 'changePortParamType: Must provide port');
+      printError(this.name, null, 'changePortParamType: Must provide port');
       return;
     }
     if (typeof port === 'string')
       port = this.getPortByGUID(port) as NodePort;
     if (!port) {
-      printError(this.name, `changePortParamType: Port ${port} not found`);
+      printError(this.name, null, `changePortParamType: Port ${port} not found`);
       return;
     }
 
     if(port.parent !== this) {
-      printError(this.name, `changePortParamType: Port ${port.guid} is not this node children `);
+      printError(this.name, null, `changePortParamType: Port ${port.guid} is not this node children `);
       return;
     }
       

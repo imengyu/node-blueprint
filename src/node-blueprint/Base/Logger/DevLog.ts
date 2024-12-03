@@ -1,31 +1,31 @@
-import logger, { type LogExtendData } from "./Logger";
+import logger, { type LogContentType, type LogTraceData } from "./Logger";
 
-export function printError(tag : string, msg : string|number|boolean|unknown, extendObj ?: LogExtendData) : void {
-  logger.error(tag, msg, extendObj);
-  devError(tag, msg, extendObj);
+export function printError(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  logger.error(tag, trace, ...content);
+  devError(tag, trace, ...content);
 }
-export function printInfo(tag : string, msg : string|number|boolean|unknown, extendObj ?: LogExtendData) : void {
-  logger.info(tag, msg, extendObj);
-  devInfo(tag, msg, extendObj);
+export function printInfo(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  logger.info(tag, trace, ...content);
+  devInfo(tag, trace, ...content);
 }
-export function printlog(tag : string, msg : string|number|boolean|unknown, extendObj ?: LogExtendData) : void {
-  logger.log(tag, msg, extendObj);
-  devLog(tag, msg, extendObj);
+export function printLog(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  logger.log(tag, trace, ...content);
+  devLog(tag, trace, ...content);
 }
-export function printWarning(tag : string, msg : string|number|boolean|unknown, extendObj ?: LogExtendData) : void {
-  logger.warning(tag, msg, extendObj);
-  devWarning(tag, msg, extendObj);
+export function printWarning(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  logger.warning(tag, trace, ...content);
+  devWarning(tag, trace, ...content);
 }
 
-export function devError(tag : string, msg : string|number|boolean|unknown, _extendObj ?: LogExtendData) : void {
-  console.error(`[${tag}] ${msg}`);
+export function devError(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  console.error(`[${tag}] ${logger.formatContent(trace, content)}`);
 }
-export function devInfo(tag : string, msg : string|number|boolean|unknown, _extendObj ?: LogExtendData) : void {
-  console.info(`[${tag}] ${msg}`);
+export function devInfo(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  console.info(`[${tag}] ${logger.formatContent(trace, content)}`);
 }
-export function devLog(tag : string, msg : string|number|boolean|unknown, _extendObj ?: LogExtendData) : void {
-  console.log(`[${tag}] ${msg}`);
+export function devLog(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  console.log(`[${tag}] ${logger.formatContent(trace, content)}`);
 }
-export function devWarning(tag : string, msg : string|number|boolean|unknown, _extendObj ?: LogExtendData) : void {
-  console.warn(`[${tag}] ${msg}`);
+export function devWarning(tag : string, trace: LogTraceData|null, ...content : LogContentType[]) : void {
+  console.warn(`[${tag}] ${logger.formatContent(trace, content)}`);
 }
