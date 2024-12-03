@@ -63,8 +63,10 @@ function zoomSet(scale: number) {
   emit("zoomUpdate", scale);
 }
 
-context.zoomIn = zoomIn;
-context.zoomOut = zoomOut;
-context.zoomSet = zoomSet;
+context.zoomManager = {
+  zoomIn,
+  zoomOut,
+  zoomSet
+};
 
 </script>

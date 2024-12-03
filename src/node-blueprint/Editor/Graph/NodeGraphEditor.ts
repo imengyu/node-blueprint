@@ -1,6 +1,4 @@
-import type { ChunkedPanel } from './Cast/ChunkedPanel';
 import type { NodeEditorMouseControllerContext } from './Editor/EditorMouseHandler';
-import type { NodeGraphEditorViewport } from './Editor/Viewport';
 import type { NodeGraphEditorSelectionContext } from './Editor/EditorSelectionContoller';
 import type { NodeGraphEditorConnectorContext } from './Editor/EditorConnectorController';
 import type { NodeGraphEditorGraphControllerContext } from './Editor/EditorGraphController';
@@ -37,15 +35,6 @@ export interface NodeGraphEditorContext extends NodeGraphEditorBaseContext,
  * 基础上下文函数
  */
 export interface NodeGraphEditorBaseContext {
-  /**
-   * 获取当前视口
-   */
-  getViewPort() : NodeGraphEditorViewport;
-  /**
-   * 获取 ChunkedPanel
-   */
-  getBaseChunkedPanel(): ChunkedPanel;
-
   /**
    * 监听指定事件
    * @param name 事件名称
@@ -84,8 +73,10 @@ export interface NodeGraphEditorBaseEventListener {
  * 内部上下文函数
  */
 export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
-  autoNodeSizeChangeCheckerStartStop(start: boolean) : void;
-  mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
+  internalManager: {
+    autoNodeSizeChangeCheckerStartStop(start: boolean) : void;
+    mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
+  },
 }
 
 // eslint-disable-next-line no-shadow

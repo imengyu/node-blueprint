@@ -7,11 +7,13 @@ import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHa
  * 鼠标事件控制器上下文函数
  */
 export interface NodeEditorMouseControllerContext {
-  setCursor: (cursor: string) => void;
-  resetCursor: () => void;
-  getMouseInfo: () => NodeGraphEditorMouseInfo,
-  updateMousePos(e: MouseEvent): void,
-  getMouseHandler: () => EditorMousHandlerExtendHandlers,
+  mouseManager: {
+    setCursor: (cursor: string) => void;
+    resetCursor: () => void;
+    getMouseInfo: () => NodeGraphEditorMouseInfo,
+    updateMousePos(e: MouseEvent): void,
+    getMouseHandler: () => EditorMousHandlerExtendHandlers,
+  },
 }
 
 const noDragControl = [
@@ -76,7 +78,7 @@ export class EditorMousHandlerExtendHandlers {
  */
 export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
   const mouseInfo = new NodeGraphEditorMouseInfo();
-  const viewPort = context.getViewPort();
+  const viewPort = context.viewPortManager.getViewPort();
 
   /**
    * 对外鼠标事件接口
@@ -91,10 +93,10 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
         return false;
       if (e.button !== 2 && e.button !== 1)
         return false;
-      if (context.isAnyConnectorHover())
+      if (context.connectorManager.isAnyConnectorHover())
         return false;
       e.stopPropagation();
-      context.setCursor('grab')
+      context.mouseManager.setCursor('grab');
       mouseInfo.mouseDowned = true;
       viewDragDownPos.set(viewPort.position);
       return true;
@@ -107,7 +109,7 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     },
     onUp(e) {
       mouseInfo.mouseDowned = false;
-      context.resetCursor();
+      context.mouseManager.resetCursor();
       onMouseUp(e);
     },
   });
@@ -181,10 +183,14 @@ export function useEditorMousHandler(context: NodeGraphEditorInternalContext) {
     }
   }
 
-  context.updateMousePos = updateMousePos;
-  context.getMouseHandler = () => extendHandlerObject;
-  context.getMouseInfo = () => mouseInfo;
-  context.mouseEventUpdateMouseInfo = mouseEventUpdateMouseInfo;
+  context.mouseManager = {
+    updateMousePos,
+    getMouseHandler: () => extendHandlerObject,
+    getMouseInfo: () => mouseInfo,
+    setCursor() {},
+    resetCursor() {},
+  };
+  context.internalManager.mouseEventUpdateMouseInfo = mouseEventUpdateMouseInfo;
 
   return {
     onMouseDown,

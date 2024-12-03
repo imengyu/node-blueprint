@@ -155,6 +155,8 @@ provide(TOP_CONFIG_KEY, props.config);
 const graphLoading = ref(false);
 const graphLoadError = ref('');
 
+context.internalManager = {} as any;
+
 const {
   viewPort,
   cursor,
@@ -260,7 +262,7 @@ onMounted(() => {
   loadSettings();
   graphLoading.value = true;
   eventSelectNodeChanged = context.listenEvent('selectNodeOrConnectorChanged', () => {
-    emit('selectNodeOrConnectorChanged', context.getSelectNodes(), context.getSelectConnectors());
+    emit('selectNodeOrConnectorChanged', context.selectionManager.getSelectNodes(), context.selectionManager.getSelectConnectors());
   });
   loadGraph(props.graph).then(() => {
     graphLoading.value = false;
@@ -271,7 +273,7 @@ onMounted(() => {
     graphLoading.value = false;
   })
   setTimeout(() => {
-    context.autoNodeSizeChangeCheckerStartStop(true);
+    context.internalManager.autoNodeSizeChangeCheckerStartStop(true);
     props.graph.readyDispatcher.setReadyState();
   }, 1000);
 });
@@ -280,7 +282,7 @@ onBeforeUnmount(() => {
     eventSelectNodeChanged.unListen();
     eventSelectNodeChanged = null;
   }
-  context.autoNodeSizeChangeCheckerStartStop(false);
+  context.internalManager.autoNodeSizeChangeCheckerStartStop(false);
 })
 
 function initRenderer() {

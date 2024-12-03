@@ -4,26 +4,48 @@ import { ChunkedPanel } from "../Cast/ChunkedPanel";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { NodePortEditor } from "../Flow/NodePortEditor";
 
 export interface NodeEditorViewPortControllerContext {
-  /**
-   * 计算一些单元的矩形区域
-   * @param nodes 要计算的单元
-   */
-  calcNodesRegion(nodes: NodeEditor[]): Rect;
-  /**
-   * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
-   * @param pos 
-   */
-  moveViewportWithCursorPosition(pos: Vector2): void;
-  /**
-   * 记录视口位置
-   */
-  recordViewportPosition(): void;
-  /**
-   * 获取自上次记录以来视口移动的位置
-   */
-  getViewportMovedPosition(): Vector2;
+  viewPortManager: {
+    /**
+      * 获取当前视口
+      */
+    getViewPort() : NodeGraphEditorViewport;
+    /**
+      * 获取 ChunkedPanel
+      */
+    getBaseChunkedPanel(): ChunkedPanel;
+    /**
+     * 计算一些单元的矩形区域
+     * @param nodes 要计算的单元
+     */
+    calcNodesRegion(nodes: NodeEditor[]): Rect;
+    /**
+     * 移动视口至节点中心位置
+     * @param baseNode 
+     * @returns 返回是否已经移至目标位置
+     */
+    moveViewportToNode(nodeOrPort : NodeEditor|NodePortEditor, showPositionIndicator ?: boolean) : boolean; 
+    /**
+     * 设置视口坐标
+     * @param pos 
+     */
+    moveViewportToPosition(pos: Vector2): void;
+    /**
+     * 让视口跟随鼠标位置移动(通常在按下鼠标拖拽时使用)
+     * @param pos 
+     */
+    moveViewportWithCursorPosition(pos: Vector2): void;
+    /**
+     * 记录视口位置
+     */
+    recordViewportPosition(): void;
+    /**
+     * 获取自上次记录以来视口移动的位置
+     */
+    getViewportMovedPosition(): Vector2;
+  }
 }
 
 /**
@@ -40,7 +62,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
 
   //缩放功能
   function mouseWhellEvent(e: WheelEvent) {
-    const mouseInfo = context.getMouseInfo();
+    const mouseInfo = context.mouseManager.getMouseInfo();
     if (e.deltaY !== 0) {
       if (e.deltaY < 0) {
         //放大
@@ -59,12 +81,10 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
       }
     }
   }
-  
-  //基础控制
-  context.getBaseChunkedPanel = () => chunkedPanel;
-  context.getViewPort = () => viewPort.value as NodeGraphEditorViewport;
-  context.setCursor = (v: string) => { cursor.value = v };
-  context.resetCursor = () => { cursor.value = 'default' };
+
+  if (!context.mouseManager) context.mouseManager = {} as any;
+  context.mouseManager.setCursor = (v: string) => { cursor.value = v };
+  context.mouseManager.resetCursor = () => { cursor.value = 'default' };
 
   //扩展函数
 
@@ -111,10 +131,35 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
       viewPort.value.position.y += MOVE_SIZE;
   }
 
-  context.calcNodesRegion = calcNodesRegion;
-  context.moveViewportWithCursorPosition = moveViewportWithCursorPosition;
-  context.recordViewportPosition = recordViewportPosition;
-  context.getViewportMovedPosition = getViewportMovedPosition;
+  context.viewPortManager = {
+    getBaseChunkedPanel: () => chunkedPanel,
+    getViewPort: () => viewPort.value as NodeGraphEditorViewport,
+    calcNodesRegion,
+    moveViewportToPosition: (pos) => viewPort.value.position.set(pos),
+    moveViewportWithCursorPosition,
+    moveViewportToNode(nodeOrPort : NodeEditor|NodePortEditor, positionIndicator = false) : boolean {
+      const node = nodeOrPort instanceof NodePortEditor ? nodeOrPort.parent as NodeEditor : nodeOrPort;
+      const size = (node as NodeEditor).getRealSize();
+      const offset = new Vector2(
+        size.x / 2 - viewPort.value.size.x / 2, 
+        size.y / 2 - viewPort.value.size.y / 2, 
+      );
+      const newPos = new Vector2(node.position).add(offset);
+
+      viewPort.value.scaleScreenSizeToViewportSize(offset);
+
+      if (positionIndicator)
+        context.interfaceUtiles.showNodePositionIndicator(nodeOrPort);
+
+      if (!viewPort.value.position.equal(newPos)) {
+        viewPort.value.position = newPos;
+        return false;
+      }
+      return true;
+    },
+    recordViewportPosition,
+    getViewportMovedPosition
+  };
 
   const currentShowNodes : NodeEditor[] = [];
 
@@ -122,7 +167,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
    * 进行节点显示剔除
    */
   function doNodeExclusion() {
-    const nodesMap = context.getNodes();
+    const nodesMap = context.graphManager.getNodes();
     if (nodesMap.size > 64) {
       nodeExclusionEnable.value = true;
       for (const node of currentShowNodes)
@@ -144,7 +189,7 @@ export function useEditorViewPortController(context: NodeGraphEditorInternalCont
   }
 
   onMounted(() => {
-    context.getMouseHandler().pushMouseWhellHandlers(mouseWhellEvent);
+    context.mouseManager.getMouseHandler().pushMouseWhellHandlers(mouseWhellEvent);
     setTimeout(() => doNodeExclusion(), 300);
   });
 

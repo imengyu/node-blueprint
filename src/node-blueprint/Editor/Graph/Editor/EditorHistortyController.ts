@@ -33,6 +33,7 @@ type EditorHistoryStepRestoreFn = (lastParams: unknown) => void;
 interface EditorHistoryStep {
   name: string;
   lastParams: unknown;
+  childSteps : EditorHistoryStep[],
   doingFn: EditorHistoryStepDoingFn;
   restoreFn: EditorHistoryStepRestoreFn;
 }
@@ -48,34 +49,60 @@ export function useEditorHistoryController(context: NodeEditorHistoryControllerC
 
   const MAX_HISTORY = getStaticConfig<number>("maxHistory");
 
+  let historyIsRedoing = false;
   let historyCurrentCursor = 0;
+  let historyCurrentStep : EditorHistoryStep|null = null;
   const historySteps : EditorHistoryStep[] = [];
  
   context.historyManager = {
     storeStep(name, doingFn, restoreFn) {
+      if (historyIsRedoing)
+        return;
       if (historyCurrentCursor < historySteps.length)
         historySteps.splice(historyCurrentCursor + 1);
 
-      const param = doingFn();
-      historySteps.push({ name, doingFn, restoreFn, lastParams: param });
+      const currentStep : EditorHistoryStep = { name, doingFn, restoreFn, childSteps: [], lastParams: null };
+      if (historyCurrentStep === null)
+      {
+        historyCurrentStep = currentStep;
+        currentStep.lastParams = doingFn();
+        historySteps.push(currentStep);
+        historyCurrentStep = null;
 
-      if (historySteps.length > MAX_HISTORY)
-        historySteps.unshift();
-      historyCurrentCursor = historySteps.length;
+        if (historySteps.length > MAX_HISTORY)
+          historySteps.unshift();
+        historyCurrentCursor = historySteps.length;
+      }
+      else
+      {
+        //嵌套步骤
+        currentStep.lastParams = doingFn();
+        historyCurrentStep.childSteps.push(currentStep);
+      }
     },
     undoStep() {
       if (historyCurrentCursor > -1) {
         historyCurrentCursor--;
+        historyIsRedoing = true;
         const step = historySteps[historyCurrentCursor];
         step.restoreFn(step.lastParams);
+        for (let index = step.childSteps.length - 1; index >= 0; index--) {
+          const childStep = step.childSteps[index];
+          childStep.restoreFn(childStep.lastParams);
+        }
+        historyIsRedoing = false;
       }
       return false
     },
     redoStep() {
       if (historyCurrentCursor < historySteps.length) {
         historyCurrentCursor++;
+        historyIsRedoing = true;
         const step = historySteps[historyCurrentCursor];
+        for (const childStep of step.childSteps)
+          childStep.doingFn();
         step.doingFn();
+        historyIsRedoing = false;
       }
       return false
     },

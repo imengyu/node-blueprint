@@ -197,9 +197,9 @@ const connectDragHandler = createMouseDragHandler({
       parent.mouseConnectingPort = true;
 
       if(e.button === 0) {
-        context?.setCursor('crosshair')
-        context?.startConnect(instance.value);
-        context?.updateConnectEnd(new Vector2(e.x, e.y));
+        context?.mouseManager.setCursor('crosshair')
+        context?.connectorManager.startConnect(instance.value);
+        context?.connectorManager.updateConnectEnd(new Vector2(e.x, e.y));
         return true;
       }
     }
@@ -209,21 +209,21 @@ const connectDragHandler = createMouseDragHandler({
     if(e.button === 0) {
       const parent = instance.value.parent as NodeEditor;
       parent.mouseConnectingPort = true;
-      context?.moveViewportWithCursorPosition(context.getMouseInfo().mouseCurrentPosEditor);
-      context?.updateConnectEnd(new Vector2(e.x, e.y));
+      context?.viewPortManager.moveViewportWithCursorPosition(context.mouseManager.getMouseInfo().mouseCurrentPosEditor);
+      context?.connectorManager.updateConnectEnd(new Vector2(e.x, e.y));
     }
   },
   onUp() {
-    context?.resetCursor()
-    context?.endConnect(instance.value);
+    context?.mouseManager.resetCursor()
+    context?.connectorManager.endConnect(instance.value);
   },
 })
 
 function onPortMouseEnter() {
-  context?.updateCurrentHoverPort(instance.value, true);
+  context?.connectorManager.updateCurrentHoverPort(instance.value, true);
 }
 function onPortMouseLeave() {
-  context?.updateCurrentHoverPort(instance.value, false);
+  context?.connectorManager.updateCurrentHoverPort(instance.value, false);
 }
 function onPortMouseDown(e : MouseEvent) {
   connectDragHandler(e);
@@ -236,7 +236,7 @@ function onPortMouseDown(e : MouseEvent) {
 function onContextMenu(e : MouseEvent) {
   e.preventDefault();
   e.stopPropagation();
-  context?.showPortRightMenu(instance.value, new Vector2(e.x, e.y));
+  context?.contextMenuManager.showPortRightMenu(instance.value, new Vector2(e.x, e.y));
 }
 function onDeleteParam() {
   emit('deletePort', instance.value);

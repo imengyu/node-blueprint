@@ -21,74 +21,76 @@ import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
  * 节点连接上下文函数
  */
 export interface NodeGraphEditorConnectorContext {
-  /**
-   * 获取用户鼠标是否悬浮于任意一个连接线上
-   * @returns 
-   */
-  isAnyConnectorHover: () => boolean;
-  /**
-   * 选中鼠标悬浮的连接线
-   * @returns 
-   */
-  selectHoverConnectors: () => void;
-  /**
-   * 获取用户现在是否处于连接至新节点状态中
-   * @returns 
-   */
-  isConnectToNew: () => boolean;
-  /**
-   * 获取用户连接控制器的状态
-   * @returns 
-   */
-  getConnectingInfo: () => IConnectingInfo;
-  updateCurrentHoverPort: (port : NodePortEditor, active : boolean) => void,
-  updateConnectEnd: (screenPos : Vector2) => void;
-  startConnect: (port : NodePortEditor) => void;
-  endConnect: (port : NodePortEditor) => void;
-  getCanConnect: () => boolean;
-  /**
-   * 使用连接线连接两个节点。此函数无检查，直接创建连接
-   * @param start 开始节点
-   * @param end 结束节点
-   * @returns 
-   */
-  connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
-  connectorSuccessSetState: (connector: NodeConnectorEditor) => void;
-  endConnectToNew: (node?: NodeEditor) => [NodePortEditor|null,NodeConnector|null];
-  /**
-   * 断开连接线
-   * @param conn 
-   * @returns 
-   */
-  unConnectConnector: (conn : NodeConnectorEditor) => void;
-  /**
-   * 取消当前端口上的所有连接线
-   * @param port 
-   * @returns 
-   */
-  unConnectPortConnectors: (port: NodePortEditor) => void;
-  /**
-   * 取消当前节点上的所有连接线
-   * @param node 
-   * @returns 
-   */
-  unConnectNodeConnectors: (node: NodeEditor) => void;
-  /**
-   * 在弹性端口连接后执行弹性事件
-   * @param thisPort 当前端口
-   * @param anotherPort 另外一个端口
-   */
-  doFlexPortConnect(thisPort: NodePort, anotherPort: NodePort): void
-  /**
-   * 当本节点的端口类型更改后，触发与之相连的弹性端口更改事件
-   * @param node 本节点
-   * @param changedPorts 更改类型的端口
-   */
-  doFlexPortUpdateConnected(node: NodeEditor, changedPorts: string[]) : void;
-  /**
-   * 对整个图表进行孤立节点检查
-   */
-  startGlobalIsolateCheck(): void;
+  connectorManager: {
+    /**
+     * 获取用户鼠标是否悬浮于任意一个连接线上
+     * @returns 
+     */
+    isAnyConnectorHover: () => boolean;
+    /**
+     * 选中鼠标悬浮的连接线
+     * @returns 
+     */
+    selectHoverConnectors: () => void;
+    /**
+     * 获取用户现在是否处于连接至新节点状态中
+     * @returns 
+     */
+    isConnectToNew: () => boolean;
+    /**
+     * 获取用户连接控制器的状态
+     * @returns 
+     */
+    getConnectingInfo: () => IConnectingInfo;
+    updateCurrentHoverPort: (port : NodePortEditor, active : boolean) => void,
+    updateConnectEnd: (screenPos : Vector2) => void;
+    startConnect: (port : NodePortEditor) => void;
+    endConnect: (port : NodePortEditor) => void;
+    getCanConnect: () => boolean;
+    /**
+     * 使用连接线连接两个节点。此函数无检查，直接创建连接
+     * @param start 开始节点
+     * @param end 结束节点
+     * @returns 
+     */
+    connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
+    connectorSuccessSetState: (connector: NodeConnectorEditor) => void;
+    endConnectToNew: (node?: NodeEditor) => [NodePortEditor|null,NodeConnector|null];
+    /**
+     * 断开连接线
+     * @param conn 
+     * @returns 
+     */
+    unConnectConnector: (conn : NodeConnectorEditor) => void;
+    /**
+     * 取消当前端口上的所有连接线
+     * @param port 
+     * @returns 
+     */
+    unConnectPortConnectors: (port: NodePortEditor) => void;
+    /**
+     * 取消当前节点上的所有连接线
+     * @param node 
+     * @returns 
+     */
+    unConnectNodeConnectors: (node: NodeEditor) => void;
+    /**
+     * 在弹性端口连接后执行弹性事件
+     * @param thisPort 当前端口
+     * @param anotherPort 另外一个端口
+     */
+    doFlexPortConnect(thisPort: NodePort, anotherPort: NodePort): void
+    /**
+     * 当本节点的端口类型更改后，触发与之相连的弹性端口更改事件
+     * @param node 本节点
+     * @param changedPorts 更改类型的端口
+     */
+    doFlexPortUpdateConnected(node: NodeEditor, changedPorts: string[]) : void;
+    /**
+     * 对整个图表进行孤立节点检查
+     */
+    startGlobalIsolateCheck(): void;
+  }
 }
 
 
@@ -130,11 +132,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     const _mousePosScreen = mouseInfo.mouseCurrentPosEditor;
 
     lastHoverConnector.forEach(i => (i.hoverChecked = false));
-    context
+    context.viewPortManager
       .getBaseChunkedPanel()
       .testPointCastTag(_mousePos, "connector")
       .forEach((i) => {
-        const connector = context.getConnectors().get(i.data as string) as NodeConnectorEditor;
+        const connector = context.graphManager.getConnectors().get(i.data as string) as NodeConnectorEditor;
         if (connector && connector.testInConnector(_mousePos, _mousePosScreen)) {
           connector.hoverChecked = true;
           connector.hover = true;
@@ -150,20 +152,21 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
   }
   function selectOneConnector() : NodeConnectorEditor|null {
-    const _mousePos = context.getMouseInfo().mouseCurrentPosViewPort;
-    const _mousePosEditor = context.getMouseInfo().mouseCurrentPosEditor;
-    const pointCastConnectors = context
+    const _mouseInfo = context.mouseManager.getMouseInfo();
+    const _mousePos = _mouseInfo.mouseCurrentPosViewPort;
+    const _mousePosEditor = _mouseInfo.mouseCurrentPosEditor;
+    const pointCastConnectors = context.viewPortManager
       .getBaseChunkedPanel()
       .testPointCastTag(_mousePos, "connector");
     if (pointCastConnectors.length > 0) {
       for (let i = 0; i < pointCastConnectors.length; i++) {
-        const connector = context
+        const connector = context.graphManager
           .getConnectors()
           .get(pointCastConnectors[i].data as string) as NodeConnectorEditor;
         if (connector && connector.testInConnector(_mousePos, _mousePosEditor)) {
           connector.hoverChecked = true;
           connector.hover = true;
-          context.selectConnector(connector, false);
+          context.selectionManager.selectConnector(connector, false);
           return connector;
         }
       }
@@ -171,7 +174,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     return null;
   }
   function selectHoverConnectors() {
-    lastHoverConnector.forEach(c => context.selectConnector(c, true))
+    lastHoverConnector.forEach(c => context.selectionManager.selectConnector(c, true))
   }
 
   //处理鼠标按下选择连接线
@@ -179,7 +182,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
   let lastSelectAtDown : NodeConnectorEditor|null = null;
 
-  context.getMouseHandler().pushMouseDownHandler(createMouseDownAndUpHandler({
+  context.mouseManager.getMouseHandler().pushMouseDownHandler(createMouseDownAndUpHandler({
     onDown: (e) => {
       if (HtmlUtils.isEventInControl(e))
         return false;
@@ -194,12 +197,12 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       if (lastSelectAtDown) {
         //Alt按下，删除连接线
         if (context.keyboardManager.isKeyAltDown())
-          context.unConnectConnector(lastSelectAtDown);
+          unConnectConnector(lastSelectAtDown);
         lastSelectAtDown = null;
       }
     },
   }));
-  context.getMouseHandler().pushMouseMoveHandlers((mouseInfo) => {
+  context.mouseManager.getMouseHandler().pushMouseMoveHandlers((mouseInfo) => {
     connectorCast(mouseInfo);
     return false;
   });
@@ -338,16 +341,16 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     //更新连接显示状态
     if (connectingInfo.isConnecting || connectingInfo.isConnectingToNew) {
       if (connectingInfo.canConnect)
-        context.showEditorHoverInfoTip(successText, 'success');
+        context.dialogManager.showEditorHoverInfoTip(successText, 'success');
       else
-        context.showEditorHoverInfoTip(failedText, 'failed');
+        context.dialogManager.showEditorHoverInfoTip(failedText, 'failed');
     } else {
-      context.closeEditorHoverInfoTip();
+      context.dialogManager.closeEditorHoverInfoTip();
     }
   }
   function updateConnectEnd(screenPos : Vector2) {
     if(!connectingInfo.isConnectingToNew) {
-      context.getViewPort().screenPointToViewportPoint(screenPos, connectingInfo.endPos);
+      context.viewPortManager.getViewPort().screenPointToViewportPoint(screenPos, connectingInfo.endPos);
     }
   }
   function startConnect(P : NodePort) {
@@ -355,10 +358,10 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     connectingInfo.startPort = port;
     connectingInfo.isConnecting = true;
     port.state = 'active';
-    context.showEditorHoverInfoTip('连接至新的单元', 'success');
+    context.dialogManager.showEditorHoverInfoTip('连接至新的单元', 'success');
   }
   function endConnect(P ?: NodePort) {
-    context.closeEditorHoverInfoTip();
+    context.dialogManager.closeEditorHoverInfoTip();
 
     const port = P as NodePortEditor;
     if(port)
@@ -369,11 +372,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       connectingInfo.otherSideRequireType = connectingInfo.startPort.paramType;
       connectingInfo.otherSideRequireDirection = connectingInfo.startPort.direction === 'input' ? 'output' : 'input';
 
-      const viewPort = context.getViewPort();
+      const viewPort = context.viewPortManager.getViewPort();
       const panelPos = new Vector2();
       viewPort.viewportPointToScreenPoint(connectingInfo.endPos, panelPos);
 
-      context.showAddNodePanel(
+      context.dialogManager.showAddNodePanel(
         panelPos, 
         connectingInfo.otherSideRequireType, 
         connectingInfo.otherSideRequireDirection,
@@ -391,7 +394,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       if(connectingInfo.shouldAddConverter)
         connectConnectorWithConverter();
       else if(connectingInfo.startPort) {
-        context.connectConnector(connectingInfo.startPort, connectingInfo.currentHoverPort);
+        connectConnector(connectingInfo.startPort, connectingInfo.currentHoverPort);
         connectingInfo.startPort = null;
       }
     }
@@ -418,7 +421,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
     //创建转换器节点
     //新的节点在两个端口的中心位置
-    const convertNode = context.userAddNode<ICoverterNodeOptions>(
+    const convertNode = context.userActionsManager.addNode<ICoverterNodeOptions>(
       converter.converterNode, 
       {
         addNodeInPos: Rect.makeBy2Point(
@@ -454,13 +457,13 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     let port : NodePortEditor|null = null;
     let connector : NodeConnector|null = null;
 
-    context.closeEditorHoverInfoTip();
+    context.dialogManager.closeEditorHoverInfoTip();
 
     //如果已选单元，则连接至这个单元
     if(typeof node !== 'undefined' && connectingInfo.otherSideRequireType) {
       port = node.getPortByTypeAndDirection(connectingInfo.otherSideRequireType, connectingInfo.otherSideRequireDirection, true) as NodePortEditor;
       if(port !== null && connectingInfo.startPort !== null)
-        connector = context.connectConnector(connectingInfo.startPort, port);
+        connector = connectConnector(connectingInfo.startPort, port);
       connectingInfo.otherSideRequireType = null;
     }
 
@@ -573,7 +576,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
     //添加线段
     if (connector !== null) {
-      context.addConnector(connector);
+      context.graphManager.addConnector(connector);
       connector.updatePortValue();
       //更新孤立状态
       afterConnectDoIsolateCheck(
@@ -585,7 +588,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       );
     }
 
-    context.markGraphChanged();
+    context.graphManager.markGraphChanged();
     return connector;
   }
   /**
@@ -609,8 +612,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       startNode = (start.parent as NodeEditor),
       endNode = (end.parent as NodeEditor);
 
-    context.unSelectConnector(connector);
-    context.removeConnector(connector);
+    context.selectionManager.unSelectConnector(connector);
+    context.graphManager.removeConnector(connector);
 
     if (start !== null && end !== null) {
 
@@ -629,7 +632,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
       if (end.parent.events.onPortUnConnect) end.parent.events.onPortUnConnect(end.parent, end);
     }
     
-    context.markGraphChanged();
+    context.graphManager.markGraphChanged();
   }
   //删除端口连接
   function unConnectPortConnectors(port: NodePortEditor) {
@@ -748,7 +751,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   function startGlobalIsolateCheck() {
     const visitedNodes : NodeEditor[] = [];
     const noIsolateNodes : NodeEditor[] = [];
-    const allNodes = context.getNodes();
+    const allNodes = context.graphManager.getNodes();
     for (const [,node] of allNodes) {
       if (node.style.noIsolate) 
         noIsolateNodes.push((node as NodeEditor));
@@ -862,24 +865,25 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
   //#endregion
 
 
-  context.updateCurrentHoverPort = updateCurrentHoverPort;
-  context.updateConnectEnd = updateConnectEnd;
-  context.startConnect = startConnect;
-  context.endConnect = endConnect;
-  context.getCanConnect = getCanConnect;
-  context.endConnectToNew = endConnectToNew;
-  context.connectConnector = connectConnector;
-  context.connectorSuccessSetState = connectorSuccessSetState;
-  context.unConnectConnector = unConnectConnector;
-  context.unConnectPortConnectors = unConnectPortConnectors;
-  context.unConnectNodeConnectors = unConnectNodeConnectors;
-  context.isAnyConnectorHover = isAnyConnectorHover;
-  context.isConnectToNew = isConnectToNew;
-  context.selectHoverConnectors = selectHoverConnectors;
-  context.getConnectingInfo = getConnectingInfo;
-  context.startGlobalIsolateCheck = startGlobalIsolateCheck;
-  context.doFlexPortConnect = doFlexPortConnect;
-  context.doFlexPortUpdateConnected = doFlexPortUpdateConnected;
+  context.connectorManager = {
+    updateCurrentHoverPort, 
+    updateConnectEnd,
+    startConnect,
+    endConnect,
+    getCanConnect,
+    endConnectToNew,
+    connectConnector,
+    connectorSuccessSetState,
+    unConnectConnector,
+    unConnectPortConnectors,
+    unConnectNodeConnectors,
+    isAnyConnectorHover,isConnectToNew,
+    selectHoverConnectors,
+    getConnectingInfo,
+    startGlobalIsolateCheck,
+    doFlexPortConnect, 
+    doFlexPortUpdateConnected,
+  };
 
   return {
     connectingInfo,

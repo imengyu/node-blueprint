@@ -129,6 +129,7 @@ const nodesFavorite = ref<CategoryData>({
   open: false,
   show: true,
   filterShow: true,
+  key: '-2',
 });
 const nodesGroupedMostOut = ref<CategoryData|null>(null);
 const filterText = ref('所有可用单元');

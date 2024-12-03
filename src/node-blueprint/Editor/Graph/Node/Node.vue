@@ -362,7 +362,7 @@ function updateNodeForMoveEnd() {
   //移动后更新区块
   updateRegion();
   //如果有选择其他块，则同时更新区块
-  const selectedNodes = context.getSelectNodes();
+  const selectedNodes = context.selectionManager.getSelectNodes();
   for (const n of selectedNodes) {
     const node = n as NodeEditor;
     if (node !== instance.value) {
@@ -579,13 +579,13 @@ const resizeMouseHandler = createMouseDragHandler({
 let mouseDown = false;
 let lastMovedBlock = false;
 
-const mouseInfo = context.getMouseInfo();
+const mouseInfo = context.mouseManager.getMouseInfo();
 
 const dragMouseHandler = createMouseDragHandler({
   onDown() {
     lastResized = false;
     mouseDown = true;
-    context.recordViewportPosition();
+    context.viewPortManager.recordViewportPosition();
     return true;
   },
   onMove(downPos, movedPos, e) {
@@ -593,7 +593,7 @@ const dragMouseHandler = createMouseDragHandler({
       return;
     
     if(e.buttons === 1) {
-      context.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
+      context.viewPortManager.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
 
       const movedScaledDistance = new Vector2(
         (viewPort.value.scaleScreenSizeToViewportSize(movedPos.x)),
@@ -601,7 +601,7 @@ const dragMouseHandler = createMouseDragHandler({
       );
       const pos = new Vector2(instance.value.lastBlockPos);
       pos.add(movedScaledDistance);
-      pos.add(context.getViewportMovedPosition());
+      pos.add(context.viewPortManager.getViewportMovedPosition());
 
       //吸附最小刻度
       moveNodeSolveSnap(context, instance.value, pos);
@@ -610,16 +610,16 @@ const dragMouseHandler = createMouseDragHandler({
 
         if(!instance.value.selected) {
           //如果当前块没有选中，在这里切换选中状态
-          context.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
+          context.selectionManager.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
         }
         else {
           //选中后，如果有选择其他块，则同时移动其他块
-          const selectedNodes = context.getSelectNodes();
+          const selectedNodes = context.selectionManager.getSelectNodes();
           for (const node of selectedNodes) {
             if (node !== instance.value) {
               const posOfThisBlock = new Vector2((node as NodeEditor).lastBlockPos);
               posOfThisBlock.add(movedScaledDistance);
-              posOfThisBlock.add(context.getViewportMovedPosition());
+              posOfThisBlock.add(context.viewPortManager.getViewportMovedPosition());
               moveNodeSolveSnap(context, node, posOfThisBlock);
               node.position.set(posOfThisBlock)
               node.events.onEditorMoveEvent?.(instance.value, context, posOfThisBlock.substract((node as NodeEditor).lastBlockPos));
@@ -650,7 +650,7 @@ const dragMouseHandler = createMouseDragHandler({
     } else {
       //未移动则检查/如果当前块没有选中，在这里切换选中状态
       if (!props.instance.selected)
-        context.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
+        context.selectionManager.selectNode(instance.value, context.keyboardManager.isKeyControlDown() ? true : false);
     }
   },
 })
@@ -708,7 +708,7 @@ function onMouseDblclick(e : MouseEvent) {
 function onContextmenu(e : MouseEvent) {
   e.preventDefault();
   e.stopPropagation();
-  context.showNodeRightMenu(instance.value, new Vector2(e.x, e.y));
+  context.contextMenuManager.showNodeRightMenu(instance.value, new Vector2(e.x, e.y));
   return false;
 }
 
@@ -731,7 +731,7 @@ async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'pa
 }
 //删除端口
 async function onUserDeletePort(port : NodePortEditor) {
-  context.userDeletePort(port);
+  context.userActionsManager.deletePort(port);
 }
 
 //#endregion 

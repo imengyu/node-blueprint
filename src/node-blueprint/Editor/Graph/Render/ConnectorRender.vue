@@ -166,7 +166,11 @@ function render() {
       ctx.strokeStyle = '#efefef';
       ctx.fillStyle = ctx.strokeStyle;
 
-      drawerConnectingConnector.drawConnectorBezierCurve(ctx, tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, true, -1, false);
+      drawerConnectingConnector.drawConnectorBezierCurve(
+        ctx, 
+        tempPoint1.x, tempPoint1.y, 
+        tempPoint2.x, tempPoint2.y, true, -1
+      );
     }
   }
 

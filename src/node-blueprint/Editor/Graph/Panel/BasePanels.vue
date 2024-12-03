@@ -115,7 +115,7 @@ const editorHoverInfoTip = reactive({
 const editorHoverInfoTooltipPos = ref(new Vector2());
 const updateMousePointTimer = new SimpleTimer(undefined, () => {
   if (context)
-    editorHoverInfoTooltipPos.value.set(context.getMouseInfo().mouseCurrentPosScreen);
+    editorHoverInfoTooltipPos.value.set(context.mouseManager.getMouseInfo().mouseCurrentPosScreen);
 }, 20);
 function showEditorHoverInfoTip(text : string, status: 'success'|'failed'|'' = '') {
   editorHoverInfoTip.show = true;
@@ -157,12 +157,12 @@ function closeAddNodePanel() {
 
 function onAddNode(node: INodeDefine) {
   isShowAddNodePanel.value = false;
-  context?.userAddNode(node, { addNodeInPos: addNodePos.value });
+  context?.userActionsManager.addNode(node, { addNodeInPos: addNodePos.value });
 }
 
 watch(isShowAddNodePanel, (show) => {
   if (!show && context)
-    context.endConnectToNew();
+    context.connectorManager.endConnectToNew();
 });
 
 //#endregion
@@ -207,8 +207,8 @@ onMounted(() => {
 
   if (context) {
     //鼠标未拖拽未选择情况下，弹出添加单元菜单
-    context.getMouseHandler().pushMouseUpHandlers((info, e) => {
-      if (!info.mouseMoved && e.button === 2 && !context.isAnyConnectorHover()) {
+    context.mouseManager.getMouseHandler().pushMouseUpHandlers((info, e) => {
+      if (!info.mouseMoved && e.button === 2 && !context.connectorManager.isAnyConnectorHover()) {
         showAddNodePanel(
           info.mouseCurrentPosScreen, 
           undefined,
@@ -220,16 +220,18 @@ onMounted(() => {
       }
       return false;
     })
-    context.showModal = showModal;
-    context.showConfirm = showConfirm;
-    context.showEditorHoverInfoTip = showEditorHoverInfoTip;
-    context.closeEditorHoverInfoTip = closeEditorHoverInfoTip;
-    context.showSelectTypePanel = showSelectTypePanel;
-    context.closeSelectTypePanel = closeSelectTypePanel;
-    context.showAddNodePanel = showAddNodePanel;
-    context.closeAddNodePanel = closeAddNodePanel;
-    context.showSmallTip = showSmallTip;
-    context.closeSmallTip = closeSmallTip;
+    context.dialogManager = {
+      showModal,
+      showConfirm,
+      showEditorHoverInfoTip,
+      closeEditorHoverInfoTip,
+      showSelectTypePanel,
+      closeSelectTypePanel,
+      showAddNodePanel,
+      closeAddNodePanel,
+      showSmallTip,
+      closeSmallTip,
+    };
   }
 });
 

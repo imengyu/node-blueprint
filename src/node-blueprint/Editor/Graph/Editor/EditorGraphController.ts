@@ -13,107 +13,109 @@ import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessa
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 
 export interface NodeGraphEditorGraphControllerContext {
-  /**
-   * 获取节点
-   */
-  getNodes(): Map<string, NodeEditor>;
-  /**
-   * 通过UID获取节点
-   * @param uid UID
-   */
-  getNodeByUid(uid: string): NodeEditor|null;
-  /**
-   * 通过UID获取节点端口
-   * @param uid UID
-   * @param pguid 端口UID
-   */
-  getNodePortByUid(uid: string, pguid: string): NodePortEditor|null;
-  /**
-   * 获取连接线
-   */
-  getConnectors(): Map<string, NodeConnectorEditor>;  
-  /**
-    * 添加节点至当前图表中
-    * @param nodes 
-    */
-  addNode(nodes: NodeEditor) : void;
-  /**
-    * 添加节点至当前图表中
-    * @param nodes 
-    */
-  addNodes(nodes: NodeEditor[]) : void;
-  /**
-   * 移除节点
-   * @param node 
-   * @param byUser 是否是用户操作，如果是用户操作，则会调用删除检查回调
-   */
-  removeNode(node: NodeEditor, byUser: boolean) : void;
-  /**
-    * 添加连接线至当前图表中
-    * @param connector 
-    */
-  addConnector(connector: NodeConnectorEditor) : void;
-  /**
-    * 从当前图表中移除连接线
-    * @param connector 
-    */
-  removeConnector(connector: NodeConnectorEditor) : void;
-  /**
-   * 获取当前打开的图表
-   */
-  getCurrentGraph() : NodeGraph;
-  /**
-   * 标记当前图表已经被用户修改
-   */
-  markGraphChanged() : void;
-  /**
-   * 关闭图表
-   */
-  closeGraph() : void;
-  /**
-   * 清空编辑器内所有内容
-   */
-  clearAll() : void;
-  
-  /**
-   * 按标签筛选节点
-   * @param tag 标签
-   */
-  filterNodes(tag: string): NodeEditor[];
-  /**
-   * 向指定节点发送消息
-   * @param node 节点
-   * @param message 消息号
-   * @param data 消息数据
-   */
-  sendMessageToNode(node: NodeEditor, message: string | number, data: any): void;
-  /**
-   * 向多个节点发送消息
-   * @param nodes 节点数组
-   * @param message 消息号
-   * @param data 消息数据
-   */
-  sendMessageToNodes(nodes: NodeEditor[], message: string | number, data: any): void;
-  /**
-   * 向多个已筛选的节点发送消息
-   * @param tag 筛选标签
-   * @param message 消息号
-   * @param data 消息数据
-   */
-  sendMessageToFilteredNodes(tag: string, message: string|number, data: any) : void;
-  
-  /**
-   * 向编辑器分发消息
-   * @param message 消息
-   * @param data 消息数据
-   */
-  dispstchMessage(message: string, data: any) : void;
-  /**
-   * 向顶级编辑器分发消息
-   * @param message 消息
-   * @param data 消息数据
-   */
-  postUpMessage(message: string, data: any) : void;
+  graphManager: {
+    /**
+     * 获取节点
+     */
+    getNodes(): Map<string, NodeEditor>;
+    /**
+     * 通过UID获取节点
+     * @param uid UID
+     */
+    getNodeByUid(uid: string): NodeEditor|null;
+    /**
+     * 通过UID获取节点端口
+     * @param uid UID
+     * @param pguid 端口UID
+     */
+    getNodePortByUid(uid: string, pguid: string): NodePortEditor|null;
+    /**
+     * 获取连接线
+     */
+    getConnectors(): Map<string, NodeConnectorEditor>;  
+    /**
+      * 添加节点至当前图表中
+      * @param nodes 
+      */
+    addNode(nodes: NodeEditor) : void;
+    /**
+      * 添加节点至当前图表中
+      * @param nodes 
+      */
+    addNodes(nodes: NodeEditor[]) : void;
+    /**
+     * 移除节点
+     * @param node 
+     * @param byUser 是否是用户操作，如果是用户操作，则会调用删除检查回调
+     */
+    removeNode(node: NodeEditor, byUser: boolean) : void;
+    /**
+      * 添加连接线至当前图表中
+      * @param connector 
+      */
+    addConnector(connector: NodeConnectorEditor) : void;
+    /**
+      * 从当前图表中移除连接线
+      * @param connector 
+      */
+    removeConnector(connector: NodeConnectorEditor) : void;
+    /**
+     * 获取当前打开的图表
+     */
+    getCurrentGraph() : NodeGraph;
+    /**
+     * 标记当前图表已经被用户修改
+     */
+    markGraphChanged() : void;
+    /**
+     * 关闭图表
+     */
+    closeGraph() : void;
+    /**
+     * 清空编辑器内所有内容
+     */
+    clearAll() : void;
+    
+    /**
+     * 按标签筛选节点
+     * @param tag 标签
+     */
+    filterNodes(tag: string): NodeEditor[];
+    /**
+     * 向指定节点发送消息
+     * @param node 节点
+     * @param message 消息号
+     * @param data 消息数据
+     */
+    sendMessageToNode(node: NodeEditor, message: string | number, data: any): void;
+    /**
+     * 向多个节点发送消息
+     * @param nodes 节点数组
+     * @param message 消息号
+     * @param data 消息数据
+     */
+    sendMessageToNodes(nodes: NodeEditor[], message: string | number, data: any): void;
+    /**
+     * 向多个已筛选的节点发送消息
+     * @param tag 筛选标签
+     * @param message 消息号
+     * @param data 消息数据
+     */
+    sendMessageToFilteredNodes(tag: string, message: string|number, data: any) : void;
+    
+    /**
+     * 向编辑器分发消息
+     * @param message 消息
+     * @param data 消息数据
+     */
+    dispstchMessage(message: string, data: any) : void;
+    /**
+     * 向顶级编辑器分发消息
+     * @param message 消息
+     * @param data 消息数据
+     */
+    postUpMessage(message: string, data: any) : void;
+  },
 }
 
 const TAG = 'EditorGraphController';
@@ -176,7 +178,7 @@ export function useEditorGraphController(
         }        
         allNodes.set(node.uid, node);
       }
-      context.userInterfaceNextTick(() => {
+      context.interfaceUtiles.userInterfaceNextTick(() => {
         for (const node of nodes) {
           node.editorHooks.callbackOnAddToEditor?.();
           node.events.onAddToEditor?.(node);
@@ -212,7 +214,7 @@ export function useEditorGraphController(
         "connector",
         connector.uid
       );
-      context.getBaseChunkedPanel().addInstance(connector.chunkInfo);
+      context.viewPortManager.getBaseChunkedPanel().addInstance(connector.chunkInfo);
     }
   }
   /**
@@ -222,7 +224,7 @@ export function useEditorGraphController(
   function removeConnector(connector: NodeConnectorEditor) {
     
     if (connector.chunkInfo) {
-      context.getBaseChunkedPanel().removeInstance(connector.chunkInfo);
+      context.viewPortManager.getBaseChunkedPanel().removeInstance(connector.chunkInfo);
       connector.chunkInfo = null;
     }
     const 
@@ -245,7 +247,7 @@ export function useEditorGraphController(
 
       //自定义检查回调
       if (byUser) {
-        const err = node.events.onDeleteCheck?.(node, context.getCurrentGraph());
+        const err = node.events.onDeleteCheck?.(node, context.graphManager.getCurrentGraph());
         if (err) {
           printWarning(
             TAG,
@@ -257,7 +259,7 @@ export function useEditorGraphController(
       }
 
       //断开所有连接
-      context.unConnectNodeConnectors(node);
+      context.connectorManager.unConnectNodeConnectors(node);
 
       if (currentGraph.value)
         currentGraph.value.nodes.delete(node.uid);
@@ -275,7 +277,7 @@ export function useEditorGraphController(
           break;
       }
 
-      context.postUpMessage(NodeGraphEditorInternalMessages.NodeRemoved, { node, byUser });
+      postUpMessage(NodeGraphEditorInternalMessages.NodeRemoved, { node, byUser });
     }
     return true;
   }
@@ -297,15 +299,15 @@ export function useEditorGraphController(
       currentGraph.value = graph;
       graph.activeEditor = context;
       pushNodes(...(Array.from(graph.nodes.values()) as NodeEditor[])).then(() => {
-        context.userInterfaceNextTick(() => {
+        context.interfaceUtiles.userInterfaceNextTick(() => {
           graph.connectors.forEach((connector) => {
             addConnector(connector as NodeConnectorEditor);
             (connector as NodeConnectorEditor).updatePortValue();
             connector.setConnectionState();
-            context.connectorSuccessSetState(connector as NodeConnectorEditor);
+            context.connectorManager.connectorSuccessSetState(connector as NodeConnectorEditor);
           });
   
-          context.startGlobalIsolateCheck();
+          context.connectorManager.startGlobalIsolateCheck();
           resolve();
         });
       }).catch(reject);
@@ -317,7 +319,7 @@ export function useEditorGraphController(
       for (const node of nodes) {
         node.parent = currentGraph.value;
         currentGraph.value.nodes.set(node.uid, node);
-        context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
+        postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
       }
     } else {
       printWarning('Graph', null, 'addNode fail: no currentGraph');
@@ -328,7 +330,7 @@ export function useEditorGraphController(
       pushNodes(node);
       node.parent = currentGraph.value;
       currentGraph.value.nodes.set(node.uid, node);
-      context.postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
+      postUpMessage(NodeGraphEditorInternalMessages.NodeAdded, { node });
     } else {
       printWarning('Graph', null, 'addNode fail: no currentGraph');
     }
@@ -426,26 +428,27 @@ export function useEditorGraphController(
     onUpMessage(message, data);
   }
 
-  context.filterNodes = filterNodes;
-  context.sendMessageToNode = sendMessageToNode;
-  context.sendMessageToNodes = sendMessageToNodes;
-  context.sendMessageToFilteredNodes = sendMessageToFilteredNodes;
-  context.dispstchMessage = dispstchMessage;
-  context.postUpMessage = postUpMessage;
-
-  context.closeGraph = closeGraph;
-  context.clearAll = clearAll;
-  context.getConnectors = () => allConnectors;
-  context.getNodes = () => allNodes;
-  context.getNodeByUid = getNodeByUid;
-  context.getNodePortByUid = getNodePortByUid;
-  context.removeConnector = removeConnector;
-  context.addConnector = addConnector;
-  context.removeNode = removeNode;
-  context.addNodes = addNodes;
-  context.addNode = addNode;
-  context.getCurrentGraph = () => currentGraph.value as NodeGraph;
-  context.markGraphChanged = markGraphChanged;
+  context.graphManager = {
+    filterNodes,
+    sendMessageToNode,
+    sendMessageToNodes,
+    sendMessageToFilteredNodes,
+    dispstchMessage,
+    postUpMessage,
+    closeGraph,
+    clearAll,
+    getConnectors: () => allConnectors,
+    getNodes: () => allNodes,
+    getNodeByUid,
+     getNodePortByUid,
+    removeConnector,
+    addConnector,
+    removeNode,
+    addNodes,
+    addNode,
+    getCurrentGraph: () => currentGraph.value as NodeGraph,
+    markGraphChanged,
+  };
 
   return {
     loadGraph,

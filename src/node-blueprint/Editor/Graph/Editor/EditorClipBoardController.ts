@@ -12,7 +12,9 @@ import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
  * 编辑器的剪贴板控制器上下文函数
  */
 export interface NodeEditorClipBoardControllerContext {
-
+  /**
+   * 剪贴板控制器
+   */
   clipBoardManager: {
     /**
      * 剪切选中的单元
@@ -47,7 +49,7 @@ export function useEditorClipBoardController(context: NodeGraphEditorInternalCon
   const TAG = "EditorClipBoardController";
 
   function cutOrCopySelectionNodes(cut : boolean) {
-    const selectedNodes = context.getSelectNodes();
+    const selectedNodes = context.selectionManager.getSelectNodes();
     const selectedConnectors = new Set<NodeConnectorEditor>();
 
     if (selectedNodes.length === 0)
@@ -68,20 +70,11 @@ export function useEditorClipBoardController(context: NodeGraphEditorInternalCon
         } as INodeSaveData
       }),
       connectors: Array.from(selectedConnectors).map(p => p.save('graph')),
-      selectedNodesRect: (
-        selectedNodes.length > 2 ? selectedNodes.reduce((r, node) => {
-          ///计算出选中节点的方框
-          let rect = r as any as Rect;
-          if (!(rect instanceof Rect))
-            rect = r.getRect();
-          rect.grow(node.getRect());
-          return rect as any
-        }) : selectedNodes[0].getRect()
-      ).save(),
+      selectedNodesRect: context.viewPortManager.calcNodesRegion(selectedNodes).save(),
     };
 
     if (cut)
-      context.deleteSelectedNodes();
+      context.userActionsManager.deleteSelectedNodes();
 
     //写入剪贴板
     navigator.clipboard.writeText(JSON.stringify(storedData)).catch(handleClipboardError);
@@ -120,7 +113,7 @@ export function useEditorClipBoardController(context: NodeGraphEditorInternalCon
 
     //计算出选中节点的方框，其中的节点位置与方框相减得出相对位置
     const selectedNodesRect = new Rect().load(json.selectedNodesRect);
-    const mousePos = new Vector2(context.getMouseInfo().mouseCurrentPosViewPort).substract(selectedNodesRect.getSize().divide(2));
+    const mousePos = new Vector2(context.mouseManager.getMouseInfo().mouseCurrentPosViewPort).substract(selectedNodesRect.getSize().divide(2));
 
     //对应新拷贝的节点
     const nodeIdMap = new Map<string, Node>();
@@ -138,13 +131,9 @@ export function useEditorClipBoardController(context: NodeGraphEditorInternalCon
         new Vector2().load(node.node.position as any).substract(selectedNodesRect.getPoint())
       );
 
-      console.log('newPos', newPos.toString());
-      console.log('newPos2',node.node.position);
-      console.log('newPos3', new Vector2().load(node.node.position as any).substract(selectedNodesRect.getPoint()).toString());
-      
       delete (node.node as any).uid;
 
-      const newNode = context.userAddNode(define, {
+      const newNode = context.userActionsManager.addNode(define, {
         noErrorAlert: true,
         addNodeInPos: newPos,  
         intitalShadow: node.node,
@@ -164,23 +153,23 @@ export function useEditorClipBoardController(context: NodeGraphEditorInternalCon
       if (!newStartPortNodeUid || !newEndPortNodeUid)
         continue;
 
-      const startPortInstance = context.getNodePortByUid(newStartPortNodeUid.uid, connector.startPort.portUid);
-      const endPortInstance = context.getNodePortByUid(newEndPortNodeUid.uid, connector.endPort.portUid);
+      const startPortInstance = context.graphManager.getNodePortByUid(newStartPortNodeUid.uid, connector.startPort.portUid);
+      const endPortInstance = context.graphManager.getNodePortByUid(newEndPortNodeUid.uid, connector.endPort.portUid);
 
       if (!startPortInstance || !endPortInstance)
         continue;
 
-      context.connectConnector(startPortInstance, endPortInstance);
+      context.connectorManager.connectConnector(startPortInstance, endPortInstance);
     }
     
-    context.markGraphChanged();
+    context.graphManager.markGraphChanged();
   }
   function isPasteable() {
     return true;
   }
 
   function handleClipboardError(e: unknown) {
-    context.userActionAlert('warning', "无法读取或者设置剪贴板，错误：" + e);
+    context.interfaceUtiles.userActionAlert('warning', "无法读取或者设置剪贴板，错误：" + e);
   }
 
   context.clipBoardManager = {

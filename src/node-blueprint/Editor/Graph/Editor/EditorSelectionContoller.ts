@@ -12,81 +12,88 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
  * Selection management
  */
 export interface NodeGraphEditorSelectionContext {
-  /**
-   * 获取所有选中的节点
-   * @returns 
-   */
-  getSelectNodes: () => NodeEditor[];
-  /**
-   * 获取选中的节点数量
-   * @returns 
-   */
-  getSelectNodeCount: () => number;
-  /**
-   * 获取选中的连接线
-   * @returns 
-   */
-  getSelectConnectors: () => NodeConnectorEditor[];
+  selectionManager: {
+    /**
+     * 获取所有选中的节点
+     * @returns 
+     */
+    getSelectNodes: () => NodeEditor[];
+    /**
+     * 获取选中的节点数量
+     * @returns 
+     */
+    getSelectNodeCount: () => number;
+    /**
+     * 获取选中的连接线
+     * @returns 
+     */
+    getSelectConnectors: () => NodeConnectorEditor[];
 
-  /**
-   * 选中当前编辑器中所有的节点
-   * @returns 
-   */
-  selectAllNodes: () => void;
-  /**
-   * 选中当前编辑器中所有的连接线
-   * @returns 
-   */
-  selectAllConnectors: () => void;
-  /**
-   * 取消选中所有的节点
-   * @returns 
-   */
-  unSelectAllNodes: () => void;
-  /**
-   * 取消选中所有的节点连接线
-   * @returns 
-   */
-  unSelectAllConnectors: () => void;
-  /**
-   * 选中一个或者多个节点
-   * @param nodes 
-   * @param append 是否是追加选择，否则将会清空之前的选择
-   */
-  selectSomeNodes(nodes: NodeEditor[], append?: boolean): void;
-  /**
-   * 取消选中某个连接线
-   * @param connector 
-   */
-  unSelectConnector(connector: NodeConnectorEditor): void;
-  /**
-   * 取消选中某个节点
-   */
-  unSelectNode(node: NodeEditor): void;
-  /**
-   * 选中某个节点
-   * @param node 节点
-   * @param append 是否是追加选择，否则将会清空之前的选择
-   */
-  selectNode(node: NodeEditor, append?: boolean): void;
-  /**
-   * 选中某个连接线
-   * @param connector 连接线
-   * @param append 是否是追加选择，否则将会清空之前的选择
-   */
-  selectConnector(connector: NodeConnectorEditor, append?: boolean): void;
+    /**
+     * 选中当前编辑器中所有的节点
+     * @returns 
+     */
+    selectAllNodes: () => void;
+    /**
+     * 选中当前编辑器中所有的连接线
+     * @returns 
+     */
+    selectAllConnectors: () => void;
+    /**
+     * 选中鼠标悬浮的连接线
+     * @returns 
+     */
+    selectHoverConnectors: () => void;
+    /**
+     * 取消选中所有的节点
+     * @returns 
+     */
+    unSelectAllNodes: () => void;
+    /**
+     * 取消选中所有的节点连接线
+     * @returns 
+     */
+    unSelectAllConnectors: () => void;
+    /**
+     * 选中一个或者多个节点
+     * @param nodes 
+     * @param append 是否是追加选择，否则将会清空之前的选择
+     */
+    selectSomeNodes(nodes: NodeEditor[], append?: boolean): void;
+    /**
+     * 取消选中某个连接线
+     * @param connector 
+     */
+    unSelectConnector(connector: NodeConnectorEditor): void;
+    /**
+     * 取消选中某个节点
+     */
+    unSelectNode(node: NodeEditor): void;
+    /**
+     * 选中某个节点
+     * @param node 节点
+     * @param append 是否是追加选择，否则将会清空之前的选择
+     */
+    selectNode(node: NodeEditor, append?: boolean): void;
+    /**
+     * 选中某个连接线
+     * @param connector 连接线
+     * @param append 是否是追加选择，否则将会清空之前的选择
+     */
+    selectConnector(connector: NodeConnectorEditor, append?: boolean): void;
 
-  /**
-   * 获取当前用户是否正在多选操作
-   * @returns 
-   */
-  isMulitSelect: () => boolean;
+    /**
+     * 获取当前用户是否正在多选操作
+     * @returns 
+     */
+    isMulitSelect: () => boolean;
 
-  /**
-   * 获取最低矩形内的单元
-   * @param rect 视口坐标
-   */
-  getNodesInRect(rect: Rect) : NodeEditor[];
+    /**
+     * 获取最低矩形内的单元
+     * @param rect 视口坐标
+     */
+    getNodesInRect(rect: Rect) : NodeEditor[];
+  },
 }
 
 interface EditorSelectionContoller {
@@ -112,9 +119,9 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   const isMultiSelected = ref(false);
   const multiSelectRect = ref(new Rect()) as Ref<Rect>;
 
-  const mouseInfo = context.getMouseInfo();
-  const viewPort = context.getViewPort();
-  const mouseHandlers = context.getMouseHandler();
+  const mouseInfo = context.mouseManager.getMouseInfo();
+  const viewPort = context.viewPortManager.getViewPort();
+  const mouseHandlers = context.mouseManager.getMouseHandler();
 
   //多选处理
   const selectDragDownPos = new Vector2();
@@ -122,12 +129,12 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     onDown(e) {
       if (isMouseEventInNoDragControl(e))
         return false;
-      if (context.isAnyConnectorHover())
+      if (context.connectorManager.isAnyConnectorHover())
         return false;
       if (e.button !== 0)
         return false;
       e.stopPropagation();
-      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Down);
+      context.internalManager.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Down);
       isMulitSelect.value = true;
       selectDragDownPos.set(viewPort.position);
       return true;
@@ -135,13 +142,13 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     onMove(_, m, e) {
       e.preventDefault();
       e.stopPropagation();
-      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
-      context.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
+      context.internalManager.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Move);
+      context.viewPortManager.moveViewportWithCursorPosition(mouseInfo.mouseCurrentPosEditor);
       doSelectNodes();
     },
     onUp(e) {
       isMulitSelect.value = false;
-      context.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
+      context.internalManager.mouseEventUpdateMouseInfo(e, MouseEventUpdateMouseInfoType.Up);
       if (mouseInfo.mouseMoved)
         endSelectNodes();
       else
@@ -152,10 +159,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   mouseHandlers.pushMouseDownHandler(selectDragHandler);
   mouseHandlers.pushMouseUpHandlers((_mouseInfo) => {
     if (!_mouseInfo.mouseMoved) {
-      if (context.isAnyConnectorHover())
-        context.selectHoverConnectors();
+      if (context.connectorManager.isAnyConnectorHover())
+        context.selectionManager.selectHoverConnectors();
       else
-        context.unSelectAllConnectors();
+        context.selectionManager.unSelectAllConnectors();
     }
     return false;
   });
@@ -196,7 +203,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   function selectAllNodes() {
     const _selectNodes = selectNodes.value;
     ArrayUtils.clear(_selectNodes);
-    context.getNodes().forEach((b) => {
+    context.graphManager.getNodes().forEach((b) => {
       const node = b as NodeEditor;
       _selectNodes.push(node);
       doSelectNode(node, true);
@@ -261,10 +268,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * @param rect 视口坐标
    */
   function getNodesInRect(rect: Rect) : NodeEditor[] {
-    const castNodes = context.getBaseChunkedPanel().testRectCastTag(rect as Rect, "node");
+    const castNodes = context.viewPortManager.getBaseChunkedPanel().testRectCastTag(rect as Rect, "node");
     const thisTimeSelectedNode = new Array<NodeEditor>();
     castNodes.forEach((i) => {
-      const block = context.getNodes().get(i.data as string);
+      const block = context.graphManager.getNodes().get(i.data as string);
       if (block) 
         ArrayUtils.addOnce(thisTimeSelectedNode, block);
     });
@@ -305,10 +312,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       /**
        * 选择单元
        */
-      const castNodes = context.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "node");
+      const castNodes = context.viewPortManager.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "node");
       const thisTimeSelectedNode = new Array<NodeEditor>();
       castNodes.forEach((i) => {
-        const block = context.getNodes().get(i.data as string);
+        const block = context.graphManager.getNodes().get(i.data as string);
         if (block) 
           ArrayUtils.addOnce(thisTimeSelectedNode, block);
       });
@@ -333,8 +340,8 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
         c.selected = false;
       });
       ArrayUtils.clear(selectConnectors.value);
-      context.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "connector").forEach((i) => {
-        const connector = context.getConnectors().get(i.data as string);
+      context.viewPortManager.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "connector").forEach((i) => {
+        const connector = context.graphManager.getConnectors().get(i.data as string);
         if (connector) {
           (connector as NodeConnectorEditor).selected = true;
           ArrayUtils.addOnce(selectConnectors.value, connector as NodeConnectorEditor);
@@ -388,20 +395,23 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     context.emitEvent('selectNodeOrConnectorChanged');
   }
 
-  context.getNodesInRect = getNodesInRect;
-  context.unSelectAllNodes = unSelectAllNodes;
-  context.unSelectAllConnectors = unSelectAllConnectors;
-  context.unSelectConnector = unSelectConnector;
-  context.unSelectNode = unSelectNode;
-  context.selectNode = selectNode;
-  context.selectSomeNodes = selectSomeNodes;
-  context.selectAllNodes = selectAllNodes;
-  context.selectAllConnectors = selectAllConnectors;
-  context.selectConnector = selectConnector;
-  context.getSelectNodes = () => selectNodes.value as unknown as NodeEditor[];
-  context.getSelectNodeCount = () => selectNodes.value.length;
-  context.getSelectConnectors = () => selectConnectors.value as NodeConnectorEditor[];
-  context.isMulitSelect = () => isMulitSelect.value;
+  context.selectionManager = {
+    getNodesInRect,
+    unSelectAllNodes,
+    unSelectAllConnectors,
+    unSelectConnector,
+    unSelectNode,
+    selectNode,
+    selectSomeNodes,
+    selectAllNodes,
+    selectAllConnectors,
+    selectHoverConnectors: () => context.connectorManager.selectHoverConnectors(),
+    selectConnector,
+    getSelectNodes: () => selectNodes.value as unknown as NodeEditor[],
+    getSelectNodeCount: () => selectNodes.value.length,
+    getSelectConnectors: () => selectConnectors.value as NodeConnectorEditor[],
+    isMulitSelect: () => isMulitSelect.value,
+  };
 
   return {
     selectNodes,

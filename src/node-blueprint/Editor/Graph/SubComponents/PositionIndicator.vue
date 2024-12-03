@@ -45,7 +45,7 @@ const posScreen = new Rect();
 
 watch(() => props.positionIndicatorOn, (v) => {
   if (v) {
-    const viewPort = props.context.getViewPort();
+    const viewPort = props.context.viewPortManager.getViewPort();
     posScreen.setPos(viewPort.viewportPointToEditorPoint(props.positionIndicatorPos.getPoint()));
     posScreen.setSize(viewPort.scaleViewportSizeToScreenSize(props.positionIndicatorPos.getSize()));
   }

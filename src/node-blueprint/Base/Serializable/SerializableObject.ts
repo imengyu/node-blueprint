@@ -554,7 +554,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     return o;
   }
   /**
-   * 将影子数据以追加方式合并至当前对象中
+   * Merge shadow data into the current object with append
    * @param data 
    */
   mergeShadow(data: IKeyValueObject, mergeList = false) {
@@ -618,17 +618,17 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     return this as unknown as U;
   }
   /**
-   * 获取当前对象指定名称的属性值
-   * @param key 名称
+   * Get the property value of the specified name of the current object
+   * @param key Name
    * @returns 
    */
   getProperty<K>(key: string) {
     return (this as unknown as IKeyValueObject)[key] as K;
   }
   /**
-   * 设置当前对象指定名称的属性值
-   * @param key 名称
-   * @param value 值
+   * Set the attribute value of the specified name for the current object
+   * @param key Name
+   * @param value Value
    * @returns 
    */
   setProperty<K>(key: string, value: K) {
@@ -636,8 +636,8 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
   }
 
   /**
-   * 克隆当前对象
-   * @param scheme 预设名称。默认是：default 
+   * Clone the current object
+   * @param scheme Preset name. Default is: 'default'
    */
   clone(scheme?: string) : typeof this {
     const clonedObject = CreateObjectFactory.createSerializableObject<T, P>(
