@@ -1,7 +1,7 @@
 import type { IKeyValueObject } from "../BaseTypes";
-import { CreateObjectFactory, SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
-CreateObjectFactory.addObjectFactory('Vector2', () => new Vector2());
 
 /**
  * 2D Vector
@@ -17,14 +17,21 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
    */
   public y = 0;
 
-  public constructor(x: number|Vector2 = 0, y = 0) {
-    super('Vector2', undefined, {
+  static TAG = 'Vector2';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(Vector2.TAG, (define: any) => new Vector2(define));
+    SerializableFactory.addSerializableObjectConfig(Vector2.TAG, { 
       serializeSchemes: {
         default: {
           serializableProperties: [ 'x', 'y' ],
         },
       }
     });
+  }
+
+  public constructor(x: number|Vector2 = 0, y = 0) {
+    super(Vector2.TAG, undefined, Vector2.TAG);
     if (typeof x === 'object') {
       this.y = x.y;
       this.x = x.x;

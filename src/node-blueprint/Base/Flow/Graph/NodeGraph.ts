@@ -8,12 +8,12 @@ import type { NodeDocunment } from "./NodeDocunment";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
 import { NodeRegistry } from "../Registry/NodeRegistry";
 import { printWarning } from "../../Logger/DevLog";
-import { CreateObjectFactory } from "../../Serializable/SerializableObject";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import { Vector2 } from "../../Utils/Base/Vector2";
 import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData";
 import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
 import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
 /**
  * 流图类型
@@ -47,9 +47,16 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
     return 'NodeGraph:' + this.name + ':' + this.uid;
   }
 
-  constructor(define: INodeGraphDefine, parent: NodeDocunment|NodeGraph, isEditor: boolean) {
-    super('NodeGraph', define, {
-      serializeSchemes: {
+  static NAME  = 'NodeGraph';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeGraph.NAME, (define: INodeGraphDefine, parent) => new NodeGraph(define, parent as NodeDocunment, false));
+    SerializableFactory.addSerializableObjectConfigsWithSwitch([
+      NodeGraph.NAME,
+      NodeGraph.NAME + 'Editor',
+    ], (_, i) => {
+      return {
+        serializeSchemes: {
         default: {
           serializeAll: true,
           serializableProperties: [],
@@ -66,7 +73,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
             'readyDispatcher',
           ],
           forceSerializableClassProperties: {
-            children: isEditor === true ? 'NodeGraphEditor' : 'NodeGraph',
+            children: i === 1 ? 'NodeGraphEditor' : 'NodeGraph',
             inputPorts: SerializableObjectPureObjName,
             outputPorts: SerializableObjectPureObjName,
           },
@@ -121,7 +128,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
                   return { parsed: true, ignore: true };
                 }
     
-                const connector = (isEditor ? 
+                const connector = (i === 1 ? 
                   CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
                   CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
                 
@@ -163,7 +170,12 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
           },
         },
       },
-    });
+      }
+    })
+  }
+
+  constructor(define: INodeGraphDefine, parent: NodeDocunment|NodeGraph, isEditor: boolean) {
+    super(NodeGraph.NAME, define, NodeGraph.NAME + (isEditor ? 'Editor' : ''));
     this.parent = parent;
     this.isEditor = isEditor;
   }
@@ -305,7 +317,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
   /**
    * 指示当前函数是否是静态
    */
-  static = false;
+  isStatic = false;
 
   
   /**

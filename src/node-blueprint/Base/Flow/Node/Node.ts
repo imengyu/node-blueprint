@@ -1,7 +1,7 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import ArrayUtils from "../../Utils/ArrayUtils";
 import { Vector2 } from "../../Utils/Base/Vector2";
-import { SerializableObject, type SerializableConfig, mergeSerializableConfig } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import { printError, printWarning } from "../../Logger/DevLog";
 import { NodeParamType, type NodeParamEditorCreateCallback } from "../Type/NodeParamType";
 import type { NodePort } from "./NodePort";
@@ -17,16 +17,18 @@ import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
 import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
 import type { INodeCompileSettings } from "../../Compiler/NodeCompileSettings";
 import type { NodeConnector } from "./NodeConnector";
+import { CreateObjectFactory, mergeSerializableConfigName, SerializableFactory } from "../../Serializable/SerializableFactory";
 
-const TAG = 'Node';
 
 /**
  * 节点
  */
 export class Node extends SerializableObject<INodeDefine> {
 
-  constructor(define: INodeDefine, config?: SerializableConfig<INodeDefine>) {
-    super('Node', define, mergeSerializableConfig({    
+  static TAG = 'Node';
+
+  static() {
+    SerializableFactory.addSerializableObjectConfig(this.TAG, {
       mergeOverride(keyName, thisData, fromData) {
         if (keyName === 'ports') {
           const thisArray = thisData as NodePort[];
@@ -60,7 +62,7 @@ export class Node extends SerializableObject<INodeDefine> {
             this.mapPorts.set(port.guid, port);
             this.outputPorts.push(port);
           } else {
-            printError(TAG, null, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
+            printError(this.TAG, null, `Node ${this.define.name} ${this.uid} port: ${port.guid} has bad direction.`);
           }
         });
       },
@@ -115,7 +117,12 @@ export class Node extends SerializableObject<INodeDefine> {
           },
         }
       },
-    }, config));
+    })
+    CreateObjectFactory.addObjectFactory(this.TAG, (define: INodeDefine) => new Node(define));
+  }
+
+  constructor(define: INodeDefine, childConfig?: string) {
+    super(Node.TAG, define, mergeSerializableConfigName(Node.TAG, childConfig));
     this.define = define;
   }
 
@@ -689,8 +696,12 @@ export interface INodeEventSettings {
  * 单元自定义事件设置
  */
 export class NodeEventSettings extends SerializableObject<INodeEventSettings, Node> {
-  constructor(define?: INodeEventSettings) {
-    super('NodeEventSettings', define, {
+
+  static TAG = 'NodeEventSettings';
+
+  static() {
+    CreateObjectFactory.addObjectFactory('NodeEventSettings', (define: INodeEventSettings) => new NodeEventSettings(define));
+    SerializableFactory.addSerializableObjectConfig(NodeEventSettings.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
@@ -699,7 +710,11 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
           ]
         }
       }
-    });
+    })
+  }
+
+  constructor(define?: INodeEventSettings) {
+    super(NodeEventSettings.TAG, define, NodeEventSettings.TAG);
   }
 
   onCreate ?: NodeEventCallback;
@@ -842,17 +857,25 @@ export interface INodeStyleSettings {
  * 节点样式结构
  */
 export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, Node> {
-  constructor(define?: INodeStyleSettings) {
-    super('NodeStyleSettings', define, {
+
+  static TAG = 'NodeStyleSettings';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeStyleSettings.TAG, (define: INodeStyleSettings) => new NodeStyleSettings(define)); 
+    SerializableFactory.addSerializableObjectConfig(NodeStyleSettings.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
           noSerializableProperties: [
             'parent',
-          ],
+          ]
         }
-      }
-    });
+      } 
+    })
+  }
+
+  constructor(define?: INodeStyleSettings) {
+    super(NodeStyleSettings.TAG, define, NodeStyleSettings.TAG);
   }
 
   public logo = '';

@@ -1,8 +1,15 @@
-import { NodePort, type NodePortState } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import { NodePort, type INodePortDefine, type NodePortState } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
+import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 
 export class NodePortEditor extends NodePort {
+
+  static() {
+    CreateObjectFactory.addObjectFactory('NodePortEditor', (define: INodePortDefine, parent) => new NodePortEditor(define, parent as Node));
+  }
+
   public state: NodePortState = 'normal';
   
   private pos = new Vector2();

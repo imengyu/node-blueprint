@@ -3,6 +3,7 @@ import type { IKeyValueObject } from "../../Utils/BaseTypes";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "../Node/NodePort";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
 /**
  * Base types
@@ -101,8 +102,11 @@ export type NodeParamCustomPortIconRenderCallback = (port: NodePort, param: Node
  */
 export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
-  constructor() {
-    super('NodeParamType', undefined, {
+  static TAG = 'NodeParamType';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeParamType.TAG, (define: NodeParamTypeDefine) => new NodeParamType().load(define));
+    SerializableFactory.addSerializableObjectConfig(NodeParamType.TAG, {
       serializeSchemes: {
         default: {
           serializableProperties: [],
@@ -118,7 +122,11 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
           name: this.toString(),
         };
       },
-    });
+    })
+  }
+
+  constructor() {
+    super(NodeParamType.TAG, undefined, NodeParamType.TAG);
   }
 
   /**
@@ -169,7 +177,7 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
   /**
    * 内置类型 执行
    */
-  public static Execute = new NodeParamType();
+  public static Execute: NodeParamType;
   /**
    * 内置类型 对象
    */

@@ -1,8 +1,8 @@
 import type{ IKeyValueObject } from "../BaseTypes";
-import { CreateObjectFactory, SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "../../Serializable/SerializableObject";
 import { Vector2 } from "./Vector2";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
-CreateObjectFactory.addObjectFactory('Rect', () => new Rect());
 
 /**
  * 矩形类 [Rectangle base class]
@@ -13,6 +13,19 @@ export class Rect extends SerializableObject<IKeyValueObject> {
   public w = 0;
   public h = 0;
 
+  static TAG = 'Rect';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(Rect.TAG, (define: any) => new Rect(define));
+    SerializableFactory.addSerializableObjectConfig(Rect.TAG, {
+      serializeSchemes: {
+        default: {
+          serializableProperties: [ 'x', 'y', 'w', 'h' ],
+        },
+      },
+    })
+  }
+
   /**
    * 创建一个矩形 [Create a rectangle instance]
    * @param x 点x轴坐标或一个点对象，使用对象时可不填写y [Point X-axis coordinate or a point object. If the object is used, the parameter Y will be ignored]
@@ -21,14 +34,8 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * @param y 高度 [Height]
    */
   public constructor(x?: number | Rect, y? : number, w? : number, h? : number) {
-    super('Rect', undefined, {
-      serializeSchemes: {
-        default: {
-          serializableProperties: [ 'x', 'y', 'w', 'h' ],
-        },
-      }
-    });
-    this.set(x || 0,y,w,h);
+    super(Rect.TAG, undefined, Rect.TAG);
+    this.set(x || 0, y, w, h);
   }
 
   /**
@@ -126,6 +133,7 @@ export class Rect extends SerializableObject<IKeyValueObject> {
     this.y = t;
     this.w = r - l;
     this.h = b - t;
+    return this;
   }
 
   /**
@@ -134,11 +142,12 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * Expand the current rectangle to the specified size according to the center coordinate
    * @param size 扩展大小 
    */
-  public expand(size : number) : void {
+  public expand(size : number) {
     this.x -= size;
     this.y -= size;
     this.w += size * 2;
     this.h += size * 2;
+    return this;
   }
   /**
    * 将矩形坐标和大小放大指定倍数
@@ -146,11 +155,12 @@ export class Rect extends SerializableObject<IKeyValueObject> {
    * Enlarges the rectangular coordinates and size by a specified factor
    * @param v 
    */
-  public multiply(v : number) : void {
+  public multiply(v : number) {
     this.x *= v;
     this.y *= v;
     this.w *= v;
     this.h *= v;
+    return this;
   }
 
   /**

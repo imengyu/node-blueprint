@@ -8,6 +8,7 @@ import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import { threeOrderBezier } from "../../Utils/BezierUtils";
 import { getNodeCSSColor } from "../Composeable/EditorColors";
 import { calc2PointDistance } from "@/node-blueprint/Base/Utils/Base/Math";
+import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
 
 let _debug = false;
 
@@ -16,8 +17,8 @@ let _debug = false;
  */
 export class NodeConnectorEditor extends NodeConnector {
 
-  constructor(define?: INodeConnectorDefine) {
-    super(define);
+  static() {
+    CreateObjectFactory.addObjectFactory('NodeConnectorEditor', (define: INodeConnectorDefine) => new NodeConnectorEditor(define));
   }
 
   public static setRenderDebugInfo(on: boolean) {

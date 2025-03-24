@@ -2,13 +2,18 @@ import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "./NodePort";
 import ArrayUtils from "../../Utils/ArrayUtils";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
 /**
  * 节点链接
  */
 export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
-  constructor(define?: INodeConnectorDefine) {
-    super('NodeConnector', define, {
+
+  static TAG = 'NodeConnector';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeConnector.TAG, (define: INodeConnectorDefine) => new NodeConnector(define));
+    SerializableFactory.addSerializableObjectConfig(NodeConnector.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
@@ -33,7 +38,11 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
           },
         },
       },
-    });
+    })
+  }
+
+  constructor(define?: INodeConnectorDefine) {
+    super(NodeConnector.TAG, define, NodeConnector.TAG);
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);
   }
 

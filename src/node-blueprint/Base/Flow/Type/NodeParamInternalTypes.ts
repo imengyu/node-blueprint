@@ -12,6 +12,7 @@ import EnumEditor from "../../../Editor/Graph/TypeEditor/EnumEditor.vue";
  * @param registry 
  */
 export function registerInternalTypes(registry: NodeParamTypeRegistry) {
+  NodeParamType.Execute = new NodeParamType();
   NodeParamType.Number = registry.registerType('number', {
     baseType: 'number',
     inheritType: null,

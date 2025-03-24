@@ -6,14 +6,18 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
 import type { NodeContextMenuItem } from "../Editor/EditorContextMenuHandler";
 import type { NodeGraphEditorContext } from "../NodeGraphEditor";
+import { CreateObjectFactory, SerializableFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
  */
 export class NodeEditor extends Node {
 
-  constructor(define: INodeDefine) {
-    super(define, {
+  static TAG = 'NodeEditor';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeEditor.TAG, (define: INodeDefine) => new NodeEditor(define));
+    SerializableFactory.addSerializableObjectConfig(NodeEditor.TAG, {
       serializeSchemes: {
         default: {
           forceSerializableClassProperties: {
@@ -32,6 +36,10 @@ export class NodeEditor extends Node {
         },
       }
     });
+  }
+
+  constructor(define: INodeDefine) {
+    super(define, NodeEditor.TAG);
   }
 
   /**

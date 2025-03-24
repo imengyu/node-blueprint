@@ -1,60 +1,74 @@
 import RandomUtils from "../../Utils/RandomUtils";
 import { SerializableObject } from "../../Serializable/SerializableObject";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
-import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
 import { NodeParamTypeRegistry } from "../Type/NodeParamTypeRegistry";
+import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
 import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
 import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
 /**
  * 蓝图文档定义
  */
 export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> implements IWaitReady {
-  constructor(define?: INodeDocunmentDefine, isEditor?: boolean) {
-    super('NodeDocunment', define, {
-      serializeSchemes: {
-        default: {
-          serializableProperties: [
-            'uid',
-            'name',
-            'comment',
-            'version',
-            'description',
-            'author',
-            'mainGraph',
-            'customData',
-            'customTypes',
-          ],
-          serializePropertyOrder: {
-            'customTypes': 1,
-            'mainGraph': 2,
-          },
-          forceSerializableClassProperties: {
-            mainGraph: isEditor ? 'NodeGraphEditor' : 'NodeGraph',
-          },
-          afterPropertyLoad: (key) => {
-            if (key === 'customTypes') {
-              //加载自定义组合类型数据
-              const typeRegistry = NodeParamTypeRegistry.getInstance();
-              for (const type of this.customTypes) {
-                if (!typeRegistry.isTypeRegistered(type.name))
-                  typeRegistry.registerType(type.name, type.define);
+
+  static TAG = 'NodeDocunment';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodeDocunment.TAG, (define: INodeDocunmentDefine) => new NodeDocunment(define));
+    SerializableFactory.addSerializableObjectConfigsWithSwitch([ 
+      NodeDocunment.TAG,
+      NodeDocunment.TAG + 'Editor',
+    ], (n, i) => {
+      return {
+        serializeSchemes: {
+          default: {
+            serializableProperties: [
+              'uid',
+              'name',
+              'comment',
+              'version',
+              'description',
+              'author',
+              'mainGraph',
+              'customData',
+              'customTypes',
+            ],
+            serializePropertyOrder: {
+              'customTypes': 1,
+              'mainGraph': 2,
+            },
+            forceSerializableClassProperties: {
+              mainGraph: i === 1 ? 'NodeGraphEditor' : 'NodeGraph',
+            },
+            afterPropertyLoad: (key) => {
+              if (key === 'customTypes') {
+                //加载自定义组合类型数据
+                const typeRegistry = NodeParamTypeRegistry.getInstance();
+                for (const type of this.customTypes) {
+                  if (!typeRegistry.isTypeRegistered(type.name))
+                    typeRegistry.registerType(type.name, type.define);
+                }
               }
-            }
+            },
+            beforeSave: () => {
+              //保存其他数据
+              //保存自定义组合类型
+              const typeRegistry = NodeParamTypeRegistry.getInstance();
+              this.customTypes = [];
+              for (const [,type] of typeRegistry.getAllTypes()) {
+                if (type.isCustomType)
+                  this.customTypes.push({ name: type.toString(), define: type.define });
+              }
+            },
           },
-          beforeSave: () => {
-            //保存其他数据
-            //保存自定义组合类型
-            const typeRegistry = NodeParamTypeRegistry.getInstance();
-            this.customTypes = [];
-            for (const [,type] of typeRegistry.getAllTypes()) {
-              if (type.isCustomType)
-                this.customTypes.push({ name: type.toString(), define: type.define });
-            }
-          },
-        },
+        }
       }
     });
+  }
+
+  constructor(define?: INodeDocunmentDefine, isEditor?: boolean) {
+    super(NodeDocunment.TAG, define, NodeDocunment.TAG + (isEditor ? 'Editor' : ''));
     this.isEditor = isEditor === true;
   }
 

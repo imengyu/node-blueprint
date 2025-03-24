@@ -2,85 +2,8 @@ import type { IKeyValueObject, ISaveableTypes } from "../Utils/BaseTypes";
 import ObjectUtils from "../Utils/ObjectUtils";
 import type { IChildObject } from "./IChildObject";
 import type { ICloneable } from "./ICloneable";
+import { CreateObjectFactory, mergeSerializableSchemeConfig, SerializableFactory } from "./SerializableFactory";
 
-const createObjectFactorys = new Map<string, CreateObjectClassCallback<any, any>>();
-
-export type CreateObjectClassCallback<T, P> = (
-  define: T,
-  parent: P, 
-) => SerializableObject<T, P>
-
-/**
- * SerializableObject Object Creation Factory
- */
-export const CreateObjectFactory = {
-  /**
-   * Add to factory
-   * @param name Object Name
-   * @param createFn Create callback
-   */
-  addObjectFactory<T, P>(name : string, createFn : CreateObjectClassCallback<T, P>) : void {
-    createObjectFactorys.set(name, createFn);
-  },
-  /**
-   * Create SerializableObject from data Object
-   * @param name Object Name
-   * @param k data Object
-   * @returns 
-   */
-  createSerializableObject<T, P>(name : string, parent: P|null, k ?: T|null) : SerializableObject<T, P>|null {
-    const objCreate = createObjectFactorys.get(name);
-    if(objCreate) {
-      const obj = objCreate(k, parent) as SerializableObject<T, P>;
-      if (typeof k !== 'undefined' && k !== null)
-        return obj.load(k);
-      return obj;
-    }
-    return null;
-  }
-}
-
-function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig, childConfig: SerializableSchemeConfig) : SerializableSchemeConfig {
-  return {
-    ...superConfig,
-    ...childConfig,
-    serializableProperties: [
-      ...(superConfig.serializableProperties || []),
-      ...(childConfig.serializableProperties || []),
-    ],
-    noSerializableProperties: [
-      ...(superConfig.noSerializableProperties || []),
-      ...(childConfig.noSerializableProperties || []),
-    ],
-    serializePropertyOrder: {
-      ...superConfig.serializePropertyOrder,
-      ...childConfig.serializePropertyOrder,
-    },
-    forceSerializableClassProperties: {
-      ...superConfig.forceSerializableClassProperties,
-      ...childConfig.forceSerializableClassProperties,
-    },
-  }
-}
-export function mergeSerializableConfig<T = any, P = any>(superConfig: SerializableConfig<T, P>, childConfig: SerializableConfig<T, P>|undefined) : SerializableConfig<T, P>{
-  if (!childConfig)
-    return superConfig;
-  const schemes : Record<string, SerializableSchemeConfig> = superConfig.serializeSchemes || {};
-  if (childConfig.serializeSchemes)
-    for (const key in childConfig.serializeSchemes) {
-      const scheme = childConfig.serializeSchemes[key];
-      if (schemes[key]) {
-        schemes[key] = mergeSerializableSchemeConfig(schemes[key], scheme);
-      } else {
-        schemes[key] = scheme;
-      }
-    }
-  return {
-    ...superConfig,
-    ...childConfig,
-    serializeSchemes: schemes,
-  }
-}
 
 export interface SerializaeObjectSave<T> {
   [SerializableObjectSaveObjNameKey]: string,
@@ -211,11 +134,11 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
    * @param saveClassName Class name, same as object name when register in `addObjectFactory`.
    * @param define Inittal source data
    */
-  constructor(className: string, define?: T, config?: SerializableConfig<T, P>) {
-    this.serializeClassName = className;
+  constructor(saveClassName: string, define?: T, configName?: string) {
+    this.serializeClassName = saveClassName;
     this.define = define || null;
-    if (config)
-      this.serializeConfig = config;
+    if (configName)
+      this.serializeConfig = SerializableFactory.getSerializableObjectConfig(configName) as SerializableConfig<T, P>;
   }
 
   /**

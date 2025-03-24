@@ -4,14 +4,18 @@ import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";
 import type { ISaveableTypes } from "../../Utils/BaseTypes";
+import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 
 /**
  * 节点端口
  */
 export class NodePort extends SerializableObject<INodePortDefine, Node> {
 
-  constructor(define: INodePortDefine, parent: Node) {
-    super('NodePort', define, {
+  static TAG = 'NodePort';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodePort.TAG, (define: INodePortDefine, parent) => new NodePort(define, parent as Node));
+    SerializableFactory.addSerializableObjectConfig(NodePort.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
@@ -43,7 +47,11 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
           ],
         },
       },
-    });
+    })
+  }
+
+  constructor(define: INodePortDefine, parent: Node) {
+    super(NodePort.TAG, define, NodePort.TAG);
     this.parent = parent as Node;
     this.define = define;
     this.guid = define.guid;
@@ -249,8 +257,12 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
  * 端口样式
  */
 export class NodePortStyle extends SerializableObject<INodePortStyleDefine, NodePort> {
-  constructor(define?: INodePortStyleDefine) {
-    super('NodePortStyle', define, {
+
+  static TAG = 'NodePortStyle';
+
+  static() {
+    CreateObjectFactory.addObjectFactory(NodePortStyle.TAG, (define: INodePortStyleDefine) => new NodePortStyle(define));
+    SerializableFactory.addSerializableObjectConfig(NodePortStyle.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
@@ -259,7 +271,11 @@ export class NodePortStyle extends SerializableObject<INodePortStyleDefine, Node
           ],
         }
       }
-    });
+    })
+  }
+
+  constructor(define?: INodePortStyleDefine) {
+    super(NodePortStyle.TAG, define, NodePortStyle.TAG);
   }
 
   forceNoEditorControl = false;
