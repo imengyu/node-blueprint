@@ -6,9 +6,10 @@ import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodePortEditor } from "../Flow/NodePortEditor";
 import type { NodeEditor } from "../Flow/NodeEditor";
 import { DevAssert } from "@/node-blueprint/Base/Logger/Assert";
-import { CreateObjectFactory, SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
+import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
 import { printError } from "@/node-blueprint/Base/Logger/DevLog";
 import logger from "@/node-blueprint/Base/Logger/Logger";
+import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
 
 
 /**
