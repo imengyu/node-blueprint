@@ -12,7 +12,7 @@ export function useGraphNameChangeHandler() {
     const parent = graph.parent;
     if (newName !== oldName) {
       if (parent instanceof NodeGraph && parent.children.find(k => k.name === newName)) {
-        getNodeGraphEditorContext()?.userActionAlert('warning', `已有一个名为 ${newName} 的图表，请换一个名称`);
+        getNodeGraphEditorContext()?.interfaceUtiles.userActionAlert('warning', `已有一个名为 ${newName} 的图表，请换一个名称`);
         return;
       }
       graph.name = newName;

@@ -41,15 +41,19 @@ export class Logger {
   public formatContent(trace: LogTraceData|null, ...content : LogContentType[]) {
     return content.join(" ") + ` \nTrace: ${trace}`
   }
-  public formatError(err : Error) {
-    const message = err.message;
-    const stack = err.stack;
-    if (!stack) {
-      return message;
-    } else if (stack.indexOf(message) < 0) {
-      return message + "\n" + stack;
+  public formatError(err : unknown) {
+    if (err instanceof Error) {
+      const message = err.message;
+      const stack = err.stack;
+      if (!stack) {
+        return message;
+      } else if (stack.indexOf(message) < 0) {
+        return message + "\n" + stack;
+      } else {
+        return stack;
+      }
     } else {
-      return stack;
+      return '' + err;
     }
   }
   public shouldLog(level : LogLevel) {

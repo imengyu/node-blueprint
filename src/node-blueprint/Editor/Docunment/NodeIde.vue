@@ -128,7 +128,7 @@ import IconButton from '../Nana/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
 import PropItem from '../Components/PropList/PropItem.vue';
 
-import TestScript from '../../../../test-scripts/compiler-test-2.json';
+import TestScript from '../../../../test-scripts/sub-graph.json';
 import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
@@ -242,16 +242,30 @@ const menuData = reactive<MenuOptions>({
       ],
     },
     {
+      onSubMenuOpen() {
+        //主菜单显示历史记录
+        const historyManager = getCurrentActiveGraphEditor()?.historyManager;
+        if (historyManager) {
+          menuData.items![1].children![0].label = `撤销 ${historyManager.getFirstUndoStepName()}`;
+          menuData.items![1].children![1].label = `恢复 ${historyManager.getFirstRedoStepName()}`;
+        }
+      },
       label: '编辑',
       children: [
         {
           label: '撤销',
           shortcut: 'Ctrl+Z',
+          onClick() {
+            getCurrentActiveGraphEditor()?.historyManager.undoStep();
+          },
         },
         {
           label: '恢复',
           shortcut: 'Ctrl+Y',
           divided: true,
+          onClick() {
+            getCurrentActiveGraphEditor()?.historyManager.redoStep();
+          },
         },
         {
           label: '剪贴',
@@ -278,7 +292,7 @@ const menuData = reactive<MenuOptions>({
           label: '删除',
           shortcut: 'Delete',
           onClick() {
-            getCurrentActiveGraphEditor()?.userDelete();
+            getCurrentActiveGraphEditor()?.userActionsManager.delete();
           },
         },
       ],
@@ -308,14 +322,14 @@ const menuData = reactive<MenuOptions>({
           label: '放大',
           shortcut: 'Ctrl+鼠标滚轮上',
           onClick() {
-            getCurrentActiveGraphEditor()?.zoomIn();
+            getCurrentActiveGraphEditor()?.zoomManager.zoomIn();
           },
         },
         {
           label: '缩小',
           shortcut: 'Ctrl+鼠标滚轮下',
           onClick() {
-            getCurrentActiveGraphEditor()?.zoomOut();
+            getCurrentActiveGraphEditor()?.zoomManager.zoomOut();
           },
         },
         {
@@ -323,7 +337,7 @@ const menuData = reactive<MenuOptions>({
           shortcut: 'Ctrl+0',
           divided: true,
           onClick() {
-            getCurrentActiveGraphEditor()?.zoomSet(100);
+            getCurrentActiveGraphEditor()?.zoomManager.zoomSet(100);
           },
         },
         {
@@ -508,7 +522,7 @@ async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node
     if (node) {
       if (typeof port === 'string') 
         port = node.getPortByGUID(port) as NodePortEditor;
-      if (graph.activeEditor?.moveViewportToNode(port ?? node, showPositionIndicator)) 
+      if (graph.activeEditor?.viewPortManager.moveViewportToNode(port ?? node, showPositionIndicator)) 
         node.twinkle();
     }
   }

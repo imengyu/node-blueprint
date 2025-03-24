@@ -10,6 +10,7 @@ import type { NodeEditorClipBoardControllerContext } from './Editor/EditorClipBo
 import type { NodeGraphEditorZoomToolContext } from './SubComponents/ZoomTool';
 import type { NodeEditorViewPortControllerContext } from './Editor/EditorViewPortController';
 import type { NodeEditorHistoryControllerContext } from './Editor/EditorHistortyController';
+import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 export * from './Editor/Viewport';
 
 /**
@@ -52,6 +53,22 @@ export interface NodeGraphEditorBaseContext {
    * 获取编辑器设置
    */
   getSettings(): INodeGraphEditorSettings;
+  /**
+   * 获取当前打开的图表
+   */
+  getCurrentGraph(): NodeGraph,
+  /**
+   * 创建一个由上下文控制的临时变量，防止在编辑器切换后丢失。
+   * 当上下文中存在变量时，使用已保存的变量。
+   * @param name 名称
+   * @param intitalValue 初始值
+   */
+  holdData<T>(name: string, intitalValue: T) : T;
+  /**
+   * 取消一个上下文控制的临时变量。
+   * @param name 名称
+   */
+  unHoldData(name: string) : void;
 }
 
 export interface INodeGraphEditorSettings {
@@ -76,6 +93,7 @@ export interface NodeGraphEditorInternalContext extends NodeGraphEditorContext {
   internalManager: {
     autoNodeSizeChangeCheckerStartStop(start: boolean) : void;
     mouseEventUpdateMouseInfo: (e: MouseEvent, type: MouseEventUpdateMouseInfoType) => void,
+    holdDataMap: Map<string, unknown>
   },
 }
 

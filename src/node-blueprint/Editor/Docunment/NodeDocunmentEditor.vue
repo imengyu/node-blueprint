@@ -54,7 +54,7 @@
           :currentGraph="currentGraph"
           :canGoBack="canGoBack"
           :canGoForward="canGoForward"
-          @goGraph="context.openGraph"
+          @goGraph="(g) => context.openGraph(g)"
           @goBack="backStack"
           @goForward="forwardStack"
         />
@@ -150,7 +150,7 @@ function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
   ArrayUtils.remove(openedGraphs.value, data);
   resolve();
 }
-function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
+function onActiveTabChange(old: CodeLayoutPanelInternal, currentActive: CodeLayoutPanelInternal) {
   if (!currentActive)
     return;
   const data = currentActive.data as OpenedGraphsData;
@@ -230,10 +230,10 @@ const context = {
 
 function onAdd() {
   const buttonPos = addButtonRef.value.getButtonPosition() as Vector2;
-  context.getActiveGraphEditor()?.showAddNodePanel(buttonPos, undefined, undefined, undefined, true);
+  context.getActiveGraphEditor()?.dialogManager.showAddNodePanel(buttonPos, undefined, undefined, undefined, true);
 }
 function onDelete() {
-  context.getActiveGraphEditor()?.userDelete();
+  context.getActiveGraphEditor()?.userActionsManager.delete();
 }
 function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: NodeConnectorEditor[]) {
   emit('activeGraphSelectionChange', graphUid, nodes, connectors);

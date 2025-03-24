@@ -38,9 +38,8 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
           },
         },
       },
-    })
+    });
   }
-
   constructor(define?: INodeConnectorDefine) {
     super(NodeConnector.TAG, define, NodeConnector.TAG);
     this.uid = RandomUtils.genNonDuplicateIDHEX(32);

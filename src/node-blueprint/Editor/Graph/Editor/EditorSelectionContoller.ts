@@ -97,8 +97,6 @@ export interface NodeGraphEditorSelectionContext {
 }
 
 interface EditorSelectionContoller {
-  selectNodes: Ref<Array<NodeEditor>>;
-  selectConnectors: Ref<Array<NodeConnectorEditor>>;
   isMulitSelect: Ref<boolean>;
   isMultiSelected: Ref<boolean>;
   multiSelectRect: Ref<Rect>;
@@ -113,8 +111,8 @@ interface EditorSelectionContoller {
  */
 export function useEditorSelectionContoller(context: NodeGraphEditorInternalContext) : EditorSelectionContoller {
 
-  const selectNodes = ref(new Array<NodeEditor>()) as Ref<Array<NodeEditor>>;
-  const selectConnectors = ref(new Array<NodeConnectorEditor>()) as Ref<Array<NodeConnectorEditor>>;
+  const selectNodes = context.holdData('selectNodes', [] as NodeEditor[]);
+  const selectConnectors = context.holdData('selectConnectors', [] as NodeConnectorEditor[]);
   const isMulitSelect = ref(false);
   const isMultiSelected = ref(false);
   const multiSelectRect = ref(new Rect()) as Ref<Rect>;
@@ -161,8 +159,10 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     if (!_mouseInfo.mouseMoved) {
       if (context.connectorManager.isAnyConnectorHover())
         context.selectionManager.selectHoverConnectors();
-      else
+      else {
         context.selectionManager.unSelectAllConnectors();
+        context.selectionManager.unSelectAllNodes();
+      }
     }
     return false;
   });
@@ -171,38 +171,38 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 取消选中所有连接线
    */
   function unSelectAllConnectors() {
-    selectConnectors.value.forEach((b) => {
+    selectConnectors.forEach((b) => {
       b.selected = false;
       b.hover = false;
     });
-    ArrayUtils.clear(selectConnectors.value);
+    ArrayUtils.clear(selectConnectors);
     notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中所有连接线
    */
   function selectAllConnectors() {
-    selectConnectors.value.forEach((b) => {
+    selectConnectors.forEach((b) => {
       b.selected = false;
       b.hover = false;
     });
-    ArrayUtils.clear(selectConnectors.value);
+    ArrayUtils.clear(selectConnectors);
     notifySelectNodeOrConnectorChanged();
   }
   /**
    * 取消选中所有单元
    */
   function unSelectAllNodes() {
-    selectNodes.value.forEach((b) => doSelectNode(b as NodeEditor, false));
-    ArrayUtils.clear(selectNodes.value);
+    selectNodes.forEach((b) => doSelectNode(b as NodeEditor, false));
+    ArrayUtils.clear(selectNodes);
     notifySelectNodeOrConnectorChanged();
   }
   /**
    * 选中当前编辑器中所有单元
    */
   function selectAllNodes() {
-    const _selectNodes = selectNodes.value;
-    ArrayUtils.clear(_selectNodes);
+    const _selectNodes = selectNodes;
+    ArrayUtils.clear(_selectNodes);    
     context.graphManager.getNodes().forEach((b) => {
       const node = b as NodeEditor;
       _selectNodes.push(node);
@@ -214,7 +214,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 取消选中某个单元
    */
   function unSelectNode(node: NodeEditor) {
-    ArrayUtils.remove(selectNodes.value, node);
+    ArrayUtils.remove(selectNodes, node);
     doSelectNode(node, false);
     notifySelectNodeOrConnectorChanged();
   }
@@ -224,19 +224,19 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    */
   function selectNode(node: NodeEditor, append = false) {
     if (append) {
-      if (selectNodes.value.includes(node)) {
-        ArrayUtils.remove(selectNodes.value, node);
+      if (selectNodes.includes(node)) {
+        ArrayUtils.remove(selectNodes, node);
         doSelectNode(node, false);
       }
       else {
-        selectNodes.value.push(node);
+        selectNodes.push(node);
         doSelectNode(node, true);
       }
     }
     else {
       unSelectAllNodes();
       unSelectAllConnectors();
-      selectNodes.value.push(node);
+      selectNodes.push(node);
       doSelectNode(node,  true);
     }
     notifySelectNodeOrConnectorChanged();
@@ -249,7 +249,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   function selectSomeNodes(nodes: NodeEditor[], append = false) {
     if (append) {
       nodes.forEach(node => {
-        ArrayUtils.addOnce(selectNodes.value, node);
+        ArrayUtils.addOnce(selectNodes, node);
         doSelectNode(node, true);
       });
     }
@@ -257,7 +257,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       unSelectAllNodes();
       unSelectAllConnectors();
       nodes.forEach(node => {
-        selectNodes.value.push(node);
+        selectNodes.push(node);
         doSelectNode(node, true);
       });
     }
@@ -286,7 +286,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   //多选选择
   function doSelectNodes() {
     const _multiSelectRect = multiSelectRect.value;
-    const _selectNodes = selectNodes.value;
+    const _selectNodes = selectNodes;
 
     /**
      * 多选框的方向处理
@@ -335,16 +335,16 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
       /**
        * 选择连接线
        */
-      selectConnectors.value.forEach((c) => {
+      selectConnectors.forEach((c) => {
         c.hover = false;
         c.selected = false;
       });
-      ArrayUtils.clear(selectConnectors.value);
+      ArrayUtils.clear(selectConnectors);
       context.viewPortManager.getBaseChunkedPanel().testRectCastTag(_multiSelectRect as Rect, "connector").forEach((i) => {
         const connector = context.graphManager.getConnectors().get(i.data as string);
         if (connector) {
           (connector as NodeConnectorEditor).selected = true;
-          ArrayUtils.addOnce(selectConnectors.value, connector as NodeConnectorEditor);
+          ArrayUtils.addOnce(selectConnectors, connector as NodeConnectorEditor);
         }
       });
 
@@ -360,7 +360,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
   function endSelectNodes() {
     isMulitSelect.value = false;
     multiSelectRect.value.set(0, 0, 0, 0);
-    selectNodes.value.forEach((node) => {
+    selectNodes.forEach((node) => {
       //保存单元位置，以供后续多选移动使用
       node.saveLastNodePos();
     });
@@ -370,7 +370,7 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    * 取消选中某个连接线
    */
   function unSelectConnector(connector: NodeConnectorEditor) {  
-    ArrayUtils.remove(selectConnectors.value, connector);
+    ArrayUtils.remove(selectConnectors, connector);
     connector.selected = false;
 
     notifySelectNodeOrConnectorChanged();
@@ -381,11 +381,11 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
    */
   function selectConnector(connector: NodeConnectorEditor, append = false) { 
     if (append)
-      ArrayUtils.addOnce(selectConnectors.value, connector);
+      ArrayUtils.addOnce(selectConnectors, connector);
     else {
       unSelectAllNodes();
       unSelectAllConnectors();
-      selectConnectors.value.push(connector);
+      selectConnectors.push(connector);
     }
     connector.selected = true;
     notifySelectNodeOrConnectorChanged();
@@ -407,15 +407,13 @@ export function useEditorSelectionContoller(context: NodeGraphEditorInternalCont
     selectAllConnectors,
     selectHoverConnectors: () => context.connectorManager.selectHoverConnectors(),
     selectConnector,
-    getSelectNodes: () => selectNodes.value as unknown as NodeEditor[],
-    getSelectNodeCount: () => selectNodes.value.length,
-    getSelectConnectors: () => selectConnectors.value as NodeConnectorEditor[],
+    getSelectNodes: () => selectNodes as unknown as NodeEditor[],
+    getSelectNodeCount: () => selectNodes.length,
+    getSelectConnectors: () => selectConnectors as NodeConnectorEditor[],
     isMulitSelect: () => isMulitSelect.value,
   };
 
   return {
-    selectNodes,
-    selectConnectors,
     isMulitSelect,
     isMultiSelected,
     multiSelectRect,

@@ -120,6 +120,8 @@ import type { ChunkedPanel } from './Cast/ChunkedPanel';
 import PositionIndicator from './SubComponents/PositionIndicator.vue';
 import { useEditorHistoryController } from './Editor/EditorHistortyController';
 import { TOP_CONFIG_KEY, type NodeGraphEditorStaticConfig } from './Config/ConfigManager';
+import { devLog } from '@/node-blueprint/Base/Logger/DevLog';
+import { useEditorBasicController } from './Editor/EditorBasicController';
 
 const emit = defineEmits([
   'selectNodeOrConnectorChanged',
@@ -155,7 +157,7 @@ provide(TOP_CONFIG_KEY, props.config);
 const graphLoading = ref(false);
 const graphLoadError = ref('');
 
-context.internalManager = {} as any;
+useEditorBasicController(context);
 
 const {
   viewPort,
@@ -257,7 +259,11 @@ function loadSettings() {
 //init
 //=========================
 
+const TAG = 'NodeGraphEditor';
+
 onMounted(() => {
+  devLog(TAG, null, 'onMounted');
+  
   initRenderer();
   loadSettings();
   graphLoading.value = true;
@@ -278,6 +284,8 @@ onMounted(() => {
   }, 1000);
 });
 onBeforeUnmount(() => {
+  devLog(TAG, null, 'onBeforeUnmount');
+
   if (eventSelectNodeChanged) {
     eventSelectNodeChanged.unListen();
     eventSelectNodeChanged = null;

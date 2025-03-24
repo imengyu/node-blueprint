@@ -14,13 +14,13 @@
   },
   "dependencies": {
     "@guolao/vue-monaco-editor": "^1.5.1",
-    "@imengyu/vue3-context-menu": "^1.3.8",
+    "@imengyu/vue3-context-menu": "^1.4.4",
     "pinia": "^2.0.28",
     "recast": "^0.23.6",
     "ses": "^1.4.1",
     "vue": "^3.4.23",
     "vue-clipboard3": "^2.0.0",
-    "vue-code-layout": "^1.0.5",
+    "vue-code-layout": "^1.1.1",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {

@@ -14,6 +14,7 @@ import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData"
 import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
 import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
 import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
+import ArrayUtils from "../../Utils/ArrayUtils";
 
 /**
  * 流图类型
@@ -56,7 +57,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
       NodeGraph.NAME + 'Editor',
     ], (_, i) => {
       return {
-        serializeSchemes: {
+      serializeSchemes: {
         default: {
           serializeAll: true,
           serializableProperties: [],
@@ -197,6 +198,25 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
    * 子流图
    */
   children: NodeGraph[] = [];
+
+  /**
+   * 添加子节点
+   * @param child 
+   */
+  addChildren(child: NodeGraph) {
+    this.children.push(child);
+    child.parent = this;
+  }
+  /**
+   * 移除子节点
+   * @param childOrIndex 
+   */
+  removeChildren(childOrIndex: NodeGraph|number) {
+    if (typeof childOrIndex === 'number')
+      ArrayUtils.removeAt(this.children, childOrIndex);
+    else 
+      ArrayUtils.remove(this.children, childOrIndex);
+  }
 
   /**
    * 单元

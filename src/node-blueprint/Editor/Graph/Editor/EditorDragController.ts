@@ -69,31 +69,31 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
       const { canDrop, message } = preCheckDragData();
       if (canDrop) {
         if (message)
-          context.showEditorHoverInfoTip(message, 'success');
+          context.dialogManager.showEditorHoverInfoTip(message, 'success');
         else
-          context.closeEditorHoverInfoTip();
+          context.dialogManager.closeEditorHoverInfoTip();
         e.dataTransfer!.dropEffect = 'copy';
       } else {
-        context.showEditorHoverInfoTip(message, 'failed');
+        context.dialogManager.showEditorHoverInfoTip(message, 'failed');
         e.dataTransfer!.dropEffect = 'none';
       }
     },
     () => {
-      context.closeEditorHoverInfoTip();
+      context.dialogManager.closeEditorHoverInfoTip();
     },
   );
   function onDragOver(e: DragEvent) {
     if (getInternalDraggingData()) {
       e.preventDefault();
       e.stopPropagation();
-      context.updateMousePos(e);
+      context.mouseManager.updateMousePos(e);
     }
   }
 
   //拖放处理
   function onDrop(e: DragEvent) {
-    context.updateMousePos(e);
-    context.closeEditorHoverInfoTip();
+    context.mouseManager.updateMousePos(e);
+    context.dialogManager.closeEditorHoverInfoTip();
     reset();
 
     const data = getInternalDraggingData<string>() || '';
@@ -102,15 +102,15 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
       switch(datav[1]) {
         //拖拽变量
         case 'graph-variable': 
-          context.showAddVariableMenu(datav[3], (action) => 
-            context.userAddVariableNode(datav[2], datav[3], action)
+          context.contextMenuManager.showAddVariableMenu(datav[3], (action) => 
+            context.userActionsManager.addVariableNode(datav[2], datav[3], action)
           ); 
           break;
         //拖拽子图表
         case 'graph': {
-          const pos = context.getMouseInfo().mouseCurrentPosViewPort;
+          const pos = context.mouseManager.getMouseInfo().mouseCurrentPosViewPort;
           const nodeDefine = BaseNodes.getScriptBaseGraphCall();
-          context.userAddNode(nodeDefine, {  
+          context.userActionsManager.addNode(nodeDefine, {  
             addNodeInPos: pos, 
             intitalOptions: {
               callGraphType: datav[2],
@@ -121,13 +121,13 @@ export function useEditorDragController(context: NodeGraphEditorInternalContext)
         }
         //拖拽节点
         case 'node': {
-          const pos = context.getMouseInfo().mouseCurrentPosViewPort;
+          const pos = context.mouseManager.getMouseInfo().mouseCurrentPosViewPort;
           const node = NodeRegistry.getInstance().getNodeByGUID(datav[2]);
           if (node)
-            context.userAddNode(node, { addNodeInPos: pos });
+            context.userActionsManager.addNode(node, { addNodeInPos: pos });
           else
-            context.userActionAlert('error', '无法找到对应节点GUID：' + datav[2]);
-          context.closeAddNodePanel();
+            context.interfaceUtiles.userActionAlert('error', '无法找到对应节点GUID：' + datav[2]);
+          context.dialogManager.closeAddNodePanel();
           break;
         }
       }

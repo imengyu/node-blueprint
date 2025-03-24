@@ -549,7 +549,7 @@ function registerOperatorBase() {
           const id = port.guid.substr(3);
           const port2 = node.getPortByGUID('VALUE' + id);
           if (port2)
-            context.userDeletePort(port2 as NodePortEditor);
+            context.userActionsManager.deletePort(port2 as NodePortEditor);
           return true;
         }
       },

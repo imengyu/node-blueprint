@@ -140,7 +140,7 @@ function onChildGraphMenu(index: number, childGraph: NodeGraph, e: MouseEvent) {
   if (!context)
     return;
   e.preventDefault();
-  context.showContextMenu({
+  context.contextMenuManager.showContextMenu({
     x: e.x,
     y: e.y,
     items: [
@@ -170,7 +170,7 @@ function onDeleteChildGraph(childGraph: NodeGraph) {
   const context = getNodeGraphEditorContext();
   if (!context)
     return;
-  context.userActionConfirm('warning', '是否确认删除此子图表？此操作会使当前或者其他图表中调用此图表的节点失效。').then((confirm) => {
+  context.interfaceUtiles.userActionConfirm('warning', '是否确认删除此子图表？此操作会使当前或者其他图表中调用此图表的节点失效。').then((confirm) => {
     if (confirm) {
       ArrayUtils.remove(graph.children, childGraph);
       //通知当前图表中所有调用节点移除

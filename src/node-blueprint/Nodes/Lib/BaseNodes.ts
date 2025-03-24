@@ -130,7 +130,7 @@ export interface ICoverterNodeOptions {
 }
 
 export function getGraphCallNodeGraph(context: NodeGraphEditorContext, node: Node) {
-  const graph = context.getCurrentGraph();
+  const graph = context.graphManager.getCurrentGraph();
   const options = node.options as unknown as IGraphCallNodeOptions;
   let childGraph : NodeGraph|undefined;
   switch (options.callGraphType) {
@@ -371,7 +371,7 @@ function registerScriptVariableBase()  {
     events: {
       onEditorCreate(node, context) {
         //在初始化时加载之前绑定的变量信息
-        const graph = context.getCurrentGraph();
+        const graph = context.graphManager.getCurrentGraph();
         const variableName = node.options.variable as string;
         const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
         if (variable) {
@@ -381,7 +381,7 @@ function registerScriptVariableBase()  {
         }
       },
       onEditorShowContextMenu(node, context) {
-        const graph = context.getCurrentGraph();
+        const graph = context.graphManager.getCurrentGraph();
         const variableName = node.options.variable as string;
         const variable = variableName ? graph.variables.find(v => v.name === variableName) : undefined;
         if (variable) {
@@ -505,7 +505,7 @@ function registerScriptVariableBase()  {
         if (msg?.message === messages.VARIABLE_UPDATE_TYPE) {
           node.changePortParamType('INPUT', msg.data.type, false);
           node.changePortParamType('OUTPUT', msg.data.type, false);
-          context.doFlexPortUpdateConnected(node, [ 'INPUT', 'OUTPUT' ]);
+          context.connectorManager.doFlexPortUpdateConnected(node, [ 'INPUT', 'OUTPUT' ]);
         } 
         //变量名称更改消息
         else if (msg?.message === messages.VARIABLE_UPDATE_NAME) 
@@ -646,8 +646,9 @@ function registerScriptGraphBase()  {
           const childGraph = node.data.childGraph as NodeGraph;
           if (childGraph) {
             context.getCurrentGraph().getParentDocunment()?.activeEditor?.openGraph(childGraph);
+            context.selectionManager.unSelectAllNodes();
           } else {
-            context.showSmallTip('调用目标图表丢失');
+            context.dialogManager.showSmallTip('调用目标图表丢失');
           }
         }
       }
@@ -1185,16 +1186,16 @@ function registerCommentNode() {
           input.style.height = (typeof node.options['height'] === 'number' ? node.options['height'] : 122) + 'px';
           input.onchange = () => { 
             node.options['content'] = input.value; 
-            context.markGraphChanged();
+            context.graphManager.markGraphChanged();
           };
           input.onmouseup = () => { 
             node.updateRegion();
-            context.markGraphChanged();
+            context.graphManager.markGraphChanged();
           };
           input.oncontextmenu = (e) => {   
             e.stopPropagation();
             e.preventDefault();
-            context.showInputRightMenu(new Vector2(e.x, e.y), e.target as HTMLInputElement);
+            context.contextMenuManager.showInputRightMenu(new Vector2(e.x, e.y), e.target as HTMLInputElement);
           };
           node.data['input-control'] = input;
           parentEle.appendChild(input);
@@ -1335,7 +1336,7 @@ function registerCommentNode() {
                 //保存鼠标按下时区域内的所有单元
                 rect.set(node.getRect());
                 ArrayUtils.clear(list);
-                context.getNodesInRect(rect).forEach((v) => {
+                context.selectionManager.getNodesInRect(rect).forEach((v) => {
                   if(v !== node) {
                     v.saveLastNodePos();
                     list.push(v);
@@ -1526,7 +1527,7 @@ function registerConnNode() {
               getValue: () => node.options['type'] as string === 'execute',
               onUpdateValue(newValue) {
                 node.options['type'] = newValue ? 'execute' : 'any';
-                context.unConnectNodeConnectors(node);
+                context.connectorManager.unConnectNodeConnectors(node);
                 const paramType = newValue ? NodeParamType.Execute : NodeParamType.Any;
                 node.changePortParamType(node.getPortByGUID('INPUT')!, paramType); 
                 node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType); 

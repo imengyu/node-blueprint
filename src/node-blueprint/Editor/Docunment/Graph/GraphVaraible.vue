@@ -34,7 +34,7 @@
         <GraphVaraibleParamEditor :variable="variable" />
       </PropItem>
       <PropItem title="静态">
-        <BaseCheck v-model="variable.isStatic" />
+        <BaseCheck v-model="variable.static" />
       </PropItem>
     </template> 
     <template #add>
@@ -101,7 +101,7 @@ function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {
     return;
 
   if (graph.variables.find(k => k.name === newName)) {
-    getNodeGraphEditorContext()?.userActionAlert('warning', `已有一个名为 ${newName} 的变量，请换一个名称`);
+    getNodeGraphEditorContext()?.interfaceUtiles.userActionAlert('warning', `已有一个名为 ${newName} 的变量，请换一个名称`);
     return;
   }
 
@@ -109,7 +109,7 @@ function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {
   variable.name = newName;
 
   //进行图表中所有变量节点的更新
-  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(oldName, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
+  getNodeGraphEditorContext()?.graphManager.sendMessageToFilteredNodes(oldName, BaseNodes.messages.VARIABLE_UPDATE_NAME, { name: newName });
 }
 function onGraphVariableTypeUpdate(variable: NodeVariable, type: NodeParamType) {
   //设置变量类型，重新设置使用类型的默认值
@@ -118,7 +118,7 @@ function onGraphVariableTypeUpdate(variable: NodeVariable, type: NodeParamType) 
     variable.defaultValue = type.define?.defaultValue();
   }
   //进行图表中所有变量节点的更新
-  getNodeGraphEditorContext()?.sendMessageToFilteredNodes(variable.name, BaseNodes.messages.VARIABLE_UPDATE_TYPE, { type });
+  getNodeGraphEditorContext()?.graphManager.sendMessageToFilteredNodes(variable.name, BaseNodes.messages.VARIABLE_UPDATE_TYPE, { type });
 }
 
 </script>

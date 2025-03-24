@@ -5,7 +5,7 @@ import { NodePortEditor } from "../Flow/NodePortEditor";
 import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
 import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
-import { NodeGraph, type INodeGraphDefine } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { NodeGraph, type INodeConnectorSaveData, type INodeGraphDefine, type INodeSaveData } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
@@ -14,6 +14,7 @@ import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnecto
 import type { INodePortDefine, NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -39,6 +40,10 @@ export interface NodeEditorUserAddNodeOptions<T> {
    * @default false
    */
   noErrorAlert?: boolean,
+  /**
+   * 是否重用UID
+   */
+  reuseUid?: string;
 }
 export interface NodeEditorUserControllerContext {
   interfaceUtiles: {
@@ -78,12 +83,6 @@ export interface NodeEditorUserControllerContext {
      */
     addNode<T = CustomStorageObject>(define: INodeDefine, options: NodeEditorUserAddNodeOptions<T>) : Node|null;
     /**
-     * 用户删除单元
-     * @param node 
-     * @returns 
-     */
-    deleteNode(node: NodeEditor) : void;
-    /**
      * 用户删除操作
      */
     delete() : void;
@@ -106,7 +105,8 @@ export interface NodeEditorUserControllerContext {
      */
     promotePortToVariable(port: NodePort): void; 
     /**
-     * 提升为函数
+     * 提升图表节点为函数
+     * @param node 必须是调用图表节点 
      */
     promoteSubgraphToFunction(node: Node): void;
     /**
@@ -126,33 +126,47 @@ export interface NodeEditorUserControllerContext {
     expandSubgraph(subgraph: NodeGraph) : void;
     /**
      * Deletes a dynamic port from the editor.
+     * 
+     * * 历史记录：此函数会保存历史记录
      * @param port - The dynamic port to delete.
      */
     deleteDynamicPort(port: NodePort) : void;
     /**
      * 删除选中连接线
+     * 
+     * * 历史记录：此函数会保存历史记录
      */
     deleteSelectedConnectors() : void;
     /**
      * 删除选中的单元
+     * 
+     * * 历史记录：此函数会保存历史记录
      */
     deleteSelectedNodes() : void;
     /**
      * 删除选中单元的连接
+     * 
+     * * 历史记录：此函数会保存历史记录
      */
     unConnectSelectedNodeConnectors() : void;
     /**
      * 设置选中单元断点状态
+     * 
+     * * 历史记录：此函数会保存历史记录
      * @param node 
      * @param state 
      */
     setNodeBreakpointState(node: Node, state : NodeBreakPoint) : void;
     /**
      * 设置选中单元断点状态
+     * 
+     * * 历史记录：此函数会保存历史记录
      */
     setSelectedNodeBreakpointState(state : NodeBreakPoint) : void;
     /**
      * 拉直连接
+     * 
+     * * 历史记录：此函数会保存历史记录
      * @param refPort 拉直参考端口
      * @param connector 连接
      * @returns 
@@ -160,12 +174,16 @@ export interface NodeEditorUserControllerContext {
     straightenConnector(refPort : NodePortEditor, connector : NodeConnector) : void;
     /**
      * 对齐节点
+     * 
+     * * 历史记录：此函数会保存历史记录
      * @param baseNode 参考基准节点
      * @param align 对齐方向
      */
     alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') : void;
     /**
      * 为选中项创建注释
+     * 
+     * * 历史记录：此函数会保存历史记录
      */
     genCommentForSelectedNode() : void;
   },
@@ -180,9 +198,6 @@ const TAG = 'EditorUserController';
  * @param context The internal context of the Node Graph Editor.
  */
 export function useEditorUserController(context: NodeGraphEditorInternalContext) {
-
-
-
 
   const positionIndicatorOn = ref(false);
   const positionIndicatorPos = ref(new Rect());
@@ -204,339 +219,574 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     (node as NodeEditor).editorHooks.callbackUpdateNodeForMoveEnd?.();
   }
 
+  //删除节点
+  function deleteNode(node: NodeEditor) {
+    if (node.define.canNotDelete) 
+      return false;
+    context.graphManager.removeNode(node, true);
+    return true;
+  }
+  //重做步骤重做相关连接线
+  function restoreConectors(restoreData: INodeConnectorSaveData[]) {
+    for (const connector of restoreData) {
+      const startPortInstance = context.graphManager.getNodePortByUid(connector.startPort.nodeUid, connector.startPort.portUid);
+      const endPortInstance = context.graphManager.getNodePortByUid(connector.endPort.nodeUid, connector.endPort.portUid);
+      if (!startPortInstance || !endPortInstance)
+        continue;
+      context.connectorManager.connectConnector(startPortInstance, endPortInstance, connector.uid);
+    }
+  }
+  //下方是包装操作，无历史记录
+  function deletePort(port: NodePort) {
+    if (port.dyamicAdd) {
+      if (port.isCallingDelete) {
+        context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+      } else {
+        port.isCallingDelete = true;
+        const ret = port.parent.events.onUserDeletePort?.(port.parent as NodeEditor, context, port);
+        port.isCallingDelete = false;
+        if (!ret) {
+          context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+          return;
+        }
+        if (ret instanceof Promise)
+          ret.then((result) => {
+            if (result)
+              context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+          });
+        else if (ret === true)
+          context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+      }
+    }
+  }
+  function deleteHandler() {
+    if(context.keyboardManager.isKeyAltDown())
+      context.userActionsManager.deleteSelectedConnectors();
+    else 
+      context.userActionsManager.deleteSelectedNodes();
+  }
+  function expandSubgraphConfirm(node: Node) {
+    context.interfaceUtiles.userActionConfirm(
+      'warning', 
+      '确定展开选中的图表/函数？如果有其它节点调用此子图表，将会失去调用'
+    ).then((confirm) => {
+      if (confirm) {
+        const callGraph = getGraphCallNodeGraph(context, node);
+        if (callGraph)
+          context.userActionsManager.expandSubgraph(callGraph);
+        else
+          context.dialogManager.showSmallTip('调用图标丢失');
+      }
+    });
+  }
+
   context.userActionsManager = {
     deleteSelectedConnectors() {
-      context.historyManager.storeStep(
+      context.historyManager.beginUndoableAction(
         "删除选中的连接线", 
-        () => {
-          const connectors = context.selectionManager.getSelectConnectors();
+        (actionContext) => actionContext.toNodeConnectorsInfoAndCancelIfEmpty(
+          context.selectionManager.getSelectConnectors()
+        ),
+        (info, actionContext) => {
+          const connectors = actionContext.fromNodeConnectorsInfo(info);
+          //删除选中的连接线
           connectors.forEach((c) => context.connectorManager.unConnectConnector(c));
-          return connectors;
-        }, (deletedConnectors) => {
-
-
+          return connectors.map(p => p.save('graph')) as INodeConnectorSaveData[];;
+        },
+        (restoreData) => {
+          restoreConectors(restoreData);
         }
-      )
-
+      );
     },
     unConnectSelectedNodeConnectors() {
-      context.selectionManager.getSelectNodes().forEach((node) => context.connectorManager.unConnectNodeConnectors(node));
+      context.historyManager.beginUndoableAction(
+        "取消选中单元的所有连接线", 
+        (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
+          context.selectionManager.getSelectNodes()
+        ),
+        (info, actionContext) => {
+          const nodes = actionContext.fromNodesInfo(info);
+          const deletedConnectors : INodeConnectorSaveData[] = [];
+
+          //取消选中单元的所有连接线
+          nodes.forEach((node) => 
+            deletedConnectors.push(
+              ...context.connectorManager
+                .unConnectNodeConnectors(node)
+                .map(p => p.save('graph')) as INodeConnectorSaveData[]
+            )
+          );
+          return deletedConnectors;
+        }, 
+        (restoreData) => {
+          restoreConectors(restoreData);
+        }
+      );
     },
     deleteSelectedNodes() {
-      context.selectionManager.getSelectNodes().forEach((node) => {
-        if (node.define.canNotDelete) 
+      context.historyManager.beginUndoableAction(
+        "删除选中单元", 
+        (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
+          context.selectionManager.getSelectNodes()
+        ),
+        (info, actionContext) => {
+          const nodes = actionContext.fromNodesInfo(info);
+          const deletedNodes : INodeSaveData[] = [];
+
+          //删除选中单元
+          for (const node of nodes) {
+            if (node.define.canNotDelete) 
+              continue;
+            if (context.graphManager.removeNode(node, true))
+              deletedNodes.push({
+                uid: node.uid,
+                guid: node.guid,
+                node: node.save('graph')
+              });
+          }
+          context.selectionManager.unSelectAllNodes();
+
+          return deletedNodes;
+        }, 
+        (restoreData) => {
+          const registry = NodeRegistry.getInstance();
+          for (const node of restoreData) {
+            const define = registry.getNodeByGUID(node.guid);
+            if (!define)
+              continue;
+            context.userActionsManager.addNode(define, {
+              noErrorAlert: true,
+              intitalShadow: node.node,
+              reuseUid: node.uid,
+            });
+          }
+        }
+      );
+    },
+    deleteDynamicPort(_port: NodePort) {
+      if (!_port.dyamicAdd)
+        throw new Error('The port is not a dynamic port.');
+
+      context.historyManager.beginUndoableAction(
+        "删除动态端口", 
+        (actionContext) => actionContext.toNodePortInfo(_port as NodePortEditor),
+        (info, actionContext) => {
+          const port = info.requestInstance();
+
+          const deletedInfo = {
+            nodeInfo: actionContext.toNodeInfo(port.parent as NodeEditor),
+            portInfo: port.save() as INodePortDefine,
+            connectorsInfo: [] as INodeConnectorSaveData[],
+          };
+
+          //删除端口
+          const parent = port.parent as NodeEditor;
+          parent.deletePort(port);
+
+          //删除端口所属连接线
+          for (let i = parent.connectors.length - 1; i >= 0; i--) {
+            const connector = parent.connectors[i];
+            if (connector.startPort === port || connector.endPort === port)
+              deletedInfo.connectorsInfo.push(
+                context.connectorManager
+                  .unConnectConnector(connector as NodeConnectorEditor)
+                  .save('graph')
+              );
+          }
+
+          return deletedInfo;
+        }, 
+        (restoreData) => {
+          const node = restoreData.nodeInfo.requestInstance();
+          node.addPort(restoreData.portInfo, true);
+          restoreConectors(restoreData.connectorsInfo);
+        }
+      );
+    },
+    straightenConnector(_refPort : NodePortEditor, _connector : NodeConnectorEditor) {
+      context.historyManager.beginUndoableAction(
+        "拉直连接", 
+        (actionContext) => ({
+          refPort: actionContext.toNodePortInfo(_refPort),
+          connector: actionContext.toNodeConnectorInfo(_connector),
+        }),
+        (info, actionContext) => {
+          const refPort = info.refPort.requestInstance();
+          const connector = info.connector.requestInstance();
+
+          if (!refPort || !connector)
+            return;
+          if(!connector.startPort || !connector.endPort)
+            return;
+
+          //获取参考位置
+          const refPos = refPort.getPortPositionViewport();
+          let node : Node|null = null;
+          let oldPos : Vector2|null = null;
+    
+          //获取另一端的节点
+          if(connector.startPort === refPort) {
+            node = connector.endPort.parent;
+            oldPos = (connector.endPort as NodePortEditor).getPortPositionViewport();
+          }
+          else if(connector.endPort === refPort)  {
+            node = connector.startPort.parent;
+            oldPos = (connector.startPort as NodePortEditor).getPortPositionViewport();
+          }
+    
+          if(node && oldPos) {
+            //设置位置
+            const offPos = oldPos.y - node.position.y;
+
+            return actionContext
+              .toNodeInfo(node as NodeEditor)
+              .storeChangedProperty('position', new Vector2(node.position.x, refPos.y - offPos))
+              .afterChanged(() =>  updateNodeForMoveEnd(node));
+          }
           return;
-        context.graphManager.removeNode(node as NodeEditor, true);
-      });
-      context.selectionManager.unSelectAllNodes();
+        }, 
+        (info) => {
+          //还原节点位置
+          info.restoreChangedProperty('position');
+        }
+      );
     },
-    straightenConnector(refPort : NodePortEditor, connector : NodeConnectorEditor) {
-
-      if(!connector.startPort || !connector.endPort)
-        return;
-
-      const refPos = refPort.getPortPositionViewport();
-      let node : Node|null = null;
-      let oldPos : Vector2|null = null;
-
-      if(connector.startPort === refPort) {
-        node = connector.endPort.parent;
-        oldPos = (connector.endPort as NodePortEditor).getPortPositionViewport();
-      }
-      else if(connector.endPort === refPort)  {
-        node = connector.startPort.parent;
-        oldPos = (connector.startPort as NodePortEditor).getPortPositionViewport();
-      }
-
-      if(node && oldPos) {
-        const offPos = oldPos.y - node.position.y;
-        node.position = new Vector2(node.position.x, refPos.y - offPos);
-        updateNodeForMoveEnd(node);
-      }
-
-      context.graphManager.markGraphChanged();
-    },
-    alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
-      const selectedNodes = context.selectionManager.getSelectNodes();
-      const baseNodeSize = baseNode.getRealSize();
-      switch(align) {
-        case 'left':
-          selectedNodes.forEach((b) => {
-            b.position = new Vector2(baseNode.position.x, b.position.y);
-            updateNodeForMoveEnd(b);
-          });
-          break;
-        case 'top':
-          selectedNodes.forEach((b) => {
-            b.position = (new Vector2(b.position.x, baseNode.position.y));
-            updateNodeForMoveEnd(b);
-          });
-          break;
-        case 'center-x': {
-          const center = baseNode.position.x + baseNodeSize.x / 2;
-          selectedNodes.forEach((b) => {
-            b.position = (new Vector2(center + b.getRealSize().x / 2, b.position.y));
-            updateNodeForMoveEnd(b);
-          });
-          break;
+    alignSelectedNode(_baseNode : NodeEditor, _align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
+      context.historyManager.beginUndoableAction(
+        "对齐选中节点", 
+        (actionContext) => ({
+          selectedNodes: actionContext.toNodesInfoAndCancelIfEmpty(context.selectionManager.getSelectNodes()),
+          baseNode: actionContext.toNodeInfo(_baseNode),
+          align: _align,
+        }),
+        (info) => {
+          const baseNode = info.baseNode.requestInstance();
+          const baseNodeSize = baseNode.getRealSize();
+          switch(info.align) {
+            case 'left':
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue) => new Vector2(baseNode.position.x, oldValue.y))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            case 'top':
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue) => new Vector2(oldValue.x, baseNode.position.y))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            case 'center-x': {
+              const center = baseNode.position.x + baseNodeSize.x / 2;
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue, instance) => new Vector2(center + instance.getRealSize().x / 2, oldValue.y))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            }
+            case 'center-y': {
+              const center = baseNode.position.y + baseNodeSize.y / 2;
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue, instance) => new Vector2(oldValue.x, center + instance.getRealSize().y / 2))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            }
+            case 'right': {
+              const right = baseNode.position.x + baseNodeSize.x;
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue) => new Vector2(right - baseNodeSize.x, oldValue.y))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            }
+            case 'bottom': {
+              const bottom = baseNode.position.y + baseNodeSize.y;
+              info.selectedNodes.forEach((node) => {
+                node
+                  .storeChangedProperty<Vector2>('position', (oldValue) => new Vector2(oldValue.x, bottom - baseNodeSize.y))
+                  .afterChanged((b) =>  updateNodeForMoveEnd(b));
+              });
+              break;
+            }
+          }
+        }, 
+        (_, info) => {
+          info.selectedNodes.forEach((node) => node.restoreChangedProperty('position'));
         }
-        case 'center-y': {
-          const center = baseNode.position.y + baseNodeSize.y / 2;
-          selectedNodes.forEach((b) => {
-            b.position = (new Vector2(b.position.x, center + b.getRealSize().y / 2));
-            updateNodeForMoveEnd(b);
-          });
-          break;
-        }
-        case 'right': {
-          const right = baseNode.position.x + baseNodeSize.x;
-          selectedNodes.forEach((b) => {
-            b.position = (new Vector2(right - baseNodeSize.x, b.position.y));
-            updateNodeForMoveEnd(b);
-          });
-          break;
-        }
-        case 'bottom': {
-          const bottom = baseNode.position.y + baseNodeSize.y;
-          selectedNodes.forEach((b) => {
-            b.position = (new Vector2(b.position.x, bottom - baseNodeSize.y));
-            updateNodeForMoveEnd(b);
-          });
-          break;
-        }
-      }
-      context.graphManager.markGraphChanged();
+      );
     },
     setSelectedNodeBreakpointState(state : NodeBreakPoint) {
-      context.selectionManager.getSelectNodes().forEach((n) => this.setNodeBreakpointState(n, state));
-      context.graphManager.markGraphChanged();
+      context.historyManager.beginUndoableAction(
+        "设置选中节点的断点状态", 
+        (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
+          context.selectionManager.getSelectNodes()
+        ),
+        (info, actionContext) => {
+          //设置选中节点的断点状态
+          const nodes = actionContext.fromNodesInfo(info);
+          nodes.forEach((n) => this.setNodeBreakpointState(n, state));
+        }
+      );
     },
-    setNodeBreakpointState(node: Node, state : NodeBreakPoint) {
-      node.breakpoint = state;
-      context.graphManager.markGraphChanged();
-      context.graphManager.postUpMessage(NodeGraphEditorInternalMessages.NodeBreakpointStateChanged, { node });
+    setNodeBreakpointState(_node: Node, _state : NodeBreakPoint) {
+      context.historyManager.beginUndoableAction(
+        "设置节点的断点状态", 
+        (actionContext) => ({
+          node: actionContext.toNodeInfo(_node as NodeEditor),
+          state: _state,
+        }),
+        (info) => {
+          info.node
+            .storeChangedProperty('breakpoint', info.state)
+            .afterChanged((node) => context.postUpMessage(NodeGraphEditorInternalMessages.NodeBreakpointStateChanged, { node }));
+        }, 
+        (_, info) => {
+          info.node
+            .restoreChangedProperty('breakpoint')
+            .afterChanged((node) => context.postUpMessage(NodeGraphEditorInternalMessages.NodeBreakpointStateChanged, { node }));
+        }
+      );
     },
-    genCommentForSelectedNode() {
-      const selectedNodes = context.selectionManager.getSelectNodes();
-      if (selectedNodes.length < 0)
-        return;
-  
-      const rect = context.viewPortManager.calcNodesRegion(selectedNodes);
-      const node = this.addNode(BaseNodes.getScriptBaseCommentNode(), {
-        addNodeInPos: new Vector2(rect.x - 15, rect.y - 15 - 50)
-      });
-      if (node) {
-        node.customSize.set(rect.w + 30, rect.h + 30 + 50);
-      }
+    genCommentForSelectedNode() {  
+      context.historyManager.beginUndoableAction(
+        "为选中项创建注释", 
+        (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(context.selectionManager.getSelectNodes()),
+        (info, actionContext) => {
+
+          //计算选中节点的矩形，并创建住宿节点
+          const selectedNodes = actionContext.fromNodesInfo(info);
+          const rect = context.viewPortManager.calcNodesRegion(selectedNodes);
+
+          actionContext.beginNoUndoableRegion();
+
+          const node = this.addNode(BaseNodes.getScriptBaseCommentNode(), {
+            //设置位置
+            addNodeInPos: new Vector2(rect.x - 15, rect.y - 15 - 50)
+          });
+
+          actionContext.endNoUndoableRegion();
+
+          if (!node)
+            return;
+
+          //调整大小为矩形大小
+          node.customSize.set(rect.w + 30, rect.h + 30 + 50);
+
+          return actionContext.toNodeInfo(node as NodeEditor);
+        }, 
+        (restoreData) => {
+          deleteNode(restoreData.requestInstance());
+        }
+      );
     },
-   
-    deleteDynamicPort(port: NodePort) {
-      if (!port.dyamicAdd)
-        throw new Error('The port is not a dynamic port.');
-      const parent = port.parent as NodeEditor;
-      parent.deletePort(port);
-      for (let i = parent.connectors.length - 1; i >= 0; i--) {
-        const connector = parent.connectors[i];
-        if (connector.startPort === port || connector.endPort === port)
-          context.connectorManager.unConnectConnector(connector as NodeConnectorEditor);
-      }
-      context.graphManager.markGraphChanged();
+    promotePortToVariable(_port: NodePort) {
+      context.historyManager.beginUndoableAction(
+        "提升端口为变量", 
+        (actionContext) => actionContext.toNodePortInfo(_port as NodePortEditor),
+        (info, actionContext) => {
+
+          const port = info.requestInstance();
+          const graph = context.graphManager.getCurrentGraph();
+          const name = graph.getUseableVariableName(port.isInput ? 'Input' : 'Output');
+
+          //添加变量
+          graph.variables.push(new NodeVariable().load({
+            name,
+            type: port.paramType,
+            defaultValue: port.paramType.define?.defaultValue(),
+            static: false,
+            customData: {}
+          }));
+
+          //添加节点
+          const node = this.addVariableNode(
+            graph.uid, 
+            name, 
+            port.isInput ? 'get' : 'set', 
+            (port as NodePortEditor).getPortPositionViewport().substract(new Vector2(port.isInput ? 180 : -100, 0))
+          );
+          if (!node)
+            return;
+
+          //连接端口与变量节点
+          const connector = context.connectorManager.connectConnector(
+            node.getPortByGUID(port.isInput ? 'OUTPUT' : 'INPUT') as NodePortEditor,
+            port as NodePortEditor
+          );
+          if (!connector)
+            return;
+
+          context.interfaceUtiles.userInterfaceNextTick(() => {
+            //拉直连接
+            this.straightenConnector(port as NodePortEditor, connector);
+          });
+
+          return {
+            connector: actionContext.toNodeConnectorInfo(connector as NodeConnectorEditor),
+            name,
+          }
+        }, 
+        (restoreData) => {
+          const graph = context.graphManager.getCurrentGraph();
+          context.connectorManager.unConnectConnector(restoreData.connector.requestInstance());
+          ArrayUtils.removeBy(graph.variables, (g) => g.name === restoreData.name);
+        }
+      );
     },
-    deletePort(port: NodePort) {
-      if (port.dyamicAdd) {
-        if (port.isCallingDelete) {
-          this.deleteDynamicPort(port as NodePortEditor);
-        } else {
-          port.isCallingDelete = true;
-          const ret = port.parent.events.onUserDeletePort?.(port.parent as NodeEditor, context, port);
-          port.isCallingDelete = false;
-          if (!ret) {
-            this.deleteDynamicPort(port as NodePortEditor);
+    addNode<T = CustomStorageObject>(_define: INodeDefine, _options: NodeEditorUserAddNodeOptions<T>) {
+      return context.historyManager.beginUndoableAction(
+        "添加节点",
+        () => ({
+          define: _define,
+          options: _options,
+        }),
+        (info, actionContext) => {
+          const { define, options } = info;
+          const currentGraph = context.graphManager.getCurrentGraph();
+
+          //检查单元是否只能有一个
+          if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {  
+            if (options.noErrorAlert)   
+              printWarning(TAG, null, '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
+            else
+              context.interfaceUtiles.userActionAlert('warning', '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
+            return null;
+          }
+          //自定义检查回调
+          if(typeof define.events?.onAddCheck === 'function') {
+            const err = define.events.onAddCheck(define, currentGraph);
+            if(err !== null) {
+              if (options.noErrorAlert)   
+                printWarning(TAG, null, err);
+              else
+                context.interfaceUtiles.userActionAlert('warning', err);
+              return null;
+            }
+          }
+          //重用UID
+          if (options.reuseUid && context.graphManager.getNodeByUid(options.reuseUid) !== null)
+            throw new Error(`Connector reuse uid failed, uid ${options.reuseUid} already used.`);
+
+          const newNode = new NodeEditor(define);
+          newNode.load();
+          if (options.intitalShadow) {
+            const shadowSettings = newNode.loadShadow(options.intitalShadow, 'graph');
+            newNode.mergeShadow(shadowSettings);
+          }
+          //配置
+          if (options.intitalOptions)
+            newNode.options = options.intitalOptions;
+          if (options.reuseUid)
+            newNode.uid = options.reuseUid;
+          //事件
+          newNode.events.onCreate?.(newNode);
+
+          if(context.connectorManager.isConnectToNew()) { //添加单元并连接
+            const connectingEndPos = context.connectorManager.getConnectingInfo().endPos;
+            newNode.position.set(connectingEndPos);
+            context.graphManager.addNode(newNode);
+            const [ port, _connector ] = context.connectorManager.endConnectToNew(newNode);  
+            const pos = new Vector2();
+
+            //强制同步连接线位置，保证显示正确
+            if (_connector && _connector instanceof NodeConnectorEditor) {
+              const connector = (_connector as NodeConnectorEditor);
+              connector.forceSetPos(undefined, connectingEndPos);
+            }
+
+            //延时以保证VUE将节点原件加载完成，获取端口的位置
+            context.interfaceUtiles.userInterfaceNextTick(() => {
+              if (port) {
+                //重新定位单元位置至连接线末端位置
+                pos.set(port.getPortPositionViewport());
+                pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
+                pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
+                newNode.position.set(pos);
+                newNode.updateRegion();
+              }
+            });
+          } else if(options.addNodeInPos) { //在指定位置添加单元
+            newNode.position.set(options.addNodeInPos);
+            //居中放置
+            if (options.addNodePosRefernceCenter) {
+              context.interfaceUtiles.userInterfaceNextTick(() => {
+                const size = newNode.getRealSize();
+                newNode.position.x -= size.x / 2;
+                newNode.position.y -= size.y / 2;
+                newNode.updateRegion();
+              });
+            }
+            context.graphManager.addNode(newNode)
+          } else { //在屏幕中央位置添加单元
+            const center = context.viewPortManager.getViewPort().rect().calcCenter();
+            newNode.position.set(center);
+            context.graphManager.addNode(newNode);
+          }
+
+          actionContext.setDoingReturn(newNode);
+
+          return actionContext.toNodeInfo(newNode);
+        },
+        (restoreData) => {
+          deleteNode(restoreData.requestInstance());
+        },
+      );
+    },
+    promoteSubgraphToFunction(_node: Node) {
+      context.historyManager.beginUndoableAction(
+        "提升图表节点为函数",
+        (actionContext) => actionContext.toNodeInfo(_node as NodeEditor),
+        (info) => {
+          //将图表类型更改为函数或者静态函数
+          //移动图表至文档根
+          //更改调用节点设置
+          const node = info.requestInstance();
+          const options = (node.options as unknown as IGraphCallNodeOptions);
+          const callGraphName = options.callGraphName;
+          const graph = context.graphManager.getCurrentGraph().getChildGraphByName(callGraphName);
+          if (!graph) {
+            printError(TAG, null, `Not found graph for node ${node.uid}`);
             return;
           }
-          if (ret instanceof Promise)
-            ret.then((result) => {
-              if (result)
-                this.deleteDynamicPort(port as NodePortEditor);
-            });
-          else if (ret === true)
-            this.deleteDynamicPort(port as NodePortEditor);
-        }
-      }
-    },
-    deleteNode(node: NodeEditor) {
-      if (node.define.canNotDelete) 
-        return false;
-      context.graphManager.removeNode(node, true);
-      return true;
-    },
-    promotePortToVariable(port: NodePort) {
-      const graph = context.graphManager.getCurrentGraph();
-      const name = graph.getUseableVariableName(port.isInput ? 'Input' : 'Output');
-
-      //添加变量
-      graph.variables.push(new NodeVariable().load({
-        name,
-        type: port.paramType,
-        defaultValue: port.paramType.define?.defaultValue(),
-        static: false,
-        customData: {}
-      }));
-
-      //添加节点
-      const node = this.addVariableNode(
-        graph.uid, 
-        name, 
-        port.isInput ? 'get' : 'set', 
-        (port as NodePortEditor).getPortPositionViewport().substract(new Vector2(port.isInput ? 180 : -100, 0))
-      );
-      if (!node)
-        return false;
-
-      //连接端口与变量节点
-      const connector = context.connectorManager.connectConnector(
-        node.getPortByGUID(port.isInput ? 'OUTPUT' : 'INPUT') as NodePortEditor,
-        port as NodePortEditor
-      );
-      if (!connector)
-        return false;
-
-      context.interfaceUtiles.userInterfaceNextTick(() => {
-        //拉直连接
-        this.straightenConnector(port as NodePortEditor, connector);
-      });
-    
-      return true;
-    },
-    addNode<T = CustomStorageObject>(define: INodeDefine, options: NodeEditorUserAddNodeOptions<T>) {
-      const currentGraph = context.graphManager.getCurrentGraph();
-
-      //检查单元是否只能有一个
-      if(define.oneNodeOnly && currentGraph?.getNodesByGUID(define.guid).length > 0) {  
-        if (options.noErrorAlert)   
-          printWarning(TAG, null, '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
-        else
-          context.interfaceUtiles.userActionAlert('warning', '当前文档中已经有 ' + define.name + ' 了，此单元只能有一个');
-        return null;
-      }
-      //自定义检查回调
-      if(typeof define.events?.onAddCheck === 'function') {
-        const err = define.events.onAddCheck(define, currentGraph);
-        if(err !== null) {
-          if (options.noErrorAlert)   
-            printWarning(TAG, null, err);
-          else
-            context.interfaceUtiles.userActionAlert('warning', err);
-          return null;
-        }
-      }
-
-      const newNode = new NodeEditor(define);
-      newNode.load();
-      if (options.intitalShadow) {
-        const shadowSettings = newNode.loadShadow(options.intitalShadow, 'graph');
-        newNode.mergeShadow(shadowSettings);
-      }
-      //配置
-      if (options.intitalOptions)
-        newNode.options = options.intitalOptions;
-      //事件
-      newNode.events.onCreate?.(newNode);
-
-      if(context.connectorManager.isConnectToNew()) { //添加单元并连接
-        const connectingEndPos = context.connectorManager.getConnectingInfo().endPos;
-        newNode.position.set(connectingEndPos);
-        context.graphManager.addNode(newNode);
-        const [ port, _connector ] = context.connectorManager.endConnectToNew(newNode);  
-        const pos = new Vector2();
-
-        //强制同步连接线位置，保证显示正确
-        if (_connector && _connector instanceof NodeConnectorEditor) {
-          const connector = (_connector as NodeConnectorEditor);
-          connector.forceSetPos(undefined, connectingEndPos);
-        }
-
-        //延时以保证VUE将节点原件加载完成，获取端口的位置
-        context.interfaceUtiles.userInterfaceNextTick(() => {
-          if (port) {
-            //重新定位单元位置至连接线末端位置
-            pos.set(port.getPortPositionViewport());
-            pos.x = connectingEndPos.x - (pos.x - newNode.position.x);
-            pos.y = connectingEndPos.y - (pos.y - newNode.position.y);
-            newNode.position.set(pos);
-            newNode.updateRegion();
+          const doc = graph.getParentDocunment();
+          if (!doc) {
+            printError(TAG, null, `Not found ParentDocunment for graph ${graph.uid}`);
+            return;
           }
-        });
-      } else if(options.addNodeInPos) { //在指定位置添加单元
-        newNode.position.set(options.addNodeInPos);
-        //居中放置
-        if (options.addNodePosRefernceCenter) {
-          context.interfaceUtiles.userInterfaceNextTick(() => {
-            const size = newNode.getRealSize();
-            newNode.position.x -= size.x / 2;
-            newNode.position.y -= size.y / 2;
-            newNode.updateRegion();
-          });
-        }
-        context.graphManager.addNode(newNode)
-      } else { //在屏幕中央位置添加单元
-        const center = context.viewPortManager.getViewPort().rect().calcCenter();
-        newNode.position.set(center);
-        context.graphManager.addNode(newNode);
-      }
+          const mainGraph = doc.mainGraph;
+          if (!mainGraph) {
+            printError(TAG, null, `Not found mainGraph for doc ${doc.name}`);
+            return;
+          }
 
-      return newNode;
-    },
-    delete() {
-      if(context.keyboardManager.isKeyAltDown())
-        this.deleteSelectedConnectors();
-      else 
-      this.deleteSelectedNodes();
-    },
-    promoteSubgraphToFunction(node: Node) {
+          const restoreData = {
+            graph,
+            graphOldParent: graph.parent as NodeGraph,
+            mainGraph,
+            callGraphName,
+          };
 
-      //将图表类型更改为函数或者静态函数
-      //移动图表至文档根
-      //更改调用节点设置
-      const options = (node.options as unknown as IGraphCallNodeOptions);
-      const callGraphName = options.callGraphName;
-      const graph = context.graphManager.getCurrentGraph().getChildGraphByName(callGraphName);
-      if (!graph) {
-        printError(TAG, null, `Not found graph for node ${node.uid}`);
-        return;
-      }
-      const doc = graph.getParentDocunment();
-      if (!doc) {
-        printError(TAG, null, `Not found ParentDocunment for graph ${graph.uid}`);
-        return;
-      }
-      const mainGraph = doc.mainGraph;
-      if (!mainGraph) {
-        printError(TAG, null, `Not found mainGraph for doc ${doc.name}`);
-        return;
-      }
+          graph.type = mainGraph.type === 'class' ? 'function' : 'static';
 
-      graph.type = mainGraph.type === 'class' ? 'function' : 'static';
+          restoreData.graphOldParent.removeChildren(graph);
+          mainGraph.addChildren(graph);
 
-      ArrayUtils.remove((graph.parent as NodeGraph).children, graph);
-      mainGraph.children.push(graph);
-      graph.parent = mainGraph;
+          context.graphManager.sendMessageToFilteredNodes(`GraphCall${callGraphName}`, BaseNodes.messages.GRAPH_PROMOTE, { type: 'function' });
+        
+          return restoreData;
+        },
+        (restoreData) => {
+          restoreData.mainGraph.removeChildren(restoreData.graph);
+          restoreData.graphOldParent.addChildren(restoreData.graph);
 
-      context.graphManager.sendMessageToFilteredNodes(`GraphCall${callGraphName}`, BaseNodes.messages.GRAPH_PROMOTE, { type: 'function' });
-    },
-    expandSubgraphConfirm(node: Node) {
-      context.interfaceUtiles.userActionConfirm(
-        'warning', 
-        '确定展开选中的图表/函数？如果有其它节点调用此子图表，将会失去调用'
-      ).then((confirm) => {
-        if (confirm) {
-          const callGraph = getGraphCallNodeGraph(context, node);
-          if (callGraph)
-            this.expandSubgraph(callGraph);
-          else
-            context.dialogManager.showSmallTip('调用图标丢失');
-        }
-      });
+          context.graphManager.sendMessageToFilteredNodes(`GraphCall${restoreData.callGraphName}`, BaseNodes.messages.GRAPH_PROMOTE, { type: 'subgraph' });
+        },
+      );
     },
     expandSubgraph(subgraph: NodeGraph) {
       const currentGraph = context.graphManager.getCurrentGraph();
@@ -601,7 +851,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
             printError(TAG, null, `expandSubgraph: Failed to connect ${connector.startPort.guid} to ${connector.endPort.guid} connector uid: (${connector.uid})`);
         }
   
-        this.deleteNode(callNode);
+        deleteNode(callNode);
       }
     },
     collapseSelectedNodesTo(to: 'function'|'subgraph') {
@@ -652,7 +902,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       const childGraph = new NodeGraph(childGraphDefine, childGraphParent, true);
       childGraph.load(childGraphDefine);
       childGraph.initNew();
-      currentGraph.children.push(childGraph);
+      currentGraph.addChildren(childGraph);
   
       //如果选中节点有调用子图表节点，则需要将对应子图表复制到新的子图表中
       const callGuid = BaseNodes.getScriptBaseGraphCall().guid;
@@ -842,6 +1092,10 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         });
       }
     },
+    //下方是包装操作，无历史记录
+    deletePort,
+    delete: deleteHandler,
+    expandSubgraphConfirm,
   };
   context.interfaceUtiles = {
     userActionAlert(type: 'error'|'warning'|'help', message: string) {

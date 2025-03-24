@@ -53,7 +53,7 @@ export interface NodeGraphEditorConnectorContext {
      * @param end 结束节点
      * @returns 
      */
-    connectConnector: (start : NodePortEditor, end : NodePortEditor) => NodeConnectorEditor|null;
+    connectConnector: (start : NodePortEditor, end : NodePortEditor, reuseUid?: string) => NodeConnectorEditor|null;
     connectorSuccessSetState: (connector: NodeConnectorEditor) => void;
     endConnectToNew: (node?: NodeEditor) => [NodePortEditor|null,NodeConnector|null];
     /**
@@ -61,19 +61,19 @@ export interface NodeGraphEditorConnectorContext {
      * @param conn 
      * @returns 
      */
-    unConnectConnector: (conn : NodeConnectorEditor) => void;
+    unConnectConnector: (conn : NodeConnectorEditor) => NodeConnectorEditor;
     /**
      * 取消当前端口上的所有连接线
      * @param port 
      * @returns 
      */
-    unConnectPortConnectors: (port: NodePortEditor) => void;
+    unConnectPortConnectors: (port: NodePortEditor) => NodeConnectorEditor[];
     /**
      * 取消当前节点上的所有连接线
      * @param node 
      * @returns 
      */
-    unConnectNodeConnectors: (node: NodeEditor) => void;
+    unConnectNodeConnectors: (node: NodeEditor) => NodeConnectorEditor[];
     /**
      * 在弹性端口连接后执行弹性事件
      * @param thisPort 当前端口
@@ -484,7 +484,8 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
    */
   function connectConnector(
     _startPort: NodePort,
-    _endPort: NodePort
+    _endPort: NodePort,
+    reuseUid?: string
   ) {
     const invokeOnPortConnect = (
       startPort: NodePortEditor,
@@ -576,6 +577,11 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
     //添加线段
     if (connector !== null) {
+      if (reuseUid) {
+        if (context.graphManager.getConnectorByUid(reuseUid) !== null)
+          throw new Error(`Connector reuse uid failed, uid ${reuseUid} already used.`);
+        connector.uid = reuseUid;
+      }
       context.graphManager.addConnector(connector);
       connector.updatePortValue();
       //更新孤立状态
@@ -633,17 +639,22 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
     
     context.graphManager.markGraphChanged();
+    return connector;
   }
   //删除端口连接
   function unConnectPortConnectors(port: NodePortEditor) {
+    const removedConnectors : NodeConnectorEditor[] = [];
     for (let i = port.connectedFromPort.length - 1; i >= 0; i--) 
-      unConnectConnector(port.connectedFromPort[i] as NodeConnectorEditor);
-    for (let i = port.connectedToPort.length - 1; i >= 0; i--) 
-      unConnectConnector(port.connectedToPort[i] as NodeConnectorEditor);
+      removedConnectors.push(unConnectConnector(port.connectedFromPort[i] as NodeConnectorEditor));
+    for (let i = port.connectedToPort.length - 1; i >= 0; i--)
+      removedConnectors.push(unConnectConnector(port.connectedToPort[i] as NodeConnectorEditor));
+    return removedConnectors;
   }
   //删除单元连接
   function unConnectNodeConnectors(node: NodeEditor) {
-    node.ports.forEach((p) => unConnectPortConnectors(p as NodePortEditor));
+    const removedConnectors : NodeConnectorEditor[] = [];
+    node.ports.forEach((p) => removedConnectors.push(...unConnectPortConnectors(p as NodePortEditor)));
+    return removedConnectors;
   }
   //获取用户现在是否处于连接至新节点状态中
   function isConnectToNew() {

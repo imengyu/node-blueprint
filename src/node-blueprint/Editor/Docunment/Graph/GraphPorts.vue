@@ -105,7 +105,7 @@ function onDeletPort(port: INodePortDefine) {
   const context = getNodeGraphEditorContext();
   if (!context)
     return;
-  context.userActionConfirm('warning', '是否确认删除此端口？将会断开与之相关的连接').then((confirm) => {
+  context.interfaceUtiles.userActionConfirm('warning', '是否确认删除此端口？将会断开与之相关的连接').then((confirm) => {
     if (confirm) {
       ArrayUtils.remove(ports.value, port);
       notifyPortChange();
