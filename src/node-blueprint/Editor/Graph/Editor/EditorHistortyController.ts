@@ -70,10 +70,34 @@ export interface NodeEditorHistoryControllerContext {
       name: string, 
       doFn: (actionContext: EditorHistoryActionContext) => Promise<T>
     ) => void;
-    
-    // createLinkingShadowUndoableAction: (
-
-    // ) => void;
+    /**
+     * 在当前上下文中创建一个链接的历史记录，链接至主操作的上下文。
+     * 
+     * 主要用于多个编辑器同时打开，并且一个操作影响到了另外一个编辑器的内容时使用。
+     * 副编辑器会创建一条影子历史记录，链接至主操作，当用户在副编辑器中撤销或重做时，会返回到实际的主操作中执行，
+     * 同样主操作撤销或重做时，副编辑器该条影子记录也会改变撤销或重做状态。
+     * 
+     * @param linkingContext 由主操作提供的连接上下文对象
+     * @param options 当前控制上下文的历史记录配置
+     * @returns 
+     */
+    createLinkingShadowUndoableAction: (
+      linkingContext: EditorHistoryLinkingContext,
+      options: {
+        /**
+         * 在当前控制上下文显示的名称。
+         */
+        name: string,
+        /**
+         * 是否是关键性操作，用于界面显示。
+         */
+        critical?: boolean,
+        /**
+         * 是否禁止在在当前控制上下文中执行撤销操作。
+         */
+        noUndoable?: boolean,
+      },
+    ) => void;
     /**
      * 开始一个禁止记录区间
      */
@@ -115,11 +139,15 @@ export interface NodeEditorHistoryControllerContext {
   }
 }
 
-type EditorHistoryStepDoingFn<T, K> = (inputParams: K, actionContext: EditorHistoryActionContext, first: boolean) => T;
+type EditorHistoryStepDoingFn<T, K> = (inputParams: K, actionContext: EditorHistoryActionContext, first: boolean, linkingContext: EditorHistoryLinkingContext) => T;
 type EditorHistoryStepRestoreFn<T, K> = (lastParams: NonNullable<T>, inputParams: K, actionContext: EditorHistoryActionContext) => void;
 type EditorHistoryStepDoingConfirmFn<K> = (inputParams: K, first: boolean) => Promise<boolean>;
 type EditorHistoryStepRestoreConfirmFn<T, K> = (lastParams: T, inputParams: K) => Promise<boolean>;
 type EditorHistoryStoreChangedPropertyFn<T, K> = (oldValue: K, instance: T) => K;
+
+class EditorHistoryLinkingContext {
+
+}
 
 /**
  * 用于管理可撤销操作中的目标对象。
@@ -232,7 +260,6 @@ export class EditorHistoryInfoStorager<T = any> {
       this.restoreChangedProperty(element[0]);
   }
 }
-
 export class EditorHistoryNodeInfo extends EditorHistoryInfoStorager<NodeEditor> {
   private uid: string;
   constructor(context: NodeGraphEditorInternalContext, node: NodeEditor) {
@@ -398,7 +425,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
    */
   function handleUndoableActionExecptionAndRollback(e: unknown, actionContext: EditorHistoryActionContext, step: EditorHistoryStep) {
     //回滚当前步骤的所有子步骤
-    uodoStepChilds(step);
+    uodoStepChilds(step, step);
 
     //抛出异常
     const errorMessage = `UndoableAction first do failed because exception: ${logger.formatError(e)}`;
@@ -412,7 +439,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
   function handleFullUndoableActionRollback(actionContext: EditorHistoryActionContext, data: unknown, e?: unknown) {
 
   }
-  function uodoStepChilds(step: EditorHistoryStep) {
+  function uodoStepChilds(step: EditorHistoryStep, topStep: EditorHistoryStep) {
     //还原子步骤
     for (let index = step.childSteps.length - 1; index >= 0; index--) {
       const childStep = step.childSteps[index];
@@ -420,16 +447,16 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         childStep.restoreFn?.(childStep.lastParams, childStep.lastInput, childStep.actionContext);
       step.state = 'restored';
       if (childStep.childSteps.length > 0)
-        uodoStepChilds(step);
+        uodoStepChilds(step, topStep);
     }
   }
-  function redoStepChilds(step: EditorHistoryStep) {
+  function redoStepChilds(step: EditorHistoryStep, topStep: EditorHistoryStep) {
     //重做子步骤
     for (const childStep of step.childSteps) {
-      childStep.doingFn(childStep.lastInput, childStep.actionContext, false);
+      childStep.doingFn(childStep.lastInput, childStep.actionContext, false, null);
       step.state = 'redone';
       if (childStep.childSteps.length > 0)
-        redoStepChilds(step);
+        redoStepChilds(step, topStep);
     }
   }
  
@@ -517,6 +544,9 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
       context.graphManager.markGraphChanged();
 
       return actionContext.getDoingReturn();
+    },
+    createLinkingShadowUndoableAction(linkingContext, options) {
+      
     },
     /**
      * 完整快照操作.
@@ -617,7 +647,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
           step.restoreFn?.(step.lastParams, step.lastInput, step.actionContext);
         step.state = 'restored';
         //还原子步骤
-        uodoStepChilds(step);
+        uodoStepChilds(step, step);
         historyIsRedoing = false;
         //标记文档已更改
         context.graphManager.markGraphChanged();
@@ -638,7 +668,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         //重做子步骤和主步骤
         step.doingFn(step.lastInput, step.actionContext, false);
         step.state = 'redone';
-        redoStepChilds(step);
+        redoStepChilds(step, step);
         //跳转到发生事件时的位置
         if (step.currentPosition)
           context.viewPortManager.moveViewportToPosition(step.currentPosition);
