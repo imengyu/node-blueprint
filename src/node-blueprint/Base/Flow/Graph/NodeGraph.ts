@@ -15,6 +15,7 @@ import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDi
 import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
 import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
 import ArrayUtils from "../../Utils/ArrayUtils";
+import { EditorHolder, type IEditorHolderResources } from "@/node-blueprint/Editor/Graph/Editor/Utils/IEditorHolderResources";
 
 /**
  * 流图类型
@@ -35,7 +36,9 @@ export type NodeGraphType = 'main' | 'class' | 'subgraph' | 'none' | 'static' | 
 /**
  * 图表数据
  */
-export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunment|NodeGraph> implements IObjectSharedData, IWaitReady {
+export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunment|NodeGraph> 
+  implements IObjectSharedData, IWaitReady, IEditorHolderResources<NodeGraphEditorContext>
+{
   type = 'none' as NodeGraphType;
   name = '';
   uid = RandomUtils.genNonDuplicateIDHEX(32);
@@ -50,127 +53,128 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
 
   static NAME  = 'NodeGraph';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeGraph.NAME, (define: INodeGraphDefine, parent) => new NodeGraph(define, parent as NodeDocunment, false));
-    SerializableFactory.addSerializableObjectConfigsWithSwitch([
+    CreateObjectFactory.addObjectFactory(NodeGraph.NAME + 'Editor', (define: INodeGraphDefine, parent) => new NodeGraph(define, parent as NodeDocunment, true));
+    SerializableFactory.addSerializableObjectConfigsWithSwitch<NodeGraph>([
       NodeGraph.NAME,
       NodeGraph.NAME + 'Editor',
     ], (_, i) => {
       return {
-      serializeSchemes: {
-        default: {
-          serializeAll: true,
-          serializableProperties: [],
-          serializePropertyOrder: {
-            'nodes': 1,
-            'connectors': 3,
-          },
-          noSerializableProperties: [
-            'docunment',
-            'fileChanged',
-            'activeEditor',
-            'isEditor',
-            'parent',
-            'readyDispatcher',
-          ],
-          forceSerializableClassProperties: {
-            children: i === 1 ? 'NodeGraphEditor' : 'NodeGraph',
-            inputPorts: SerializableObjectPureObjName,
-            outputPorts: SerializableObjectPureObjName,
-          },
-          //加载与保存
-          loadProp: (key, parentKey, source) => {
-            switch (parentKey) {
-              case 'nodes': {
-                const { 
-                  uid, 
-                  guid, 
-                  node
-                } = source as INodeSaveData;
-                const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
-                if (!nodeDefine) {
-                  printWarning(this.TAG, null, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
-                  return { parsed: true, ignore: true };
-                }
-              
-                const nodeInstance = this.createNode(nodeDefine);
-                const shadowSettings = nodeInstance.loadShadow(node, 'graph');
-                nodeInstance.mergeShadow(shadowSettings);
-                nodeInstance.isLoad = true;
-                nodeInstance.parent = this;
-                nodeInstance.events.onCreate?.(nodeInstance);
+        serializeSchemes: {
+          default: {
+            serializeAll: true,
+            serializableProperties: [],
+            serializePropertyOrder: {
+              'nodes': 1,
+              'connectors': 3,
+            },
+            noSerializableProperties: [
+              'docunment',
+              'fileChanged',
+              'activeEditor',
+              'isEditor',
+              'parent',
+              'readyDispatcher',
+            ],
+            forceSerializableClassProperties: {
+              children: i === 1 ? 'NodeGraphEditor' : 'NodeGraph',
+              inputPorts: SerializableObjectPureObjName,
+              outputPorts: SerializableObjectPureObjName,
+            },
+            //加载与保存
+            loadProp(key, parentKey, source) {
+              switch (parentKey) {
+                case 'nodes': {
+                  const { 
+                    uid, 
+                    guid, 
+                    node
+                  } = source as INodeSaveData;
+                  const nodeDefine = NodeRegistry.getInstance().getNodeByGUID(guid);
+                  if (!nodeDefine) {
+                    printWarning(NodeGraph.NAME, null, `Failed to load node guid: ${guid} uid:${uid}, maybe not register.`);
+                    return { parsed: true, ignore: true };
+                  }
+                
+                  const nodeInstance = this.createNode(nodeDefine);
+                  const shadowSettings = nodeInstance.loadShadow(node, 'graph');
+                  nodeInstance.mergeShadow(shadowSettings);
+                  nodeInstance.isLoad = true;
+                  nodeInstance.parent = this;
+                  nodeInstance.events.onCreate?.(nodeInstance);
 
-                return {
-                  parsed: true,
-                  return: nodeInstance
-                };
-              }
-              case 'connectors': {
-                const { uid, startPort, endPort } = source as INodeConnectorSaveData;
-                const startNode = this.nodes.get(startPort.nodeUid);
-                const endNode = this.nodes.get(endPort.nodeUid);
-                if (!startNode) {
-                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
-                  return { parsed: true, ignore: true };
+                  return {
+                    parsed: true,
+                    return: nodeInstance
+                  };
                 }
-                if (!endNode) {
-                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
-                  return { parsed: true, ignore: true };
+                case 'connectors': {
+                  const { uid, startPort, endPort } = source as INodeConnectorSaveData;
+                  const startNode = this.nodes.get(startPort.nodeUid);
+                  const endNode = this.nodes.get(endPort.nodeUid);
+                  if (!startNode) {
+                    printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${startPort.nodeUid} not found.`);
+                    return { parsed: true, ignore: true };
+                  }
+                  if (!endNode) {
+                    printWarning(this.TAG, null, `Failed to load connector uid:${uid}, node uid: ${endPort.nodeUid} not found.`);
+                    return { parsed: true, ignore: true };
+                  }
+                  
+                  const startPortInstance = startNode.getPortByGUID(startPort.portUid);
+                  const endPortInstance = endNode.getPortByGUID(endPort.portUid);
+                  if (!startPortInstance) {
+                    printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
+                    return { parsed: true, ignore: true };
+                  }
+                  if (!endPortInstance) {
+                    printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
+                    return { parsed: true, ignore: true };
+                  }
+      
+                  const connector = (i === 1 ? 
+                    CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
+                    CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
+                  
+                  connector.startPort = startPortInstance;
+                  connector.endPort = endPortInstance;
+                  connector.setConnectionState();
+                  connector.parent = this;
+                  
+                  return {
+                    parsed: true,
+                    return: connector
+                  };
                 }
-                
-                const startPortInstance = startNode.getPortByGUID(startPort.portUid);
-                const endPortInstance = endNode.getPortByGUID(endPort.portUid);
-                if (!startPortInstance) {
-                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${startPort.portUid} not found.`);
-                  return { parsed: true, ignore: true };
+              }
+              return { parsed: false };
+            },
+            saveProp(key, parentKey, source) {
+              switch (parentKey) {
+                case 'nodes': {
+                  const node = source as Node;
+                  return {
+                    parsed: true,
+                    return: {
+                      guid: node.guid,
+                      uid: node.uid,
+                      node: node.save<INodeDefine>('graph'),
+                    } as INodeSaveData,
+                  };
                 }
-                if (!endPortInstance) {
-                  printWarning(this.TAG, null, `Failed to load connector uid:${uid}, port guid: ${endPort.portUid} not found.`);
-                  return { parsed: true, ignore: true };
+                case 'connectors': {
+                  const connector = source as NodeConnector;
+                  return {
+                    parsed: true,
+                    return: connector.save('graph') as INodeConnectorSaveData
+                  };
                 }
-    
-                const connector = (i === 1 ? 
-                  CreateObjectFactory.createSerializableObject('NodeConnectorEditor', this, { uid }) :
-                  CreateObjectFactory.createSerializableObject('NodeConnector', this, { uid })) as unknown as NodeConnector;
-                
-                connector.startPort = startPortInstance;
-                connector.endPort = endPortInstance;
-                connector.setConnectionState();
-                connector.parent = this;
-                
-                return {
-                  parsed: true,
-                  return: connector
-                };
               }
-            }
-            return { parsed: false };
-          },
-          saveProp: (key, parentKey, source) => {
-            switch (parentKey) {
-              case 'nodes': {
-                const node = source as Node;
-                return {
-                  parsed: true,
-                  return: {
-                    guid: node.guid,
-                    uid: node.uid,
-                    node: node.save<INodeDefine>('graph'),
-                  } as INodeSaveData,
-                };
-              }
-              case 'connectors': {
-                const connector = source as NodeConnector;
-                return {
-                  parsed: true,
-                  return: connector.save('graph') as INodeConnectorSaveData
-                };
-              }
-            }
-            return { parsed: false };
+              return { parsed: false };
+            },
           },
         },
-      },
       }
     })
   }
@@ -189,9 +193,13 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
 
 
   readyDispatcher = new ReadyDispatcher();
+  editorHolder = new EditorHolder<NodeGraphEditorContext>();
 
   waitReady(): Promise<void> {
     return this.readyDispatcher.waitReadyState();
+  }
+  getHolderContext(): NodeGraphEditorContext | null {
+    return this.editorHolder.getHolderContext();
   }
 
   /**
@@ -362,10 +370,6 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
    * 指定当前文件是否已经更改
    */
   fileChanged = false;
-  /**
-   * 当前激活的编辑器实例
-   */
-  activeEditor: NodeGraphEditorContext | null = null;
 
   /**
    * 获取一个可用的图表变量名称

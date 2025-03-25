@@ -48,7 +48,7 @@
           <NodeNodeProp 
             v-if="currentActiveNodes.length > 0"
             :nodes="(currentActiveNodes as NodeEditor[])"
-            :context="(currentActiveGraph?.activeEditor as NodeGraphEditorContext)"
+            :context="(currentActiveGraph?.getHolderContext() as NodeGraphEditorContext)"
           />
           <PropItem v-else>
             在图表选中单元来编辑其属性
@@ -109,7 +109,7 @@ import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
 import DebugStacks from './Debug/DebugStacks.vue';
 import DebugVariables from './Debug/DebugVariables.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
+import { NodeDocunmentEditor } from '../Graph/Node/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
 import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
@@ -119,8 +119,8 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { NodeEditor } from '../Graph/Flow/NodeEditor';
-import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
+import type { NodeEditor } from '../Graph/Node/Flow/NodeEditor';
+import type { NodeConnectorEditor } from '../Graph/Node/Flow/NodeConnectorEditor';
 import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import Alert from '../Nana/Modal/Alert';
 import Icon from '../Nana/Icon.vue';
@@ -133,7 +133,7 @@ import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompi
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
 import ConsoleItem from '../Console/ConsoleItem.vue';
-import type { NodePortEditor } from '../Graph/Flow/NodePortEditor';
+import type { NodePortEditor } from '../Graph/Node/Flow/NodePortEditor';
 
 const loadTestScript = true;
  
@@ -434,8 +434,8 @@ const menuData = reactive<MenuOptions>({
 
 //#region 文档管理
 
-const opendDocunment = ref(new Map<string, NodeDocunmentEditor>());
-const currentActiveDocunment = ref<NodeDocunment|null>(null);
+const opendDocunment = ref(new Map<string, NodeDocunmentEditor>()) as Ref<Map<string, NodeDocunmentEditor>>;
+const currentActiveDocunment = ref<NodeDocunment|null>(null) as Ref<NodeDocunment|null>;
 const currentActiveGraph = ref<NodeGraph|null>(null);
 const currentActiveNodes = ref<NodeEditor[]>([]) as Ref<NodeEditor[]>;
 const currentActiveConnectors = ref<NodeConnectorEditor[]>([]);
@@ -450,13 +450,13 @@ function getCurrentActiveDocunmentEditor() : NodeDocunmentEditorContext|undefine
  * 获取当前打开的编辑器
  */
 function getCurrentActiveGraphEditor() {
-  return currentActiveDocunment.value?.activeEditor?.getActiveGraph()?.activeEditor || null;
+  return currentActiveDocunment.value?.activeEditor?.getActiveGraph()?.getHolderContext() || null;
 }
 /**
  * 获取其他打开的编辑器
  */
 function getOtherGraphEditor() {
-  return currentActiveDocunment.value?.activeEditor?.getOtherGraphs()?.map(g => g.activeEditor) || null;
+  return currentActiveDocunment.value?.activeEditor?.getOtherGraphs()?.map(g => g.getHolderContext()) || null;
 }
 /**
  * 通过UID获取文档实例
@@ -522,7 +522,7 @@ async function jumpToDocunment(doc: NodeDocunmentEditor, graph?: NodeGraph, node
     if (node) {
       if (typeof port === 'string') 
         port = node.getPortByGUID(port) as NodePortEditor;
-      if (graph.activeEditor?.viewPortManager.moveViewportToNode(port ?? node, showPositionIndicator)) 
+      if (graph.getHolderContext()?.viewPortManager.moveViewportToNode(port ?? node, showPositionIndicator)) 
         node.twinkle();
     }
   }
@@ -605,7 +605,7 @@ async function loadDocunment() {
     return;
   }
 
-  const json = JSON.parse(content);0
+  const json = JSON.parse(content);
   const doc = new NodeDocunmentEditor();
   doc.load(json);
 
@@ -713,7 +713,7 @@ function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
     const editor = (panel.data as NodeDocunmentEditor);
     opendDocunment.value.delete(editor.uid);
     if (currentActiveDocunment.value?.uid === editor.uid) {
-      currentActiveDocunment.value = opendDocunment.value.values().next().value;
+      currentActiveDocunment.value = opendDocunment.value.values().next().value ?? null;
       onCurrentActiveDocunmentChanged();
     }
   }
@@ -786,5 +786,5 @@ defineExpose({
 </script>
 
 <style lang="scss">
-@import './NodeIde.scss';
+@use './NodeIde.scss' as *;
 </style>

@@ -4,11 +4,11 @@ import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePort, NodePortDirection } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
-import type { NodeEditor } from "../Flow/NodeEditor";
+import type { NodePortEditor } from "../Node/Flow/NodePortEditor";
+import type { NodeEditor } from "../Node/Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
-import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
 import { createMouseDownAndUpHandler } from "./MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
@@ -407,7 +407,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
     }
   }
   //使用转换器连接两个端口
-  function connectConnectorWithConverter() {
+  async function connectConnectorWithConverter() {
     if (!connectingInfo.startPort || !connectingInfo.currentHoverPort)
       return;
     const startPort = connectingInfo.startPort?.direction === 'output' ? 
@@ -421,7 +421,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
 
     //创建转换器节点
     //新的节点在两个端口的中心位置
-    const convertNode = context.userActionsManager.addNode<ICoverterNodeOptions>(
+    const convertNode = await context.userActionsManager.addNode<ICoverterNodeOptions>(
       converter.converterNode, 
       {
         addNodeInPos: Rect.makeBy2Point(

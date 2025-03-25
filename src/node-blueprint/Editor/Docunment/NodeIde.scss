@@ -1,4 +1,4 @@
-@import './NodeIdeDefine.scss';
+@use './NodeIdeDefine.scss' as *;
 
 :root {
   --mx-editor-background-color: #1e1e1e;

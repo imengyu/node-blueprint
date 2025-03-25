@@ -11,7 +11,7 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
 
   static TAG = 'NodeConnector';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeConnector.TAG, (define: INodeConnectorDefine) => new NodeConnector(define));
     SerializableFactory.addSerializableObjectConfig(NodeConnector.TAG, {
       serializeSchemes: {

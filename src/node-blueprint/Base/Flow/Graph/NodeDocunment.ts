@@ -14,9 +14,9 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> impl
 
   static TAG = 'NodeDocunment';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeDocunment.TAG, (define: INodeDocunmentDefine) => new NodeDocunment(define));
-    SerializableFactory.addSerializableObjectConfigsWithSwitch([ 
+    SerializableFactory.addSerializableObjectConfigsWithSwitch<NodeDocunment>([ 
       NodeDocunment.TAG,
       NodeDocunment.TAG + 'Editor',
     ], (n, i) => {
@@ -41,7 +41,7 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> impl
             forceSerializableClassProperties: {
               mainGraph: i === 1 ? 'NodeGraphEditor' : 'NodeGraph',
             },
-            afterPropertyLoad: (key) => {
+            afterPropertyLoad(key) {
               if (key === 'customTypes') {
                 //加载自定义组合类型数据
                 const typeRegistry = NodeParamTypeRegistry.getInstance();
@@ -51,7 +51,7 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> impl
                 }
               }
             },
-            beforeSave: () => {
+            beforeSave() {
               //保存其他数据
               //保存自定义组合类型
               const typeRegistry = NodeParamTypeRegistry.getInstance();

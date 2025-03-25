@@ -9,7 +9,7 @@
     <slot>
       <template 
         v-for="(item,i) in items"
-        :key="itemKey ? item[itemKey] : i"
+        :key="itemKey ? (item as Record<string, any>)[itemKey] : i"
       >
         <PropListItem 
           :horizontal="$slots.rowHorizontal!==undefined"

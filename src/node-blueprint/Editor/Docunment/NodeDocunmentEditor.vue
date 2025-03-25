@@ -86,15 +86,15 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { NodeConnectorEditor } from '../Graph/Flow/NodeConnectorEditor';
-import type { NodeEditor } from '../Graph/Flow/NodeEditor';
+import type { NodeConnectorEditor } from '../Graph/Node/Flow/NodeConnectorEditor';
+import type { NodeEditor } from '../Graph/Node/Flow/NodeEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugController } from './Editor/EditorDebugController';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
-import { NodeGraphEditorInternalMessages } from '../Graph/Meaasges/EditorInternalMessages';
-import type { NodeDocunmentEditor } from '../Graph/Flow/NodeDocunmentEditor';
+import { NodeGraphEditorInternalMessages } from '../Graph/Editor/Meaasges/EditorInternalMessages';
+import type { NodeDocunmentEditor } from '../Graph/Node/Flow/NodeDocunmentEditor';
 
 interface OpenedGraphsData {
   graph: NodeGraph,
@@ -178,7 +178,7 @@ const context = {
     return openedGraphs.value.map(p => p.graph);
   },
   getActiveGraphEditor() {
-    return currentGraph.value?.activeEditor || undefined;
+    return currentGraph.value?.getHolderContext() || undefined;
   },
   switchActiveGraph(graph, noStackHistory = false) {
     currentGraph.value = graph;

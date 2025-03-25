@@ -2,7 +2,7 @@
 import type { Node, NodeCreateEditorFunction } from '@/node-blueprint/Base/Flow/Node/Node';
 import { ref, h, type PropType, type VNode, onMounted, nextTick, defineComponent, inject } from 'vue'
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
-import type { NodeEditor } from '../Flow/NodeEditor';
+import type { NodeEditor } from './Flow/NodeEditor';
 
 export default defineComponent({
   props: {

@@ -15,7 +15,7 @@ export class Rect extends SerializableObject<IKeyValueObject> {
 
   static TAG = 'Rect';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(Rect.TAG, (define: any) => new Rect(define));
     SerializableFactory.addSerializableObjectConfig(Rect.TAG, {
       serializeSchemes: {

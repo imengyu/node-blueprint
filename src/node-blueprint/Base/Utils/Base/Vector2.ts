@@ -19,7 +19,7 @@ export class Vector2 extends SerializableObject<IKeyValueObject> {
 
   static TAG = 'Vector2';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(Vector2.TAG, (define: any) => new Vector2(define));
     SerializableFactory.addSerializableObjectConfig(Vector2.TAG, { 
       serializeSchemes: {

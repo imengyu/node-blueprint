@@ -2,6 +2,7 @@
   <NodeGraphEditor 
     :graph="graph"
     :context="context"
+    :settings="settings"
   />
 </template>
 
@@ -9,7 +10,7 @@
 import { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
 import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import NodeGraphEditor from '@/node-blueprint/Editor/Graph/NodeGraphEditor.vue';
-import type { NodeGraphEditorInternalContext } from '@/node-blueprint/Editor/Graph/NodeGraphEditor';
+import type { INodeGraphEditorSettings, NodeGraphEditorInternalContext } from '@/node-blueprint/Editor/Graph/NodeGraphEditor';
 
 const docunment = new NodeDocunment();
 const graph = new NodeGraph({
@@ -18,6 +19,12 @@ const graph = new NodeGraph({
 const context = {
 
 } as NodeGraphEditorInternalContext;
+const settings : INodeGraphEditorSettings = {
+  drawDebugInfo: true,
+  drawGrid: true,
+  snapGrid: false,
+  snapGridSize: 5,
+}
 </script>
 
 <style>

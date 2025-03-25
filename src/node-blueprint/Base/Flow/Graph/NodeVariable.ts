@@ -10,7 +10,7 @@ export class NodeVariable extends SerializableObject<INodeVariableDefine> {
 
   static TAG = 'NodeVariable';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeVariable.TAG, (define: INodeVariableDefine) => new NodeVariable(define));
     SerializableFactory.addSerializableObjectConfig(NodeVariable.TAG, {
       serializeSchemes: {

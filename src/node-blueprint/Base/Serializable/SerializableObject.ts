@@ -23,7 +23,7 @@ export interface SerializePropCustomRet {
    */
   return?: unknown|undefined,
 }
-export interface SerializableSchemeConfig {
+export interface SerializableSchemeConfig<T> {
   /**
    * 是否是序列化所有属性
    */
@@ -55,66 +55,66 @@ export interface SerializableSchemeConfig {
    * @param source 源值
    * @returns 
    */
-  loadProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
+  loadProp?: (this: T, key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
   /**
    * 自定义保存属性回调
    * @param key 键值
    * @param source 源值
    * @returns 
    */
-  saveProp?: (key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
+  saveProp?: (this: T, key: string, parentKey: string, source: unknown) => SerializePropCustomRet|undefined,
   
   /**
    * 单个属性加载之后回调
    * @returns 
    */
-  afterPropertyLoad?: (key: string) => void,
+  afterPropertyLoad?: (this: T, key: string) => void,
   /**
    * 整个对象加载之前回调
    * @returns 
    */
-  beforeLoad?: (data: unknown) => void,
+  beforeLoad?: (this: T, data: unknown) => void,
   /**
    * 加载之后回调
    * @returns 
    */
-  afterLoad?: () => void,
+  afterLoad?: (this: T) => void,
   /**
    * 加载之前回调
    * @returns 
    */
-  beforeSave?: () => void,
+  beforeSave?: (this: T) => void,
   /**
    * 加载之后回调
    * @returns 
    */
-  afterSave?: (data: unknown) => void,
+  afterSave?: (this: T, data: unknown) => void,
 }
-export interface SerializableConfig<T, P = unknown> {
+export interface SerializableConfig<T, C = any> {
   /**
    * 序列化预设
    */
-  serializeSchemes?: Record<string, SerializableSchemeConfig>,
+  serializeSchemes?: Record<string, SerializableSchemeConfig<C>>,
   /**
    * 覆盖默认保存函数
    * @returns 
    */
-  saveOverride?: () => IKeyValueObject;
+  saveOverride?: (this: C) => IKeyValueObject;
   /**
    * 覆盖默认加载函数
    * @returns 
    */
-  loadOverride?: (data : T) => SerializableObject<T, P>;
+  loadOverride?: (this: C, data : T) => C;
   /**
    * 覆盖默认混合函数
    * @returns 
    */
-  mergeOverride?: (keyName: string, thisData : unknown, fromData : unknown) =>  SerializePropCustomRet|undefined,
+  mergeOverride?: (this: C, keyName: string, thisData : unknown, fromData : unknown) =>  SerializePropCustomRet|undefined,
   /**
    * load\merge 之后回调
    * @returns 
    */
-  afterLoadOrMerge?: () => void,
+  afterLoadOrMerge?: (this: C) => void,
 }
 export const SerializableObjectLoadIgnore = Symbol('LoadIgnore');
 export const SerializableObjectPureObjName = 'PureObject';
@@ -146,6 +146,13 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
    */
   parent: P|null = null;
 
+  /**
+   * Serialize config
+   */
+  protected serializeConfig : SerializableConfig<T> = {};
+  /**
+   * Tag name
+   */
   protected get TAG() {
     return 'SerializableObject:' + this.serializeClassName;
   }
@@ -155,18 +162,14 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
    */
   serializeClassName = '';
   /**
-   * Serialize config
-   */
-  serializeConfig : SerializableConfig<T, P> = {};
-  /**
    * The source define data
    */
   define: T|null = null;
   
-  protected saveProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: unknown) : unknown {
+  protected saveProp(config: SerializableSchemeConfig<any>, key: string, parentKey: string, element: unknown) : unknown {
     
     if (config.saveProp) {
-      const ret = config.saveProp(key, parentKey, element);
+      const ret = config.saveProp.call(this, key, parentKey, element);
       if (ret?.parsed)
         element = ret.return;
     }
@@ -241,10 +244,10 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     }
     return undefined;
   }
-  protected loadProp(config: SerializableSchemeConfig, key: string, parentKey: string, element: IKeyValueObject) : unknown {
+  protected loadProp(config: SerializableSchemeConfig<any>, key: string, parentKey: string, element: IKeyValueObject) : unknown {
    
     if (!key.startsWith('@') && config.loadProp) {
-      const ret = config.loadProp(key, parentKey, element);
+      const ret = config.loadProp.call(this, key, parentKey, element);
       if (ret?.ignore)
         return SerializableObjectLoadIgnore;
       if (ret?.parsed)
@@ -265,7 +268,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
       } = element as unknown as SerializaeObjectSave<unknown>;
       switch (className) {
         case 'Array': {
-          const arr = new Array();
+          const arr : unknown[] = [];
           (obj as IKeyValueObject[]).forEach((v, index) => {
             const data = this.loadProp(config, `${key}[${index}]`, key, v);
             if (data !== SerializableObjectLoadIgnore)
@@ -331,8 +334,8 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     return undefined;
   }
 
-  private getSerializeScheme(scheme: string, inhertCheck?: string[]) : SerializableSchemeConfig {
-    let config: SerializableSchemeConfig|undefined =  this.serializeConfig.serializeSchemes?.[scheme];
+  private getSerializeScheme(scheme: string, inhertCheck?: string[]) : SerializableSchemeConfig<any> {
+    let config: SerializableSchemeConfig<typeof this>|undefined =  this.serializeConfig.serializeSchemes?.[scheme];
     if (!config && scheme === 'default')
       config = {
         serializableProperties: [],
@@ -349,14 +352,14 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
         inhertCheck.push(scheme);
       }
       return mergeSerializableSchemeConfig(
-        this.getSerializeScheme(config.inhertForm, inhertCheck) as SerializableSchemeConfig, 
+        this.getSerializeScheme(config.inhertForm, inhertCheck) as SerializableSchemeConfig<typeof this>, 
         config
-      ) as SerializableSchemeConfig;
+      ) as SerializableSchemeConfig<typeof this>;
     }
     
     return config; 
   }
-  private getSortedKeys(config: SerializableSchemeConfig, object: object, reverse = false) {
+  private getSortedKeys(config: SerializableSchemeConfig<any>, object: object, reverse = false) {
     let keys = Object.keys(object);
     if (config.serializePropertyOrder) {
       const keyOrders = keys.map(key => {
@@ -370,7 +373,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     }
     return keys;
   }
-  private isPropertySerializable(config: SerializableSchemeConfig, key: string) {
+  private isPropertySerializable(config: SerializableSchemeConfig<any>, key: string) {
     if (SerializableObjectForceNoSerializeProps.includes(key))
       return false;
     return (
@@ -380,7 +383,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
       )
     );
   }
-  private isForceSerializableClassProperty(config: SerializableSchemeConfig, key: string, pkey: string) {
+  private isForceSerializableClassProperty(config: SerializableSchemeConfig<any>, key: string, pkey: string) {
     return (
       config.forceSerializableClassProperties?.[key] ||
       config.forceSerializableClassProperties?.[pkey]
@@ -395,13 +398,13 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     const saveOverride = this.serializeConfig.saveOverride;
     if (saveOverride) {
       this.serializeConfig.saveOverride = undefined;
-      const ret = saveOverride();
+      const ret = saveOverride.call(this);
       this.serializeConfig.saveOverride = saveOverride;
       return ret as unknown as K;
     }
 
     const config = this.getSerializeScheme(scheme || 'default');
-    config.beforeSave?.();
+    config.beforeSave?.call(this);
 
     const o : IKeyValueObject = {}
     const keys = this.getSortedKeys(config, this, false);
@@ -411,8 +414,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
       o[key] = this.saveProp(config, key, '', (this as unknown as Record<string, IKeyValueObject>)[key]) as ISaveableTypes;
     }
 
-    config.afterSave?.(o);
-
+    config.afterSave?.call(this, o);
     return o as unknown as K;
   }
   /**
@@ -436,14 +438,14 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
     const loadOverride = this.serializeConfig.loadOverride;
     if (loadOverride) {
       this.serializeConfig.loadOverride = undefined;
-      const ret = loadOverride(data);
+      const ret = loadOverride.call(this, data);
       this.serializeConfig.loadOverride = loadOverride;
-      this.serializeConfig.afterLoadOrMerge?.();
+      this.serializeConfig.afterLoadOrMerge?.call(this);
       return ret as typeof this;
     }
 
     const config = this.getSerializeScheme(scheme || 'default');
-    config.beforeLoad?.(data);
+    config.beforeLoad?.call(this, data);
 
     this.define = data;
     const o : IKeyValueObject = this as unknown as IKeyValueObject;
@@ -452,12 +454,11 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
       if (!this.isPropertySerializable(config, key))
         continue;
       o[key] = this.loadProp(config, key, '', (data as unknown as Record<string, IKeyValueObject>)[key]) as IKeyValueObject;
-      config.afterPropertyLoad?.(key);
+      config.afterPropertyLoad?.call(this, key);
     }
 
-    this.serializeConfig.afterLoadOrMerge?.();
-    config.afterLoad?.();
-
+    this.serializeConfig.afterLoadOrMerge?.call(this);
+    config.afterLoad?.call(this);
     return this;
   }
   /**
@@ -488,7 +489,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
         const thisEle = o[key];
 
         if (this.serializeConfig.mergeOverride) {
-          const ret = this.serializeConfig.mergeOverride(key, thisEle, element);
+          const ret = this.serializeConfig.mergeOverride.call(this, key, thisEle, element);
           if (ret?.return)
             o[key] = ret.return as any;
           if (ret?.parsed)
@@ -516,7 +517,7 @@ export class SerializableObject<T, P = unknown> implements IChildObject<P>, IClo
         }
       }
     }
-    this.serializeConfig.afterLoadOrMerge?.();
+    this.serializeConfig.afterLoadOrMerge?.call(this);
   }
   /**
    * 按当前对象的序列化配置直接创建单个序列化子对象

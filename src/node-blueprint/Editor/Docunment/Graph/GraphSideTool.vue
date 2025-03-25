@@ -5,7 +5,7 @@
 </template>
 
 <style lang="scss">
-@import '../NodeIdeDefine.scss';
+@use '../NodeIdeDefine.scss' as *;
 
 .node-editor-toolbar {
   position: relative;

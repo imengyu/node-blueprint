@@ -13,9 +13,9 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
 
   static TAG = 'NodePort';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodePort.TAG, (define: INodePortDefine, parent) => new NodePort(define, parent as Node));
-    SerializableFactory.addSerializableObjectConfig(NodePort.TAG, {
+    SerializableFactory.addSerializableObjectConfig<NodePort>(NodePort.TAG, {
       serializeSchemes: {
         default: {
           serializeAll: true,
@@ -30,7 +30,7 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
           forceSerializableClassProperties: {
             style: 'NodePortStyle',
           },
-          afterLoad: () => {
+          afterLoad() {
             if (this.paramDefaultValue !== undefined)
               this.initialValue = this.paramDefaultValue;
           },
@@ -260,7 +260,7 @@ export class NodePortStyle extends SerializableObject<INodePortStyleDefine, Node
 
   static TAG = 'NodePortStyle';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodePortStyle.TAG, (define: INodePortStyleDefine) => new NodePortStyle(define));
     SerializableFactory.addSerializableObjectConfig(NodePortStyle.TAG, {
       serializeSchemes: {

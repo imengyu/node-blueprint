@@ -99,7 +99,7 @@ function onChangeGenericType(index: number, type: NodeParamType) {
 }
 function onPickMainType() {
   if (selectBox.value) {
-    getNodeGraphEditorContext()?.showSelectTypePanel(
+    getNodeGraphEditorContext()?.dialogManager.showSelectTypePanel(
       new Vector2(HtmlUtils.getLeft(selectBox.value), HtmlUtils.getTop(selectBox.value)),
       prop.canBeExecute,
       prop.canBeAny,

@@ -3,6 +3,7 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
 import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
 
 /**
  * 编辑器视图信息结构体
@@ -13,8 +14,11 @@ import { SerializableObject } from "@/node-blueprint/Base/Serializable/Serializa
  */
 export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditorViewport> {
 
-  constructor() {
-    super('NodeGraphEditorViewport', undefined, {
+  static TAG = 'NodeGraphEditorViewport';
+
+  static {
+    CreateObjectFactory.addObjectFactory(NodeGraphEditorViewport.TAG, (define: INodeGraphEditorViewport) => new NodeGraphEditorViewport().load(define));
+    SerializableFactory.addSerializableObjectConfig(NodeGraphEditorViewport.TAG, {
       serializeSchemes: {
         default: {
           serializableProperties: [
@@ -25,7 +29,11 @@ export class NodeGraphEditorViewport extends SerializableObject<INodeGraphEditor
           ],
         },
       }
-    });
+    }) 
+  }
+
+  constructor() {
+    super(NodeGraphEditorViewport.TAG, undefined, NodeGraphEditorViewport.TAG);
   }
 
   /**

@@ -104,20 +104,20 @@ export class NodeParamType extends SerializableObject<NodeParamTypeDefine> {
 
   static TAG = 'NodeParamType';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeParamType.TAG, (define: NodeParamTypeDefine) => new NodeParamType().load(define));
-    SerializableFactory.addSerializableObjectConfig(NodeParamType.TAG, {
+    SerializableFactory.addSerializableObjectConfig<NodeParamType>(NodeParamType.TAG, {
       serializeSchemes: {
         default: {
           serializableProperties: [],
         }
       },
-      loadOverride: (data) => {
+      loadOverride(data) {
         return NodeParamTypeRegistry.getInstance().getTypeByString(
           (data as unknown as IKeyValueObject).name as string
         ) || NodeParamType.Any;
       },
-      saveOverride: () => {
+      saveOverride() {
         return {
           name: this.toString(),
         };

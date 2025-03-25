@@ -1,10 +1,10 @@
 import { inject } from "vue";
-import type { NodeDocunmentEditor } from "../Graph/Flow/NodeDocunmentEditor";
+import type { NodeDocunmentEditor } from "../Graph/Node/Flow/NodeDocunmentEditor";
 import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
 import type { NodeDocunmentEditorContext } from "./NodeDocunmentEditor";
-import type { NodeEditor } from "../Graph/Flow/NodeEditor";
+import type { NodeEditor } from "../Graph/Node/Flow/NodeEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodePortEditor } from "../Graph/Flow/NodePortEditor";
+import type { NodePortEditor } from "../Graph/Node/Flow/NodePortEditor";
 
 export interface NodeIdeControlContext {
   newDocunment() : Promise<NodeDocunmentEditor>; 

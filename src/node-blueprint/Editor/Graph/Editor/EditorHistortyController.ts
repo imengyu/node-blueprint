@@ -2,9 +2,9 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import { useNodeGraphEditorStaticConfig } from "../Config/ConfigManager";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
-import type { NodeEditor } from "../Flow/NodeEditor";
+import { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
+import type { NodePortEditor } from "../Node/Flow/NodePortEditor";
+import type { NodeEditor } from "../Node/Flow/NodeEditor";
 import { DevAssert } from "@/node-blueprint/Base/Logger/Assert";
 import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
 import { printError } from "@/node-blueprint/Base/Logger/DevLog";
@@ -31,6 +31,7 @@ import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/Serializ
         }
       );
  * 
+ * 
  */
 
 const TAG = "NodeEditorHistoryController";
@@ -49,21 +50,30 @@ export interface NodeEditorHistoryControllerContext {
      * @param getInputParams 获取输入参数，输入参数用于记录操作的主体，通常是与实例分开的数据，例如UID
      * @param doingFn 正向执行函数，例如执行、重做，传入参数由 getInputParams 返回。返回一个参数用于反向执行函数，如果返回 undefined 或者 null，则不会执行反向执行函数。
      * @param restoreFn 反向执行函数，例如撤销，参数来源于第一次执行 doingFn 返回。
+     * @param doingConfirm 正向执行函数，可以弹窗用于向用户确认是否执行反向执行函数。返回 false 可以终止执行撤销操作。注：仅在非嵌套操作的顶层有效。
+     * @param restoreConfirm 反向执行函数的确认函数，可以弹窗用于向用户确认是否执行反向执行函数。返回 false 可以终止执行重做操作。注：仅在非嵌套操作的顶层有效。
+     * @returns 返回 doingFn 中的返回值
      */
     beginUndoableAction: <T, K>(
       name: string, 
       getTargetParams: (actionContext: EditorHistoryActionContext) => K,
-      doingFn: EditorHistoryStepDoingFn<T, K>, 
-      restoreFn?: EditorHistoryStepRestoreFn<T, K>
-    ) => any;
+      doingFn: EditorHistoryStepDoingFn<Promise<T>, K>, 
+      restoreFn?: EditorHistoryStepRestoreFn<T, K>,
+      doingConfirm?: EditorHistoryStepDoingConfirmFn<K>,
+      restoreConfirm?: EditorHistoryStepRestoreConfirmFn<T, K>,
+    ) => Promise<any>;
     /**
      * 开始一个完整快照的可撤销操作
      * @returns 
      */
     beginFullSnapshortUndoableAction: <T = void>(
       name: string, 
-      doFn: (actionContext: EditorHistoryActionContext) => T
+      doFn: (actionContext: EditorHistoryActionContext) => Promise<T>
     ) => void;
+    
+    // createLinkingShadowUndoableAction: (
+
+    // ) => void;
     /**
      * 开始一个禁止记录区间
      */
@@ -76,12 +86,12 @@ export interface NodeEditorHistoryControllerContext {
      * 撤销一个步骤
      * @returns 返回当前是否存在步骤
      */
-    undoStep: () => boolean;
+    undoStep: () => Promise<boolean>;
     /**
      * 重做一个步骤
      * @returns 返回当前是否存在步骤
      */
-    redoStep: () => boolean;
+    redoStep: () => Promise<boolean>;
     /**
      * 清除历史记录
      * @returns 
@@ -107,6 +117,8 @@ export interface NodeEditorHistoryControllerContext {
 
 type EditorHistoryStepDoingFn<T, K> = (inputParams: K, actionContext: EditorHistoryActionContext, first: boolean) => T;
 type EditorHistoryStepRestoreFn<T, K> = (lastParams: NonNullable<T>, inputParams: K, actionContext: EditorHistoryActionContext) => void;
+type EditorHistoryStepDoingConfirmFn<K> = (inputParams: K, first: boolean) => Promise<boolean>;
+type EditorHistoryStepRestoreConfirmFn<T, K> = (lastParams: T, inputParams: K) => Promise<boolean>;
 type EditorHistoryStoreChangedPropertyFn<T, K> = (oldValue: K, instance: T) => K;
 
 /**
@@ -341,14 +353,28 @@ export class EditorHistoryActionContext {
 }
 
 export interface EditorHistoryStep {
+  /**
+   * 步骤名称
+   */
   name: string;
+  /**
+   * 步骤状态
+   * - not-use: 未使用
+   * - done: 已完成。第一次执行，未撤销
+   * - restored: 已撤销
+   * - redone: 已重做
+   */
+  state: 'not-use'|'done'|'restored'|'redone';
   lastInput: unknown;
   lastParams: unknown;
   childSteps : EditorHistoryStep[],
   currentPosition?: Vector2,
   actionContext: EditorHistoryActionContext,
+  parent: EditorHistoryStep|null,
   doingFn: EditorHistoryStepDoingFn<unknown, unknown>;
   restoreFn?: EditorHistoryStepRestoreFn<unknown, unknown>;
+  doingConfirm?: EditorHistoryStepDoingConfirmFn<unknown>;
+  restoreConfirm?: EditorHistoryStepRestoreConfirmFn<unknown, unknown>;
 }
 
 /**
@@ -392,6 +418,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
       const childStep = step.childSteps[index];
       if (childStep.lastParams)
         childStep.restoreFn?.(childStep.lastParams, childStep.lastInput, childStep.actionContext);
+      step.state = 'restored';
       if (childStep.childSteps.length > 0)
         uodoStepChilds(step);
     }
@@ -400,13 +427,19 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
     //重做子步骤
     for (const childStep of step.childSteps) {
       childStep.doingFn(childStep.lastInput, childStep.actionContext, false);
+      step.state = 'redone';
       if (childStep.childSteps.length > 0)
         redoStepChilds(step);
     }
   }
  
   context.historyManager = {
-    beginUndoableAction(name, getTargetParams, doingFn, restoreFn) {
+    
+    async beginUndoableAction(
+      name, getTargetParams, 
+      doingFn, restoreFn, 
+      doingConfirm, restoreConfirm
+    ) {
       if (historyIsRedoing || historyIsDisabled)
         return undefined;
       //丢弃之后的步骤
@@ -424,20 +457,32 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         name, 
         doingFn: doingFn as EditorHistoryStepDoingFn<unknown, unknown>, 
         restoreFn: restoreFn as EditorHistoryStepRestoreFn<unknown, unknown>, 
+        doingConfirm: doingConfirm as EditorHistoryStepDoingConfirmFn<unknown>, 
+        restoreConfirm: restoreConfirm as EditorHistoryStepRestoreConfirmFn<unknown, unknown>, 
         childSteps: [], 
+        state: 'not-use',
         lastParams: null,
         lastInput: inputParams,
         actionContext,
+        parent: null,
         currentPosition: context.viewPortManager.getViewPort().position.clone(), //记录视口信息
       };
 
       //处理嵌套调用情况下每个步骤的组织
       const historyCurrentStep = historyCurrentStepGroupingStack[0];
-      if (historyCurrentStep === null) {
+      if (!historyCurrentStep) {
+
+        //可弹窗询问
+        if (doingConfirm) {
+          if (!(await doingConfirm(inputParams, true)))
+            return undefined;
+        }
         //先执行步骤，然后存入数据
         try {
           historyCurrentStepGroupingStack.push(currentStep);
+          currentStep.parent = historyCurrentStep;
           currentStep.lastParams = doingFn(inputParams, currentStep.actionContext, true);
+          currentStep.state = 'done';
         } catch (e) {
           //发生异常时，将放弃当前操作和回滚
           handleUndoableActionExecptionAndRollback(e, actionContext, currentStep);
@@ -458,6 +503,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         try {
           historyCurrentStepGroupingStack.push(currentStep);
           currentStep.lastParams = doingFn(inputParams, currentStep.actionContext, true);
+          currentStep.state = 'done';
         } catch (e) {
           //发生异常时，将放弃当前操作和回滚
           handleUndoableActionExecptionAndRollback(e, actionContext, currentStep);
@@ -494,9 +540,13 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         restoreFn: (r, i, a) => {
           handleFullUndoableActionRollback(a, i);
         }, 
+        doingConfirm: undefined,
+        restoreConfirm: undefined,
+        state: 'not-use',
         childSteps: [], 
         lastParams: null,
         lastInput: null,
+        parent: null,
         actionContext,
         currentPosition: context.viewPortManager.getViewPort().position.clone(), //记录视口信息
       };
@@ -549,7 +599,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
       else
         return historySteps[historyCurrentCursor].name;
     },
-    undoStep() {
+    async undoStep() {
       if (historyCurrentCursor > -1) {
         historyCurrentCursor--;
         historyIsRedoing = true;
@@ -557,24 +607,37 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         //跳转到发生事件时的位置
         if (step.currentPosition)
           context.viewPortManager.moveViewportToPosition(step.currentPosition);
+        //询问是否还原
+        if (step.restoreConfirm) {
+          if (!(await step.restoreConfirm(step.lastParams, step.lastInput)))
+            return false;
+        }
         //还原主步骤
         if (step.lastParams)
           step.restoreFn?.(step.lastParams, step.lastInput, step.actionContext);
+        step.state = 'restored';
         //还原子步骤
         uodoStepChilds(step);
         historyIsRedoing = false;
         //标记文档已更改
         context.graphManager.markGraphChanged();
+        return true;
       }
       return false
     },
-    redoStep() {
+    async redoStep() {
       if (historyCurrentCursor < historySteps.length) {
         historyCurrentCursor++;
         historyIsRedoing = true;
         const step = historySteps[historyCurrentCursor];
+        //询问是否还原
+        if (step.doingConfirm) {
+          if (!(await step.doingConfirm(step.lastInput, false)))
+            return false;
+        }
         //重做子步骤和主步骤
         step.doingFn(step.lastInput, step.actionContext, false);
+        step.state = 'redone';
         redoStepChilds(step);
         //跳转到发生事件时的位置
         if (step.currentPosition)
@@ -582,6 +645,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
         historyIsRedoing = false;
         //标记文档已更改
         context.graphManager.markGraphChanged();
+        return true;
       }
       return false
     },

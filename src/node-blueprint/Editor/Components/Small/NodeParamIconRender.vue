@@ -20,7 +20,7 @@ import NodeParamIconDictionaryRender from './NodeParamIconDictionaryRender.vue';
 import type { NodeParamType } from '../../../Base/Flow/Type/NodeParamType';
 import VNodeRenderer from '../../Nana/VNodeRenderer.vue';
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import type { NodePortEditor } from '../../Graph/Flow/NodePortEditor';
+import type { NodePortEditor } from '../../Graph/Node/Flow/NodePortEditor';
 
 const props = defineProps({
   type: {

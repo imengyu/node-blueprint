@@ -90,8 +90,8 @@
 
 <script lang="ts" setup>
 import { onMounted, provide, ref, type PropType, type Ref, onBeforeUnmount, watch } from 'vue';
-import BackgroundRender from './Render/BackgroundRender.vue';
-import ConnectorRender from './Render/ConnectorRender.vue';
+import BackgroundRender from './SubComponents/Render/BackgroundRender.vue';
+import ConnectorRender from './SubComponents/Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
 import NodeContainer from './Node/NodeContainer.vue';
 import ZoomTool from './SubComponents/ZoomTool.vue';
@@ -99,7 +99,7 @@ import BasePanels from './Panel/BasePanels.vue';
 import Spin from '../Nana/Common/Spin.vue';
 import Icon from '../Nana/Icon.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import { NodeConnectorEditor } from './Flow/NodeConnectorEditor';
+import { NodeConnectorEditor } from './Node/Flow/NodeConnectorEditor';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
@@ -115,8 +115,8 @@ import type { INodeGraphEditorSettings, NodeGraphEditorBaseEventListener, NodeGr
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { NodeEditor } from './Flow/NodeEditor';
-import type { ChunkedPanel } from './Cast/ChunkedPanel';
+import type { NodeEditor } from './Node/Flow/NodeEditor';
+import type { ChunkedPanel } from './Editor/Cast/ChunkedPanel';
 import PositionIndicator from './SubComponents/PositionIndicator.vue';
 import { useEditorHistoryController } from './Editor/EditorHistortyController';
 import { TOP_CONFIG_KEY, type NodeGraphEditorStaticConfig } from './Config/ConfigManager';
@@ -139,7 +139,7 @@ const props = defineProps({
   },
   settings: {
     type: Object as PropType<INodeGraphEditorSettings>,
-    default: null,
+    default: () => ({}),
   },
   config: {
     type: Object as PropType<NodeGraphEditorStaticConfig>,
@@ -148,7 +148,6 @@ const props = defineProps({
 });
 
 const editorHost = ref<HTMLElement>();
-// eslint-disable-next-line vue/no-setup-props-destructure
 const context = props.context;
 const events = new Map<string, NodeGraphEditorBaseEventCallback[]>();
 
@@ -285,7 +284,8 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   devLog(TAG, null, 'onBeforeUnmount');
-
+  context.graphManager.closeGraph();
+  context.graphManager.clearAll();
   if (eventSelectNodeChanged) {
     eventSelectNodeChanged.unListen();
     eventSelectNodeChanged = null;
@@ -309,5 +309,5 @@ function initRenderer() {
 </script>
 
 <style lang="scss">
-@import './NodeGraphEditor.scss';
+@use './NodeGraphEditor.scss' as *;
 </style>

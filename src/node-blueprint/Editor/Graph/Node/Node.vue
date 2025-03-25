@@ -192,11 +192,11 @@ import StringUtils from '@/node-blueprint/Base/Utils/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import NodeCustomEditorWrapper from './NodeCustomEditorWrapper.vue';
 import PropControl from '../../Components/PropControl/PropControl.vue';
-import type { ChunkedPanel } from '../Cast/ChunkedPanel';
+import type { ChunkedPanel } from '../Editor/Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import type { NodePortEditor } from '../Flow/NodePortEditor';
-import type { NodeEditor } from '../Flow/NodeEditor';
+import type { NodePortEditor } from './Flow/NodePortEditor';
+import type { NodeEditor } from './Flow/NodeEditor';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/MouseHandler';

@@ -126,8 +126,8 @@ import RowView from '../../Nana/Layout/RowView.vue';
 import ColumnView from '../../Nana/Layout/ColumnView.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
-import type { NodePortEditor } from '../Flow/NodePortEditor';
-import type { NodeEditor } from '../Flow/NodeEditor';
+import type { NodePortEditor } from './Flow/NodePortEditor';
+import type { NodeEditor } from './Flow/NodeEditor';
 import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { createMouseDragHandler } from '../Editor/MouseHandler';
@@ -147,7 +147,7 @@ const {
 const emit = defineEmits([ 'deletePort' ]);
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
-const debugController = inject<EditorDebugController|undefined>('NodeIdeDebugController');
+const debugController = inject<EditorDebugController|undefined>('NodeIdeDebugController', undefined);
 const portDot = ref<HTMLElement>();
 
 //#region 钩子

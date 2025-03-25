@@ -6,7 +6,7 @@ import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import ObjectUtils from "@/node-blueprint/Base/Utils/ObjectUtils";
 import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Node/Flow/NodeEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";

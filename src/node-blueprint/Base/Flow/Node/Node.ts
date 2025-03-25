@@ -11,10 +11,10 @@ import type { NodeGraph } from "../Graph/NodeGraph";
 import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
 import type { VNode } from "vue";
 import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
-import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Flow/NodeEditor";
+import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Node/Flow/NodeEditor";
 import type { PropControlItem } from "../../Editor/PropDefine";
 import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
+import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Node/Flow/NodePortEditor";
 import type { INodeCompileSettings } from "../../Compiler/NodeCompileSettings";
 import type { NodeConnector } from "./NodeConnector";
 import { CreateObjectFactory, mergeSerializableConfigName, SerializableFactory } from "../../Serializable/SerializableFactory";
@@ -27,8 +27,8 @@ export class Node extends SerializableObject<INodeDefine> {
 
   static TAG = 'Node';
 
-  static() {
-    SerializableFactory.addSerializableObjectConfig(this.TAG, {
+  static {
+    SerializableFactory.addSerializableObjectConfig<Node>(this.TAG, {
       mergeOverride(keyName, thisData, fromData) {
         if (keyName === 'ports') {
           const thisArray = thisData as NodePort[];
@@ -49,7 +49,7 @@ export class Node extends SerializableObject<INodeDefine> {
           return { parsed: true };
         }
       },
-      afterLoadOrMerge: () => {
+      afterLoadOrMerge() {
         ArrayUtils.clear(this.inputPorts);
         ArrayUtils.clear(this.outputPorts);
         this.mapPorts.clear();
@@ -699,7 +699,7 @@ export class NodeEventSettings extends SerializableObject<INodeEventSettings, No
 
   static TAG = 'NodeEventSettings';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory('NodeEventSettings', (define: INodeEventSettings) => new NodeEventSettings(define));
     SerializableFactory.addSerializableObjectConfig(NodeEventSettings.TAG, {
       serializeSchemes: {
@@ -860,7 +860,7 @@ export class NodeStyleSettings extends SerializableObject<INodeStyleSettings, No
 
   static TAG = 'NodeStyleSettings';
 
-  static() {
+  static {
     CreateObjectFactory.addObjectFactory(NodeStyleSettings.TAG, (define: INodeStyleSettings) => new NodeStyleSettings(define)); 
     SerializableFactory.addSerializableObjectConfig(NodeStyleSettings.TAG, {
       serializeSchemes: {

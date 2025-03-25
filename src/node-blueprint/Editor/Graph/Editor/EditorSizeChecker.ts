@@ -1,7 +1,7 @@
 
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { onBeforeUnmount, onMounted, type Ref, ref } from "vue";
-import type { INodeGraphEditorBackgroundRenderer, INodeGraphEditorRenderer } from "../Render/Render";
+import type { INodeGraphEditorBackgroundRenderer, INodeGraphEditorRenderer } from "../SubComponents/Render/Render";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 

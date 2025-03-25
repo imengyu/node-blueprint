@@ -1,9 +1,9 @@
 import type { SerializableConfig, SerializableObject, SerializableSchemeConfig } from "./SerializableObject";
 
-const createObjectFactorys = new Map<string, CreateObjectClassCallback<any, any>>();
+const createObjectFactorys = new Map<string, CreateObjectClassCallback<any, any, any>>();
 const serializableObjectFactorys = new Map<string, SerializableObjectConfigRegistry>();
 
-export type CreateObjectClassCallback<T, P> = (define: T, parent: P) => SerializableObject<T, P>;
+export type CreateObjectClassCallback<T, P, C> = (define: T, parent: P) => C;
 
 interface SerializableObjectConfigRegistry {
   name: string;
@@ -19,7 +19,9 @@ export const CreateObjectFactory = {
    * @param name Object Name
    * @param createFn Create callback
    */
-  addObjectFactory<T, P>(name : string, createFn : CreateObjectClassCallback<T, P>) : void {
+  addObjectFactory<T, P, C>(name : string, createFn : CreateObjectClassCallback<T, P, C>) : void {
+    if (createObjectFactorys.has(name))
+      throw new Error(`CreateObjectFactory ${name} already exists`);
     createObjectFactorys.set(name, createFn);
   },
   /**
@@ -30,13 +32,13 @@ export const CreateObjectFactory = {
    */
   createSerializableObject<T, P>(name : string, parent: P|null, k ?: T|null) : SerializableObject<T, P>|null {
     const objCreate = createObjectFactorys.get(name);
-    if(objCreate) {
-      const obj = objCreate(k, parent) as SerializableObject<T, P>;
-      if (typeof k !== 'undefined' && k !== null)
-        return obj.load(k);
-      return obj;
-    }
-    return null;
+    if(!objCreate) 
+      throw new Error(`SerializableObject ${name} not found`);
+
+    const obj = objCreate(k, parent) as SerializableObject<T, P>;
+    if (typeof k !== 'undefined' && k !== null)
+      return obj.load(k);
+    return obj;
   },
 }
 
@@ -47,17 +49,21 @@ export const SerializableFactory = {
    * @param config SerializableObject config
    * @param mergeWithSuperConfig Merge with super config
    */
-  addSerializableObjectConfig(name: string, config: SerializableConfig<any>, mergeWithSuperConfig?: string) {
+  addSerializableObjectConfig<C>(name: string, config: SerializableConfig<any, C>, mergeWithSuperConfig?: string) {
     if (mergeWithSuperConfig) {
       const superConfig = serializableObjectFactorys.get(mergeWithSuperConfig);
       if (!superConfig)
         throw new Error(`Super config ${mergeWithSuperConfig} not found`);
       const pname = `${name}@${mergeWithSuperConfig}`;
+      if (serializableObjectFactorys.has(pname))
+        throw new Error(`SerializableObject config ${pname} already exists`);
       serializableObjectFactorys.set(pname, {
         name: pname,
         config: mergeSerializableConfig(superConfig.config, config),
       });
     } else {
+      if (serializableObjectFactorys.has(name))
+        throw new Error(`SerializableObject config ${name} already exists`);
       serializableObjectFactorys.set(name, { name, config });
     }
     return config;
@@ -68,7 +74,7 @@ export const SerializableFactory = {
    * @param createConfig Create config callback
    * @param mergeWithSuperConfig Merge with super config
    */
-  addSerializableObjectConfigsWithSwitch(names: string[], createConfig: (name: string, index: number) => SerializableConfig<any>, mergeWithSuperConfig?: string) {
+  addSerializableObjectConfigsWithSwitch<C>(names: string[], createConfig: (name: string, index: number) => SerializableConfig<any, C>, mergeWithSuperConfig?: string) {
     names.forEach((name, index) => {
       this.addSerializableObjectConfig(name, createConfig(name, index), mergeWithSuperConfig);
     });
@@ -82,16 +88,16 @@ export const SerializableFactory = {
     const config = serializableObjectFactorys.get(name);
     if (!config)
       throw new Error(`Config ${name} not found`);
-    return config;
+    return config.config;
   },
 }
 
 export function mergeSerializableConfigName(thisName: string, childName?: string|undefined) {
   if (!childName)
     return thisName;
-  return `${thisName}@${childName}`;
+  return `${childName}@${thisName}`;
 }
-export function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig, childConfig: SerializableSchemeConfig) : SerializableSchemeConfig {
+export function mergeSerializableSchemeConfig(superConfig: SerializableSchemeConfig<any>, childConfig: SerializableSchemeConfig<any>) : SerializableSchemeConfig<any> {
   return {
     ...superConfig,
     ...childConfig,
@@ -116,7 +122,7 @@ export function mergeSerializableSchemeConfig(superConfig: SerializableSchemeCon
 export function mergeSerializableConfig<T = any, P = any>(superConfig: SerializableConfig<T, P>, childConfig: SerializableConfig<T, P>|undefined) : SerializableConfig<T, P>{
   if (!childConfig)
     return superConfig;
-  const schemes : Record<string, SerializableSchemeConfig> = superConfig.serializeSchemes || {};
+  const schemes : Record<string, SerializableSchemeConfig<any>> = superConfig.serializeSchemes || {};
   if (childConfig.serializeSchemes)
     for (const key in childConfig.serializeSchemes) {
       const scheme = childConfig.serializeSchemes[key];

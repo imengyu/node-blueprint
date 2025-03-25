@@ -1,16 +1,16 @@
 
 import { ref, toRaw } from "vue";
-import { ChunkInstance } from "../Cast/ChunkedPanel";
+import { ChunkInstance } from "./Cast/ChunkedPanel";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import type { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeEditor } from "../Flow/NodeEditor";
+import type { NodeEditor } from "../Node/Flow/NodeEditor";
 import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
-import { NodeGraphEditorInternalMessages } from "../Meaasges/EditorInternalMessages";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
+import { NodeGraphEditorInternalMessages } from "./Meaasges/EditorInternalMessages";
+import type { NodePortEditor } from "../Node/Flow/NodePortEditor";
 
 export interface NodeGraphEditorGraphControllerContext {
   graphManager: {
@@ -151,6 +151,7 @@ export function useEditorGraphController(
   const allNodes = new Map<string, NodeEditor>();
   const allConnectors = new Map<string, NodeConnectorEditor>();
   const currentGraph = ref<NodeGraph|null>(null);
+  let graphEndHoldCb: VoidFunction|null = null;
 
   /**
    * 向编辑器视口中添加节点
@@ -313,7 +314,7 @@ export function useEditorGraphController(
     return new Promise<void>((resolve, reject) => {
       closeGraph();
       currentGraph.value = graph;
-      graph.activeEditor = context;
+      graphEndHoldCb = graph.editorHolder.hold(context);
       pushNodes(...(Array.from(graph.nodes.values()) as NodeEditor[])).then(() => {
         context.interfaceUtiles.userInterfaceNextTick(() => {
           graph.connectors.forEach((connector) => {
@@ -379,7 +380,10 @@ export function useEditorGraphController(
   function closeGraph() {
     if (currentGraph.value) {
       clearAll();
-      currentGraph.value.activeEditor = null;
+      if (graphEndHoldCb) {
+        graphEndHoldCb();
+        graphEndHoldCb = null;
+      }
       currentGraph.value = null;
     }
   }

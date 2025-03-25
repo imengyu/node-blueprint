@@ -1,10 +1,10 @@
 import type { INodeDefine, INodeEventSettings } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePackage } from "@/node-blueprint/Base/Flow/Registry/NodePackage";
 import type { INodePortDefine } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Flow/NodePortEditor";
+import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Node/Flow/NodePortEditor";
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import { h } from "vue";
-import StringEditor from "@/node-blueprint/Editor/Graph/TypeEditor/StringEditor.vue";
+import StringEditor from "@/node-blueprint/Editor/Graph/SubComponents/TypeEditor/StringEditor.vue";
 
 export default { 
   register() {

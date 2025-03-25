@@ -183,7 +183,7 @@ export default defineComponent({
 
     const modalPos = ref(new Vector2(0));
 
-    let mouseDownPos = new Vector2(0);
+    const mouseDownPos = new Vector2(0);
 
     const mouseDragHandler = createMouseDragHandler({
       onDown(e) {
@@ -218,7 +218,7 @@ export default defineComponent({
 
 
 <style lang="scss">
-@import "../Scss/Scroll.scss";
+@use "../Scss/Scroll.scss" as *;
 
 @keyframes nana-modal-out {
   0% {

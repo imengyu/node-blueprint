@@ -104,7 +104,7 @@ function loadGraphBreadcrumb(v : NodeGraph) {
     isEnd: childList.length === 0,
   });
   
-  let loop = (graph : NodeGraph) => {
+  const loop = (graph : NodeGraph) => {
     childList = graph.children.map((v1) => ({
       text: v1.name,
       graph: v1,
@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-@import '../NodeIdeDefine.scss';
+@use '../NodeIdeDefine.scss' as *;
 
 .node-graph-breadcrumb-space {
   top: $top-breadcrumb-height;

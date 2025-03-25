@@ -1,3 +1,13 @@
+@use '../Nana/Scss/Root.scss';
+@use './Scss/Node.scss';
+@use './Scss/CustomEditors.scss';
+@use './Scss/Text.scss';
+@use './Scss/Tooltip.scss';
+@use './Scss/FloatPanel.scss';
+@use './Scss/PropList.scss';
+@use './Scss/Layout.scss';
+@use './Scss/SmallWidgets.scss';
+
 :root {
   --node-graph-background: #232323;
   --node-graph-line-primary: #191919;
@@ -128,14 +138,4 @@
   }
 
 }
-
-@import '../Nana/Scss/Root.scss';
-@import './Scss/Node.scss';
-@import './Scss/CustomEditors.scss';
-@import './Scss/Text.scss';
-@import './Scss/Tooltip.scss';
-@import './Scss/FloatPanel.scss';
-@import './Scss/PropList.scss';
-@import './Scss/Layout.scss';
-@import './Scss/SmallWidgets.scss';
 

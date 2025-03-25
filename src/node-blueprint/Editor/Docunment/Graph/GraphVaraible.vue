@@ -34,7 +34,7 @@
         <GraphVaraibleParamEditor :variable="variable" />
       </PropItem>
       <PropItem title="静态">
-        <BaseCheck v-model="variable.static" />
+        <BaseCheck v-model="variable.isStatic" />
       </PropItem>
     </template> 
     <template #add>

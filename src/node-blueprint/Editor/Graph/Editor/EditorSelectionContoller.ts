@@ -4,8 +4,8 @@ import { ref, type Ref } from "vue";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { isMouseEventInNoDragControl } from "./EditorMouseHandler";
 import { createMouseDragHandler } from "./MouseHandler";
-import type { NodeEditor } from "../Flow/NodeEditor";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
+import type { NodeEditor } from "../Node/Flow/NodeEditor";
+import type { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 
 /**

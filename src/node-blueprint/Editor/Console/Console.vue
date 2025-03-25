@@ -71,10 +71,10 @@ const listScrollDebTask = new Debounce(1000, () => {
 
 function logListener(tag : string, level : LogLevel, trace: LogTraceData|null, ...contents: LogContentType[]) {
   let hasWarp = false;
-  let srcText = '';
-  let srcBlock = '';
-  let srcPort = '';
-  let srcDoc = '';
+  const srcText = '';
+  const srcBlock = '';
+  const srcPort = '';
+  const srcDoc = '';
 
   outputs.value.push({
     tag: tag,
@@ -187,5 +187,5 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-@import "Console.scss";
+@use "Console.scss" as *;
 </style>
