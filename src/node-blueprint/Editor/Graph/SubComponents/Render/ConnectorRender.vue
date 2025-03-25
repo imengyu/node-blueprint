@@ -11,10 +11,10 @@ import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
 import { onBeforeUnmount, onMounted, ref, type PropType } from 'vue';
 import type { NodeGraphEditorViewport } from '../../NodeGraphEditor';
 import type { IConnectingInfo } from '../../Editor/EditorConnectorController';
-import type { NodeConnectorEditor } from '../../Node/Flow/NodeConnectorEditor';
+import type { NodeConnectorEditor } from '../../Editor/Flow/NodeConnectorEditor';
 import type { ChunkedPanel } from '../../Editor/Cast/ChunkedPanel';
 import { ConnectorDrawer } from './ConnectorDrawer';
-import type { NodePortEditor } from '../../Node/Flow/NodePortEditor';
+import type { NodePortEditor } from '../../Editor/Flow/NodePortEditor';
 import { FPSCalculator } from './FPSCalculator';
 import RandomUtils from '@/node-blueprint/Base/Utils/RandomUtils';
 

@@ -2,7 +2,7 @@
 import { defineComponent, type PropType } from 'vue';
 import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
 import type { IKeyValueObject, ISaveableTypes } from '@/node-blueprint/Base/Utils/BaseTypes';
-import type { NodePortEditor } from './Flow/NodePortEditor';
+import type { NodePortEditor } from '../Editor/Flow/NodePortEditor';
 import type { NodeGraphEditorContext } from '../NodeGraphEditor';
 import type { NodeParamEditorCreateCallback } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
 

@@ -3,19 +3,19 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodePort, NodePortDirection } from "@/node-blueprint/Base/Flow/Node/NodePort";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import type { NodePortEditor } from "../Node/Flow/NodePortEditor";
-import type { NodeEditor } from "../Node/Flow/NodeEditor";
+import type { NodePortEditor } from "./Flow/NodePortEditor";
+import type { NodeEditor } from "./Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
-import { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
-import { createMouseDownAndUpHandler } from "./MouseHandler";
+import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
+import { createMouseDownAndUpHandler } from "./Utils/MouseHandler";
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
 import type { ICoverterNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 
 /**
  * 节点连接上下文函数

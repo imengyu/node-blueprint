@@ -2,7 +2,7 @@ import { NodeConnector, type INodeConnectorDefine } from "@/node-blueprint/Base/
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { ConnectorDrawer } from "../../SubComponents/Render/ConnectorDrawer";
-import type { ChunkInstance } from "../../Editor/Cast/ChunkedPanel";
+import type { ChunkInstance } from "../Cast/ChunkedPanel";
 import type { NodePortEditor } from "./NodePortEditor";
 import type { NodeGraphEditorViewport } from "../../NodeGraphEditor";
 import { threeOrderBezier } from "../../../Utils/BezierUtils";

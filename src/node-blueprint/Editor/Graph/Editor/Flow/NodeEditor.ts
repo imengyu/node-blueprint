@@ -1,11 +1,11 @@
 import { Node, type INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { ChunkInstance } from "../../Editor/Cast/ChunkedPanel";
+import { ChunkInstance } from "../Cast/ChunkedPanel";
 import { CreateObjectFactory, SerializableFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
-import type { NodeContextMenuItem } from "../../Editor/EditorContextMenuHandler";
+import type { NodeContextMenuItem } from "../EditorContextMenuHandler";
 import type { NodeGraphEditorContext } from "../../NodeGraphEditor";
 
 /**

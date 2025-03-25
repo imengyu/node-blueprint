@@ -109,7 +109,7 @@ import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
 import DebugStacks from './Debug/DebugStacks.vue';
 import DebugVariables from './Debug/DebugVariables.vue';
 import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import { NodeDocunmentEditor } from '../Graph/Node/Flow/NodeDocunmentEditor';
+import { NodeDocunmentEditor } from '../Graph/Editor/Flow/NodeDocunmentEditor';
 import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
 import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
@@ -119,8 +119,8 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { NodeEditor } from '../Graph/Node/Flow/NodeEditor';
-import type { NodeConnectorEditor } from '../Graph/Node/Flow/NodeConnectorEditor';
+import type { NodeEditor } from '../Graph/Editor/Flow/NodeEditor';
+import type { NodeConnectorEditor } from '../Graph/Editor/Flow/NodeConnectorEditor';
 import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import Alert from '../Nana/Modal/Alert';
 import Icon from '../Nana/Icon.vue';
@@ -133,7 +133,7 @@ import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompi
 import { printError } from '@/node-blueprint/Base/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
 import ConsoleItem from '../Console/ConsoleItem.vue';
-import type { NodePortEditor } from '../Graph/Node/Flow/NodePortEditor';
+import type { NodePortEditor } from '../Graph/Editor/Flow/NodePortEditor';
 
 const loadTestScript = true;
  

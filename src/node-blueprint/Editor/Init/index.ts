@@ -1,9 +1,9 @@
 import { initBase } from "@/node-blueprint/Base";
 import { initLib } from "@/node-blueprint/Nodes";
-import '../Graph/Node/Flow/NodeConnectorEditor';
-import '../Graph/Node/Flow/NodeDocunmentEditor';
-import '../Graph/Node/Flow/NodeEditor';
-import '../Graph/Node/Flow/NodePortEditor';
+import '../Graph/Editor/Flow/NodeConnectorEditor';
+import '../Graph/Editor/Flow/NodeDocunmentEditor';
+import '../Graph/Editor/Flow/NodeEditor';
+import '../Graph/Editor/Flow/NodePortEditor';
 import '../Graph/Editor/Viewport';
 
 export function initEditor() {

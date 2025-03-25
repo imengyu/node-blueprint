@@ -5,7 +5,7 @@ import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { INodeConnectorSaveData, INodeSaveData } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
+import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
 import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
 
 /**

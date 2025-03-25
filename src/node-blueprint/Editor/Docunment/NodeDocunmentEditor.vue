@@ -86,15 +86,15 @@ import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunme
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
 import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { NodeConnectorEditor } from '../Graph/Node/Flow/NodeConnectorEditor';
-import type { NodeEditor } from '../Graph/Node/Flow/NodeEditor';
+import type { NodeConnectorEditor } from '../Graph/Editor/Flow/NodeConnectorEditor';
+import type { NodeEditor } from '../Graph/Editor/Flow/NodeEditor';
 import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
 import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugController } from './Editor/EditorDebugController';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
 import { NodeGraphEditorInternalMessages } from '../Graph/Editor/Meaasges/EditorInternalMessages';
-import type { NodeDocunmentEditor } from '../Graph/Node/Flow/NodeDocunmentEditor';
+import type { NodeDocunmentEditor } from '../Graph/Editor/Flow/NodeDocunmentEditor';
 
 interface OpenedGraphsData {
   graph: NodeGraph,

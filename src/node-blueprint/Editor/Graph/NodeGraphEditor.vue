@@ -99,7 +99,7 @@ import BasePanels from './Panel/BasePanels.vue';
 import Spin from '../Nana/Common/Spin.vue';
 import Icon from '../Nana/Icon.vue';
 import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import { NodeConnectorEditor } from './Node/Flow/NodeConnectorEditor';
+import { NodeConnectorEditor } from './Editor/Flow/NodeConnectorEditor';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
@@ -115,7 +115,7 @@ import type { INodeGraphEditorSettings, NodeGraphEditorBaseEventListener, NodeGr
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
 import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { NodeEditor } from './Node/Flow/NodeEditor';
+import type { NodeEditor } from './Editor/Flow/NodeEditor';
 import type { ChunkedPanel } from './Editor/Cast/ChunkedPanel';
 import PositionIndicator from './SubComponents/PositionIndicator.vue';
 import { useEditorHistoryController } from './Editor/EditorHistortyController';

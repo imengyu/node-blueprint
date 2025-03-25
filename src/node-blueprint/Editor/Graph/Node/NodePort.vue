@@ -126,11 +126,11 @@ import RowView from '../../Nana/Layout/RowView.vue';
 import ColumnView from '../../Nana/Layout/ColumnView.vue';
 import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
-import type { NodePortEditor } from './Flow/NodePortEditor';
-import type { NodeEditor } from './Flow/NodeEditor';
+import type { NodePortEditor } from '../Editor/Flow/NodePortEditor';
+import type { NodeEditor } from '../Editor/Flow/NodeEditor';
 import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
 import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import { createMouseDragHandler } from '../Editor/MouseHandler';
+import { createMouseDragHandler } from '../Editor/Utils/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
 import { useComponentLoadBoundThing } from '../../Composeable/ComponentLoadBoundThing';
 

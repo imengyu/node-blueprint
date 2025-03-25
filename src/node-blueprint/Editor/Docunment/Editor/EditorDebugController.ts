@@ -5,16 +5,16 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeDocunment } from "@/node-blueprint/Base/Flow/Graph/NodeDocunment";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
 import type { NodeIdeControlContext } from "../NodeIde";
-import type { NodeDocunmentEditor } from "../../Graph/Node/Flow/NodeDocunmentEditor";
-import type { NodeEditor } from "../../Graph/Node/Flow/NodeEditor";
+import type { NodeDocunmentEditor } from "../../Graph/Editor/Flow/NodeDocunmentEditor";
+import type { NodeEditor } from "../../Graph/Editor/Flow/NodeEditor";
 import { NodeGraphCompiler } from "@/node-blueprint/Base/Compiler/NodeGraphCompiler";
 import { printError, printInfo } from "@/node-blueprint/Base/Logger/DevLog";
 import Alert from "../../Nana/Modal/Alert";
 import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnectorEditor } from "../../Graph/Node/Flow/NodeConnectorEditor";
+import type { NodeConnectorEditor } from "../../Graph/Editor/Flow/NodeConnectorEditor";
 import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
 import MapUtils from "@/node-blueprint/Base/Utils/MapUtils";
-import type { NodePortEditor } from "../../Graph/Node/Flow/NodePortEditor";
+import type { NodePortEditor } from "../../Graph/Editor/Flow/NodePortEditor";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {

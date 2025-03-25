@@ -1,7 +1,7 @@
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
 import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry, type IMouseWhellHandlerEntry } from "./MouseHandler"
+import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry, type IMouseWhellHandlerEntry } from "./Utils/MouseHandler"
 
 /**
  * 鼠标事件控制器上下文函数

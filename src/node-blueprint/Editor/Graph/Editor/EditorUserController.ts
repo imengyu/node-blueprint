@@ -1,8 +1,8 @@
 import { nextTick, ref, type Ref } from "vue";
-import { NodeEditor } from "../Node/Flow/NodeEditor";
+import { NodeEditor } from "./Flow/NodeEditor";
 import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { NodePortEditor } from "../Node/Flow/NodePortEditor";
-import { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
+import { NodePortEditor } from "./Flow/NodePortEditor";
+import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
 import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
 import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";

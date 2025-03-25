@@ -5,12 +5,12 @@ import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
 import { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnectorEditor } from "../Node/Flow/NodeConnectorEditor";
+import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
 import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeEditor } from "../Node/Flow/NodeEditor";
+import type { NodeEditor } from "./Flow/NodeEditor";
 import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeGraphEditorInternalMessages } from "./Meaasges/EditorInternalMessages";
-import type { NodePortEditor } from "../Node/Flow/NodePortEditor";
+import type { NodePortEditor } from "./Flow/NodePortEditor";
 
 export interface NodeGraphEditorGraphControllerContext {
   graphManager: {
