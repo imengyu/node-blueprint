@@ -49,6 +49,16 @@ export interface NodeGraphEditorGraphControllerContext {
      */
     getConnectorByUid(uid: string): NodeConnectorEditor|null;  
     /**
+     * 通过UID查找当前图表中的全部子图表，如果未找到，则返回null
+     * @param uid 
+     */
+    getSubGraphByUid(uid: string): NodeGraph|null;  
+    /**
+     * 通过UID查找当前文档中的全部子图表，如果未找到，则返回null
+     * @param uid 
+     */
+    getDocGraphByUid(uid: string): NodeGraph|null;  
+    /**
       * 添加节点至当前图表中
       * @param nodes 
       */
@@ -362,6 +372,16 @@ export function useEditorGraphController(
   function getConnectorByUid(uid: string): NodeConnectorEditor|null {
     return allConnectors.get(uid) || null;
   }
+  function getSubGraphByUid(uid: string): NodeGraph|null {
+    if (!currentGraph.value)
+      return null;
+    return currentGraph.value.getChildGraphByUid(uid);
+  }
+  function getDocGraphByUid(uid: string): NodeGraph|null {
+    if (!currentGraph.value)
+      return null;
+    return currentGraph.value.getParentDocunment()?.findChildGraph(uid) ?? null;
+  }
   function getNodesByUids(uids: string[]): NodeEditor[] {
     return uids
       .map(p => getNodeByUid(p))
@@ -476,6 +496,8 @@ export function useEditorGraphController(
     getNodeByUid,
     getNodePortByUid,
     getConnectorByUid,
+    getSubGraphByUid,
+    getDocGraphByUid,
     getNodesByUids,
     getConnectorsByUids,
     removeConnector,

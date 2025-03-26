@@ -89,12 +89,12 @@ export interface NodeEditorUserControllerContext {
     /**
      * 用户删除操作
      */
-    delete() : void;
+    delete() : Promise<void>;
     /**
      * 用户删除端口
      * @param nodePort 
      */
-    deletePort(nodePort: NodePortEditor) : void;
+    deletePort(nodePort: NodePortEditor) : Promise<void>;
     /**
      * 添加图表变量节点
      * @param uid 图表UID
@@ -107,52 +107,52 @@ export interface NodeEditorUserControllerContext {
      * @param port 
      * @returns 
      */
-    promotePortToVariable(port: NodePort): void; 
+    promotePortToVariable(port: NodePort): Promise<void>; 
     /**
      * 提升图表节点为函数
      * @param node 必须是调用图表节点 
      */
-    promoteSubgraphToFunction(node: Node): void;
+    promoteSubgraphToFunction(node: Node): Promise<void>;
     /**
      * 折叠当前选中的节点为函数或者子图表
      * @param to 
      */
-    collapseSelectedNodesTo(to: 'function'|'subgraph'): void;
+    collapseSelectedNodesTo(to: 'function'|'subgraph'): Promise<void>;
     /**
      * 展开子图表
      * @param node 选中节点
      */
-    expandSubgraphConfirm(node: Node): void;
+    expandSubgraphConfirm(node: Node): Promise<void>;
     /**
      * 展开子图表
      * @param subgraph 子图表
      */
-    expandSubgraph(subgraph: NodeGraph) : void;
+    expandSubgraph(subgraph: NodeGraph) : Promise<void>;
     /**
      * Deletes a dynamic port from the editor.
      * 
      * * 历史记录：此函数会保存历史记录
      * @param port - The dynamic port to delete.
      */
-    deleteDynamicPort(port: NodePort) : void;
+    deleteDynamicPort(port: NodePort) : Promise<void>;
     /**
      * 删除选中连接线
      * 
      * * 历史记录：此函数会保存历史记录
      */
-    deleteSelectedConnectors() : void;
+    deleteSelectedConnectors() : Promise<void>;
     /**
      * 删除选中的单元
      * 
      * * 历史记录：此函数会保存历史记录
      */
-    deleteSelectedNodes() : void;
+    deleteSelectedNodes() : Promise<void>;
     /**
      * 删除选中单元的连接
      * 
      * * 历史记录：此函数会保存历史记录
      */
-    unConnectSelectedNodeConnectors() : void;
+    unConnectSelectedNodeConnectors() : Promise<void>;
     /**
      * 设置选中单元断点状态
      * 
@@ -160,13 +160,13 @@ export interface NodeEditorUserControllerContext {
      * @param node 
      * @param state 
      */
-    setNodeBreakpointState(node: Node, state : NodeBreakPoint) : void;
+    setNodeBreakpointState(node: Node, state : NodeBreakPoint) : Promise<void>;
     /**
      * 设置选中单元断点状态
      * 
      * * 历史记录：此函数会保存历史记录
      */
-    setSelectedNodeBreakpointState(state : NodeBreakPoint) : void;
+    setSelectedNodeBreakpointState(state : NodeBreakPoint) : Promise<void>;
     /**
      * 拉直连接
      * 
@@ -175,7 +175,7 @@ export interface NodeEditorUserControllerContext {
      * @param connector 连接
      * @returns 
      */
-    straightenConnector(refPort : NodePortEditor, connector : NodeConnector) : void;
+    straightenConnector(refPort : NodePortEditor, connector : NodeConnector) : Promise<void>;
     /**
      * 对齐节点
      * 
@@ -183,13 +183,13 @@ export interface NodeEditorUserControllerContext {
      * @param baseNode 参考基准节点
      * @param align 对齐方向
      */
-    alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') : void;
+    alignSelectedNode(baseNode : NodeEditor, align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') : Promise<void>;
     /**
      * 为选中项创建注释
      * 
      * * 历史记录：此函数会保存历史记录
      */
-    genCommentForSelectedNode() : void;
+    genCommentForSelectedNode() : Promise<void>;
   },
 }
 
@@ -241,52 +241,51 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
     }
   }
   //下方是包装操作，无历史记录
-  function deletePort(port: NodePort) {
+  async function deletePort(port: NodePort) {
     if (port.dyamicAdd) {
       if (port.isCallingDelete) {
-        context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+        await context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
       } else {
         port.isCallingDelete = true;
         const ret = port.parent.events.onUserDeletePort?.(port.parent as NodeEditor, context, port);
         port.isCallingDelete = false;
         if (!ret) {
-          context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+          await context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
           return;
         }
-        if (ret instanceof Promise)
-          ret.then((result) => {
-            if (result)
-              context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
-          });
+        if (ret instanceof Promise) {
+          const rs = await ret; 
+          if (rs)
+            await context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+        }
         else if (ret === true)
-          context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
+          await context.userActionsManager.deleteDynamicPort(port as NodePortEditor);
       }
     }
   }
-  function deleteHandler() {
+  async function deleteHandler() {
     if(context.keyboardManager.isKeyAltDown())
-      context.userActionsManager.deleteSelectedConnectors();
+      await context.userActionsManager.deleteSelectedConnectors();
     else 
-      context.userActionsManager.deleteSelectedNodes();
+      await context.userActionsManager.deleteSelectedNodes();
   }
-  function expandSubgraphConfirm(node: Node) {
-    context.interfaceUtiles.userActionConfirm(
+  async function expandSubgraphConfirm(node: Node) {
+    const confirm = await context.interfaceUtiles.userActionConfirm(
       'warning', 
       '确定展开选中的图表/函数？如果有其它节点调用此子图表，将会失去调用'
-    ).then((confirm) => {
-      if (confirm) {
-        const callGraph = getGraphCallNodeGraph(context, node);
-        if (callGraph)
-          context.userActionsManager.expandSubgraph(callGraph);
-        else
-          context.dialogManager.showSmallTip('调用图标丢失');
-      }
-    });
+    );
+    if (confirm) {
+      const callGraph = getGraphCallNodeGraph(context, node);
+      if (callGraph)
+        context.userActionsManager.expandSubgraph(callGraph);
+      else
+        context.dialogManager.showSmallTip('调用图标丢失');
+    }
   }
 
   context.userActionsManager = {
     deleteSelectedConnectors() {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "删除选中的连接线", 
         (actionContext) => actionContext.toNodeConnectorsInfoAndCancelIfEmpty(
           context.selectionManager.getSelectConnectors()
@@ -303,7 +302,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     unConnectSelectedNodeConnectors() {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "取消选中单元的所有连接线", 
         (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
           context.selectionManager.getSelectNodes()
@@ -328,7 +327,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     deleteSelectedNodes() {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "删除选中单元", 
         (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
           context.selectionManager.getSelectNodes()
@@ -371,7 +370,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       if (!_port.dyamicAdd)
         throw new Error('The port is not a dynamic port.');
 
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "删除动态端口", 
         (actionContext) => actionContext.toNodePortInfo(_port as NodePortEditor),
         async (info, actionContext) => {
@@ -408,7 +407,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     straightenConnector(_refPort : NodePortEditor, _connector : NodeConnectorEditor) {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "拉直连接", 
         (actionContext) => ({
           refPort: actionContext.toNodePortInfo(_refPort),
@@ -456,7 +455,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     alignSelectedNode(_baseNode : NodeEditor, _align : 'left'|'top'|'right'|'bottom'|'center-x'|'center-y') {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "对齐选中节点", 
         (actionContext) => ({
           selectedNodes: actionContext.toNodesInfoAndCancelIfEmpty(context.selectionManager.getSelectNodes()),
@@ -525,7 +524,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     setSelectedNodeBreakpointState(state : NodeBreakPoint) {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "设置选中节点的断点状态", 
         (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(
           context.selectionManager.getSelectNodes()
@@ -538,7 +537,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     setNodeBreakpointState(_node: Node, _state : NodeBreakPoint) {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "设置节点的断点状态", 
         (actionContext) => ({
           node: actionContext.toNodeInfo(_node as NodeEditor),
@@ -557,7 +556,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     genCommentForSelectedNode() {  
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "为选中项创建注释", 
         (actionContext) => actionContext.toNodesInfoAndCancelIfEmpty(context.selectionManager.getSelectNodes()),
         async (info, actionContext) => {
@@ -589,7 +588,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     promotePortToVariable(_port: NodePort) {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "提升端口为变量", 
         (actionContext) => actionContext.toNodePortInfo(_port as NodePortEditor),
         async (info, actionContext) => {
@@ -742,7 +741,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     promoteSubgraphToFunction(_node: Node) {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "提升图表节点为函数",
         (actionContext) => actionContext.toNodeInfo(_node as NodeEditor),
         async (info) => {
@@ -800,13 +799,19 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
        *   删除图表调用节点
        *   删除子图表 <-- 此步骤影响其他编辑器
        */
-      const currentGraph = context.graphManager.getCurrentGraph();
 
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "展开子图表",
-        () => ({}),
+        (actionContext) => {
+
+          return {
+            subgraph: actionContext.toNodeGraphInfo
+          }
+        },
         async (info, actionContext) => {
           
+          const currentGraph = context.graphManager.getCurrentGraph();
+
           currentGraph.children.push(...subgraph.children);
           ArrayUtils.remove(currentGraph.children, subgraph);
       
@@ -876,7 +881,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     collapseSelectedNodesTo(to: 'function'|'subgraph') {
-      context.historyManager.beginUndoableAction(
+      return context.historyManager.beginUndoableAction(
         "展开子图表",
         () => ({}),
         async (info, actionContext) => {

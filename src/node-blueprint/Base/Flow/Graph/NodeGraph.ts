@@ -414,7 +414,18 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
     return baseName + Math.floor(Math.random() * 100);
   }
 
-
+  getChildGraphByUid(uid: string) : NodeGraph | null {
+    for (const element of this.children) {
+      if (element.uid === uid)
+        return element;
+    }
+    for (const element of this.children) {
+      const childResult = element.getChildGraphByUid(uid);
+      if (childResult)
+        return childResult;
+    }
+    return null;
+  }
 }
 
 /**

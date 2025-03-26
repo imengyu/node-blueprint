@@ -1,16 +1,12 @@
 import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import RandomUtils from "@/node-blueprint/Base/Utils/RandomUtils";
+import logger from "@/node-blueprint/Base/Logger/Logger";
 import { useNodeGraphEditorStaticConfig } from "../Config/ConfigManager";
+import { printError } from "@/node-blueprint/Base/Logger/DevLog";
+import { EventHandler } from "@/node-blueprint/Base/Utils/Events/EventHandler";
+import { EditorHistoryActionContext } from "./History/ActionContext";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import type { NodePortEditor } from "./Flow/NodePortEditor";
-import type { NodeEditor } from "./Flow/NodeEditor";
-import { DevAssert } from "@/node-blueprint/Base/Logger/Assert";
-import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
-import { printError } from "@/node-blueprint/Base/Logger/DevLog";
-import logger from "@/node-blueprint/Base/Logger/Logger";
-import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
-import RandomUtils from "@/node-blueprint/Base/Utils/RandomUtils";
 
 
 /**
@@ -68,10 +64,10 @@ export interface NodeEditorHistoryControllerContext {
      * 开始一个完整快照的可撤销操作
      * @returns 
      */
-    beginFullSnapshortUndoableAction: <T = void>(
-      name: string, 
-      doFn: (actionContext: EditorHistoryActionContext) => Promise<T>
-    ) => void;
+    // beginFullSnapshortUndoableAction: <T = void>(
+    //   name: string, 
+    //   doFn: (actionContext: EditorHistoryActionContext) => Promise<T>
+    // ) => void;
     /**
      * 在当前上下文中创建一个链接的历史记录，链接至主操作的上下文。
      * 
@@ -79,9 +75,11 @@ export interface NodeEditorHistoryControllerContext {
      * 副编辑器会创建一条影子历史记录，链接至主操作，当用户在副编辑器中撤销或重做时，会返回到实际的主操作中执行，
      * 同样主操作撤销或重做时，副编辑器该条影子记录也会改变撤销或重做状态。
      * 
-     * * linkingContext 用于链接两个操作,。
+     * * linkingContext 用于链接两个操作，
+     * 主要功能即：从副编辑器触发操作，将信息回传主操作，等同于主操作撤销重做。
+     * 主操作撤销重做时，同步状态至副编辑器（更改栈状态)。
      * 
-     * @param linkingContext 由主操作提供的连接上下文对象
+     * @param linkingContext 由主操作提供的连接上下文对象。
      * @param options 当前控制上下文的历史记录配置
      * @returns 
      */
@@ -132,10 +130,10 @@ type EditorHistoryStepExecuteFn<T, K> = (inputParams: K, actionContext: EditorHi
 type EditorHistoryStepUndoFn<T, K> = (lastParams: NonNullable<T>, inputParams: K, actionContext: EditorHistoryActionContext) => void;
 type EditorHistoryStepConfirmExecuteFn<K> = (inputParams: K, isRedo: boolean) => Promise<boolean>;
 type EditorHistoryStepConfirmUndoFn<T, K> = (lastParams: T, inputParams: K) => Promise<boolean>;
-type EditorHistoryStoreChangedPropertyFn<T, K> = (oldValue: K, instance: T) => K;
 
 interface EditorHistoryLinkingContext {
   linkStepId: string;
+  linkStepCursor: number;
   linkContext: NodeEditorHistoryControllerContext;
 }
 interface EditorHistoryHooks {
@@ -146,237 +144,40 @@ interface EditorHistoryHooks {
 }
 
 /**
- * 用于管理可撤销操作中的目标对象。
- * 
- * 本类用于暂时保存一些操作对象，例如节点，端口，连接线，
- * 并使用与实例无关的信息例如UID进行保存，以实现在撤销与恢复等步骤中
- * 可以引用到正确的实例。
+ * 用于控制影子历史记录的封装类
  */
-export class EditorHistoryInfoStorager<T = any> {
-  public constructor(context: NodeGraphEditorInternalContext) {
-    this.context = context;
-  }
-
-  protected readonly context: NodeGraphEditorInternalContext;
-  protected storedChangedProperties = new Map<string, {
-    value: unknown,
-    needSerialize: boolean,
-    serializeObjectName: string,
-  }>();
-  protected requestInstanceInternal : (() => T|null)|undefined;
-  private lastInstance : T|undefined;
-
-  /**
-   * 尝试获取当前信息所对应的实体。当无法获取实体时，将抛出异常。
-   * @returns 
-   */
-  requestInstance() : T {
-    const instance = this.requestInstanceInternal?.();
-    DevAssert(instance, `Failed to get node instance`);
-    this.lastInstance = instance as T;
-    return instance as T;
-  }
-  /**
-   * 存储当前管理目标对象的一个属性修改
-   * @param name 属性名称。
-   * @param newValue 新值，可以是值或者是回调函数。回调函数允许获取旧值与当前实例。
-   * @param valueSerializeScheme 用于对象值序列化时使用的预设。
-   */
-  storeChangedProperty<K>(
-    name: string, 
-    newValueOrCallbackFun: EditorHistoryStoreChangedPropertyFn<T, K>|K, 
-    valueSerializeScheme?: string
-  ) {
-    const instance = this.requestInstance() as any;
-    const oldValue = instance[name];
-    const storeData = {
-      value: null,
-      needSerialize: false,
-      serializeObjectName: '',
-    };
-
-
-    let finalNewValue;
-    if (typeof newValueOrCallbackFun === 'function')
-      finalNewValue = (newValueOrCallbackFun as EditorHistoryStoreChangedPropertyFn<T, K>)(oldValue as K, instance);
-    else
-      finalNewValue = newValueOrCallbackFun;
-
-    //对象类型的需要序列化
-    if (typeof oldValue === 'object' && oldValue instanceof SerializableObject) {
-      storeData.needSerialize = true;
-      storeData.value = oldValue.save(valueSerializeScheme);
-      storeData.serializeObjectName = oldValue.serializeClassName;
-    }
-
-    this.storedChangedProperties.set(name, storeData);
-    instance[name] = finalNewValue;
-    return this;
-  }
-  /**
-   * 更改后回调
-   * @param cb 
-   * @returns 
-   */
-  afterChanged(cb: (instance: T) => void) {
-    if (!this.lastInstance)
-      throw new Error(`lastInstance missing!`);
-    cb(this.lastInstance);
-    return this;
-  }
-  /**
-   * 恢复当前管理目标对象的一个属性修改
-   * @param name 属性名称
-   */
-  restoreChangedProperty(name: string) {
-    const instance = this.requestInstance() as any;
-    DevAssert(this.storedChangedProperties.has(name), `ChangedProperty does not contains ${name}.`)
-
-    const storeData = this.storedChangedProperties.get(name);
-    if (!storeData)
-      throw new Error();
-
-    //反序列化对象
-    if (storeData.needSerialize) {
-      storeData.value = CreateObjectFactory.createSerializableObject(
-        storeData.serializeObjectName, 
-        null, 
-        storeData.value
-      );
-    }
-
-    instance[name] = storeData.value;
-    return this;
-  }
-  /**
-   * 恢复当前管理目标对象的全部属性修改
-   */
-  restoreAllChangedProperty() {
-    for (const element of this.storedChangedProperties) 
-      this.restoreChangedProperty(element[0]);
-  }
-}
-export class EditorHistoryNodeInfo extends EditorHistoryInfoStorager<NodeEditor> {
-  private uid: string;
-  constructor(context: NodeGraphEditorInternalContext, node: NodeEditor) {
-    super(context);
-    this.uid = node.uid;
-    this.requestInstanceInternal = () => this.context.graphManager.getNodeByUid(this.uid);
-  }
-}
-export class EditorHistoryNodePortInfo extends EditorHistoryInfoStorager<NodePortEditor> {
-  private nodeUid: string;
-  private portUid: string;
-  constructor(context: NodeGraphEditorInternalContext, node: NodePortEditor) {
-    super(context);
-    this.nodeUid = node.parent.uid;
-    this.portUid = node.guid;
-    this.requestInstanceInternal = () => this.context.graphManager.getNodePortByUid(this.nodeUid, this.portUid);
-  }
-}
-export class EditorHistoryNodeConnectorInfo extends EditorHistoryInfoStorager<NodeConnectorEditor> {
-  private uid: string;
-  constructor(context: NodeGraphEditorInternalContext, node: NodeConnectorEditor) {
-    super(context);
-    this.uid = node.uid;
-    this.requestInstanceInternal = () => this.context.graphManager.getConnectorByUid(this.uid);
-  }
-}
-
-/**
- * 用于可恢复操作的上下文
- */
-export class EditorHistoryActionContext {
-  private cancel = false;
-  private disableException = false;
-  private returnData : unknown = null;
-  private readonly context: NodeGraphEditorInternalContext;
-
-  public constructor(context: NodeGraphEditorInternalContext) {
-    this.context = context;
-  }
-
-  /**
-   * 获取当前操作是否禁用异常捕获。否则将直接抛出异常至调用方
-   */
-  isDisableException() {
-    return this.disableException;
-  }
-  /**
-   * 获取当前操作在 getTargetParams 阶段是否被取消.
-   */
-  isCanceled() {
-    return this.cancel;
-  }
-  /**
-   * 标志当前操作在 getTargetParams 阶段取消，后续的执行操作不会继续。
-   */
-  cancelAction() {
-    this.cancel = true;;
-  }
-  /**
-   * 设置当前操作禁用异常捕获
-   */
-  setDisableException() {
-    this.disableException = true;;
-  }
-
-  setDoingReturn(returnData: unknown) {
-    this.returnData = returnData;
-  }
-  getExecuteReturn() {
-    return this.returnData
-  }
-
-  /**
-   * 对 `context.historyManager.beginNoUndoableRegion()` 的封装。可传入回调也可单独与 `endNoUndoableRegion` 成对使用。
-   * @param cb 不传入回调时，与 `endNoUndoableRegion` 成对使用。传入回调时，回调中自动调用区间。
-   */
-  beginNoUndoableRegion(cb?: () => void) {
-    if (cb) {
-      this.context.historyManager.beginNoUndoableRegion();
-      cb();
-      this.context.historyManager.endNoUndoableRegion();
-    } else
-      this.context.historyManager.beginNoUndoableRegion();
-  }
-  endNoUndoableRegion() {
-    this.context.historyManager.endNoUndoableRegion();
-  }
-
-  /**
-   * 转换 节点实例 为独立的信息，用于可撤销操作之间的数据传输。
-   */
-  toNodeInfo(node: NodeEditor) { return new EditorHistoryNodeInfo(this.context, node); }
-  /**
-   * 转换 连接线实例 为独立的信息，用于可撤销操作之间的数据传输。
-   */
-  toNodeConnectorInfo(connectior: NodeConnectorEditor) { return new EditorHistoryNodeConnectorInfo(this.context, connectior); }
-  /**
-   * 转换 节点端口实例 为独立的信息，用于可撤销操作之间的数据传输。
-   */
-  toNodePortInfo(port: NodePortEditor) { return new EditorHistoryNodePortInfo(this.context, port); }
-  
-  /**
-   * 转换 节点实例数组 为独立的信息，用于可撤销操作之间的数据传输。如果输入数组为空，则自动取消当前操作。
-   */
-  toNodesInfoAndCancelIfEmpty(nodes: NodeEditor[]) { return nodes.map(n => new EditorHistoryNodeInfo(this.context, n)); }
-  /**
-   * 转换 节点端口数组实例 为独立的信息，用于可撤销操作之间的数据传输。如果输入数组为空，则自动取消当前操作。
-   */
-  toNodePortsInfoAndCancelIfEmpty(ports: NodePortEditor[]) { return ports.map(n => new EditorHistoryNodePortInfo(this.context, n)); }
-  /**
-   * 转换 连接线实例数组 为独立的信息，用于可撤销操作之间的数据传输。如果输入数组为空，则自动取消当前操作。
-   */
-  toNodeConnectorsInfoAndCancelIfEmpty(connectiors: NodeConnectorEditor[]) { return connectiors.map(n => new EditorHistoryNodeConnectorInfo(this.context, n)); }
-
-  fromNodesInfo(info: EditorHistoryNodeInfo[]) { return info.map(i => i.requestInstance()) as NodeEditor[]; }
-  fromNodePortsInfo(info: EditorHistoryNodePortInfo[]) { return info.map(i => i.requestInstance()) as NodePortEditor[]; }
-  fromNodeConnectorsInfo(info: EditorHistoryNodeConnectorInfo[]) { return info.map(i => i.requestInstance()) as NodeConnectorEditor[]; }
-}
-
 class EditorHistoryShadowController {
+  constructor(context: NodeGraphEditorInternalContext, linkingContext: EditorHistoryLinkingContext) {
+    this.linkingContext = linkingContext;
+    this.context = context;
+    this.initMainStepHooks();
+  }
 
+  private linkingContext: EditorHistoryLinkingContext;
+  private context: NodeGraphEditorInternalContext;
+
+  private initMainStepHooks() {
+    const step = this.linkingContext.linkContext.historyManager.stack.getStepById(this.linkingContext.linkStepId);
+    step?.events.onExecute.addListener(undefined, () => {
+      this.context.historyManager.stack.redoStep(async () => true);
+    });
+    step?.events.onUndo.addListener(undefined, () => {
+      this.context.historyManager.stack.undoStep(async () => true);
+    });
+  }
+  private getMainHistoryManagerAndCursorCheck() {
+    const mainHistoryManager = this.linkingContext.linkContext.historyManager;
+    if (mainHistoryManager.stack.getCurrentCursor() !== this.linkingContext.linkStepCursor)
+      throw new Error("undoFromShadow: mainHistoryManager stack cursor not match");
+    return mainHistoryManager;
+  }
+
+  undoFromShadow() {
+    this.getMainHistoryManagerAndCursorCheck().undoStep();
+  }
+  redoFromShadow() {
+    this.getMainHistoryManagerAndCursorCheck().redoStep();
+  }
 }
 
 /**
@@ -408,6 +209,15 @@ class EditorHistoryStepStackManager {
   getCurrentCursor() {
     return this.historyCurrentCursor;
   }
+  getCurrentStep() {
+    return this.historySteps[this.historyCurrentCursor];
+  }
+  getStepById(id: string) {
+    return this.historySteps.find(s => s.id === id);
+  }
+  getCurrentGroupingStep() {
+    return this.historyCurrentStepGroupingStack[0];
+  }
   pushGroupingStack(step: EditorHistoryStep) {
     this.historyCurrentStepGroupingStack.push(step);
   }
@@ -422,14 +232,16 @@ class EditorHistoryStepStackManager {
       this.historySteps.splice(this.historyCurrentCursor + 1);
 
     //处理嵌套调用情况下每个步骤的组织
-    const historyCurrentStep = this.historyCurrentStepGroupingStack[0];
+    const historyCurrentStep = this.getCurrentGroupingStep();
     if (!historyCurrentStep) {
+      this.pushGroupingStack(currentStep);
+
       //先执行步骤，然后存入数据
       if (!await doStep())
         return;
 
       this.historySteps.push(currentStep);
-      this.historyCurrentStepGroupingStack.pop();
+      this.popGroupingStack();
 
       //如果步骤数量超出上限，移除最早的记录
       if (this.historySteps.length > this.maxStep)
@@ -438,9 +250,13 @@ class EditorHistoryStepStackManager {
     }
     else
     {
+      this.pushGroupingStack(currentStep);
+
       currentStep.parent = historyCurrentStep;
       if (!await doStep())
         return;
+
+      this.popGroupingStack();
 
       //嵌套子步骤的处理，直接放入上一级步骤中
       historyCurrentStep.childSteps.push(currentStep);
@@ -448,28 +264,30 @@ class EditorHistoryStepStackManager {
     this.context.graphManager.markGraphChanged();
     return currentStep.actionContext.getExecuteReturn();
   }
-  async undoStep(doStep: (step: EditorHistoryStep) => Promise<void>) {
+  async undoStep(doStep: (step: EditorHistoryStep) => Promise<boolean>) {
     if (this.historyCurrentCursor > -1) {
-      this.historyCurrentCursor--;
+      const newCursor = this.historyCurrentCursor - 1;
       this.historyIsRedoing = true;
-      const step = this.historySteps[this.historyCurrentCursor];
-      await doStep(step);
+      const step = this.historySteps[newCursor];
+      if (await doStep(step)) {
+        this.historyCurrentCursor = newCursor;
+        this.context.graphManager.markGraphChanged();
+      }
       this.historyIsRedoing = false;
-      //标记文档已更改
-      this.context.graphManager.markGraphChanged();
       return true;
     }
     return false
   }
-  async redoStep(doStep: (step: EditorHistoryStep) => Promise<void>) {
+  async redoStep(doStep: (step: EditorHistoryStep) => Promise<boolean>) {
     if (this.historyCurrentCursor < this.historySteps.length) {
-      this.historyCurrentCursor++;
+      const newCursor = this.historyCurrentCursor + 1;
       this.historyIsRedoing = true;
-      const step = this.historySteps[this.historyCurrentCursor];
-      await doStep(step);
+      const step = this.historySteps[newCursor];
+      if (await doStep(step)) {
+        this.historyCurrentCursor = newCursor;
+        this.context.graphManager.markGraphChanged();
+      }
       this.historyIsRedoing = false;
-      //标记文档已更改
-      this.context.graphManager.markGraphChanged();
       return true;
     }
     return false
@@ -540,6 +358,7 @@ export class EditorHistoryStep {
 
   private createLinkingContext() : EditorHistoryLinkingContext {
     return {
+      linkStepCursor: this.context.historyManager.stack.getCurrentCursor() + 1,
       linkStepId: this.id,
       linkContext: this.context,
     }
@@ -573,6 +392,7 @@ export class EditorHistoryStep {
     try {
       this.stack.pushGroupingStack(this);
       this.lastParams = await this._executeLoop(this, isRedo);
+      this.events.onExecute.invoke(isRedo);
     } catch (e) {
       //发生异常时，将放弃当前操作和回滚
       //回滚当前步骤的所有子步骤
@@ -602,6 +422,8 @@ export class EditorHistoryStep {
       this.context.viewPortManager.moveViewportToPosition(this.currentPosition);
 
     await this._undo();
+
+    this.events.onUndo.invoke();
   }
   _addChild(child: EditorHistoryStep) {
     this.childSteps.push(child);
@@ -618,6 +440,33 @@ export class EditorHistoryStep {
   shadowController?: EditorHistoryShadowController;
   parent: EditorHistoryStep|null = null;
   hooks: EditorHistoryHooks;
+  events = {
+    onExecute: new EventHandler<(isRedo: boolean) => void>(),
+    onUndo: new EventHandler(),
+  };
+}
+/**
+ * 用于副编辑器的影子步骤。
+ */
+class EditorHistoryShadowStep extends EditorHistoryStep {
+  constructor(
+    name: string, 
+    context: NodeGraphEditorInternalContext, 
+    stack: EditorHistoryStepStackManager,
+    linkingContext: EditorHistoryLinkingContext
+  ) {
+    super(name, {} as any, context, stack);
+    this.shadowController = new EditorHistoryShadowController(context, linkingContext);
+    this.hooks = {
+      stepExecute: async (i, a, isRedo) => {
+        if (isRedo)
+          this.shadowController?.redoFromShadow();
+      },
+      stepUndo: () => {
+        this.shadowController?.undoFromShadow();
+      },
+    }
+  }
 }
 
 /**
@@ -666,14 +515,10 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
       if (mainStep.shadowController)
         throw new Error(`Main step already has shadow controller: ${linkingContext.linkStepId} (${mainStep.name})`);
 
-    },
-    /**
-     * 完整快照操作.
-     * 首先对当前图表记录
-     */
-    beginFullSnapshortUndoableAction(name, stepExecute) {
-      //TODO: 完整快照历史记录
-      return undefined;
+      const currentStep = new EditorHistoryShadowStep(options.name, context, stackManager, linkingContext);
+      stackManager.pushStep(currentStep, async () => {
+        return true;
+      })
     },
     beginNoUndoableRegion() {
       stackManager.historyIsDisabled = true;
@@ -684,11 +529,13 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
     async undoStep() {
       return stackManager.undoStep(async (step) => {
         await step._undo();
+        return step.shadowController === undefined;
       });
     },
     async redoStep() {
       return stackManager.redoStep(async (step) => {
         await step._execute(true);
+        return step.shadowController === undefined;
       });
     },
     async clear() {
