@@ -793,6 +793,13 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
       );
     },
     expandSubgraph(subgraph: NodeGraph) {
+      /**
+       * 触发展开图表
+       *   添加节点到图表 ... n
+       *   链接图表调用节点
+       *   删除图表调用节点
+       *   删除子图表 <-- 此步骤影响其他编辑器
+       */
       const currentGraph = context.graphManager.getCurrentGraph();
 
       context.historyManager.beginUndoableAction(
