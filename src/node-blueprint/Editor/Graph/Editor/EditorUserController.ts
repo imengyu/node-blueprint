@@ -7,7 +7,7 @@ import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
 import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
 import { NodeGraph, type INodeConnectorSaveData, type INodeGraphDefine, type INodeSaveData } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import { NodeGraphEditorInternalMessages } from "./Meaasges/EditorInternalMessages";
+import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";
 import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
 import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";

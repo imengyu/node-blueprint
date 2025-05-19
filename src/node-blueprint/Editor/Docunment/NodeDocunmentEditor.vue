@@ -93,7 +93,7 @@ import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code
 import type { EditorDebugController } from './Editor/EditorDebugController';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
-import { NodeGraphEditorInternalMessages } from '../Graph/Editor/Meaasges/EditorInternalMessages';
+import { NodeGraphEditorInternalMessages } from '../Graph/Editor/Messages/EditorInternalMessages';
 import type { NodeDocunmentEditor } from '../Graph/Editor/Flow/NodeDocunmentEditor';
 
 interface OpenedGraphsData {
