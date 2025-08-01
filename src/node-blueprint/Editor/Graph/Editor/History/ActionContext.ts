@@ -43,6 +43,10 @@ export class EditorHistoryActionContext {
     this.disableException = true;;
   }
 
+  /**
+   * 设置当前操作的返回值，用于 `beginUndoableAction` 中整体函数的返回值。
+   * @param returnData 
+   */
   setDoingReturn(returnData: unknown) {
     this.returnData = returnData;
   }
@@ -62,6 +66,9 @@ export class EditorHistoryActionContext {
     } else
       this.context.historyManager.beginNoUndoableRegion();
   }
+  /**
+   * 与 `beginNoUndoableRegion` 成对使用。
+   */
   endNoUndoableRegion() {
     this.context.historyManager.endNoUndoableRegion();
   }

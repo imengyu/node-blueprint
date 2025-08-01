@@ -50,7 +50,7 @@ export interface NodeEditorHistoryControllerContext {
      * @param stepUndo 反向执行函数，例如撤销，参数来源于第一次执行 stepExecute 返回。
      * @param confirmExecute 正向执行函数，可以弹窗用于向用户确认是否执行反向执行函数。返回 false 可以终止执行撤销操作。注：仅在非嵌套操作的顶层有效。
      * @param confirmUndo 反向执行函数的确认函数，可以弹窗用于向用户确认是否执行反向执行函数。返回 false 可以终止执行重做操作。注：仅在非嵌套操作的顶层有效。
-     * @returns 返回 stepExecute 中的返回值
+     * @returns 返回 actionContext.setDoingReturn 设置的返回值
      */
     beginUndoableAction: <T, K>(
       name: string, 
