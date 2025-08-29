@@ -1,0 +1,51 @@
+$font-weights : (
+  100: 100,
+  200: 200,
+  300: 300,
+  400: 400,
+  500: 500,
+  600: 600,
+  700: 700,
+  800: 800,
+);
+$font-sizes : (
+  mini: 11px,
+  small: 12px,
+  normal: 13.5px,
+  large: 15px,
+  larger: 18px,
+  title: 16px,
+  title-large: 20px,
+  title-larger: 24px,
+);
+$component-sizes : (
+  mini: var(--nana-size-6),
+  small: var(--nana-size-7),
+  normal: var(--nana-size-8),
+  large: var(--nana-size-9),
+  larger: var(--nana-size-11),
+);
+
+:root {
+  @each $key, $value in $font-weights {
+    --nana-font-weight-#{$key}: #{$value};
+  }
+  @each $key, $value in $font-sizes {
+    --nana-font-size-#{$key}: #{$value};
+  }
+
+  @for $n from 1 through 50 {
+    --nana-size-#{$n} : $n * 4px;
+  }
+}
+
+@each $key, $value in $font-weights {
+  .nana-font-weight-#{$key} {
+    font-weight: #{$value};
+  }
+}
+@each $key, $value in $font-sizes {
+  .nana-font-size-#{$key} {
+    font-weight: #{$value};
+  }
+}

@@ -1,0 +1,140 @@
+
+.prop-list {
+  position: relative;
+
+  .prop-list {
+    margin-left: 10px;
+  }
+
+  .prop-list-item {
+    position: relative;
+    padding: 4px 10px;
+    color:  var(--mx-editor-text-color);
+    background-color: var(--mx-editor-list-item-background-color);
+    display: flex;
+
+    > .expand-arrow {
+      cursor: pointer;
+      fill: currentColor;
+      margin-right: 10px;
+    }
+    
+    &.horizontal {
+      flex-direction: row;
+      align-items: center;
+    }
+    &.vertical {
+      flex-direction: column;
+    }
+
+    &.drop-up::after, &.drop-down::after {
+      position: absolute;
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--mx-editor-border-color-light);
+    }
+    &.drop-down::after {
+      top: unset;
+      bottom: 0;
+    }
+
+    .prop-delete {
+      display: inline-block;
+      position: absolute;
+      padding: 1px 2px;
+      fill: var(--mx-editor-red-text-color);
+      right: 3px;
+      bottom: 3px;
+      border-radius: 4px;
+      background-color: var(--mx-editor-background-third-color);
+      cursor: pointer;
+      user-select: none;
+      z-index: 10;
+
+      &:hover {
+        fill: var(--mx-editor-red-light-text-color);
+      }
+    }
+    .prop-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      border-bottom: none;
+
+      > span {
+        width: 30%;
+        text-align: right;
+      }
+
+      textarea {
+        resize: vertical;
+      }
+
+    }
+
+    .prop-row-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 5px;
+    }
+
+    &.add-button {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      text-align: center;
+      font-size: 12px;
+      color: var(--mx-editor-text-color);
+
+      svg {
+        fill: var(--mx-editor-text-color);
+        margin-right: 6px;
+      }
+    }
+    &.empty-text {
+      flex-direction: row;
+      justify-content: center;
+      text-align: center;
+      font-size: 12px;
+      user-select: none;
+    }
+
+    &:hover {
+      background-color: var(--mx-editor-list-item-hover-color);
+    }
+  }
+
+  &.small {
+    .prop-list-item {
+      padding: 1px 10px;
+    }
+  }
+  
+}
+.prop-list-dragger {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  margin-top: -18px;
+  cursor: move;
+  z-index: 1;
+  width: 45px;
+  height: 45px;
+  background-position: center;
+  background-size: 45px;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  svg {
+    margin-left: 4px;
+    fill: var(--mx-editor-text-color);
+  }
+}

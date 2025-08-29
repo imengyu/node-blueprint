@@ -1,0 +1,133 @@
+{
+  "primary": {
+    "name": "primarySideBar",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": [
+      {
+        "name": "ExplorerGroup",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "DebugGroup",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": [
+          {
+            "name": "DebugVariables",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "DebugStacks",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "DebugBreakPoints",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "secondary": {
+    "name": "secondarySideBar",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": [
+      {
+        "name": "GraphVariableChildrenGroup",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": [
+          {
+            "name": "GraphChildrenProps",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "GraphVariableProps",
+            "open": true,
+            "resizeable": false,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "NodeProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      },
+      {
+        "name": "GraphProps",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      }
+    ]
+  },
+  "bottom": {
+    "name": "bottomPanel",
+    "open": false,
+    "resizeable": false,
+    "visible": true,
+    "showBadge": true,
+    "size": 0,
+    "children": [
+      {
+        "name": "Console",
+        "open": false,
+        "resizeable": false,
+        "visible": true,
+        "showBadge": true,
+        "size": 0,
+        "children": []
+      }
+    ]
+  }
+}

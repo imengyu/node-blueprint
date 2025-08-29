@@ -1,0 +1,140 @@
+//编辑器样式
+.node-custom-editor {
+  //输入框
+  .nana-input,
+  .node-simple-box,
+  input[type="text"],
+  input[type="password"], 
+  textarea, 
+  select {
+    &:not(.nana-input-inner) {
+      padding: 2px 5px;
+      border: 1px solid transparent;
+      background-color: var(--mx-editor-clickable-background-color);
+      color: var(--mx-editor-text-color);
+      outline: none;
+      border: none;
+      border-radius: 6px;
+      vertical-align: middle;    
+      font-family: 'Microsoft Yahei', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      font-size: 12px;
+
+      svg {
+        fill: var(--mx-editor-text-color);
+      }
+
+      &::-webkit-input-placeholder {
+        color: var(--mx-editor-placeholder-text-color);
+      }
+
+      &:disabled {
+        background-color: var(--mx-editor-clickable-disabled-color);
+        color: var(--mx-editor-drak-text-color);
+
+        svg {
+          fill: var(--mx-editor-drak-text-color);
+        }
+        input {
+          color: var(--mx-editor-drak-text-color);
+        }
+
+        &:hover , &:active {
+          background-color: var(--mx-editor-clickable-disabled-color);
+          color: var(--mx-editor-clickable-hover-color);
+        }
+      }
+
+      &:hover , &:active {
+        background-color: var(--mx-editor-clickable-hover-color);
+        color: var(--mx-editor-hover-text-color);
+
+        input {
+          color: var(--mx-editor-hover-text-color);
+        }
+        svg {
+          fill: var(--mx-editor-hover-text-color);
+        }
+      }
+
+      &.input-border {
+        outline: 2px solid transparent;
+      }
+      &.input-error {
+        outline: 2px solid var(--mx-editor-red-light-text-color)!important;
+      }
+      &.input-warn {
+        outline: 2px solid var(--mx-editor-yellow-light-text-color)!important;
+      }
+    }
+  }
+
+  //复选框
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    border-radius: 3px;
+    background-color: var(--mx-editor-clickable-background-color);
+  }
+
+  //结束图标
+  .end-icon {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 3px 0 0 0;
+  }
+}
+
+//选择框
+.node-checkbox {
+  vertical-align: middle;
+  display: inline-block;
+  position: relative;
+  background-color: transparent;
+  overflow: hidden;
+  border: 2px solid var(--mx-editor-clickable-background-color);
+  width: 18px;
+  height: 18px;
+  border-radius: var(--mx-editor-border-radius-clickable);
+  overflow: hidden;
+  background-color: var(--mx-editor-outline-clickable-color);
+
+  .checker {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: 16px;
+    height: 16px;
+  }
+  svg {
+    fill: var(--mx-editor-text-color);
+  }
+
+  &.small {
+    width: 14px;
+    height: 14px;
+
+    .checker {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 10px;
+      height: 10px;
+    }
+  }
+
+  &[disabled=disabled].svg {
+    background-color: var(--mx-editor-clickable-disabled-color);
+    color: var(--mx-editor-light-text-color);
+
+    &:hover {
+      background-color:var(--mx-editor-clickable-disabled-color);
+    }
+  }
+  &:hover {
+    background-color: var(--mx-editor-clickable-hover-2-color);
+  }
+  &:active, &:hover {
+    border-color: var(--mx-editor-outline-active-color);
+  }
+}

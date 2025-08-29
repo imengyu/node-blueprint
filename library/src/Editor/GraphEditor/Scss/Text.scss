@@ -1,0 +1,40 @@
+
+.text-danger {
+  color: var(--mx-editor-red-text-color);
+}
+.text-warning {
+  color: var(--mx-editor-yellow-text-color);
+}
+.text-secondary {
+  fill: var(--mx-editor-drak-text-color);
+}
+.text-success {
+  color: var(--mx-editor-green-text-color);
+}
+.text-white {
+  color: var(--mx-editor-text-color);
+}
+.text-info {
+  color: var(--mx-editor-blue-text-color);
+}
+
+svg {
+  &.text-info {
+    fill: var(--mx-editor-blue-text-color);
+  }
+  &.text-white {
+    color: var(--mx-editor-text-color);
+  }
+  &.text-success {
+    fill: var(--mx-editor-green-text-color);
+  }
+  &.text-danger {
+    fill: var(--mx-editor-red-text-color);
+  }
+  &.text-warning {
+    fill: var(--mx-editor-yellow-text-color);
+  }
+  &.text-secondary {
+    fill: var(--mx-editor-drak-text-color);
+  }
+}
