@@ -1,4 +1,4 @@
-import type { INodeCompileCallGenerator, INodeCompilePackage } from "@/node-blueprint/Base/Compiler/NodeCompileSettings";
+import type { INodeCompileCallGenerator, INodeCompilePackage } from "@/Core/Compiler/NodeCompileSettings";
 import LibBasicHelperCode from "./LibBasic.js?raw";
 import LibDebugHelperCode from "./LibDebug.js?raw";
 import { builders as b } from "ast-types";

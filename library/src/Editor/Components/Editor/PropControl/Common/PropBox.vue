@@ -11,9 +11,9 @@
 
 <script setup lang="ts">
 import { provide, ref, type Ref } from 'vue';
-import MathUtils from '@/node-blueprint/Base/Utils/MathUtils';
-import Input from '@/node-blueprint/Editor/Nana/Input/Input.vue';
-import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
+import { limitNumber } from '@/Common/Base/Math';
+import Input from '../../../Shared/Input/Input.vue';
+import Icon from '../../../Shared/Icon.vue';
 
 export interface PropBoxContext {
   gridSize: Ref<number>,
@@ -43,7 +43,7 @@ provide<PropBoxContext>('PropBoxContext', {
   gridSize,
   filterProp,
   updateGridSize(size: number) {
-    gridSize.value = MathUtils.limitNumber(size, props.gridMinWidth, props.gridMaxWidth);
+    gridSize.value = limitNumber(size, props.gridMinWidth, props.gridMaxWidth);
   },
 });
 

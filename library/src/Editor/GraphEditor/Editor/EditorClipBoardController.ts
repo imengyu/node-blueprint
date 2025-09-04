@@ -1,12 +1,12 @@
 import { printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { INodeConnectorSaveData, INodeSaveData } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
+import { Rect } from "@/Common/Base/Rect";
+import { Vector2 } from "@/Common/Base/Vector2";
+import type { Node } from "@/Core/Node/Node";
+import type { INodeConnectorSaveData, INodeSaveData } from "@/Core/Graph/NodeGraph";
 import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import type { IKeyValueObject } from "@/node-blueprint/Base/Utils/BaseTypes";
+import type { IKeyValueObject } from "@/Common/BaseTypes";
 
 /**
  * 编辑器的剪贴板控制器上下文函数

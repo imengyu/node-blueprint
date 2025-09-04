@@ -7,8 +7,8 @@
 </template>
 
 <script setup lang="ts">
-import { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
-import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import { NodeDocunment } from '@/Core/Graph/NodeDocunment';
+import { NodeGraph } from '@/Core/Graph/NodeGraph';
 import NodeGraphEditor from '@/node-blueprint/Editor/Graph/NodeGraphEditor.vue';
 import type { INodeGraphEditorSettings, NodeGraphEditorInternalContext } from '@/node-blueprint/Editor/Graph/NodeGraphEditor';
 

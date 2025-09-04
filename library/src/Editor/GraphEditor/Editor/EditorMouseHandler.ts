@@ -1,5 +1,5 @@
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
+import { Vector2 } from "@/Common/Base/Vector2";
+import HtmlUtils from "@/Common/HtmlUtils";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry, type IMouseWhellHandlerEntry } from "./Utils/MouseHandler"
 

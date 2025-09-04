@@ -44,19 +44,19 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import PropItem from '../../Components/PropList/PropItem.vue';
-import PropList from '../../Components/PropList/PropList.vue';
-import Icon from '../../Nana/Icon.vue';
-import SmallButton from '../../Components/SmallButton.vue';
+import BaseNodes from '@/Nodes/Lib/BaseNodes';
+import PropItem from '@/Editor/Components/Editor/PropList/PropItem.vue';
+import PropList from '@/Editor/Components/Editor/PropList/PropList.vue';
+import NodeParamTypePicker from '@/Editor/Components/Editor/PropControl/Components/NodeParamTypePicker.vue';
+import PropEditTextItem from '@/Editor/Components/Editor/PropList/PropEditTextItem.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 import GraphPortParamEditor from './GraphPortParamEditor.vue';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { INodePortDefine } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
+import type { INodePortDefine } from '@/Core/Node/NodePort';
+import { NodeParamType } from '@/Core/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
-import NodeParamTypePicker from '../../Components/PropControl/Components/NodeParamTypePicker.vue';
-import PropEditTextItem from '../../Components/PropList/PropEditTextItem.vue';
+import { downData, reInsertToArray, upData } from '@/Common/ArrayTools';
 
 export interface GraphPortListRef {
   onAddPort(): void;
@@ -107,7 +107,7 @@ function onDeletPort(port: INodePortDefine) {
     return;
   context.interfaceUtiles.userActionConfirm('warning', '是否确认删除此端口？将会断开与之相关的连接').then((confirm) => {
     if (confirm) {
-      ArrayUtils.remove(ports.value, port);
+      ports.value.remove(port);
       notifyPortChange();
     }
   });
@@ -115,14 +115,14 @@ function onDeletPort(port: INodePortDefine) {
 function onMovePort(port: INodePortDefine, down: boolean) {
   const index = ports.value.indexOf(port) ;
   if (down) {
-    ArrayUtils.downData(ports.value, index);
+    downData(ports.value, index);
   } else {
-    ArrayUtils.upData(ports.value, index);
+    upData(ports.value, index);
   }
   notifyPortChange();
 }
 function onChildDragSort(dragItem: INodePortDefine, targetIndex: number) {
-  ArrayUtils.reInsertToArray(ports.value, dragItem, targetIndex);
+  reInsertToArray(ports.value, dragItem, targetIndex);
 }
 
 defineExpose<GraphPortListRef>({

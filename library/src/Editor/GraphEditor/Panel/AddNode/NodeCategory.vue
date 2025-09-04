@@ -57,9 +57,9 @@
 
 <script lang="ts" setup>
 import { inject, type PropType, type Ref } from 'vue'
-import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import type { INodeDefine } from '@/Core/Node/Node';
+import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
+import HtmlUtils from '@/Common/HtmlUtils';
 import CollapseItem from '../../../Components/List/CollapseItem.vue';
 import DefaultLogo from '../../../Images/BlockIcon/function_static.svg';
 import SmallButton from '../../../Components//SmallButton.vue';

@@ -1,12 +1,12 @@
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Rect } from "@/Common/Base/Rect";
+import { Vector2 } from "@/Common/Base/Vector2";
 import { ref, type Ref } from "vue";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { isMouseEventInNoDragControl } from "./EditorMouseHandler";
 import { createMouseDragHandler } from "./Utils/MouseHandler";
 import type { NodeEditor } from "./Flow/NodeEditor";
 import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import ArrayUtils from "@/Common/ArrayUtils";
 
 /**
  * Selection management

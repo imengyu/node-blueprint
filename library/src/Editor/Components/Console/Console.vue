@@ -1,6 +1,6 @@
 <template>
   <div class="console-base">
-    <CodeLayoutScrollbar ref="list" scroll="vertical">
+    <ScrollRect ref="list" scroll="vertical">
       <div class="list">
         <ConsoleItem 
           v-for="(i, k) in outputs" 
@@ -16,20 +16,19 @@
           @goSrc="onGoRef(i.srcDoc as string, i.srcBlock as string, i.srcPort as string)" 
         />
       </div>
-    </CodeLayoutScrollbar>
+    </ScrollRect>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, type PropType, onBeforeUnmount, watch, h } from 'vue'
-import Icon from "../Nana/Icon.vue";
+import { onMounted, ref, type PropType, onBeforeUnmount, watch, h } from 'vue';
+import { Debounce } from '@/Common/Timer/Debounce';
+import Icon from "../Shared/Icon.vue";
 import ConsoleItem from './ConsoleItem.vue';
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import logger from '@/node-blueprint/Base/Logger/Logger';
-import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
-import type { LogLevel, LogContentType, LogTraceData } from '@/node-blueprint/Base/Logger/Logger';
-import type { CodeLayoutScrollbarInstance } from 'vue-code-layout/lib/Components/CodeLayoutScrollbar.vue';
-import { Debounce } from '@/node-blueprint/Base/Utils/Timer/Debounce';
+import logger from '@/Common/Logger/Logger';
+import type { LogLevel, LogContentType, LogTraceData } from '@/Common/Logger/Logger';
+import type { CodeLayoutPanelInternal } from 'vue-code-layout';
+import { ScrollRect, type ScrollRectInstance } from '@imengyu/vue-scroll-rect';
 
 export interface LogItem {
   tag: string,
@@ -62,7 +61,7 @@ const errorCount = ref(0);
 const filterWarning = ref(false);
 const filterError = ref(false);
 const autoScroll = ref(true);
-const list = ref<CodeLayoutScrollbarInstance | null>(null);
+const list = ref<ScrollRectInstance | null>(null);
 const listScrollDebTask = new Debounce(1000, () => {
   const container = list.value?.getScrollContainer();
   if (container)
@@ -120,7 +119,7 @@ function logListener(tag : string, level : LogLevel, trace: LogTraceData|null, .
 function clearLogs() {
   waringCount.value = 0;
   errorCount.value = 0;
-  ArrayUtils.clear(outputs.value);
+  outputs.value.clear();
 }
 function showItem(item : LogItem) {
   if(filterWarning.value)

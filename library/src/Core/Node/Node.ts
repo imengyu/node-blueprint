@@ -10,7 +10,6 @@ import type { IKeyValueObject, ISaveableTypes } from "@/Common/Base/BaseTypes";
 import type { NodeGraph } from "../Graph/NodeGraph";
 import type { VNode } from "vue";
 import type { NodeConnector } from "./NodeConnector";
-import type { PropControlItem } from "@/Editor/DocunmentEditor/Prop/PropDefine";
 import type { NodePortEditor } from "../Editor/NodePortEditor";
 import type { NodeEditor } from "../Editor/NodeEditor";
 import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
@@ -18,6 +17,7 @@ import type { NodeContextMenuItem } from "@/Editor/GraphEditor/Editor/EditorCont
 import type { INodeCompileSettings } from "../Compiler/NodeCompileSettings";
 import { genNonDuplicateIDHEX } from "@/Common/Random";
 import { removeItemFromArrayBy } from "@/Common/ArrayTools";
+import type { PropControlItem } from "@/Editor/Components/Editor/PropControl/PropDefine";
 
 /**
  * 节点

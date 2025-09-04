@@ -38,15 +38,14 @@
 
 <script setup lang="ts">
 import { ref, type PropType } from 'vue';
+import { Vector2 } from '@/Common/Base/Vector2';
 import NodeParamTypeRender from '../../Small/NodeParamTypeRender.vue';
 import NodeParamIconRender from '../../Small/NodeParamIconRender.vue';
 import NodeParamSetTypeChoose from '../../Small/NodeParamSetTypeChoose.vue';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import { injectNodeGraphEditorContextInEditorOrIDE } from '@/node-blueprint/Editor/Docunment/NodeIde';
-import { NodeParamTypeRegistry } from '@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry';
-import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import HtmlUtils from '@/Common/Html';
+import { NodeParamType } from '@/Core/Type/NodeParamType';
+import { injectNodeGraphEditorContextInEditorOrIDE } from '@/Editor/DocunmentEditor/NodeIde';
+import { NodeParamTypeRegistry } from '@/Core/Type/NodeParamTypeRegistry';
 
 const emit = defineEmits([ 'update:modelValue' ])
 const prop = defineProps({

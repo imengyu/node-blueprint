@@ -1,4 +1,4 @@
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodeGraph } from "@/Core/Graph/NodeGraph";
 import type { NodeGraphEditorInternalContext } from "../../NodeGraphEditor";
 import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
 import type { NodeEditor } from "../Flow/NodeEditor";

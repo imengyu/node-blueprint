@@ -10,8 +10,8 @@ import BaseSelectVue from "./Components/BaseSelect.vue";
 import BaseTextAreaVue from "./Components/BaseTextArea.vue";
 import BaseText from "./Components/BaseText.vue";
 import { PropControlItemRegistry, type PropControlItemRegistryItem } from "./PropControl";
-import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
 import { registerOtherComponents } from "./Components";
+import type { PropControlItem } from "./PropDefine";
 
 let registeredInternal = false;
 

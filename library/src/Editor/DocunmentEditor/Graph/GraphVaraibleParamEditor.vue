@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { IKeyValueObject, ISaveableTypes } from '@/node-blueprint/Base/Utils/BaseTypes';
-import type { NodeVariable } from '@/node-blueprint/Base/Flow/Graph/NodeVariable';
+import type { IKeyValueObject, ISaveableTypes } from '@/Common/Base/BaseTypes';
+import type { NodeVariable } from '@/Core/Graph/NodeVariable';
 
 export default defineComponent({
   props: {

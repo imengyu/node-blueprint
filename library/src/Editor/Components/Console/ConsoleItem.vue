@@ -52,8 +52,8 @@
 import { type PropType } from 'vue'
 import ConsoleRefShower from "./ConsoleRefShower.vue";
 import ConsoleObjectShower from "./ConsoleObjectShower.vue";
-import Icon from "../Nana/Icon.vue";
-import type { LogContentType, LogLevel } from '@/node-blueprint/Base/Logger/Logger';
+import Icon from "../Shared/Icon.vue";
+import type { LogContentType, LogLevel } from '@/Common/Logger/Logger';
 import type { LogSpeicalType } from './Console.vue';
 
 defineProps({

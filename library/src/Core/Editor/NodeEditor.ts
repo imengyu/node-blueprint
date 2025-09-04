@@ -5,9 +5,9 @@ import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/
 import { ChunkInstance } from "@/Editor/Components/Editor/Render/ChunkedPanel";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 import type { NodeContextMenuItem } from "@/Editor/GraphEditor/Editor/EditorContextMenuHandler";
-import type { PropControlItem } from "@/Editor/DocunmentEditor/Prop/PropDefine";
 import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
 import type { NodePortEditor } from "./NodePortEditor";
+import type { PropControlItem } from "@/Editor/Components/Editor/PropControl/PropDefine";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类

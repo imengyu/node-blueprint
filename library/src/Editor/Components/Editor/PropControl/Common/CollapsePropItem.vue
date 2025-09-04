@@ -17,9 +17,9 @@
 
 <script lang="ts" setup>
 import { computed, inject, ref } from 'vue';
+import { createMouseDragHandler } from '@/Editor/GraphEditor/Editor/Utils/MouseHandler';
 import type { PropBoxContext } from './PropBox.vue';
-import { createMouseDragHandler } from '@/node-blueprint/Editor/Graph/Editor/MouseHandler';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import HtmlUtils from '@/Common/Html';
 
 const propItem = ref<HTMLElement>();
 

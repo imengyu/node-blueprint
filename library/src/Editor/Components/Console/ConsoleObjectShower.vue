@@ -38,10 +38,10 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue'
-import type { ISaveableTypes } from '../../Base/Utils/BaseTypes';
+import type { ISaveableTypes } from '@/Common/Base/BaseTypes';
 import ConsoleRefShower from './ConsoleRefShower.vue'
-import Icon from '../Nana/Icon.vue';
-import logger from '@/node-blueprint/Base/Logger/Logger';
+import Icon from '../Shared/Icon.vue';
+import logger from '@/Common/Logger/Logger';
 
 defineEmits([ 'onGoRef' ]);
 const props = defineProps({

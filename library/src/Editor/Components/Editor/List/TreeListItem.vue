@@ -56,7 +56,7 @@ import {
   type TreeListContext, type ITreeListItem,type ITreeListDescItem,
   TreeListContextKey, TreeListDefaultDesc
 } from './TreeList';
-import Icon from '../../Nana/Icon.vue';
+import Icon from '../../Shared/Icon.vue';
 
 const props = defineProps({
   item: {

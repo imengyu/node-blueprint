@@ -41,14 +41,14 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, type PropType } from 'vue';
 import { type CodeLayoutPanelInternal } from 'vue-code-layout';
-import Icon from '../../Nana/Icon.vue';
-import SmallButton from '../../Components/SmallButton.vue';
-import ConsoleItem from '../../Console/ConsoleItem.vue';
-import TreeList from '../../Components/List/TreeList.vue';
-import type { Node } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { EditorDebugRunnerStackInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
+import ConsoleItem from '@/Editor/Components/Console/ConsoleItem.vue';
+import TreeList from '@/Editor/Components/Editor/List/TreeList.vue';
+import type { Node } from '@/Core/Node/Node';
+import type { EditorDebugRunnerStackInfo } from '@/Core/Debugger/EditorDebugRunner';
 import type { EditorDebugController } from '../Editor/EditorDebugController';
-import type { ITreeListDescItem } from '../../Components/List/TreeList';
+import type { ITreeListDescItem } from '@/Editor/Components/Editor/List/TreeList';
 
 const props = defineProps({
   panel: {

@@ -1,6 +1,6 @@
-import { NodeGraphCompiler } from "../Base/Compiler/NodeGraphCompiler";
-import { NodeRegistry } from "../Base/Flow/Registry/NodeRegistry";
+import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
 import { LibJsCompilerData } from "./Compiler/LibJs/LibJs";
+import { NodeGraphCompiler } from "@/Core/Compiler/NodeGraphCompiler";
 import BaseNodes from "./Lib/BaseNodes";
 import ControlNodees from "./Lib/ControlNodes";
 import LogicNodes from "./Lib/LogicNodes";

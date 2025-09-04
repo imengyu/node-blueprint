@@ -14,7 +14,7 @@
 
 <script lang="ts" setup>
 import type { PropType } from 'vue';
-import Icon from '../../../Nana/Icon.vue';
+import Icon from '../../../Shared/Icon.vue';
 
 defineProps({
   modelValue: {

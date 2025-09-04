@@ -1,9 +1,9 @@
 import { onMounted, ref, watch } from "vue";
 import { NodeGraphEditorViewport, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { ChunkedPanel } from "./Cast/ChunkedPanel";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
+import { Rect } from "@/Common/Base/Rect";
 import type { NodeEditor } from "./Flow/NodeEditor";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Vector2 } from "@/Common/Base/Vector2";
 import { NodePortEditor } from "./Flow/NodePortEditor";
 
 export interface NodeEditorViewPortControllerContext {

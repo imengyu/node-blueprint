@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { NodeParamType } from '../../../Base/Flow/Type/NodeParamType';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
 import NodeParamIconRender from './NodeParamIconRender.vue';
 
 defineProps({

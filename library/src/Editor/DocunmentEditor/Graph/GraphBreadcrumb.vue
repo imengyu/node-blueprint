@@ -32,15 +32,14 @@
 
 <script lang="ts" setup>
 import { toRefs, watch, type PropType, ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
-import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
-import { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import Icon from '../../Nana/Icon.vue';
+import { NodeGraph } from '@/Core/Graph/NodeGraph';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 import ContextMenuGlobal, { type MenuItem } from '@imengyu/vue3-context-menu';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import HtmlUtils from '@/Common/Html';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
-import type { NodeGraphEditorBaseEventListener } from '../../Graph/NodeGraphEditor';
-import SmallButton from '../../Components/SmallButton.vue';
+import type { NodeDocunment } from '@/Core/Graph/NodeDocunment';
+import type { NodeGraphEditorBaseEventListener } from '@/Editor/GraphEditor/NodeGraphEditor';
 
 interface GraphBreadcrumb {
   text: string,
@@ -87,7 +86,7 @@ watch(currentGraph, (v) => {
 });
 
 function loadGraphBreadcrumb(v : NodeGraph) {
-  ArrayUtils.clear(graphBreadcrumb.value);
+  graphBreadcrumb.value.clear();
   if (v === null || currentDocunment.value === null) 
     return;
 

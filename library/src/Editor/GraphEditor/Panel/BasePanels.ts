@@ -1,6 +1,6 @@
-import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
-import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
+import type { Vector2 } from '@/Common/Base/Vector2';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
+import type { NodePortDirection } from '@/Core/Node/NodePort';
 import type { AlertProps } from '../../Nana/Modal/Alert';
 
 export type ChooseTypePanelCallback = undefined;

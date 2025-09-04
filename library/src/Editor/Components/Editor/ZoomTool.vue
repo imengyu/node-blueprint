@@ -18,8 +18,9 @@
 
 <script setup lang="ts">
 import { ref, type PropType, inject, watch } from "vue";
-import Icon from "../../Nana/Icon.vue";
-import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from "../NodeGraphEditor";
+import Icon from "../Shared/Icon.vue";
+import type { NodeGraphEditorViewport } from "@/Core/Editor/NodeGraphEditorViewport";
+import type { NodeGraphEditorInternalContext } from "@/Editor/GraphEditor/NodeGraphEditor";
 
 const emit = defineEmits([ 'zoomUpdate' ]);
 const props = defineProps({

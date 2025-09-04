@@ -58,3 +58,11 @@ export function stringIsNumber(val : string) : boolean {
 export function stringIsInteger(val : string) : boolean {
   return /^-?[0-9]\d*$/.test(val);
 }
+/**
+ * 检测字符串是否为空
+ * @param str 字符串
+ * @returns 
+ */
+export function isNullOrEmpty(str: string) : boolean {
+  return str === null || str === undefined || str.length === 0;
+}

@@ -74,27 +74,25 @@
 
 <script setup lang="ts">
 import { onMounted, ref, type PropType, onBeforeUnmount, watch } from 'vue';
-import RowView from '../Nana/Layout/RowView.vue';
-import NodeGraphEditor from '../Graph/NodeGraphEditor.vue';
+import RowView from '@/Editor/Components/Shared/Layout/RowView.vue';
+import NodeGraphEditor from '../GraphEditor/NodeGraphEditor.vue';
 import GraphBreadcrumb from './Graph/GraphBreadcrumb.vue';
 import GraphSideTool from './Graph/GraphSideTool.vue';
 import GraphSideToolItem from './Graph/GraphSideToolItem.vue';
 import GraphSideToolSeparator from './Graph/GraphSideToolSeparator.vue';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import type { NodeGraphEditorInternalContext } from '../Graph/NodeGraphEditor';
-import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import type { NodeGraphEditorInternalContext } from '../GraphEditor/NodeGraphEditor';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
-import type { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { NodeConnectorEditor } from '../Graph/Editor/Flow/NodeConnectorEditor';
-import type { NodeEditor } from '../Graph/Editor/Flow/NodeEditor';
-import type { INodeGraphEditorSettings } from '../Graph/NodeGraphEditor';
+import type { Vector2 } from '@/Common/Base/Vector2';
+import type { INodeGraphEditorSettings } from '../GraphEditor/NodeGraphEditor';
 import type { CodeLayoutSplitNInstance, CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugController } from './Editor/EditorDebugController';
+import type { NodeConnectorEditor } from '@/Core/Editor/NodeConnectorEditor';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
+import type { NodeDocunmentEditor } from '@/Core/Editor/NodeDocunmentEditor';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
-import { NodeGraphEditorInternalMessages } from '../Graph/Editor/Messages/EditorInternalMessages';
-import type { NodeDocunmentEditor } from '../Graph/Editor/Flow/NodeDocunmentEditor';
+import { NodeGraphEditorInternalMessages } from '../GraphEditor/Editor/Messages/EditorInternalMessages';
 
 interface OpenedGraphsData {
   graph: NodeGraph,
@@ -103,7 +101,7 @@ interface OpenedGraphsData {
 
 const props = defineProps({
   docunment: {
-    type: Object as PropType<NodeDocunment>,
+    type: Object as PropType<NodeDocunmentEditor>,
     required: true,
   },
   editorSettings: {
@@ -147,7 +145,7 @@ function onJumpStack(data: GraphOpenStackData) {
 }
 function onPanelClose(panel: CodeLayoutPanelInternal, resolve: () => void) {
   const data = (panel.data as OpenedGraphsData);
-  ArrayUtils.remove(openedGraphs.value, data);
+  openedGraphs.value.remove(data);
   resolve();
 }
 function onActiveTabChange(old: CodeLayoutPanelInternal, currentActive: CodeLayoutPanelInternal) {
@@ -217,7 +215,7 @@ const context = {
       editorPanel.closePanel();
   },
   closeAllGraph() {
-    ArrayUtils.clear(openedGraphs.value);
+    openedGraphs.value.clear();
     clearStack();
     splitLayoutRef.value?.clearLayout();
     currentGraph.value = undefined;
@@ -255,7 +253,7 @@ function onPostUpMessage(graphUid: string, message: string, data: any) {
 
 //打开主图表
 function openMainGraph() {
-  const doc = props.docunment as NodeDocunmentEditor;
+  const doc = props.docunment;
   if (doc.mainGraph)
     context.openGraph(doc.mainGraph)
       .then(() => doc.readyDispatcher.setReadyState())

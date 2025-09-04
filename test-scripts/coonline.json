@@ -1,0 +1,305 @@
+{
+  "uid": "6b7468717772346e",
+  "name": "新文档",
+  "version": "1.0",
+  "description": "新文档",
+  "author": "",
+  "comment": "",
+  "mainGraph": {
+    "@SNK": "NodeGraph",
+    "@SNO": {
+      "connectors": {
+        "@SNK": "Array",
+        "@SNO": [
+          {
+            "uid": "33686d37736b6c",
+            "startPort": {
+              "nodeUid": "7336a396c6e7635",
+              "portUid": "START"
+            },
+            "endPort": {
+              "nodeUid": "31723035303363",
+              "portUid": "INPUT"
+            }
+          },
+          {
+            "uid": "35713464637838",
+            "startPort": {
+              "nodeUid": "31723035303363",
+              "portUid": "OUTPUT"
+            },
+            "endPort": {
+              "nodeUid": "39697371327469",
+              "portUid": "INPUT"
+            }
+          },
+          {
+            "uid": "b667330346762",
+            "startPort": {
+              "nodeUid": "39697371327469",
+              "portUid": "OUTPUT"
+            },
+            "endPort": {
+              "nodeUid": "346b763768756e",
+              "portUid": "END"
+            }
+          }
+        ]
+      },
+      "nodes": {
+        "@SNK": "Map",
+        "@SNO": [
+          {
+            "@SNM": "7336a396c6e7635",
+            "@SNV": {
+              "guid": "0324C0EC-CE44-05B8-A62D-0ECE0D19DC9F",
+              "uid": "7336a396c6e7635",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 250,
+                    "y": 100
+                  }
+                },
+                "markOpen": true,
+                "markContent": "这是入口节点，程序从这里开始运行",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "7336a396c6e7635"
+              }
+            }
+          },
+          {
+            "@SNM": "346b763768756e",
+            "@SNV": {
+              "guid": "77885802-92C8-569B-1E7F-48938943A549",
+              "uid": "346b763768756e",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 908,
+                    "y": 92
+                  }
+                },
+                "markOpen": true,
+                "markContent": "这是程序结束节点，运行到这里后程序结束",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "346b763768756e"
+              }
+            }
+          },
+          {
+            "@SNM": "31723035303363",
+            "@SNV": {
+              "guid": "8A94A788-ED4E-E521-5BC2-4D69B59BAB80",
+              "uid": "31723035303363",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 446,
+                    "y": 305
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {
+                  "type": "execute"
+                },
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    },
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "31723035303363"
+              }
+            }
+          },
+          {
+            "@SNM": "39697371327469",
+            "@SNV": {
+              "guid": "8A94A788-ED4E-E521-5BC2-4D69B59BAB80",
+              "uid": "39697371327469",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 734,
+                    "y": 307
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {
+                  "type": "execute"
+                },
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    },
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "39697371327469"
+              }
+            }
+          },
+          {
+            "@SNM": "3835696863776d",
+            "@SNV": {
+              "guid": "8A94A788-ED4E-E521-5BC2-4D69B59BAB80",
+              "uid": "3835696863776d",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 1179,
+                    "y": 248
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    },
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "3835696863776d"
+              }
+            }
+          },
+          {
+            "@SNM": "6f777231346f67",
+            "@SNV": {
+              "guid": "8A94A788-ED4E-E521-5BC2-4D69B59BAB80",
+              "uid": "6f777231346f67",
+              "node": {
+                "customSize": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 0,
+                    "y": 0
+                  }
+                },
+                "position": {
+                  "@SNK": "Vector2",
+                  "@SNO": {
+                    "x": 1130,
+                    "y": 246
+                  }
+                },
+                "markOpen": false,
+                "markContent": "",
+                "options": {},
+                "ports": {
+                  "@SNK": "Array",
+                  "@SNO": [
+                    {
+                      "dyamicAdd": false
+                    },
+                    {
+                      "dyamicAdd": false
+                    }
+                  ]
+                },
+                "uid": "6f777231346f67"
+              }
+            }
+          }
+        ]
+      },
+      "outputPorts": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "inputPorts": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "static": false,
+      "variables": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "children": {
+        "@SNK": "Array",
+        "@SNO": []
+      },
+      "author": "",
+      "description": "主图表是整个程序的入口",
+      "version": "1.0",
+      "uid": "7869316d677370",
+      "name": "主图表",
+      "type": "main"
+    }
+  }
+}

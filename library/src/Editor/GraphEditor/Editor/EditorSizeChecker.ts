@@ -1,9 +1,9 @@
 
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Vector2 } from "@/Common/Base/Vector2";
 import { onBeforeUnmount, onMounted, type Ref, ref } from "vue";
 import type { INodeGraphEditorBackgroundRenderer, INodeGraphEditorRenderer } from "../SubComponents/Render/Render";
 import type { NodeGraphEditorViewport } from "../NodeGraphEditor";
-import HtmlUtils from "@/node-blueprint/Base/Utils/HtmlUtils";
+import HtmlUtils from "@/Common/HtmlUtils";
 
 /**
  * 当前全局索引编辑器信息

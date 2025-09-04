@@ -1,12 +1,12 @@
 
 import { ref, toRaw } from "vue";
 import { ChunkInstance } from "./Cast/ChunkedPanel";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
+import ArrayUtils from "@/Common/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
+import type { Node } from "@/Core/Node/Node";
+import { NodePort } from "@/Core/Node/NodePort";
 import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import type { NodeGraph } from "@/Core/Graph/NodeGraph";
 import type { NodeEditor } from "./Flow/NodeEditor";
 import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
 import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";

@@ -44,18 +44,18 @@
 
 <script setup lang="ts">
 import { computed, ref, type PropType, onMounted, watch, provide, onBeforeUnmount } from 'vue';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import { Vector2 } from '@/Common/Base/Vector2';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
 import Row from '../../../Nana/Layout/RowView.vue';
 import NodeList from './NodeList.vue';
 import NodeCategory from './NodeCategory.vue';
 import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
-import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
-import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
-import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
-import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
+import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
+import type { NodePortDirection } from '@/Core/Node/NodePort';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
+import type { INodeDefine } from '@/Core/Node/Node';
+import SettingsUtils from '@/Common/SettingsUtils';
+import ArrayUtils from '@/Common/ArrayUtils';
 import CollapseItem from '@/node-blueprint/Editor/Components/List/CollapseItem.vue';
 
 const emit = defineEmits([ 

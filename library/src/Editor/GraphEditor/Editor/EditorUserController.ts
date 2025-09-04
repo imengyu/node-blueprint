@@ -1,20 +1,20 @@
 import { nextTick, ref, type Ref } from "vue";
 import { NodeEditor } from "./Flow/NodeEditor";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Vector2 } from "@/Common/Base/Vector2";
 import { NodePortEditor } from "./Flow/NodePortEditor";
 import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import { NodeVariable } from "@/node-blueprint/Base/Flow/Graph/NodeVariable";
+import { NodeVariable } from "@/Core/Graph/NodeVariable";
 import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
-import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
-import { NodeGraph, type INodeConnectorSaveData, type INodeGraphDefine, type INodeSaveData } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
+import { NodeGraph, type INodeConnectorSaveData, type INodeGraphDefine, type INodeSaveData } from "@/Core/Graph/NodeGraph";
 import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/node-blueprint/Base/Flow/Node/Node";
+import { Rect } from "@/Common/Base/Rect";
+import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/Core/Node/Node";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import type { INodePortDefine, NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import type { NodeConnector } from "@/Core/Node/NodeConnector";
+import type { INodePortDefine, NodePort } from "@/Core/Node/NodePort";
+import ArrayUtils from "@/Common/ArrayUtils";
+import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {

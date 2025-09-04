@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
 
 import IconFunction from '../../Images/BlockIcon/function.svg';
 import IconFunctionStatic from '../../Images/BlockIcon/function_static.svg';

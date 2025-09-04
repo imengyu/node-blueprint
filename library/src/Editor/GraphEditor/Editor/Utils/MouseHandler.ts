@@ -1,4 +1,4 @@
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import { Vector2 } from "@/Common/Base/Vector2";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
 
 export type IMouseEventHandlerEntry<T = any> = (e: MouseEvent, param?: T) => boolean;

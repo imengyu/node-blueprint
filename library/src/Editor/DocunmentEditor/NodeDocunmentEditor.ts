@@ -1,5 +1,5 @@
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeGraphEditorContext } from "../Graph/NodeGraphEditor";
+import type { NodeGraph } from "@/Core/Graph/NodeGraph";
+import type { NodeGraphEditorContext } from "../GraphEditor/NodeGraphEditor";
 
 export interface NodeDocunmentEditorContext {
   /**

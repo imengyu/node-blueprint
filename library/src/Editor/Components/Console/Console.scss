@@ -138,6 +138,7 @@ $console-colors: (
     font-size: 12px;
     display: block;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
     margin-left: 20px;
   }

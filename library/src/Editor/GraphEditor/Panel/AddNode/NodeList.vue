@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryData } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
+import type { CategoryData } from '@/Core/Registry/NodeCategory';
 import CollapseItem from '@/node-blueprint/Editor/Components/List/CollapseItem.vue';
 import NodeCategory from './NodeCategory.vue';
 import type { PropType } from 'vue';

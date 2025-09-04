@@ -1,7 +1,7 @@
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { ISaveableTypes } from "@/node-blueprint/Base/Utils/BaseTypes";
+import ArrayUtils from "@/Common/ArrayUtils";
+import { Rect } from "@/Common/Base/Rect";
+import { Vector2 } from "@/Common/Base/Vector2";
+import type { ISaveableTypes } from "@/Common/BaseTypes";
 import type { NodeGraphEditorViewport } from "../../NodeGraphEditor";
 
 /**

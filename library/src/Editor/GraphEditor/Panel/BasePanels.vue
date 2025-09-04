@@ -52,18 +52,18 @@
 
 <script lang="ts" setup>
 import { inject, ref, type PropType, onMounted, watch, reactive } from 'vue';
-import { NodeRegistry } from '@/node-blueprint/Base/Flow/Registry/NodeRegistry';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import type { NodePortDirection } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import type { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { NodeRegistry } from '@/Core/Registry/NodeRegistry';
+import { Vector2 } from '@/Common/Base/Vector2';
+import type { NodePortDirection } from '@/Core/Node/NodePort';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
-import type { INodeDefine } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { CategoryData, CategoryDataItem } from '@/node-blueprint/Base/Flow/Registry/NodeCategory';
+import type { INodeDefine } from '@/Core/Node/Node';
+import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
 import Icon from '../../Nana/Icon.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
 import Alert, { type AlertProps } from '../../Nana/Modal/Alert';
-import { SimpleTimer } from '@/node-blueprint/Base/Utils/Timer/Timer';
+import { SimpleTimer } from '@/Common/Timer/Timer';
 import TooltipContent from '../../Nana/Tooltip/TooltipContent.vue';
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');

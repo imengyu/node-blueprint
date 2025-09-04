@@ -1,6 +1,6 @@
-import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodePackage } from "@/node-blueprint/Base/Flow/Registry/NodePackage";
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import type { INodeDefine } from "@/Core/Node/Node";
+import type { NodePackage } from "@/Core/Registry/NodePackage";
+import { NodeParamType } from "@/Core/Type/NodeParamType";
 
 import NodeIconBranch from '../NodeIcon/branch.svg';
 import NodeIconSwitch from '../NodeIcon/switch.svg';

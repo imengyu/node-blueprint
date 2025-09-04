@@ -33,12 +33,12 @@ import { type PropType } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import type { CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugController } from '../Editor/EditorDebugController';
-import SmallButton from '../../Components/SmallButton.vue';
-import Row from '../../Nana/Layout/RowView.vue';
-import Icon from '../../Nana/Icon.vue';
-import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
-import TreeList from '../../Components/List/TreeList.vue';
-import type { EditorDebugRunnerVariableInfo } from '@/node-blueprint/Base/Debugger/EditorDebugRunner';
+import type { EditorDebugRunnerVariableInfo } from '@/Core/Debugger/EditorDebugRunner';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
+import Row from '@/Editor/Components/Shared/Layout/RowView.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import ConsoleAutoShower from '@/Editor/Components/Console/ConsoleAutoShower.vue';
+import TreeList from '@/Editor/Components/Editor/List/TreeList.vue';
 
 const props = defineProps({
   panel: {

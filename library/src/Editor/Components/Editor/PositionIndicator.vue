@@ -18,9 +18,9 @@
 </template>
 
 <script setup lang="ts">
-import { Rect } from '@/node-blueprint/Base/Utils/Base/Rect';
+import { Rect } from '@/Common/Base/Rect';
+import type { NodeGraphEditorInternalContext } from '@/Editor/GraphEditor/NodeGraphEditor';
 import { watch, type PropType } from 'vue';
-import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 
 const props = defineProps({
   context: {

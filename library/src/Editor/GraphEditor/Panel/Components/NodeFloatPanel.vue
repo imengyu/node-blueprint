@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import { Vector2 } from '@/Common/Base/Vector2';
 import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
 import { watch, type PropType, ref } from 'vue';
 

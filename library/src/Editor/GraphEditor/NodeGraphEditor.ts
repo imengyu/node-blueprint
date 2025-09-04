@@ -7,11 +7,11 @@ import type { NodeEditorKeyBoardControllerContext } from './Editor/EditorKeyBoar
 import type { NodeEditorUserControllerContext } from './Editor/EditorUserController';
 import type { NodeEditorContextMenuContext } from './Editor/EditorContextMenuHandler';
 import type { NodeEditorClipBoardControllerContext } from './Editor/EditorClipBoardController';
-import type { NodeGraphEditorZoomToolContext } from './SubComponents/ZoomTool';
+import type { NodeGraphEditorZoomToolContext } from '../Components/Editor/ZoomTool';
 import type { NodeEditorViewPortControllerContext } from './Editor/EditorViewPortController';
 import type { NodeEditorHistoryControllerContext } from './Editor/EditorHistortyController';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-export * from './Editor/Viewport';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
+export * from '@/Core/Editor/NodeGraphEditorViewport';
 
 /**
  * 公开的上下文函数

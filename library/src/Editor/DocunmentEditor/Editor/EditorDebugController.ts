@@ -1,20 +1,23 @@
-import { EditorDebugRunner, type EditorDebugRunnerPauseContextInfo, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, type EditorDebugRunnerVariableGroupInfo, type EditorDebugRunnerVariableInfo, type EditorDebugRunnerVariableListInfo } from "@/node-blueprint/Base/Debugger/EditorDebugRunner";
-import type { Node, NodeBreakPoint } from "@/node-blueprint/Base/Flow/Node/Node";
+
 import { ref, type Ref } from "vue";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import type { NodeDocunment } from "@/node-blueprint/Base/Flow/Graph/NodeDocunment";
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { EditorDebugRunner, 
+  type EditorDebugRunnerPauseContextInfo, type EditorDebugRunnerPauseInfo, type EditorDebugRunnerState, 
+  type EditorDebugRunnerVariableGroupInfo, type EditorDebugRunnerVariableInfo, type EditorDebugRunnerVariableListInfo 
+} from "@/Core/Debugger/EditorDebugRunner";
+import type { Node, NodeBreakPoint } from "@/Core/Node/Node";
+import type { NodeDocunment } from "@/Core/Graph/NodeDocunment";
+import type { NodeGraph } from "@/Core/Graph/NodeGraph";
 import type { NodeIdeControlContext } from "../NodeIde";
-import type { NodeDocunmentEditor } from "../../Graph/Editor/Flow/NodeDocunmentEditor";
-import type { NodeEditor } from "../../Graph/Editor/Flow/NodeEditor";
-import { NodeGraphCompiler } from "@/node-blueprint/Base/Compiler/NodeGraphCompiler";
-import { printError, printInfo } from "@/node-blueprint/Base/Logger/DevLog";
-import Alert from "../../Nana/Modal/Alert";
-import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnectorEditor } from "../../Graph/Editor/Flow/NodeConnectorEditor";
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import MapUtils from "@/node-blueprint/Base/Utils/MapUtils";
-import type { NodePortEditor } from "../../Graph/Editor/Flow/NodePortEditor";
+import { NodeParamType } from "@/Core/Type/NodeParamType";
+import { NodeGraphCompiler } from "@/Core/Compiler/NodeGraphCompiler";
+import { printError, printInfo } from "@/Common/Logger/DevLog";
+import Alert from "@/Editor/Components/Shared/Modal/Alert";
+import type { NodePort } from "@/Core/Node/NodePort";
+import { mapGetOrAddNew } from "@/Common/Map";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
+import type { NodeDocunmentEditor } from "@/Core/Editor/NodeDocunmentEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
 
 export type EditorDebugType = 'debug'|'remote';
 export interface EditorDebugBreakpoint {
@@ -135,7 +138,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     function addVariable(v: EditorDebugRunnerVariableInfo) {
       //TODO: FIX
       const [ uid ] = v.key.split(':');
-      const group = MapUtils.getOrAddNew(variablesMap, uid, (key) => {
+      const group = mapGetOrAddNew(variablesMap, uid, (key) => {
         return {
           key,
           graph: info.graph,
@@ -147,7 +150,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     }
     function addTemp(v: EditorDebugRunnerVariableInfo) {
       const [ uid, puid ] = v.key.split(':');
-      const group = MapUtils.getOrAddNew(tempsMap, uid, (key) => {
+      const group = mapGetOrAddNew(tempsMap, uid, (key) => {
         return {
           key,
           node: info.graph.getOneNodeByUID(key),
@@ -204,7 +207,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
     }
     for (const connector of lastActivedConnectors)
       connector.state = 'normal';
-    ArrayUtils.clear(lastActivedConnectors);
+    lastActivedConnectors.clear();
   }
   /**
    * 激活第一个运行栈上的连接线状态和当前暂停的节点
@@ -308,18 +311,18 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
   }
   function deleteBreakPoint(breakpoint: EditorDebugBreakpoint) {
     breakpoint.node.breakpoint = 'none';
-    ArrayUtils.remove(breakpoints.value, breakpoint);
+    breakpoints.value.remove(breakpoint);
   }
   function deleteAllBreakPoint() {
     for (const breakpoint of breakpoints.value)
       breakpoint.node.breakpoint = 'none';
-    ArrayUtils.clear(breakpoints.value);
+    breakpoints.value.clear();
   }
   function onNodeBreakPointStateChanged(node: Node) {
     const index = breakpoints.value.findIndex(n => n.node === node);
     if (node.breakpoint === 'none') {
       if (index >= 0)
-        ArrayUtils.removeAt(breakpoints.value, index);
+        breakpoints.value.removeAt(index);
     } else {
       if (index >= 0)
         breakpoints.value[index].state = node.breakpoint;
@@ -330,7 +333,7 @@ export function useEditorDebugController(context: NodeIdeControlContext) : Edito
   function onNodeDelete(node: Node) {
     const index = breakpoints.value.findIndex(n => n.node === node);
     if (index >= 0)
-      ArrayUtils.removeAt(breakpoints.value, index);
+      breakpoints.value.removeAt(index);
   }
 
   //如果调试中编辑，则提示用户

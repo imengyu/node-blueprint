@@ -23,9 +23,9 @@
 
 <script setup lang="ts">
 import { ref, type PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import HtmlUtils from '@/Common/Html';
+import { Vector2 } from '@/Common/Base/Vector2';
 import { SimpleTooltip } from 'vue-code-layout';
 
 const button = ref<HTMLElement>();

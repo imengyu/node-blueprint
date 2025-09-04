@@ -5,8 +5,8 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import type { NodeParamType } from '../../../Base/Flow/Type/NodeParamType';
-import Icon from '../../Nana/Icon.vue';
+import Icon from '../../Shared/Icon.vue';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
 
 defineEmits([ 'click' ]);
 const props = defineProps({

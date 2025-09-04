@@ -1,6 +1,6 @@
-import { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
+import { NodeGraph } from "@/Core/Graph/NodeGraph";
 import { injectNodeGraphEditorContextInEditorOrIDE } from "../../NodeIde";
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
 
 export function useGraphNameChangeHandler() {
   const { getNodeGraphEditorContext, getNodeDocunmentEditorContext } = injectNodeGraphEditorContextInEditorOrIDE();

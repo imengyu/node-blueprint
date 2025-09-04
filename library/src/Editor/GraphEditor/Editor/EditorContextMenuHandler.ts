@@ -1,15 +1,15 @@
-import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
+import type { Vector2 } from "@/Common/Base/Vector2";
 import type { NodeGraphEditorContext, NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodeConnector } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
+import type { NodePort } from "@/Core/Node/NodePort";
+import type { NodeConnector } from "@/Core/Node/NodeConnector";
 import type { NodeEditor } from "./Flow/NodeEditor";
 import type { NodePortEditor } from "./Flow/NodePortEditor";
 import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
+import StringUtils from "@/Common/StringUtils";
 import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
-import BaseNodes, { type IGraphCallNodeOptions } from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import { ConcatableArray } from "@/node-blueprint/Base/Utils/Array/ConcatableArray";
+import BaseNodes, { type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
+import ArrayUtils from "@/Common/ArrayUtils";
+import { ConcatableArray } from "@/Common/Array/ConcatableArray";
 
 export interface NodeEditorContextMenuContext {
   contextMenuManager: {

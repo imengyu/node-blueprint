@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import PropControlItemComponent from './PropControlItem.vue';
 import { type PropType, provide } from 'vue';
-import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
+import type { PropControlItem } from './PropDefine';
 
 const props = defineProps({
   /**

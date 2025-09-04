@@ -1,5 +1,5 @@
 <template>
-  <CodeLayoutScrollbar scroll="vertical">
+  <ScrollRect scroll="vertical">
     <PropList 
       :items="debugController.breakpoints.value"
         itemSize="small"
@@ -31,19 +31,20 @@
         </Row>
       </template>
     </PropList>
-</CodeLayoutScrollbar>
+  </ScrollRect>
 </template>
 
 <script setup lang="ts">
 import { h, onMounted, ref, watch, type PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
-import { CodeLayoutScrollbar, type CodeLayoutPanelInternal } from 'vue-code-layout';
+import { ScrollRect } from '@imengyu/vue-scroll-rect';
+import type { CodeLayoutPanelInternal } from 'vue-code-layout';
 import type { EditorDebugBreakpoint, EditorDebugController } from '../Editor/EditorDebugController';
-import PropList from '../../Components/PropList/PropList.vue';
-import SmallButton from '../../Components/SmallButton.vue';
-import Row from '../../Nana/Layout/RowView.vue';
-import BaseCheck from '../../Components/PropControl/Components/BaseCheck.vue';
-import Width from '../../Nana/Layout/Width.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import PropList from '@/Editor/Components/Editor/PropList/PropList.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
+import Row from '@/Editor/Components/Shared/Layout/RowView.vue';
+import BaseCheck from '@/Editor/Components/Editor/PropControl/Components/BaseCheck.vue';
+import Width from '@/Editor/Components/Shared/Layout/Width.vue';
 
 const props = defineProps({
   panel: {

@@ -103,37 +103,37 @@ import NodeGraphProp from './Prop/NodeGraphProp.vue';
 import NodeGraphVariableProp from './Prop/NodeGraphVariableProp.vue';
 import NodeGraphChildrenProp from './Prop/NodeGraphChildrenProp.vue';
 import NodeNodeProp from './Prop/NodeNodeProp.vue';
-import PropBox from '../Components/PropControl/Common/PropBox.vue';
-import Console from '../Console/Console.vue';
+import PropBox from '../Components/Editor/PropControl/Common/PropBox.vue';
+import Console from '../Components/Console/Console.vue';
 import DebugBreakPoints from './Debug/DebugBreakPoints.vue';
 import DebugStacks from './Debug/DebugStacks.vue';
 import DebugVariables from './Debug/DebugVariables.vue';
-import SettingsUtils from '@/node-blueprint/Base/Utils/SettingsUtils';
-import { NodeDocunmentEditor } from '../Graph/Editor/Flow/NodeDocunmentEditor';
-import { openJsonFile, saveJsFile, saveJsonFile } from './Tools/IOUtils';
+import SettingsUtils from '@/Common/Settings';
+import { NodeDocunmentEditor } from '@/Core/Editor/NodeDocunmentEditor';
+import { openJsonFile, saveJsFile, saveJsonFile } from './Platform/InOut';
 import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
+import { NodeGraphCompiler } from '@/Core/Compiler/NodeGraphCompiler';
+import { printError } from '@/Common/Logger/DevLog';
+import { useEditorDebugController } from './Editor/EditorDebugController';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
-import type { INodeGraphEditorSettings, NodeGraphEditorContext } from '../Graph/NodeGraphEditor';
-import type { NodeDocunment } from '@/node-blueprint/Base/Flow/Graph/NodeDocunment';
+import type { INodeGraphEditorSettings, NodeGraphEditorContext } from '../GraphEditor/NodeGraphEditor';
+import type { NodeDocunment } from '@/Core/Graph/NodeDocunment';
 import type { NodeIdeControlContext } from './NodeIde';
 import type { NodeDocunmentEditorContext } from './NodeDocunmentEditor';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import type { NodeEditor } from '../Graph/Editor/Flow/NodeEditor';
-import type { NodeConnectorEditor } from '../Graph/Editor/Flow/NodeConnectorEditor';
-import type { IObject } from '@/node-blueprint/Base/Utils/BaseTypes';
-import Alert from '../Nana/Modal/Alert';
-import Icon from '../Nana/Icon.vue';
-import IconButton from '../Nana/Button/IconButton.vue';
+import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
+import type { NodeConnectorEditor } from '@/Core/Editor/NodeConnectorEditor';
+import type { IObject } from '@/Common/Base/BaseTypes';
+import Alert from '../Components/Shared/Modal/Alert';
+import Icon from '../Components/Shared/Icon.vue';
+import IconButton from '../Components/Shared/Button/IconButton.vue';
 import DefaultLayoutData from './Data/DefaultLayoutData.json';
-import PropItem from '../Components/PropList/PropItem.vue';
+import PropItem from '../Components/Editor//PropList/PropItem.vue';
+import ConsoleItem from '../Components/Console/ConsoleItem.vue';
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
-import { NodeGraphCompiler } from '@/node-blueprint/Base/Compiler/NodeGraphCompiler';
-import { printError } from '@/node-blueprint/Base/Logger/DevLog';
-import { useEditorDebugController } from './Editor/EditorDebugController';
-import ConsoleItem from '../Console/ConsoleItem.vue';
-import type { NodePortEditor } from '../Graph/Editor/Flow/NodePortEditor';
 
 const loadTestScript = true;
  
@@ -150,7 +150,7 @@ const config = ref<CodeLayoutConfig>({
   secondarySideBarMinWidth: 170,
   bottomPanelHeight: 30,
   bottomPanelMinHeight: 40,
-  bottomAlignment: 'center',
+  panelAlignment: 'center',
   panelHeaderHeight: 24,
   panelMinHeight: 150,
   titleBar: true,

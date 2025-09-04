@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Node, NodeCreateEditorFunction } from '@/node-blueprint/Base/Flow/Node/Node';
+import type { Node, NodeCreateEditorFunction } from '@/Core/Node/Node';
 import { ref, h, type PropType, type VNode, onMounted, nextTick, defineComponent, inject } from 'vue'
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
 import type { NodeEditor } from '../Editor/Flow/NodeEditor';

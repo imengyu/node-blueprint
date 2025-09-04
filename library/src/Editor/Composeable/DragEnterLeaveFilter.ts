@@ -1,4 +1,4 @@
-import { SimpleDelay } from "@/node-blueprint/Base/Utils/Timer/Timer";
+import { SimpleDelay } from "@/Common/Timer/Timer";
 
 /**
  * 筛选反人类的 dragenter、dragleave事件，以保证在进入子节点后不会触发dragleave事件

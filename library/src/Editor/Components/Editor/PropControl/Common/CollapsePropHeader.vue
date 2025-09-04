@@ -27,7 +27,7 @@
 
 <script lang="ts" setup>
 import { watch, ref } from 'vue';
-import Icon from '../../../Nana/Icon.vue';
+import Icon from '../../../Shared/Icon.vue';
 
 const emit = defineEmits([ 'click', 'dblclick' ]);
 

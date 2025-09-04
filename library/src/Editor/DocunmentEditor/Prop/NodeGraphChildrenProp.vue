@@ -54,11 +54,11 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue'
-import GraphChildrenList, { type GraphChildrenListRef } from '../Graph/GraphChildrenList.vue';
-import SmallButton from '../../Components/SmallButton.vue';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
+import CollapsePropHeader from '@/Editor/Components/Editor/PropControl/Common/CollapsePropHeader.vue'
+import GraphChildrenList, { type GraphChildrenListRef } from '../Graph/GraphChildrenList.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 import GraphChildrenActiveDot from '../Graph/GraphChildrenActiveDot.vue';
 
 const props = defineProps({

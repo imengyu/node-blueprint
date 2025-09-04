@@ -15,12 +15,12 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
+import Icon from '../../Shared/Icon.vue';
 import NodeParamIconDictionaryRender from './NodeParamIconDictionaryRender.vue';
-import type { NodeParamType } from '../../../Base/Flow/Type/NodeParamType';
-import VNodeRenderer from '../../Nana/VNodeRenderer.vue';
-import type { NodePort } from '@/node-blueprint/Base/Flow/Node/NodePort';
-import type { NodePortEditor } from '../../Graph/Editor/Flow/NodePortEditor';
+import VNodeRenderer from '../../Shared/VNodeRenderer.vue';
+import type { NodeParamType } from '@/Core/Type/NodeParamType';
+import type { NodePort } from '@/Core/Node/NodePort';
+import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
 
 const props = defineProps({
   type: {

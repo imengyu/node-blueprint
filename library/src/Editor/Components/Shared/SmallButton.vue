@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-import Icon from '../../Editor/Nana/Icon.vue';
+import Icon from './Icon.vue';
 
 defineProps({
   icon: {

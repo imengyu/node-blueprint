@@ -28,10 +28,10 @@
 
 <script setup lang="ts">
 import { ref, type PropType, inject } from 'vue';
-import Icon from '../../Nana/Icon.vue';
-import { NodeParamType, type NodeParamTypeDefine } from '../../../Base/Flow/Type/NodeParamType';
-import { NodeParamTypeRegistry } from '@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
+import Icon from '../../Shared/Icon.vue';
+import { NodeParamType, type NodeParamTypeDefine } from '@/Core/Type/NodeParamType';
+import Html from '@/Common/Html';
+import { NodeParamTypeRegistry } from '@/Core/Type/NodeParamTypeRegistry';
 
 const props = defineProps({
   type: {
@@ -52,7 +52,7 @@ function onDotClick() {
 
   const teleportRef = document.querySelector(teleport);
   if (dot.value && teleportRef)
-    pos.value = HtmlUtils.getElementAbsolutePositionInParent(dot.value, teleportRef as HTMLElement);
+    pos.value = Html.getElementAbsolutePositionInParent(dot.value, teleportRef as HTMLElement);
 }
 
 function switchType(type: 'variable'|'array'|'set'|'dictionary') {

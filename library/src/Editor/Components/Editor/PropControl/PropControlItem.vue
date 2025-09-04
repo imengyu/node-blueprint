@@ -21,10 +21,10 @@
 
 <script setup lang="ts">
 import { inject, type PropType } from 'vue';
-import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
 import CollapsePropHeader from './Common/CollapsePropHeader.vue';
 import CollapsePropItem from './Common/CollapsePropItem.vue';
 import PropControlItemRenderer from './PropControlItemRenderer.vue';
+import type { PropControlItem } from './PropDefine';
 
 const PropBoxIsMini = inject('PropBoxIsMini', false);
 

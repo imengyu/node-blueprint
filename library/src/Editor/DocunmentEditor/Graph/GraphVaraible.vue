@@ -45,23 +45,22 @@
 </template>
 
 <script setup lang="ts">
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
 import type { PropType } from 'vue';
-import PropItem from '../../Components/PropList/PropItem.vue';
-import PropList from '../../Components/PropList/PropList.vue';
-import Input from '../../Nana/Input/Input.vue';
-import Icon from '../../Nana/Icon.vue';
+import PropItem from '@/Editor/Components/Editor/PropList/PropItem.vue';
+import PropList from '@/Editor/Components/Editor/PropList/PropList.vue';
+import Input from '@/Editor/Components/Shared/Input/Input.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 import DraggerBg from '../../Images/dragger-bg.svg';
-import NodeParamTypePicker from '../../Components/PropControl/Components/NodeParamTypePicker.vue';
+import NodeParamTypePicker from '@/Editor/Components/Editor/PropControl/Components/NodeParamTypePicker.vue';
 import GraphVaraibleParamEditor from '../Graph/GraphVaraibleParamEditor.vue';
-import BaseCheck from '../../Components/PropControl/Components/BaseCheck.vue';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
-import { NodeVariable } from '@/node-blueprint/Base/Flow/Graph/NodeVariable';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import BaseCheck from '@/Editor/Components/Editor/PropControl/Components/BaseCheck.vue';
+import HtmlUtils from '@/Common/Html';
+import BaseNodes from '@/Nodes/Lib/BaseNodes';
+import { NodeVariable } from '@/Core/Graph/NodeVariable';
+import { NodeParamType } from '@/Core/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
-import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
+import { startInternalDataDragging } from '@/Editor/GraphEditor/Editor/EditorDragController';
 
 const props = defineProps({
   graph: {
@@ -91,7 +90,7 @@ function onGraphVariableDrag(variable: NodeVariable, e: DragEvent) {
 }
 function onDeleteGraphVariable(variable: NodeVariable) {
   const graph = props.graph;
-  ArrayUtils.remove(graph.variables, variable);
+  graph.variables.remove(variable);
 }
 
 function onGraphVariableNameUpdate(variable: NodeVariable, newName: string) {

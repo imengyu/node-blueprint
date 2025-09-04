@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 interface Array<T> {
   remove<T>(item: T) : boolean;
   removeAt<T>(index: number) : boolean;

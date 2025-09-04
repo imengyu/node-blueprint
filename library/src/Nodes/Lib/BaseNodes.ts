@@ -1,15 +1,12 @@
-import { NodeParamTypeRegistry } from "@/node-blueprint/Base/Flow/Type/NodeParamTypeRegistry";
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import StringUtils from "@/node-blueprint/Base/Utils/StringUtils";
-import ArrayUtils from "@/node-blueprint/Base/Utils/ArrayUtils";
-import ObjectUtils from "@/node-blueprint/Base/Utils/ObjectUtils";
-import type { INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Editor/Flow/NodeEditor";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { NodeGraph } from "@/node-blueprint/Base/Flow/Graph/NodeGraph";
-import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
+import { NodeParamTypeRegistry } from "@/Core/Type/NodeParamTypeRegistry";
+import { NodeParamType } from "@/Core/Type/NodeParamType";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { Rect } from "@/Common/Base/Rect";
+import type { INodeDefine } from "@/Core/Node/Node";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { Node } from "@/Core/Node/Node";
+import type { NodeGraph } from "@/Core/Graph/NodeGraph";
+import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
 
 const messages = {
   VARIABLE_UPDATE_TYPE: 0,
@@ -119,6 +116,8 @@ import NodeIconConvert1 from '../NodeIcon/convert.svg';
 import NodeIconConvert2 from '../NodeIcon/convert-number.svg';
 import NodeIconConvert3 from '../NodeIcon/convert-number-2.svg';
 import NodeIconType from '../NodeIcon/cpu.svg';
+import { assignIfUndefined } from "@/Common/Object";
+import { isNullOrEmpty } from "@/Common/String";
 
 export interface IGraphCallNodeOptions {
   callGraphType: 'subgraph'|'function';
@@ -416,8 +415,8 @@ function registerScriptVariableBase()  {
           const newName = msg.data.name as string;
           const oldName = node.options.variable as string;
 
-          ArrayUtils.remove(node.tags, oldName);
-          ArrayUtils.addOnce(node.tags, newName);
+          node.tags.remove(oldName);
+          node.tags.addOnce(newName);
 
           node.options.variable = newName;
 
@@ -514,8 +513,8 @@ function registerScriptVariableBase()  {
           const oldName = node.options.variable as string;
 
           node.name = `设置变量 ${newName} 的值`;
-          ArrayUtils.remove(node.tags, oldName);
-          ArrayUtils.addOnce(node.tags, newName);
+          node.tags.remove(oldName);
+          node.tags.addOnce(newName);
 
           node.options.variable = newName;
           
@@ -574,7 +573,7 @@ function registerScriptGraphBase()  {
   
             //添加图表的端口至当前节点
             inputPorts.forEach((port, index) => {
-              ObjectUtils.assignIfUndefined(port, 'style', {});
+              assignIfUndefined(port, 'style', {});
               port.style!.forceNoDelete = true;
               port.direction = 'input';
               const oldPort = node.inputPorts[index];
@@ -590,7 +589,7 @@ function registerScriptGraphBase()  {
               node.deletePort(node.inputPorts[i]);
   
             outputPorts.forEach((port, index) => {
-              ObjectUtils.assignIfUndefined(port, 'style', {});
+              assignIfUndefined(port, 'style', {});
               port.style!.forceNoDelete = true;
               port.direction = 'output';
               const oldPort = node.outputPorts[index];
@@ -682,7 +681,7 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           inputPorts.forEach((port, index) => {
-            ObjectUtils.assignIfUndefined(port, 'style', {});
+            assignIfUndefined(port, 'style', {});
             port.style!.forceNoDelete = true;
             const oldPort = node.outputPorts[index];
             if (oldPort) {
@@ -726,7 +725,7 @@ function registerScriptGraphBase()  {
 
           //添加图表的端口至当前节点
           outputPorts.forEach((port, index) => {
-            ObjectUtils.assignIfUndefined(port, 'style', {});
+            assignIfUndefined(port, 'style', {});
             port.style!.forceNoDelete = true;
             const oldPort = node.inputPorts[index];
             if (oldPort) {
@@ -1305,7 +1304,7 @@ function registerCommentNode() {
             if (input)
               input.blur();
             if (list)
-              ArrayUtils.clear(list);
+              list.clear();
             break;
           }
         }
@@ -1335,7 +1334,7 @@ function registerCommentNode() {
                 node.data.mouseDown = true;
                 //保存鼠标按下时区域内的所有单元
                 rect.set(node.getRect());
-                ArrayUtils.clear(list);
+                list.clear();
                 context.selectionManager.getNodesInRect(rect).forEach((v) => {
                   if(v !== node) {
                     v.saveLastNodePos();
@@ -1511,7 +1510,7 @@ function registerConnNode() {
     events: {
       onCreate: (node) => {
         const type = node.options['type'] as string;
-        if(!StringUtils.isNullOrEmpty(type)) {
+        if(!isNullOrEmpty(type)) {
           const paramType = NodeParamType.FromString(type);
           node.changePortParamType(node.getPortByGUID('INPUT')!, paramType, false); 
           node.changePortParamType(node.getPortByGUID('OUTPUT')!, paramType, false); 

@@ -1,6 +1,6 @@
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import type { NodeGraphEditorContext } from "../NodeGraphEditor";
+import type { Node } from "@/Core/Node/Node";
+import type { Vector2 } from "@/Common/Base/Vector2";
+import type { NodeGraphEditorContext } from "../GraphEditor/NodeGraphEditor";
 
 export function moveNodeSolveSnap(context: NodeGraphEditorContext, node: Node, pos: Vector2) {
   const settings = context.getSettings();

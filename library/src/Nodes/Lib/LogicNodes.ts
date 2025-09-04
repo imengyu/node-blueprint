@@ -1,7 +1,7 @@
-import type { INodeDefine, INodeEventSettings } from "@/node-blueprint/Base/Flow/Node/Node";
-import type { INodePortDefine } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import type { NodePackage } from "@/node-blueprint/Base/Flow/Registry/NodePackage";
-import { NodeParamType } from "@/node-blueprint/Base/Flow/Type/NodeParamType";
+import type { INodeDefine, INodeEventSettings } from "@/Core/Node/Node";
+import type { INodePortDefine } from "@/Core/Node/NodePort";
+import type { NodePackage } from "@/Core/Registry/NodePackage";
+import { NodeParamType } from "@/Core/Type/NodeParamType";
 import type { ICalcScalarOptions } from "./OperatorNodes";
 
 import NodeIconAnd from '../NodeIcon/and.svg';

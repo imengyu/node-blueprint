@@ -33,14 +33,14 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import Input from '../../Nana/Input/Input.vue';
-import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue'
-import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
+import { useGraphNameChangeHandler } from '../Graph/Composeable/GraphNameChange';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
+import Input from '@/Editor/Components/Shared/Input/Input.vue';
+import CollapsePropHeader from '@/Editor/Components/Editor/PropControl/Common/CollapsePropHeader.vue'
+import CollapsePropItem from '@/Editor/Components/Editor/PropControl/Common/CollapsePropItem.vue';
 import GraphChildrenDragArrow from '../Graph/GraphChildrenDragArrow.vue';
 import GraphPorts, { type GraphPortListRef } from '../Graph/GraphPorts.vue';
-import SmallButton from '../../Components/SmallButton.vue';
-import { useGraphNameChangeHandler } from '../Graph/Composeable/GraphNameChange';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 
 const props = defineProps({
   graph: {

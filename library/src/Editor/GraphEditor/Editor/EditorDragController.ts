@@ -1,6 +1,6 @@
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import { NodeRegistry } from "@/node-blueprint/Base/Flow/Registry/NodeRegistry";
+import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
 import { useDragEnterLeaveFilter } from "../../Composeable/DragEnterLeaveFilter";
 
 let editorDragData : any = null;

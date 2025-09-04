@@ -17,14 +17,14 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import CollapsePropHeader from '../../Components/PropControl/Common/CollapsePropHeader.vue';
-import CollapsePropItem from '../../Components/PropControl/Common/CollapsePropItem.vue';
-import PropControl from '../../Components/PropControl/PropControl.vue';
-import type { NodeEditor } from '../../Graph/Editor/Flow/NodeEditor';
-import type { NodeBreakPoint } from '@/node-blueprint/Base/Flow/Node/Node';
-import type { PropControlItem } from '@/node-blueprint/Base/Editor/PropDefine';
-import type { BaseSelectProps } from '../../Components/PropControl/Components/BaseSelect';
-import type { NodeGraphEditorContext } from '../../Graph/NodeGraphEditor';
+import CollapsePropHeader from '@/Editor/Components/Editor/PropControl/Common/CollapsePropHeader.vue';
+import CollapsePropItem from '@/Editor/Components/Editor/PropControl/Common/CollapsePropItem.vue';
+import PropControl from '@/Editor/Components/Editor/PropControl/PropControl.vue';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
+import type { NodeBreakPoint } from '@/Core/Node/Node';
+import type { BaseSelectProps } from '@/Editor/Components/Editor/PropControl/Components/BaseSelect';
+import type { NodeGraphEditorContext } from '@/Editor/GraphEditor/NodeGraphEditor';
+import type { PropControlItem } from '@/Editor/Components/Editor/PropControl/PropDefine';
 
 const props = defineProps({
   nodes: {

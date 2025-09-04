@@ -3,5 +3,5 @@
 </template>
 
 <script setup lang="ts">
-import Icon from '../../Nana/Icon.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 </script>

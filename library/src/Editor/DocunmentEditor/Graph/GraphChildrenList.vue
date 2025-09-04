@@ -31,17 +31,16 @@
 
 <script setup lang="ts">
 import { ref, type PropType, computed } from 'vue';
-import PropList from '../../Components/PropList/PropList.vue';
-import PropEditTextItem from '../../Components/PropList/PropEditTextItem.vue';
+import PropList from '@/Editor/Components/Editor/PropList/PropList.vue';
+import PropEditTextItem from '@/Editor/Components/Editor/PropList/PropEditTextItem.vue';
 import GraphChildrenIcon from './GraphChildrenIcon.vue';
-import ArrayUtils from '@/node-blueprint/Base/Utils/ArrayUtils';
-import BaseNodes from '@/node-blueprint/Nodes/Lib/BaseNodes';
+import BaseNodes from '@/Nodes/Lib/BaseNodes';
 import GraphChildrenActiveDot from './GraphChildrenActiveDot.vue';
-import { NodeParamType } from '@/node-blueprint/Base/Flow/Type/NodeParamType';
+import { NodeParamType } from '@/Core/Type/NodeParamType';
 import { injectNodeGraphEditorContextInEditorOrIDE } from '../NodeIde';
-import { NodeGraph, type NodeGraphType } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
+import { NodeGraph, type NodeGraphType } from '@/Core/Graph/NodeGraph';
 import { useGraphNameChangeHandler } from './Composeable/GraphNameChange';
+import { startInternalDataDragging } from '@/Editor/GraphEditor/Editor/EditorDragController';
 
 export interface GraphChildrenListRef {
   onAddChildGraph(): void;
@@ -172,7 +171,7 @@ function onDeleteChildGraph(childGraph: NodeGraph) {
     return;
   context.interfaceUtiles.userActionConfirm('warning', '是否确认删除此子图表？此操作会使当前或者其他图表中调用此图表的节点失效。').then((confirm) => {
     if (confirm) {
-      ArrayUtils.remove(graph.children, childGraph);
+      graph.children.remove(childGraph);
       //通知当前图表中所有调用节点移除
       getNodeDocunmentEditorContext()?.dispstchMessage('sendMessageToFilteredNodes', { tag: `GraphCall${childGraph.name}`, message: BaseNodes.messages.GRAPH_DELETE, data: { name: childGraph.name }});
     }
@@ -192,8 +191,8 @@ function onChildDragSort(dragItem: NodeGraph, targetIndex: number) {
   const refItem = filteredList[targetIndex] ?? filteredList[filteredList.length - 1];
   const list = props.graph.children;
   const insertPos = list.indexOf(refItem);
-  ArrayUtils.remove(props.graph.children, dragItem);
-  ArrayUtils.insert(props.graph.children, insertPos, dragItem);
+  list.remove(dragItem);
+  list.insert(insertPos, dragItem);
 }
 
 defineExpose<GraphChildrenListRef>({

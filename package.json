@@ -16,10 +16,13 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "@imengyu/vue-scroll-rect": "^0.1.7",
     "ast-types": "^0.16.1",
     "recast": "^0.23.11",
     "ses": "^1.14.0",
     "vue": "^3.5.18",
+    "vue-clipboard3": "^2.0.0",
+    "vue-code-layout": "^1.2.1",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {

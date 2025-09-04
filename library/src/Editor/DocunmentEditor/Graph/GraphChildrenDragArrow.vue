@@ -12,11 +12,11 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import Icon from '../../Nana/Icon.vue';
+import type { NodeGraph } from '@/Core/Graph/NodeGraph';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 import DraggerBg from '../../Images/dragger-bg.svg';
-import HtmlUtils from '@/node-blueprint/Base/Utils/HtmlUtils';
-import type { NodeGraph } from '@/node-blueprint/Base/Flow/Graph/NodeGraph';
-import { startInternalDataDragging } from '../../Graph/Editor/EditorDragController';
+import HtmlUtils from '@/Common/Html';
+import { startInternalDataDragging } from '@/Editor/GraphEditor/Editor/EditorDragController';
 
 const props = defineProps({
   childGraph: {

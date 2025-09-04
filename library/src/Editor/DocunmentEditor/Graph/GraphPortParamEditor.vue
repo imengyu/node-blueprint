@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { IKeyValueObject, ISaveableTypes } from '@/node-blueprint/Base/Utils/BaseTypes';
-import type { INodePortDefine } from '@/node-blueprint/Base/Flow/Node/NodePort';
+import type { IKeyValueObject, ISaveableTypes } from '@/Common/Base/BaseTypes';
+import type { INodePortDefine } from '@/Core/Node/NodePort';
 
 export default defineComponent({
   props: {

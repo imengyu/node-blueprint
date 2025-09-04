@@ -1,5 +1,4 @@
 <script lang="ts">
-import type { IKeyValueObject } from '@/node-blueprint/Base/Utils/BaseTypes';
 import { defineComponent, h, type PropType, type VNode } from 'vue'
 
 export default defineComponent({
@@ -16,7 +15,7 @@ export default defineComponent({
      * 渲染回调函数。
      */
     render: {
-      type: Function as PropType<(data: IKeyValueObject) => VNode>,
+      type: Function as PropType<(data: Record<string, any>) => VNode>,
       default: null
     },
     /**
@@ -25,7 +24,7 @@ export default defineComponent({
      * * 如果指定了 render，则此参数将会作为 render 的 data 参数。
      */
     data: {
-      type: Object as PropType<IKeyValueObject>,
+      type: Object as PropType<Record<string, any>>,
       default: null
     },
   },

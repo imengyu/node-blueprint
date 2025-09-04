@@ -59,7 +59,7 @@ import type { ModalContext } from './Alert';
 import ModalClose from './ModalClose.svg';
 import ModalBack from './ModalBack.svg';
 import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
-import { Vector2 } from '@/node-blueprint/Base/Utils/Base/Vector2';
+import { Vector2 } from '@/Common/Base/Vector2';
 
 export default defineComponent({
   name: 'Modal',

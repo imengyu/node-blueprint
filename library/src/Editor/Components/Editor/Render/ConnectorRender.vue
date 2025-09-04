@@ -6,17 +6,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { Rect } from '@/Common/Base/Rect';
 import { Vector2 } from '@/Common/Base/Vector2';
 import { onBeforeUnmount, onMounted, ref, type PropType } from 'vue';
+import { FPSCalculator } from './FPSCalculator';
+import { ConnectorDrawer } from './ConnectorDrawer';
+import { genNonDuplicateNumber } from '@/Common/Random';
 import type { NodeGraphEditorViewport } from '@/Core/Editor/NodeGraphEditorViewport';
-import type { IConnectingInfo } from '../../Editor/EditorConnectorController';
 import type { NodeConnectorEditor } from '@/Core/Editor/NodeConnectorEditor';
 import type { ChunkedPanel } from './ChunkedPanel';
 import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
-import { FPSCalculator } from './FPSCalculator';
-import { ConnectorDrawer } from './ConnectorDrawer';
-import RandomUtils from '@/Common/Random';
+import type { IConnectingInfo } from '@/Editor/GraphEditor/Editor/EditorConnectorController';
+import type { Rect } from '@/Common/Base/Rect';
 
 let ctx : CanvasRenderingContext2D|null = null;
 let renderAnimId = 0;
@@ -75,7 +75,7 @@ let drawDebugInfoItems = new Map<number, () => string>();
 let drawFpsShow = "";
 
 function addDebugInfoItem(v : () => string) {
-  const id = RandomUtils.genNonDuplicateNumber()
+  const id = genNonDuplicateNumber()
   drawDebugInfoItems.set(id, v);
   return id;
 }
