@@ -1,11 +1,11 @@
-import { EventHandler } from "../../Utils/Events/EventHandler";
-import { printWarning } from "../../Logger/DevLog";
-import { Singleton } from "../../Singleton/Singleton";
+import { printWarning } from "@/Common/Logger/DevLog";
+import { Singleton } from "@/Common/Singleton/Singleton";
 import { createEnumInternalEditor, registerInternalTypes } from "./NodeParamInternalTypes";
 import { NodeParamType, type NodeParamTypeDefine } from "./NodeParamType";
-import type { IObject } from "../../Utils/BaseTypes";
-import type { INodeDefine } from "../Node/Node";
 import { NodeRegistry } from "../Registry/NodeRegistry";
+import type { IObject } from "@/Common/Base/BaseTypes";
+import type { INodeDefine } from "../Node/Node";
+import { EventHandler } from "@/Common/Event/EventHandler";
 
 const TAG = 'NodeParamTypeRegistry';
 

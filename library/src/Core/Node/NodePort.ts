@@ -1,10 +1,9 @@
-import ArrayUtils from "../../Utils/ArrayUtils";
-import { SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
 import { NodeParamType } from "../Type/NodeParamType";
 import type { Node } from "./Node";
 import type { NodeConnector } from "./NodeConnector";
-import type { ISaveableTypes } from "../../Utils/BaseTypes";
-import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
+import type { ISaveableTypes } from "@/Common/Base/BaseTypes";
 
 /**
  * 节点端口
@@ -196,7 +195,7 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
   public removeConnectToPort(port: NodePort): void {
     for (let i = this.connectedToPort.length - 1; i >= 0; i--) {
       if (this.connectedToPort[i].endPort === port) {
-        ArrayUtils.remove(this.connectedToPort, this.connectedToPort[i]);
+        this.connectedToPort.remove(this.connectedToPort[i]);
       }
     }
   }
@@ -207,7 +206,7 @@ export class NodePort extends SerializableObject<INodePortDefine, Node> {
   public removeConnectByPort(port: NodePort): void {
     for (let i = this.connectedFromPort.length - 1; i >= 0; i--) {
       if (this.connectedFromPort[i].startPort === port) {
-        ArrayUtils.remove(this.connectedFromPort, this.connectedFromPort[i]);
+        this.connectedFromPort.remove(this.connectedFromPort[i]);
       }
     }
   }

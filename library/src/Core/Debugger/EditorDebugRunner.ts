@@ -1,12 +1,11 @@
 import 'ses'
-import type { Node } from '../Flow/Node/Node';
-import type { NodeDocunment } from '../Flow/Graph/NodeDocunment';
-import type { NodeGraph } from '../Flow/Graph/NodeGraph';
-import ArrayUtils from '../Utils/ArrayUtils';
-import { printError, printInfo, printWarning, printLog } from '../Logger/DevLog';
-import type { ITreeListItem } from '@/node-blueprint/Editor/Components/List/TreeList';
-import RandomUtils from '../Utils/RandomUtils';
-import type { NodePort } from '../Flow/Node/NodePort';
+import type { Node } from '../Node/Node';
+import type { NodeDocunment } from '../Graph/NodeDocunment';
+import type { NodeGraph } from '../Graph/NodeGraph';
+import type { NodePort } from '../Node/NodePort';
+import type { ITreeListItem } from '@/Editor/Components/Editor/List/TreeList';
+import { printError, printInfo, printWarning, printLog } from '@/Common/Logger/DevLog';
+import { genNonDuplicateID } from '@/Common/Random';
 
 export type EditorDebugRunnerContextState = 'inactive'|'active'|'paused'|'completed';
 export type EditorDebugRunnerState = 'idle'|'running'|'paused';
@@ -107,7 +106,7 @@ export class EditorDebugRunner {
         throw new Error(`Not found graph ${context.dbg.uid} in context`);
       const contextInfo : EditorDebugRunnerPauseContextInfo = {
         graph,
-        key: RandomUtils.genNonDuplicateID(10),
+        key: genNonDuplicateID(10),
         state: context.state,
         variables: context.getLocalVariables(),
         temps: context.getLocalTemps(),
@@ -166,7 +165,7 @@ export class EditorDebugRunner {
             case 'completed':
               if (this.currentActiveContex === context)
                 this.currentActiveContex = null;
-              ArrayUtils.remove(this.currentAllContex, context);
+              this.currentAllContex.remove(context);
               if (this.currentAllContex.length === 0)
                 this.stop();
               break;

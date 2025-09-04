@@ -1,12 +1,13 @@
-import { Node, type INodeDefine } from "@/node-blueprint/Base/Flow/Node/Node";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { ChunkInstance } from "../Cast/ChunkedPanel";
-import { CreateObjectFactory, SerializableFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
+import { Node, type INodeDefine } from "../Node/Node";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { Rect } from "@/Common/Base/Rect";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
+import { ChunkInstance } from "@/Editor/Components/Editor/Render/ChunkedPanel";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
-import type { PropControlItem } from "@/node-blueprint/Base/Editor/PropDefine";
-import type { NodeContextMenuItem } from "../EditorContextMenuHandler";
-import type { NodeGraphEditorContext } from "../../NodeGraphEditor";
+import type { NodeContextMenuItem } from "@/Editor/GraphEditor/Editor/EditorContextMenuHandler";
+import type { PropControlItem } from "@/Editor/DocunmentEditor/Prop/PropDefine";
+import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
+import type { NodePortEditor } from "./NodePortEditor";
 
 /**
  * [仅编辑器] 编辑器使用的节点相关数据类
@@ -59,6 +60,11 @@ export class NodeEditor extends Node {
     callbackDoAutoResizeCheck: null as null|(() => void),
     callbackRequireContext: null as null|(() => NodeGraphEditorContext),
   };
+
+  public declare ports : NodePortEditor[];
+  public declare inputPorts : NodePortEditor[];
+  public declare outputPorts : NodePortEditor[];
+  public declare mapPorts : Map<string, NodePortEditor>;
 
   public mouseConnectingPort = false;
   public selected = false;

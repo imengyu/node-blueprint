@@ -1,11 +1,11 @@
 import { h } from "vue";
 import { NodeParamType, type NodeParamEditorCreateCallback, type NodeParamTypeDefine } from "./NodeParamType";
 import type { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
-import BigIntEditor from "../../../Editor/Graph/SubComponents/TypeEditor/BigIntEditor.vue";
-import NumberEditor from "../../../Editor/Graph/SubComponents/TypeEditor/NumberEditor.vue";
-import BooleanEditor from "../../../Editor/Graph/SubComponents/TypeEditor/BooleanEditor.vue";
-import StringEditor from "../../../Editor/Graph/SubComponents/TypeEditor/StringEditor.vue";
-import EnumEditor from "../../../Editor/Graph/SubComponents/TypeEditor/EnumEditor.vue";
+import BigIntEditor from "@/Editor/GraphEditor/TypeEditor/BigIntEditor.vue";
+import NumberEditor from "@/Editor/GraphEditor/TypeEditor/NumberEditor.vue";
+import BooleanEditor from "@/Editor/GraphEditor/TypeEditor/BooleanEditor.vue";
+import StringEditor from "@/Editor/GraphEditor/TypeEditor/StringEditor.vue";
+import EnumEditor from "@/Editor/GraphEditor/TypeEditor/EnumEditor.vue";
 
 /**
  * 注册系统的自定义类型

@@ -1,7 +1,7 @@
-import { NodePort, type INodePortDefine, type NodePortState } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
-import type { Node } from "@/node-blueprint/Base/Flow/Node/Node";
+import { NodePort, type INodePortDefine, type NodePortState } from "../Node/NodePort";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { CreateObjectFactory } from "@/Common/Serializable/SerializableFactory";
+import type { Node } from "../Node/Node";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 
 export class NodePortEditor extends NodePort {

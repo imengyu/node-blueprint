@@ -1,24 +1,23 @@
-import RandomUtils from "../../Utils/RandomUtils";
-import ArrayUtils from "../../Utils/ArrayUtils";
-import { Vector2 } from "../../Utils/Base/Vector2";
-import { SerializableObject } from "../../Serializable/SerializableObject";
-import { printError, printWarning } from "../../Logger/DevLog";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
+import { printError, printWarning } from "@/Common/Logger/DevLog";
 import { NodeParamType, type NodeParamEditorCreateCallback } from "../Type/NodeParamType";
+import { CreateObjectFactory, mergeSerializableConfigName, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
 import type { NodePort } from "./NodePort";
 import type { INodePortDefine, NodePortDirection } from "./NodePort";
-import type { IKeyValueObject, ISaveableTypes } from "../../Utils/BaseTypes";
+import type { IKeyValueObject, ISaveableTypes } from "@/Common/Base/BaseTypes";
 import type { NodeGraph } from "../Graph/NodeGraph";
-import type { NodeContextMenuItem } from "@/node-blueprint/Editor/Graph/Editor/EditorContextMenuHandler";
 import type { VNode } from "vue";
-import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
-import type { NodeEditor } from "@/node-blueprint/Editor/Graph/Editor/Flow/NodeEditor";
-import type { PropControlItem } from "../../Editor/PropDefine";
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import type { NodePortEditor } from "@/node-blueprint/Editor/Graph/Editor/Flow/NodePortEditor";
-import type { INodeCompileSettings } from "../../Compiler/NodeCompileSettings";
 import type { NodeConnector } from "./NodeConnector";
-import { CreateObjectFactory, mergeSerializableConfigName, SerializableFactory } from "../../Serializable/SerializableFactory";
-
+import type { PropControlItem } from "@/Editor/DocunmentEditor/Prop/PropDefine";
+import type { NodePortEditor } from "../Editor/NodePortEditor";
+import type { NodeEditor } from "../Editor/NodeEditor";
+import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
+import type { NodeContextMenuItem } from "@/Editor/GraphEditor/Editor/EditorContextMenuHandler";
+import type { INodeCompileSettings } from "../Compiler/NodeCompileSettings";
+import { genNonDuplicateIDHEX } from "@/Common/Random";
+import { removeItemFromArrayBy } from "@/Common/ArrayTools";
 
 /**
  * 节点
@@ -50,8 +49,8 @@ export class Node extends SerializableObject<INodeDefine> {
         }
       },
       afterLoadOrMerge() {
-        ArrayUtils.clear(this.inputPorts);
-        ArrayUtils.clear(this.outputPorts);
+        this.inputPorts.clear();
+        this.outputPorts.clear();
         this.mapPorts.clear();
         //加载端口
         this.ports.forEach((port) => {
@@ -133,7 +132,7 @@ export class Node extends SerializableObject<INodeDefine> {
   /**
    * 唯一ID
    */
-  public uid = RandomUtils.genNonDuplicateIDHEX(32);
+  public uid = genNonDuplicateIDHEX(32);
   /**
    * 名称。此数据会被保存至单元
    */
@@ -290,11 +289,11 @@ export class Node extends SerializableObject<INodeDefine> {
 
     const deleteGuid = typeof guid === 'string' ? guid : guid.guid;
     
-    ArrayUtils.removeBy(this.ports, (p) => p.guid === deleteGuid, true);
+    removeItemFromArrayBy(this.ports, (p) => p.guid === deleteGuid, true);
     if(oldData.direction === 'input')
-      ArrayUtils.removeBy(this.inputPorts, (p) => p.guid === deleteGuid, true);
+      removeItemFromArrayBy(this.inputPorts, (p) => p.guid === deleteGuid, true);
     else if(oldData.direction === 'output')
-      ArrayUtils.removeBy(this.outputPorts, (p) => p.guid === deleteGuid, true);
+      removeItemFromArrayBy(this.outputPorts, (p) => p.guid === deleteGuid, true);
   }
   /**
    * 根据方向获取某个端口

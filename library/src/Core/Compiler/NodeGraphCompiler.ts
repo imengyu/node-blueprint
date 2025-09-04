@@ -1,7 +1,7 @@
-import type { NodeDocunment } from "../Flow/Graph/NodeDocunment";
-import { NodeRegistry } from "../Flow/Registry/NodeRegistry";
-import { printWarning } from "../Logger/DevLog";
-import { Singleton } from "../Singleton/Singleton";
+import type { NodeDocunment } from "../Graph/NodeDocunment";
+import { NodeRegistry } from "../Registry/NodeRegistry";
+import { printWarning } from "@/Common/Logger/DevLog";
+import { Singleton } from "@/Common/Singleton/Singleton";
 import { NodeGraphCompilerJS } from "./Implementation/JavaScript/NodeGraphCompilerJS";
 import type { INodeCompileBasicSetting, INodeCompilePackage } from "./NodeCompileSettings";
 

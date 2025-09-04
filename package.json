@@ -16,6 +16,8 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "ast-types": "^0.16.1",
+    "recast": "^0.23.11",
     "ses": "^1.14.0",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"

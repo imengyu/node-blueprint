@@ -166,7 +166,7 @@ function setNodeFav(nodeGuid: string, add: boolean) {
   if(add)
     favoriteList.value.push(nodeGuid);
   else
-    ArrayUtils.removeBy(favoriteList.value, b => b === nodeGuid, true);
+    removeItemFromArrayBy(favoriteList.value, b => b === nodeGuid, true);
   flushFavorite();
 }
 

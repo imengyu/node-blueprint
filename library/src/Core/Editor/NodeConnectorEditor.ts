@@ -1,14 +1,14 @@
-import { NodeConnector, type INodeConnectorDefine } from "@/node-blueprint/Base/Flow/Node/NodeConnector";
-import { Vector2 } from "@/node-blueprint/Base/Utils/Base/Vector2";
-import { Rect } from "@/node-blueprint/Base/Utils/Base/Rect";
-import { ConnectorDrawer } from "../../SubComponents/Render/ConnectorDrawer";
-import type { ChunkInstance } from "../Cast/ChunkedPanel";
+import { NodeConnector, type INodeConnectorDefine } from "../Node/NodeConnector";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { Rect } from "@/Common/Base/Rect";
+import { CreateObjectFactory } from "@/Common/Serializable/SerializableFactory";
+import { ConnectorDrawer } from "@/Editor/Components/Editor/Render/ConnectorDrawer";
+import { getNodeCSSColor } from "@/Editor/Composeable/EditorColors";
 import type { NodePortEditor } from "./NodePortEditor";
-import type { NodeGraphEditorViewport } from "../../NodeGraphEditor";
-import { threeOrderBezier } from "../../../Utils/BezierUtils";
-import { getNodeCSSColor } from "../../Composeable/EditorColors";
-import { calc2PointDistance } from "@/node-blueprint/Base/Utils/Base/Math";
-import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
+import type { ChunkInstance } from "@/Editor/Components/Editor/Render/ChunkedPanel";
+import type { NodeGraphEditorViewport } from "./NodeGraphEditorViewport";
+import { calc2PointDistance } from "@/Common/Base/Math";
+import { threeOrderBezier } from "@/Common/Bezier";
 
 let _debug = false;
 
@@ -36,6 +36,9 @@ export class NodeConnectorEditor extends NodeConnector {
   public selectLineWidth = 3;
   public selectRectExtend = 3;
   public dotSpeed = 0.01;
+
+  public declare startPort : NodePortEditor;
+  public declare endPort : NodePortEditor;
 
   private drawer = new ConnectorDrawer();
   private rect = new Rect();
@@ -78,8 +81,8 @@ export class NodeConnectorEditor extends NodeConnector {
    */
   public updateRegion(): Rect {
     if (this.startPort && this.endPort) {
-      this.startPos = (this.startPort as NodePortEditor).getPortPositionViewport();
-      this.endPos = (this.endPort as NodePortEditor).getPortPositionViewport();
+      this.startPos = this.startPort.getPortPositionViewport();
+      this.endPos = this.endPort.getPortPositionViewport();
       this.rect = Rect.makeBy2Point(this.rect, this.startPos, this.endPos);
       //扩大一些区域方便鼠标选择
       this.rect.x -= this.selectRectExtend;
@@ -98,8 +101,8 @@ export class NodeConnectorEditor extends NodeConnector {
    */
   public updatePortValue(): void {
     if (this.startPort && this.endPort) {
-      this.startColor = (this.startPort as NodePortEditor).getTypeColor();
-      this.endColor = (this.endPort as NodePortEditor).getTypeColor();
+      this.startColor = this.startPort.getTypeColor();
+      this.endColor = this.endPort.getTypeColor();
       if (this.startColor === this.endColor) {
         this.colorGradient = null;
         this.colorGradientNeedCreate = false;

@@ -637,7 +637,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
         (restoreData) => {
           const graph = context.graphManager.getCurrentGraph();
           context.connectorManager.unConnectConnector(restoreData.connector.requestInstance());
-          ArrayUtils.removeBy(graph.variables, (g) => g.name === restoreData.name);
+          removeItemFromArrayBy(graph.variables, (g) => g.name === restoreData.name);
         }
       );
     },

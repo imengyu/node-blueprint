@@ -1,15 +1,15 @@
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import type { NodeDocunment } from "../../../Flow/Graph/NodeDocunment";
-import type { NodeGraph } from "../../../Flow/Graph/NodeGraph";
-import type { Node } from "../../../Flow/Node/Node";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
+import type { NodeDocunment } from "../../../Graph/NodeDocunment";
+import type { NodeGraph } from "../../../Graph/NodeGraph";
+import type { Node } from "../../../Node/Node";
 import type { INodeCompileBasicSetting, INodeCompileFunctionGenerator } from "../../NodeCompileSettings";
+import type { ExpressionKind, StatementKind } from "ast-types/lib/gen/kinds";
+import type { NodePort } from "../../../Node/NodePort";
 import { NodeGraphCompilerError, type INodeGraphCompiler } from "../../NodeGraphCompiler";
-import { printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import { printWarning } from "@/Common/Logger/DevLog";
 import { parse, prettyPrint } from "recast";
 import { namedTypes as n, builders as b } from "ast-types";
-import type { ExpressionKind, StatementKind } from "ast-types/lib/gen/kinds";
-import type { NodePort } from "@/node-blueprint/Base/Flow/Node/NodePort";
-import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
 
 /*
 * 编译步骤

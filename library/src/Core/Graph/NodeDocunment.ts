@@ -1,11 +1,11 @@
-import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
 import { NodeGraph, type INodeGraphDefine } from "./NodeGraph";
 import { NodeParamTypeRegistry } from "../Type/NodeParamTypeRegistry";
-import type { NodeDocunmentEditorContext } from "@/node-blueprint/Editor/Docunment/NodeDocunmentEditor";
-import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
-import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
-import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
+import { ReadyDispatcher } from "@/Common/Wait/ReadyDispatcher";
+import { genNonDuplicateIDHEX } from "@/Common/Random";
+import type { IWaitReady } from "@/Common/Wait/IWaitReady";
+import type { NodeDocunmentEditorContext } from "@/Editor/DocunmentEditor/NodeDocunmentEditor";
 
 /**
  * 蓝图文档定义
@@ -75,7 +75,7 @@ export class NodeDocunment extends SerializableObject<INodeDocunmentDefine> impl
   /**
    * 名称
    */
-  uid =  RandomUtils.genNonDuplicateIDHEX(16);
+  uid = genNonDuplicateIDHEX(16);
   /**
    * 名称
    */

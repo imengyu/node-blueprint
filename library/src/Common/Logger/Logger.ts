@@ -1,5 +1,3 @@
-import ArrayUtils from '../Array';
-
 export type LogTraceData = {
   [index: string]: any;
 };
@@ -63,7 +61,7 @@ export class Logger {
   private listeners : LogListener[] = [];
 
   public addListener(listener : LogListener) : void { this.listeners.push(listener); }
-  public removeListener(listener : LogListener)  : void{ ArrayUtils.remove(this.listeners, listener); }
+  public removeListener(listener : LogListener)  : void{ this.listeners.remove(listener); }
   public callListener(tag: string, level: LogLevel, trace: LogTraceData|null, ...content : LogContentType[]) : void {
     this.logList.push({ tag, level, content, trace });
     this.listeners.forEach((c) => c(tag, level, trace, ...content));
@@ -83,7 +81,7 @@ export class Logger {
    * 重新发送未发送的日志条目
    */
   public clear() : void {
-    ArrayUtils.clear(this.logList);
+    this.logList.clear();
   }
 }
 

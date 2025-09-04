@@ -1,11 +1,10 @@
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import ArrayUtils from "../../Utils/ArrayUtils";
-import { printInfo, printWarning } from "../../Logger/DevLog";
-import { Singleton } from "../../Singleton/Singleton";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
+import { printInfo, printWarning } from "@/Common/Logger/DevLog";
+import { Singleton } from "@/Common/Singleton/Singleton";
 import type { INodeDefine } from "../Node/Node";
 import type { CategoryData, CategoryDataItem } from "./NodeCategory";
 import type { NodePackage } from "./NodePackage";
-import RandomUtils from "../../Utils/RandomUtils";
+import { genNonDuplicateID } from "@/Common/Random";
 
 const TAG = 'NodeRegistry';
 
@@ -108,7 +107,7 @@ export class NodeRegistry extends Singleton {
     const regData = this.allNodes.get(guid);
     if (regData) {
       if (regData.categoryObject) {
-        ArrayUtils.remove(regData.categoryObject.nodes, regData);
+        regData.categoryObject.nodes.remove(regData);
       }
     }
     this.allNodes.delete(guid);
@@ -125,7 +124,7 @@ export class NodeRegistry extends Singleton {
     const defines = pack.register();
     defines.forEach((nodeDefine) => {
       this.registerNode(nodeDefine, false);
-      ArrayUtils.addOnce(guids, nodeDefine.guid);
+      guids.addOnce(nodeDefine.guid);
     });
 
     this.allPacks.set(pack.packageName, {
@@ -198,7 +197,7 @@ export class NodeRegistry extends Singleton {
     //没有则创建
     if (category === null) {
       category = {
-        key: RandomUtils.genNonDuplicateID(12),
+        key: genNonDuplicateID(12),
         category: categoryName,
         childCategories: [],
         nodes: [],

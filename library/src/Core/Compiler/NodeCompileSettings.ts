@@ -1,5 +1,5 @@
-import type { Node } from "../Flow/Node/Node";
-import type { NodePort } from "../Flow/Node/NodePort";
+import type { Node } from "../Node/Node";
+import type { NodePort } from "../Node/NodePort";
 import type { INodeGraphCompiler, NodeDocunmentCompileData } from "./NodeGraphCompiler";
 
 export interface INodeCompileBasicSetting {

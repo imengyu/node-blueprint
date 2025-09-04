@@ -1,5 +1,3 @@
-import ArrayUtils from "../Array";
-
 export class ReadyDispatcher {
   private cbs : Array<{
     resolve: () => void,
@@ -8,11 +6,11 @@ export class ReadyDispatcher {
 
   setReadyState() {
     this.cbs.forEach((cb) => cb.resolve());
-    ArrayUtils.clear(this.cbs);
+    this.cbs.clear();
   }
   setErrorState(e: any) {
     this.cbs.forEach((cb) => cb.reject(e));
-    ArrayUtils.clear(this.cbs);
+    this.cbs.clear();
   }
   waitReadyState() {
     return new Promise<void>((resolve, reject) => this.cbs.push({ resolve, reject }));

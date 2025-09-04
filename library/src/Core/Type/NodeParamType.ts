@@ -1,9 +1,9 @@
 import type { VNode } from "vue";
-import type { IKeyValueObject } from "../../Utils/BaseTypes";
-import { SerializableObject } from "../../Serializable/SerializableObject";
 import type { NodePort } from "../Node/NodePort";
+import type { IKeyValueObject } from "@/Common/Base/BaseTypes";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
 import { NodeParamTypeRegistry } from "./NodeParamTypeRegistry";
-import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
 
 /**
  * Base types

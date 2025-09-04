@@ -1,4 +1,4 @@
-import { NodeDocunment, type INodeDocunmentDefine } from "@/node-blueprint/Base/Flow/Graph/NodeDocunment";
+import { NodeDocunment, type INodeDocunmentDefine } from "../Graph/NodeDocunment";
 
 export class NodeDocunmentEditor extends NodeDocunment {
   constructor(define?: INodeDocunmentDefine) {

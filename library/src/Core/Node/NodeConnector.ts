@@ -1,8 +1,8 @@
-import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject } from "../../Serializable/SerializableObject";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
+import { genNonDuplicateIDHEX } from "@/Common/Random";
 import type { NodePort } from "./NodePort";
-import ArrayUtils from "../../Utils/ArrayUtils";
-import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
+import ArrayUtils from "@/Common/Array";
 
 /**
  * 节点链接
@@ -42,7 +42,7 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
   }
   constructor(define?: INodeConnectorDefine) {
     super(NodeConnector.TAG, define, NodeConnector.TAG);
-    this.uid = RandomUtils.genNonDuplicateIDHEX(32);
+    this.uid = genNonDuplicateIDHEX(32);
   }
 
   /**

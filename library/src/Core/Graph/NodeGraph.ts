@@ -1,21 +1,20 @@
-import RandomUtils from "../../Utils/RandomUtils";
-import { SerializableObject, SerializableObjectPureObjName } from "../../Serializable/SerializableObject";
 import type { Node, INodeDefine } from "../Node/Node";
 import type { NodeConnector } from "../Node/NodeConnector";
 import type { NodeVariable } from "./NodeVariable";
 import type { INodePortDefine } from "../Node/NodePort";
 import type { NodeDocunment } from "./NodeDocunment";
-import type { NodeGraphEditorContext } from "@/node-blueprint/Editor/Graph/NodeGraphEditor";
+import { EditorHolder, type IEditorHolderResources } from "@/Editor/GraphEditor/Editor/Utils/IEditorHolderResources";
 import { NodeRegistry } from "../Registry/NodeRegistry";
-import { printWarning } from "../../Logger/DevLog";
-import BaseNodes from "@/node-blueprint/Nodes/Lib/BaseNodes";
-import { Vector2 } from "../../Utils/Base/Vector2";
-import type { IObjectSharedData } from "../../Utils/Interface/IObjectSharedData";
-import { ReadyDispatcher } from "@/node-blueprint/Editor/Docunment/Tools/ReadyDispatcher";
-import type { IWaitReady } from "@/node-blueprint/Editor/Docunment/Tools/IWaitReady";
-import { CreateObjectFactory, SerializableFactory } from "../../Serializable/SerializableFactory";
-import ArrayUtils from "../../Utils/ArrayUtils";
-import { EditorHolder, type IEditorHolderResources } from "@/node-blueprint/Editor/Graph/Editor/Utils/IEditorHolderResources";
+import { printWarning } from "@/Common/Logger/DevLog";
+import { Vector2 } from "@/Common/Base/Vector2";
+import { SerializableObject, SerializableObjectPureObjName } from "@/Common/Serializable/SerializableObject";
+import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
+import { genNonDuplicateIDHEX } from "@/Common/Random";
+import BaseNodes from "@/Nodes/Lib/BaseNodes";
+import type { IWaitReady } from "@/Common/Wait/IWaitReady";
+import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";
+import { ReadyDispatcher } from "@/Common/Wait/ReadyDispatcher";
+import type { IObjectSharedData } from "@/Common/Base/IObjectSharedData";
 
 /**
  * 流图类型
@@ -41,7 +40,7 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
 {
   type = 'none' as NodeGraphType;
   name = '';
-  uid = RandomUtils.genNonDuplicateIDHEX(32);
+  uid = genNonDuplicateIDHEX(32);
   version = '';
   description = '';
   author = '';
@@ -221,9 +220,9 @@ export class NodeGraph extends SerializableObject<INodeGraphDefine, NodeDocunmen
    */
   removeChildren(childOrIndex: NodeGraph|number) {
     if (typeof childOrIndex === 'number')
-      ArrayUtils.removeAt(this.children, childOrIndex);
+      this.children.removeAt(childOrIndex);
     else 
-      ArrayUtils.remove(this.children, childOrIndex);
+      this.children.remove(childOrIndex);
   }
 
   /**
