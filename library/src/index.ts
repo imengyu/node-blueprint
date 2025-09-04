@@ -8,11 +8,13 @@ import TooltipDirective from '@/Editor/Components/Shared/Tooltip/TooltipDirectiv
 import ScrollRect from '@imengyu/vue-scroll-rect';
 import type { Plugin } from 'vue';
 import { initLib } from './Nodes';
+import { initBase } from './Core';
 
 const plugin : Plugin = {
   install(app, ...options) {
     app.use(TooltipDirective);
     app.use(ScrollRect);
+    initBase();
     initLib();
   },
 }
