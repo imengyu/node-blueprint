@@ -2,10 +2,10 @@ import { NodeConnector, type INodeConnectorDefine } from "../Node/NodeConnector"
 import { Vector2 } from "@/Common/Base/Vector2";
 import { Rect } from "@/Common/Base/Rect";
 import { CreateObjectFactory } from "@/Common/Serializable/SerializableFactory";
-import { ConnectorDrawer } from "@/Editor/Components/Editor/Render/ConnectorDrawer";
+import { ConnectorDrawer } from "@/Editor/GraphEditor/Components/Render/ConnectorDrawer";
 import { getNodeCSSColor } from "@/Editor/Composeable/EditorColors";
 import type { NodePortEditor } from "./NodePortEditor";
-import type { ChunkInstance } from "@/Editor/Components/Editor/Render/ChunkedPanel";
+import type { ChunkInstance } from "@/Editor/GraphEditor/Components/Render/ChunkedPanel";
 import type { NodeGraphEditorViewport } from "./NodeGraphEditorViewport";
 import { calc2PointDistance } from "@/Common/Base/Math";
 import { threeOrderBezier } from "@/Common/Bezier";

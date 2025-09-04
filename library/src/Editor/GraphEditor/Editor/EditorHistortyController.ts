@@ -1,12 +1,11 @@
-import ArrayUtils from "@/Common/ArrayUtils";
-import RandomUtils from "@/Common/RandomUtils";
-import logger from "@/node-blueprint/Base/Logger/Logger";
+import logger from "@/Common/Logger/Logger";
 import { useNodeGraphEditorStaticConfig } from "../Config/ConfigManager";
-import { printError } from "@/node-blueprint/Base/Logger/DevLog";
-import { EventHandler } from "@/Common/Events/EventHandler";
+import { printError } from "@/Common/Logger/DevLog";
 import { EditorHistoryActionContext } from "./History/ActionContext";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Vector2 } from "@/Common/Base/Vector2";
+import { genNonDuplicateIDHEX } from "@/Common/Random";
+import { EventHandler } from "@/Common/Event/EventHandler";
 
 
 /**
@@ -294,8 +293,8 @@ class EditorHistoryStepStackManager {
   }
   async clearSteps() {
     this.historyCurrentCursor = -1;
-    ArrayUtils.clear(this.historySteps);
-    ArrayUtils.clear(this.historyCurrentStepGroupingStack);
+    this.historySteps.clear();
+    this.historyCurrentStepGroupingStack.clear();
   }
   
   /**
@@ -330,7 +329,7 @@ export class EditorHistoryStep {
     context: NodeGraphEditorInternalContext,
     stack: EditorHistoryStepStackManager
   ) {
-    this.id = RandomUtils.genNonDuplicateIDHEX(16);
+    this.id = genNonDuplicateIDHEX(16);
     this.name = name;
     this.hooks = hooks;
     this.context = context;

@@ -246,8 +246,8 @@ const menuData = reactive<MenuOptions>({
         //主菜单显示历史记录
         const historyManager = getCurrentActiveGraphEditor()?.historyManager;
         if (historyManager) {
-          menuData.items![1].children![0].label = `撤销 ${historyManager.getFirstUndoStepName()}`;
-          menuData.items![1].children![1].label = `恢复 ${historyManager.getFirstRedoStepName()}`;
+          menuData.items![1].children![0].label = `撤销 ${historyManager.stack.getFirstUndoStepName()}`;
+          menuData.items![1].children![1].label = `恢复 ${historyManager.stack.getFirstRedoStepName()}`;
         }
       },
       label: '编辑',

@@ -2,7 +2,6 @@ import { SerializableObject } from "@/Common/Serializable/SerializableObject";
 import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
 import { genNonDuplicateIDHEX } from "@/Common/Random";
 import type { NodePort } from "./NodePort";
-import ArrayUtils from "@/Common/Array";
 
 /**
  * 节点链接
@@ -66,11 +65,11 @@ export class NodeConnector extends SerializableObject<INodeConnectorDefine> {
     if (this.startPort === null || this.endPort === null)
       return;
     if (this.startPort.direction === 'input') {
-      ArrayUtils.addOnce(this.startPort.connectedFromPort, this);
-      ArrayUtils.addOnce(this.endPort.connectedToPort, this);
+      this.startPort.connectedFromPort.addOnce(this);
+      this.endPort.connectedToPort.addOnce(this);
     } else {
-      ArrayUtils.addOnce(this.startPort.connectedToPort, this);
-      ArrayUtils.addOnce(this.endPort.connectedFromPort, this);
+      this.startPort.connectedToPort.addOnce(this);
+      this.endPort.connectedFromPort.addOnce(this);
     }
   }
 }

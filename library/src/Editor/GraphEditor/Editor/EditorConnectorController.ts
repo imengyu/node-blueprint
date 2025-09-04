@@ -3,19 +3,18 @@ import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/Core/Node/Node";
 import type { NodePort, NodePortDirection } from "@/Core/Node/NodePort";
 import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
-import type { NodePortEditor } from "./Flow/NodePortEditor";
-import type { NodeEditor } from "./Flow/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
 import { Vector2 } from "@/Common/Base/Vector2";
 import { Rect } from "@/Common/Base/Rect";
 import { NodeParamTypeRegistry, type NodeTypeCoverter } from "@/Core/Type/NodeParamTypeRegistry";
 import { NodeParamType } from "@/Core/Type/NodeParamType";
-import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
+import { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
 import { createMouseDownAndUpHandler } from "./Utils/MouseHandler";
-import ArrayUtils from "@/Common/ArrayUtils";
-import StringUtils from "@/Common/StringUtils";
-import HtmlUtils from "@/Common/HtmlUtils";
+import HtmlUtils from "@/Common/Html";
 import type { NodeConnector } from "@/Core/Node/NodeConnector";
 import type { ICoverterNodeOptions } from "@/Nodes/Lib/BaseNodes";
+import { isNullOrEmpty } from "@/Common/String";
 
 /**
  * 节点连接上下文函数
@@ -140,14 +139,14 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
         if (connector && connector.testInConnector(_mousePos, _mousePosScreen)) {
           connector.hoverChecked = true;
           connector.hover = true;
-          ArrayUtils.addOnce(lastHoverConnector, connector);
+          lastHoverConnector.addOnce(connector);
         }
       });
     for (let i = lastHoverConnector.length - 1; i >= 0; i--) {
       const connector = lastHoverConnector[i];
       if (!connector.hoverChecked) {
         connector.hover = false;
-        ArrayUtils.removeAt(lastHoverConnector, i);
+        lastHoverConnector.removeAt(i);
       }
     }
   }
@@ -299,7 +298,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
                   connectingInfo.currentHoverPort as NodePort, 
                   connectingInfo.startPort as NodePort
                 ); 
-                connectingInfo.canConnect = !StringUtils.isNullOrEmpty(err);
+                connectingInfo.canConnect = !isNullOrEmpty(err);
               }
             } else if(connectingInfo.startPort.direction === 'input') {
               if(typeof connectingInfo.startPort.parent.events.onPortConnectCheck === 'function') {
@@ -308,7 +307,7 @@ export function useEditorConnectorController(context: NodeGraphEditorInternalCon
                   connectingInfo.startPort as NodePort, 
                   connectingInfo.currentHoverPort as NodePort
                 ); 
-                connectingInfo.canConnect = !StringUtils.isNullOrEmpty(err);
+                connectingInfo.canConnect = !isNullOrEmpty(err);
               }
             }
             //如果不能连接，则显示错误

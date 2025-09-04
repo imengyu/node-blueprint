@@ -1,8 +1,8 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import type { NodePort } from '@/Core/Node/NodePort';
-import type { IKeyValueObject, ISaveableTypes } from '@/Common/BaseTypes';
-import type { NodePortEditor } from '../Editor/Flow/NodePortEditor';
+import type { IKeyValueObject, ISaveableTypes } from '@/Common/Base/BaseTypes';
+import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
 import type { NodeGraphEditorContext } from '../NodeGraphEditor';
 import type { NodeParamEditorCreateCallback } from '@/Core/Type/NodeParamType';
 

@@ -1,10 +1,10 @@
-import { DevAssert } from "@/node-blueprint/Base/Logger/Assert";
-import { CreateObjectFactory } from "@/node-blueprint/Base/Serializable/SerializableFactory";
-import { SerializableObject } from "@/node-blueprint/Base/Serializable/SerializableObject";
+import { DevAssert } from "@/Common/Logger/Assert";
+import { CreateObjectFactory } from "@/Common/Serializable/SerializableFactory";
+import { SerializableObject } from "@/Common/Serializable/SerializableObject";
 import type { NodeGraphEditorInternalContext } from "../../NodeGraphEditor";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import type { NodeEditor } from "../Flow/NodeEditor";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
+import type { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
 import type { NodeGraph } from "@/Core/Graph/NodeGraph";
 
 export type EditorHistoryStoreChangedPropertyFn<T, K> = (oldValue: K, instance: T) => K;

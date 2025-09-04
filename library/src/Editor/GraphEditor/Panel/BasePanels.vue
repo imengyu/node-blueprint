@@ -54,17 +54,17 @@
 import { inject, ref, type PropType, onMounted, watch, reactive } from 'vue';
 import { NodeRegistry } from '@/Core/Registry/NodeRegistry';
 import { Vector2 } from '@/Common/Base/Vector2';
+import { SimpleTimer } from '@/Common/Timer/Timer';
 import type { NodePortDirection } from '@/Core/Node/NodePort';
 import type { NodeParamType } from '@/Core/Type/NodeParamType';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { INodeDefine } from '@/Core/Node/Node';
 import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
-import Icon from '../../Nana/Icon.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import TooltipContent from '@/Editor/Components/Shared/Tooltip/TooltipContent.vue';
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
-import Alert, { type AlertProps } from '../../Nana/Modal/Alert';
-import { SimpleTimer } from '@/Common/Timer/Timer';
-import TooltipContent from '../../Nana/Tooltip/TooltipContent.vue';
+import Alert, { type AlertProps } from '@/Editor/Components/Shared/Modal/Alert';
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
 const teleport = inject<string>('NodeGraphUIModalTeleport', 'body');

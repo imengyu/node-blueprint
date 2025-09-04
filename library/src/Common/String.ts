@@ -39,6 +39,13 @@ export function stringToHexCharCode(str : string, with0x = true) : string {
   return hexCharCode.join("");
 }
 /**
+ * 检测字符串是否为空、null、undefined、空格
+ * @param {String} val 
+ */
+export function stringIsNullOrEmptyOrBlank(val : string) : boolean {
+  return val === null || val === undefined || val.length === 0 || val.trim().length === 0;
+}
+/**
  * 检测字符串是否是一串数字
  * @param {String} val 
  */
@@ -63,6 +70,6 @@ export function stringIsInteger(val : string) : boolean {
  * @param str 字符串
  * @returns 
  */
-export function isNullOrEmpty(str: string) : boolean {
+export function isNullOrEmpty(str: string|undefined|null) : boolean {
   return str === null || str === undefined || str.length === 0;
 }

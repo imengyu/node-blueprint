@@ -90,16 +90,15 @@
 
 <script lang="ts" setup>
 import { onMounted, provide, ref, type PropType, type Ref, onBeforeUnmount, watch } from 'vue';
-import BackgroundRender from './SubComponents/Render/BackgroundRender.vue';
-import ConnectorRender from './SubComponents/Render/ConnectorRender.vue';
+import BackgroundRender from './Components/Render/BackgroundRender.vue';
+import ConnectorRender from './Components/Render/ConnectorRender.vue';
 import NodeComponent from './Node/Node.vue';
 import NodeContainer from './Node/NodeContainer.vue';
-import ZoomTool from './SubComponents/ZoomTool.vue';
+import ZoomTool from './Components/ZoomTool.vue';
 import BasePanels from './Panel/BasePanels.vue';
-import Spin from '../Nana/Common/Spin.vue';
-import Icon from '../Nana/Icon.vue';
-import ArrayUtils from '@/Common/ArrayUtils';
-import { NodeConnectorEditor } from './Editor/Flow/NodeConnectorEditor';
+import Spin from '@/Editor/Components/Shared/Common/Spin.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
+import { NodeConnectorEditor } from '@/Core/Editor/NodeConnectorEditor';
 import { useEditorSizeChecker } from './Editor/EditorSizeChecker';
 import { useEditorMousHandler } from './Editor/EditorMouseHandler';
 import { useEditorGraphController } from './Editor/EditorGraphController';
@@ -115,12 +114,12 @@ import type { INodeGraphEditorSettings, NodeGraphEditorBaseEventListener, NodeGr
 import type { NodeGraphEditorBaseEventCallback, NodeGraphEditorInternalContext } from './NodeGraphEditor';
 import type { Rect } from '@/Common/Base/Rect';
 import type { NodeGraph } from '@/Core/Graph/NodeGraph';
-import type { NodeEditor } from './Editor/Flow/NodeEditor';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
 import type { ChunkedPanel } from './Editor/Cast/ChunkedPanel';
-import PositionIndicator from './SubComponents/PositionIndicator.vue';
+import PositionIndicator from './Components/PositionIndicator.vue';
 import { useEditorHistoryController } from './Editor/EditorHistortyController';
 import { TOP_CONFIG_KEY, type NodeGraphEditorStaticConfig } from './Config/ConfigManager';
-import { devLog } from '@/node-blueprint/Base/Logger/DevLog';
+import { devLog } from '@/Common/Logger/DevLog';
 import { useEditorBasicController } from './Editor/EditorBasicController';
 
 const emit = defineEmits([
@@ -174,7 +173,7 @@ context.listenEvent = (n, c) => {
   events.set(n, cbs);
   return {
     unListen() {
-      ArrayUtils.remove(cbs!, c);
+      cbs.remove(c);
       events.set(n, cbs!);
     },
   };

@@ -45,18 +45,18 @@
 <script setup lang="ts">
 import { computed, ref, type PropType, onMounted, watch, provide, onBeforeUnmount } from 'vue';
 import { Vector2 } from '@/Common/Base/Vector2';
+import { removeItemFromArrayBy } from '@/Common/ArrayTools';
+import SettingsUtils from '@/Common/Settings';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
-import Row from '../../../Nana/Layout/RowView.vue';
+import Row from '@/Editor/Components/Shared/Layout/RowView.vue';
 import NodeList from './NodeList.vue';
 import NodeCategory from './NodeCategory.vue';
-import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
+import CollapseItem from '@/Editor/Components/Editor/List/CollapseItem.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
 import type { NodePortDirection } from '@/Core/Node/NodePort';
 import type { NodeParamType } from '@/Core/Type/NodeParamType';
 import type { INodeDefine } from '@/Core/Node/Node';
-import SettingsUtils from '@/Common/SettingsUtils';
-import ArrayUtils from '@/Common/ArrayUtils';
-import CollapseItem from '@/node-blueprint/Editor/Components/List/CollapseItem.vue';
 
 const emit = defineEmits([ 
   'update:show',

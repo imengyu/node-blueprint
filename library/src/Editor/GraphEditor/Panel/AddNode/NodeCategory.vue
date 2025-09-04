@@ -57,14 +57,14 @@
 
 <script lang="ts" setup>
 import { inject, type PropType, type Ref } from 'vue'
+import { startInternalDataDragging } from '../../Editor/EditorDragController';
 import type { INodeDefine } from '@/Core/Node/Node';
 import type { CategoryData, CategoryDataItem } from '@/Core/Registry/NodeCategory';
-import HtmlUtils from '@/Common/HtmlUtils';
-import CollapseItem from '../../../Components/List/CollapseItem.vue';
+import HtmlUtils from '@/Common/Html';
+import CollapseItem from '@/Editor/Components/Editor/List/CollapseItem.vue';
 import DefaultLogo from '../../../Images/BlockIcon/function_static.svg';
-import SmallButton from '../../../Components//SmallButton.vue';
-import Tooltip from '@/node-blueprint/Editor/Nana/Tooltip/Tooltip.vue';
-import { startInternalDataDragging } from '../../Editor/EditorDragController';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
+import Tooltip from '@/Editor/Components/Shared/Tooltip/Tooltip.vue';
 
 const props = defineProps({
   categoryData: {

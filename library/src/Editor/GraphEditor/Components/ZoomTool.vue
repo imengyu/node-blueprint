@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { ref, type PropType, inject, watch } from "vue";
-import Icon from "../Shared/Icon.vue";
+import Icon from "@/Editor/Components/Shared/Icon.vue";
 import type { NodeGraphEditorViewport } from "@/Core/Editor/NodeGraphEditorViewport";
 import type { NodeGraphEditorInternalContext } from "@/Editor/GraphEditor/NodeGraphEditor";
 

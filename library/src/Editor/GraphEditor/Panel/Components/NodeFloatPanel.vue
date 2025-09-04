@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { Vector2 } from '@/Common/Base/Vector2';
-import Icon from '@/node-blueprint/Editor/Nana/Icon.vue';
 import { watch, type PropType, ref } from 'vue';
+import { Vector2 } from '@/Common/Base/Vector2';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 
 defineEmits([ 'update:show' ]);
 

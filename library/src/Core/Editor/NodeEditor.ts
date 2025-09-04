@@ -2,7 +2,7 @@ import { Node, type INodeDefine } from "../Node/Node";
 import { Vector2 } from "@/Common/Base/Vector2";
 import { Rect } from "@/Common/Base/Rect";
 import { CreateObjectFactory, SerializableFactory } from "@/Common/Serializable/SerializableFactory";
-import { ChunkInstance } from "@/Editor/Components/Editor/Render/ChunkedPanel";
+import { ChunkInstance } from "@/Editor/GraphEditor/Components/Render/ChunkedPanel";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
 import type { NodeContextMenuItem } from "@/Editor/GraphEditor/Editor/EditorContextMenuHandler";
 import type { NodeGraphEditorContext } from "@/Editor/GraphEditor/NodeGraphEditor";

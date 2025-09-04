@@ -183,28 +183,28 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, type PropType, inject, nextTick, onBeforeUnmount } from 'vue';
-import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
-import Icon from '../../Nana/Icon.vue';
+import Tooltip from '@/Editor/Components/Shared/Tooltip/Tooltip.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 import NodePort from './NodePort.vue';
-import SmallButton from '../../Components/SmallButton.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
 import NodeIconImageRender from './NodeIconImageRender.vue';
-import StringUtils from '@/Common/StringUtils';
 import DefaultBlockLogo from '../../Images/BlockIcon/function.svg'
 import NodeCustomEditorWrapper from './NodeCustomEditorWrapper.vue';
-import PropControl from '../../Components/PropControl/PropControl.vue';
+import PropControl from '@/Editor/Components/Editor/PropControl/PropControl.vue';
 import type { ChunkedPanel } from '../Editor/Cast/ChunkedPanel';
 import type { NodeGraphEditorInternalContext, NodeGraphEditorViewport } from '../NodeGraphEditor';
 import type { NodePortDirection } from '@/Core/Node/NodePort';
-import type { NodePortEditor } from '../Editor/Flow/NodePortEditor';
-import type { NodeEditor } from '../Editor/Flow/NodeEditor';
+import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
 import { Vector2 } from '@/Common/Base/Vector2';
 import { SIZE_LEFT, SIZE_TOP, SIZE_BOTTOM, SIZE_RIGHT } from './NodeDefines';
 import { createMouseDragHandler } from '../Editor/Utils/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';
-import { printWarning } from '@/node-blueprint/Base/Logger/DevLog';
+import { printWarning } from '@/Common/Logger/DevLog';
 import { useResizeChecker } from 'vue-code-layout';
-import { moveNodeSolveSnap } from '../Composeable/NodeMove';
+import { moveNodeSolveSnap } from '../../Composeable/NodeMove';
 import { useComponentLoadBoundThing } from '../../Composeable/ComponentLoadBoundThing';
+import { stringIsNullOrEmptyOrBlank } from '@/Common/String';
 
 const props = defineProps({
   instance: {
@@ -403,7 +403,7 @@ function updateComment() {
     return;
   if(commentInput.value && commentInputPlaceHolder.value) {
     commentInput.value.innerText = instance.value.markContent;
-    commentInputPlaceHolder.value.style.display = StringUtils.isNullOrBlank(instance.value.markContent) ? '' : 'none';
+    commentInputPlaceHolder.value.style.display = stringIsNullOrEmptyOrBlank(instance.value.markContent) ? '' : 'none';
   }
   setTimeout(() => onCommentInputInput(), 200);
 }

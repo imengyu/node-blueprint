@@ -1,16 +1,15 @@
 
 import { ref, toRaw } from "vue";
 import { ChunkInstance } from "./Cast/ChunkedPanel";
-import ArrayUtils from "@/Common/ArrayUtils";
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { Node } from "@/Core/Node/Node";
-import { NodePort } from "@/Core/Node/NodePort";
-import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
+import type { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
 import type { NodeGraph } from "@/Core/Graph/NodeGraph";
-import type { NodeEditor } from "./Flow/NodeEditor";
-import { devWarning, printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import { devWarning, printError, printWarning } from "@/Common/Logger/DevLog";
 import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";
-import type { NodePortEditor } from "./Flow/NodePortEditor";
+import { NodePort } from "@/Core/Node/NodePort";
 
 export interface NodeGraphEditorGraphControllerContext {
   graphManager: {
@@ -229,9 +228,9 @@ export function useEditorGraphController(
 
     allConnectors.set(connector.uid, connector);
     if (currentGraph.value)
-      ArrayUtils.addOnce(currentGraph.value.connectors, connector);
-    ArrayUtils.addOnce((connector.startPort.parent as NodeEditor).connectors, connector);
-    ArrayUtils.addOnce((connector.endPort.parent as NodeEditor).connectors, connector);
+      currentGraph.value.connectors.addOnce(connector);
+    connector.startPort.parent.connectors.addOnce(connector);
+    connector.endPort.parent.connectors.addOnce(connector);
 
     //更新
     if (connector !== null) {
@@ -257,11 +256,11 @@ export function useEditorGraphController(
       start = connector.startPort,
       end = connector.endPort;
     if (start !== null) 
-      ArrayUtils.remove((start.parent as NodeEditor).connectors, connector);
+      start.parent.connectors.remove(connector);
     if (end !== null) 
-    ArrayUtils.remove((end.parent as NodeEditor).connectors, connector);
+      end.parent.connectors.remove(connector);
     if (currentGraph.value)
-      ArrayUtils.remove(currentGraph.value.connectors, connector);
+      currentGraph.value.connectors.remove(connector);
     allConnectors.delete(connector.uid);
   }
   /**
@@ -296,10 +295,10 @@ export function useEditorGraphController(
       allNodes.delete(node.uid);
       switch(node.style.layer) {
         case 'normal':
-          ArrayUtils.remove(foregroundNodes.value, node);
+          foregroundNodes.value.remove(node);
           break;
         case 'background':
-          ArrayUtils.remove(backgroundNodes.value, node);
+          backgroundNodes.value.remove(node);
           break;
       }
 
@@ -411,8 +410,8 @@ export function useEditorGraphController(
    * 清空编辑器内所有内容
    */
   function clearAll() {
-    ArrayUtils.clear(foregroundNodes.value);
-    ArrayUtils.clear(backgroundNodes.value);
+    foregroundNodes.value.clear();
+    backgroundNodes.value.clear();
     allNodes.clear();
     allConnectors.clear();
   }

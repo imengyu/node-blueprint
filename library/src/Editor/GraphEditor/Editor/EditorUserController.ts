@@ -1,10 +1,10 @@
 import { nextTick, ref, type Ref } from "vue";
-import { NodeEditor } from "./Flow/NodeEditor";
+import { NodeEditor } from "@/Core/Editor/NodeEditor";
 import { Vector2 } from "@/Common/Base/Vector2";
-import { NodePortEditor } from "./Flow/NodePortEditor";
-import { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
+import { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
 import { NodeVariable } from "@/Core/Graph/NodeVariable";
-import { printError, printWarning } from "@/node-blueprint/Base/Logger/DevLog";
+import { printError, printWarning } from "@/Common/Logger/DevLog";
 import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
 import { NodeGraph, type INodeConnectorSaveData, type INodeGraphDefine, type INodeSaveData } from "@/Core/Graph/NodeGraph";
 import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";
@@ -13,8 +13,8 @@ import type { Node, INodeDefine, NodeBreakPoint, CustomStorageObject } from "@/C
 import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodeConnector } from "@/Core/Node/NodeConnector";
 import type { INodePortDefine, NodePort } from "@/Core/Node/NodePort";
-import ArrayUtils from "@/Common/ArrayUtils";
 import BaseNodes, { getGraphCallNodeGraph, type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
+import { removeItemFromArrayBy } from "@/Common/ArrayTools";
 
 
 export interface NodeEditorUserAddNodeOptions<T> {
@@ -813,7 +813,7 @@ export function useEditorUserController(context: NodeGraphEditorInternalContext)
           const currentGraph = context.graphManager.getCurrentGraph();
 
           currentGraph.children.push(...subgraph.children);
-          ArrayUtils.remove(currentGraph.children, subgraph);
+          currentGraph.children.remove(subgraph);
       
           const callNodes = context.graphManager.filterNodes(`GraphCall${subgraph.name}`);
           for (const callNode of callNodes) {

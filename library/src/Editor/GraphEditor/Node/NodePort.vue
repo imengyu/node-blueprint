@@ -117,18 +117,18 @@
 
 <script lang="ts" setup>
 import { toRefs, type PropType, inject, ref } from 'vue';
-import Tooltip from '../../Nana/Tooltip/Tooltip.vue';
-import Icon from '../../Nana/Icon.vue';
+import Tooltip from '@/Editor/Components/Shared/Tooltip/Tooltip.vue';
+import Icon from '@/Editor/Components/Shared/Icon.vue';
 import NodePortParamEditor from './NodePortParamEditor.vue';
-import NodeParamIconRender from '../../Components/Small/NodeParamIconRender.vue';
-import ConsoleAutoShower from '../../Console/ConsoleAutoShower.vue';
-import RowView from '../../Nana/Layout/RowView.vue';
-import ColumnView from '../../Nana/Layout/ColumnView.vue';
-import HtmlUtils from '@/Common/HtmlUtils';
+import NodeParamIconRender from '@/Editor/Components/Editor/Small/NodeParamIconRender.vue';
+import ConsoleAutoShower from '@/Editor/Components/Console/ConsoleAutoShower.vue';
+import RowView from '@/Editor/Components/Shared/Layout/RowView.vue';
+import ColumnView from '@/Editor/Components/Shared/Layout/ColumnView.vue';
+import HtmlUtils from '@/Common/Html';
 import type { NodeGraphEditorInternalContext } from '../NodeGraphEditor';
-import type { NodePortEditor } from '../Editor/Flow/NodePortEditor';
-import type { NodeEditor } from '../Editor/Flow/NodeEditor';
-import type { EditorDebugController } from '../../Docunment/Editor/EditorDebugController';
+import type { NodePortEditor } from '@/Core/Editor/NodePortEditor';
+import type { NodeEditor } from '@/Core/Editor/NodeEditor';
+import type { EditorDebugController } from '../../DocunmentEditor/Editor/EditorDebugController';
 import { Vector2 } from '@/Common/Base/Vector2';
 import { createMouseDragHandler } from '../Editor/Utils/MouseHandler';
 import { isMouseEventInNoDragControl } from '../Editor/EditorMouseHandler';

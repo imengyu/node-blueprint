@@ -1,5 +1,5 @@
 import { Vector2 } from "@/Common/Base/Vector2";
-import type { NodeGraphEditorMouseInfo } from "./EditorMouseHandler";
+import type { NodeGraphEditorMouseInfo } from "../EditorMouseHandler";
 
 export type IMouseEventHandlerEntry<T = any> = (e: MouseEvent, param?: T) => boolean;
 export type IMouseMoveHandlerEntry = (mouseInfo : NodeGraphEditorMouseInfo, e: MouseEvent) => boolean;

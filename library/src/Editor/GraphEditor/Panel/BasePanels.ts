@@ -1,7 +1,7 @@
 import type { Vector2 } from '@/Common/Base/Vector2';
 import type { NodeParamType } from '@/Core/Type/NodeParamType';
 import type { NodePortDirection } from '@/Core/Node/NodePort';
-import type { AlertProps } from '../../Nana/Modal/Alert';
+import type { AlertProps } from '@/Editor/Components/Shared/Modal/Alert';
 
 export type ChooseTypePanelCallback = undefined;
 

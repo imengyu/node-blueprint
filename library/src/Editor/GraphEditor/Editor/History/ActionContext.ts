@@ -1,8 +1,8 @@
 import type { NodeGraph } from "@/Core/Graph/NodeGraph";
 import type { NodeGraphEditorInternalContext } from "../../NodeGraphEditor";
-import type { NodeConnectorEditor } from "../Flow/NodeConnectorEditor";
-import type { NodeEditor } from "../Flow/NodeEditor";
-import type { NodePortEditor } from "../Flow/NodePortEditor";
+import type { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
 import { EditorHistoryNodeInfo, EditorHistoryNodeConnectorInfo, EditorHistoryNodePortInfo, EditorHistoryNodeGraphInfo } from "./InfoStorage";
 
 /**

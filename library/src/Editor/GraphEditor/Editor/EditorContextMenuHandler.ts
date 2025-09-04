@@ -2,14 +2,13 @@ import type { Vector2 } from "@/Common/Base/Vector2";
 import type { NodeGraphEditorContext, NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import type { NodePort } from "@/Core/Node/NodePort";
 import type { NodeConnector } from "@/Core/Node/NodeConnector";
-import type { NodeEditor } from "./Flow/NodeEditor";
-import type { NodePortEditor } from "./Flow/NodePortEditor";
-import type { NodeConnectorEditor } from "./Flow/NodeConnectorEditor";
-import StringUtils from "@/Common/StringUtils";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import type { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
 import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue3-context-menu';
 import BaseNodes, { type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
-import ArrayUtils from "@/Common/ArrayUtils";
-import { ConcatableArray } from "@/Common/Array/ConcatableArray";
+import { ConcatableArray } from "@/Common/ArrayTools";
+import { isNullOrEmpty } from "@/Common/String";
 
 export interface NodeEditorContextMenuContext {
   contextMenuManager: {
@@ -116,7 +115,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
    */
   function registerNodeCustomMenuHandler(handler: NodeContextMenuHandler) {
     customNodeMenuHandler.push(handler);
-    return () => ArrayUtils.remove(customNodeMenuHandler, handler);
+    return () => customNodeMenuHandler.remove(handler);
   }  
   /**
   * 注册连接线自定义右键菜单处理器，在处理器中会返回选中节点信息，
@@ -126,7 +125,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   */
   function registerConnectorCustomMenuHandler(handler: NodeConnectorContextMenuHandler) {
     customConnectorMenuHandler.push(handler);
-    return () => ArrayUtils.remove(customConnectorMenuHandler, handler);
+    return () => customConnectorMenuHandler.remove(handler);
   }
 
   //Connector Menu
@@ -147,7 +146,8 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         label: "断开连接", 
         onClick: () => context.userActionsManager.deleteSelectedConnectors()
       },
-    ].concat(selectedConnectors.length === 1 ? [
+    ];
+    menuItems = menuItems.concat(selectedConnectors.length === 1 ? [
       { 
         label: "按起始端位置拉直",
         onClick: () => {
@@ -335,7 +335,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           input?.focus();
           document.execCommand("cut");
         },
-        disabled: StringUtils.isNullOrEmpty(selection),
+        disabled: isNullOrEmpty(selection),
       },
       {
         label: "复制",
@@ -343,7 +343,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           input?.focus();
           document.execCommand("copy");
         },
-        disabled: StringUtils.isNullOrEmpty(selection),
+        disabled: isNullOrEmpty(selection),
       },
       {
         label: "粘贴",
@@ -366,7 +366,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           input?.focus();
           document.execCommand("delete");
         },
-        disabled: StringUtils.isNullOrEmpty(selection),
+        disabled: isNullOrEmpty(selection),
       },
     ];
 

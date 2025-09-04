@@ -1,5 +1,5 @@
 import { Vector2 } from "@/Common/Base/Vector2";
-import HtmlUtils from "@/Common/HtmlUtils";
+import HtmlUtils from "@/Common/Html";
 import { MouseEventUpdateMouseInfoType, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { createMouseDragHandler, type IMouseEventHandlerEntry, type IMouseMoveHandlerEntry, type IMouseWhellHandlerEntry } from "./Utils/MouseHandler"
 

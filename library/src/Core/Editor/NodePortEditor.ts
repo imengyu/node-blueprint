@@ -3,6 +3,7 @@ import { Vector2 } from "@/Common/Base/Vector2";
 import { CreateObjectFactory } from "@/Common/Serializable/SerializableFactory";
 import type { Node } from "../Node/Node";
 import type { NodeConnectorEditor } from "./NodeConnectorEditor";
+import type { NodeEditor } from "./NodeEditor";
 
 export class NodePortEditor extends NodePort {
 
@@ -11,6 +12,10 @@ export class NodePortEditor extends NodePort {
   }
 
   public state: NodePortState = 'normal';
+
+  public declare parent : NodeEditor;
+  public declare connectedFromPort : NodeConnectorEditor[];
+  public declare connectedToPort : NodeConnectorEditor[];
   
   private pos = new Vector2();
 

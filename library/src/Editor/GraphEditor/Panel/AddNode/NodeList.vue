@@ -15,10 +15,10 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryData } from '@/Core/Registry/NodeCategory';
-import CollapseItem from '@/node-blueprint/Editor/Components/List/CollapseItem.vue';
-import NodeCategory from './NodeCategory.vue';
 import type { PropType } from 'vue';
+import type { CategoryData } from '@/Core/Registry/NodeCategory';
+import NodeCategory from './NodeCategory.vue';
+import CollapseItem from '@/Editor/Components/Editor/List/CollapseItem.vue';
 
 defineProps({
   allNodesGrouped: {

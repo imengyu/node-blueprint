@@ -32,9 +32,9 @@ import { computed, ref, type PropType, watch } from 'vue';
 import { Vector2 } from '@/Common/Base/Vector2';
 import { NodeParamTypeRegistry } from '@/Core/Type/NodeParamTypeRegistry';
 import { NodeParamType } from '@/Core/Type/NodeParamType';
-import Row from '../../../Nana/Layout/RowView.vue';
-import SmallButton from '@/node-blueprint/Editor/Components//SmallButton.vue';
-import NodeParamTypeRender from '../../../Components/Small/NodeParamTypeRender.vue';
+import Row from '@/Editor/Components/Shared/Layout/RowView.vue';
+import SmallButton from '@/Editor/Components/Shared/SmallButton.vue';
+import NodeParamTypeRender from '@/Editor/Components/Editor/Small/NodeParamTypeRender.vue';
 import NodeFloatPanel from '../Components/NodeFloatPanel.vue';
 
 const emit = defineEmits([ 

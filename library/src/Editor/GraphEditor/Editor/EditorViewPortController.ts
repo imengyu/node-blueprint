@@ -2,9 +2,9 @@ import { onMounted, ref, watch } from "vue";
 import { NodeGraphEditorViewport, type NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { ChunkedPanel } from "./Cast/ChunkedPanel";
 import { Rect } from "@/Common/Base/Rect";
-import type { NodeEditor } from "./Flow/NodeEditor";
 import { Vector2 } from "@/Common/Base/Vector2";
-import { NodePortEditor } from "./Flow/NodePortEditor";
+import { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
 
 export interface NodeEditorViewPortControllerContext {
   viewPortManager: {

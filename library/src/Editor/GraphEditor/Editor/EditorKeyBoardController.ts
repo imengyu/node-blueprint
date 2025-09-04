@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted } from "vue";
 import type { NodeGraphEditorContext, NodeGraphEditorInternalContext } from "../NodeGraphEditor";
-import HtmlUtils from "@/Common/HtmlUtils";
+import HtmlUtils from "@/Common/Html";
 
 /**
  * 键盘控制器上下文函数
