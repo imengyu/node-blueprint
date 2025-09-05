@@ -731,7 +731,7 @@ async function onUserAddPort(direction : NodePortDirection, type : 'execute'|'pa
 }
 //删除端口
 async function onUserDeletePort(port : NodePortEditor) {
-  context.userActionsManager.deletePort(port);
+  context.graphManager.deletePort(port);
 }
 
 //#endregion 

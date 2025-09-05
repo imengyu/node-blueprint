@@ -10,6 +10,7 @@ import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
 import { devWarning, printError, printWarning } from "@/Common/Logger/DevLog";
 import { NodeGraphEditorInternalMessages } from "./Messages/EditorInternalMessages";
 import { NodePort } from "@/Core/Node/NodePort";
+import { DeleteDynamicPortAction } from "./Actions/DeleteDynamicPortAction";
 
 export interface NodeGraphEditorGraphControllerContext {
   graphManager: {
@@ -99,6 +100,12 @@ export interface NodeGraphEditorGraphControllerContext {
      * 清空编辑器内所有内容
      */
     clearAll() : void;
+
+    /**
+     * 删除端口
+     * @param port 端口
+     */
+    deletePort(port: NodePortEditor) : Promise<void>;
     
     /**
      * 按标签筛选节点
@@ -362,6 +369,33 @@ export function useEditorGraphController(
     }
   }
 
+  async function deletePort(port: NodePortEditor) {
+    if (port.dyamicAdd) {
+      async function defaultDelete() {
+        await context.runAction(new DeleteDynamicPortAction(port))
+      }
+      if (port.isCallingDelete) {
+        await defaultDelete();
+      } else {
+        port.isCallingDelete = true;
+        const ret = port.parent.events.onUserDeletePort?.(port.parent as NodeEditor, context, port);
+        port.isCallingDelete = false;
+        if (!ret) {
+          await defaultDelete();
+          return;
+        }
+        if (ret instanceof Promise) {
+          const rs = await ret; 
+          if (rs)
+            await defaultDelete();
+        }
+        else if (ret === true)
+          await defaultDelete();
+      }
+    }
+  }
+
+
   function getNodeByUid(uid: string): NodeEditor|null {
     return allNodes.get(uid) || null;
   }
@@ -504,6 +538,7 @@ export function useEditorGraphController(
     removeNode,
     addNodes,
     addNode,
+    deletePort,
     getCurrentGraph: () => currentGraph.value as NodeGraph,
     markGraphChanged,
   };

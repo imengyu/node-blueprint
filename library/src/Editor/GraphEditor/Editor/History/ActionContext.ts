@@ -12,7 +12,7 @@ export class EditorHistoryActionContext {
   private cancel = false;
   private disableException = false;
   private returnData : unknown = null;
-  private readonly context: NodeGraphEditorInternalContext;
+  readonly context: NodeGraphEditorInternalContext;
 
   public constructor(context: NodeGraphEditorInternalContext) {
     this.context = context;
@@ -44,7 +44,7 @@ export class EditorHistoryActionContext {
   }
 
   /**
-   * 设置当前操作的返回值，用于 `beginUndoableAction` 中整体函数的返回值。
+   * 设置当前操作的返回值，用于 `runAction` 中整体函数的返回值。
    * @param returnData 
    */
   setDoingReturn(returnData: unknown) {

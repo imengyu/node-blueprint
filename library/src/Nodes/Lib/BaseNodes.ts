@@ -128,6 +128,12 @@ export interface ICoverterNodeOptions {
   coverterTo: string,
 }
 
+/**
+ * 通过 图表调用节点 查询其对应的子图表实例。
+ * @param context 图表编辑器上下文
+ * @param node 图表调用节点
+ * @returns 子图表实例，如果未找到则返回 undefined 。
+ */
 export function getGraphCallNodeGraph(context: NodeGraphEditorContext, node: Node) {
   const graph = context.graphManager.getCurrentGraph();
   const options = node.options as unknown as IGraphCallNodeOptions;
