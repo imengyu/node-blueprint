@@ -1,7 +1,6 @@
-import ArrayUtils from "@/Common/ArrayUtils";
 import { Rect } from "@/Common/Base/Rect";
 import { Vector2 } from "@/Common/Base/Vector2";
-import type { ISaveableTypes } from "@/Common/BaseTypes";
+import type { ISaveableTypes } from "@/Common/Base/BaseTypes";
 import type { NodeGraphEditorViewport } from "../../NodeGraphEditor";
 
 /**
@@ -101,10 +100,10 @@ export class ChunkedPanel {
    */
   removeInstance(instance : ChunkInstance) : void {
     instance.parents.forEach((p) => {
-      ArrayUtils.remove(p.childs, instance);
+      p.childs.remove(instance);
       this.checkChunkContatinerIfEmptyRemove(p);
     });
-    ArrayUtils.clear(instance.parents);
+    instance.parents.clear();
   }
   /**
    * 更新实例的矩形。
@@ -117,14 +116,14 @@ export class ChunkedPanel {
     for (let i = instance.parents.length - 1; i >= 0; i--) {
       const p = instance.parents[i];
       if(!chunks.includes(p)) {
-        ArrayUtils.remove(p.childs, instance);
-        ArrayUtils.removeAt(instance.parents, i);
+        p.childs.remove(instance);
+        instance.parents.removeAt(i);
         needCheckEmptyChunks.push(p);
       }
     }
     chunks.forEach((c) => {
-      ArrayUtils.addOnce(c.childs, instance);
-      ArrayUtils.addOnce(instance.parents, c);
+      c.childs.addOnce(instance);
+      instance.parents.addOnce(c);
     });
     needCheckEmptyChunks.forEach(p =>  this.checkChunkContatinerIfEmptyRemove(p));
   }

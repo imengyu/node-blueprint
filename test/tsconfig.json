@@ -1,12 +1,13 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "./src/**/*", "./src/**/*.vue"],
+  "include": ["env.d.ts", "./src/**/*", "./src/**/*.vue", "../library/src/**/*", "../library/src/**/*.vue"],
   "exclude": ["../**/__tests__/*"],
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "node-blueprint/*": ["../library/src/*"]
     }
   }
 }

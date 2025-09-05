@@ -14,7 +14,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('../library/src/', import.meta.url)),
+      'node-blueprint': fileURLToPath(new URL('../library/src/', import.meta.url)),
     },
   },
 })

@@ -55,11 +55,11 @@
 import { defineComponent, ref, type PropType, watch, provide } from 'vue';
 import { getDefaultModalTeplport, getModalCurrentZIndex } from './ModalTeleport';
 import { onMounted } from 'vue';
+import { Vector2 } from '@/Common/Base/Vector2';
 import type { ModalContext } from './Alert';
 import ModalClose from './ModalClose.svg';
 import ModalBack from './ModalBack.svg';
-import { createMouseDragHandler } from '../../Graph/Editor/MouseHandler';
-import { Vector2 } from '@/Common/Base/Vector2';
+import { createMouseDragHandler } from '@/Editor/GraphEditor/Editor/Utils/MouseHandler';
 
 export default defineComponent({
   name: 'Modal',

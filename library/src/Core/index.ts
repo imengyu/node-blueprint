@@ -12,8 +12,6 @@ import './Editor/NodeDocunmentEditor';
 import './Editor/NodeEditor';
 import './Editor/NodeGraphEditorViewport';
 import './Type/NodeParamType';
-import './Utils/Base/Rect';
-import './Utils/Base/Vector2';
 
 export function initBase() {
   //Init Singleton

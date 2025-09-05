@@ -1,4 +1,4 @@
-@use "../../Nana/Scss/Scroll.scss" as *;
+@use '@/Editor/Components/Shared/Scss/Scroll.scss' as *;
 
 
 //添加单元浮动菜单
@@ -24,6 +24,7 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--mx-editor-border-color);
+    -webkit-user-select: none;
     user-select: none;
     padding-bottom: 6px;
     margin-bottom: 8px;

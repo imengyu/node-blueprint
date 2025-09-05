@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import NodeIde from '@/node-blueprint/Editor/Docunment/NodeIde.vue';
+import NodeIde from 'node-blueprint/Editor/DocunmentEditor/NodeIde.vue';
 </script>
 
 <style>

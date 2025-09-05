@@ -46,7 +46,7 @@ onMounted(() => {
 
 function checkNumber(v : string) {
   if(stringIsInteger(v)) {
-    emit('update:value', BigInt(parseInt(v)));
+    emit('update:value', Number(v));
     numberIsOk.value = true;
   }
   else 

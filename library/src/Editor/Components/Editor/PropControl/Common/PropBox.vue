@@ -50,7 +50,7 @@ provide<PropBoxContext>('PropBoxContext', {
 </script>
 
 <style lang="scss">
-@use '../../../Nana/Scss/Scroll.scss' as *;
+@use '@/Editor/Components/Shared/Scss/Scroll.scss' as *;
 
 .prop-search {
   margin: 5px 10px;
