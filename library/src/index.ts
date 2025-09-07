@@ -1,7 +1,7 @@
 import type { Plugin } from 'vue';
 
-import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css';
 import '@imengyu/vue-scroll-rect/lib/vue-scroll-rect.css'
+import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css';
 import 'vue-code-layout/lib/vue-code-layout.css';
 import TooltipDirective from '@/Editor/Components/Shared/Tooltip/TooltipDirective';
 import ScrollRect from '@imengyu/vue-scroll-rect';

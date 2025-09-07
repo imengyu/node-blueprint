@@ -134,6 +134,7 @@ import PropItem from '../Components/Editor//PropList/PropItem.vue';
 import ConsoleItem from '../Components/Console/ConsoleItem.vue';
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
+import { DeleteAction } from '../GraphEditor/Editor/Actions/DeleteAction';
 
 const loadTestScript = true;
  
@@ -185,9 +186,11 @@ function loadSettings() {
   config.value = SettingsUtils.getSettings('NodeIdeEditorCodeLayoutSettings', config.value);
 }
 function saveSettings() {
+  if (!loadSuccess)
+    return;
   saveLayout();
   SettingsUtils.setSettings('NodeIdeEditorSettings', editorSettings.value as IObject);
-  SettingsUtils.setSettings('NodeIdeEditorCodeLayoutSettings', config.value as IObject);
+  SettingsUtils.setSettings('NodeIdeEditorCodeLaoutSettings', config.value as IObject);
 }
 
 onBeforeUnmount(saveSettings)
@@ -292,7 +295,7 @@ const menuData = reactive<MenuOptions>({
           label: '删除',
           shortcut: 'Delete',
           onClick() {
-            getCurrentActiveGraphEditor()?.userActionsManager.delete();
+            getCurrentActiveGraphEditor()?.runAction(new DeleteAction());
           },
         },
       ],
@@ -736,6 +739,8 @@ function onActiveTabChange(currentActive: CodeLayoutPanelInternal) {
 
 //#region 加载与卸载
 
+let loadSuccess = false;
+
 onMounted(() => {
   loadSettings(); 
   nextTick(() => {
@@ -746,6 +751,7 @@ onMounted(() => {
       doc.load(TestScript as any);
       openDocunment(doc); 
     }
+    loadSuccess = true;
   })
 });
 onBeforeUnmount(() => {

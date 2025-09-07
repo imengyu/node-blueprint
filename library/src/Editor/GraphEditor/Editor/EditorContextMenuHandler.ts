@@ -9,6 +9,17 @@ import ContextMenuGlobal, { type MenuItem, type MenuOptions } from '@imengyu/vue
 import BaseNodes, { type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
 import { ConcatableArray } from "@/Common/ArrayTools";
 import { isNullOrEmpty } from "@/Common/String";
+import { DeleteSelectedConnectorsAction } from "./Actions/DeleteSelectedConnectorsAction";
+import { StraightenConnectorAction } from "./Actions/StraightenConnectorAction";
+import { DeleteSelectedNodesAction } from "./Actions/DeleteSelectedNodesAction";
+import { UnConnectSelectedNodeConnectorsAction } from "./Actions/UnConnectSelectedNodeConnectorsAction";
+import { AlignSelectedNodeAction } from "./Actions/AlignSelectedNodeAction";
+import { SetSelectedNodeBreakpointStateAction } from "./Actions/SetSelectedNodeBreakpointStateAction";
+import { PromoteSubgraphToFunctionAction } from "./Actions/PromoteSubgraphToFunctionAction";
+import { ExpandSubgraphAction } from "./Actions/ExpandSubgraphAction";
+import { ExpandSubgraphNodeAction } from "./Actions/ExpandSubgraphNodeAction";
+import { CollapseSelectedNodesAction } from "./Actions/CollapseSelectedNodesAction";
+import { GenCommentForSelectedNodeAction } from "./Actions/GenCommentForSelectedNodeAction";
 
 export interface NodeEditorContextMenuContext {
   contextMenuManager: {
@@ -132,7 +143,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
   function showContextMenu(options: MenuOptions) {
     ContextMenuGlobal.showContextMenu({ 
       zIndex: 100,
-      theme: 'flat',
+      theme: 'mac dark',
       ...options,
     });
   }
@@ -144,7 +155,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
     let menuItems : MenuItem[] = [
       { 
         label: "断开连接", 
-        onClick: () => context.userActionsManager.deleteSelectedConnectors()
+        onClick: () => context.runAction(new DeleteSelectedConnectorsAction())
       },
     ];
     menuItems = menuItems.concat(selectedConnectors.length === 1 ? [
@@ -152,14 +163,14 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         label: "按起始端位置拉直",
         onClick: () => {
           if (selectedConnectors[0].startPort)
-            context.userActionsManager.straightenConnector(selectedConnectors[0].startPort as NodePortEditor, selectedConnectors[0]) 
+            context.runAction(new StraightenConnectorAction(selectedConnectors[0].startPort as NodePortEditor, selectedConnectors[0])) 
         },
       },
       { 
         label: "按结束端位置拉直", 
         onClick: () => {
           if (selectedConnectors[0].endPort)
-            context.userActionsManager.straightenConnector(selectedConnectors[0].endPort as NodePortEditor, selectedConnectors[0]) 
+            context.runAction(new StraightenConnectorAction(selectedConnectors[0].endPort as NodePortEditor, selectedConnectors[0])) 
         },
       },
     ] : []);
@@ -197,7 +208,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
         { 
           label: "删除", 
           disabled: selectedCount === 1 ? selectedNodes[0].define.canNotDelete : false,
-          onClick: () => context.userActionsManager.deleteSelectedNodes(),
+          onClick: () => context.runAction(new DeleteSelectedNodesAction()),
           divided: true 
         },
         { 
@@ -211,19 +222,19 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
           onClick: () => context.clipBoardManager.pasteNodes(),
           divided: true 
         },
-        { label: "断开连接", onClick: () => context.userActionsManager.unConnectSelectedNodeConnectors(), divided: true },
+        { label: "断开连接", onClick: () => context.runAction(new UnConnectSelectedNodeConnectorsAction()), divided: true },
         { label: "对齐", disabled: selectedCount < 2, children: [
-          { label: "左对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'left') },
-          { label: "上对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'top') },
-          { label: "右对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'right') },
-          { label: "下对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'bottom') },
-          { label: "中对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'center-x') },
-          { label: "中部对齐", onClick: () => context.userActionsManager.alignSelectedNode(node, 'center-y') },
+          { label: "左对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'left')) },
+          { label: "上对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'top')) },
+          { label: "右对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'right')) },
+          { label: "下对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'bottom')) },
+          { label: "中对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'center-x')) },
+          { label: "中部对齐", onClick: () => context.runAction(new AlignSelectedNodeAction(node, 'center-y')) },
         ] },
         { label: "断点", children: [
-          { label: "无", onClick: () => context.userActionsManager.setSelectedNodeBreakpointState('none') },
-          { label: "启用", onClick: () => context.userActionsManager.setSelectedNodeBreakpointState('enable') },
-          { label: "禁用", onClick: () => context.userActionsManager.setSelectedNodeBreakpointState('disable') },
+          { label: "无", onClick: () => context.runAction(new SetSelectedNodeBreakpointStateAction('none')) },
+          { label: "启用", onClick: () => context.runAction(new SetSelectedNodeBreakpointStateAction('enable')) },
+          { label: "禁用", onClick: () => context.runAction(new SetSelectedNodeBreakpointStateAction('disable')) },
         ], divided: true },
         { 
           label: "提升为函数", 
@@ -231,26 +242,26 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
             selectedNodes[0].guid !== BaseNodes.getScriptBaseGraphCall().guid
             || (selectedNodes[0].options as unknown as IGraphCallNodeOptions).callGraphType === 'function'
           ) : false,
-          onClick: () => context.userActionsManager.promoteSubgraphToFunction(selectedNodes[0]) 
+          onClick: () => context.runAction(new PromoteSubgraphToFunctionAction(selectedNodes[0])) 
         },
         { 
           label: "展开子图表", 
           hidden: selectedCount === 1 ? selectedNodes[0].guid !== BaseNodes.getScriptBaseGraphCall().guid : false,
-          onClick: () => context.userActionsManager.expandSubgraphConfirm(selectedNodes[0]) 
+          onClick: () => context.runAction(new ExpandSubgraphNodeAction(selectedNodes[0])) 
         },
         { 
           label: "折叠为子图表", 
-          onClick: () => context.userActionsManager.collapseSelectedNodesTo('subgraph'),
+          onClick: () => context.runAction(new CollapseSelectedNodesAction('subgraph')),
         },
         { 
           label: "折叠为函数", 
-          onClick: () => context.userActionsManager.collapseSelectedNodesTo('function'),
+          onClick: () => context.runAction(new CollapseSelectedNodesAction('function')),
           divided: true,
         },
         { 
           label: "为选中项创建注释", 
           disabled: selectedCount === 0,
-          onClick: () => context.userActionsManager.genCommentForSelectedNode() 
+          onClick: () => context.runAction(new GenCommentForSelectedNodeAction()) 
         },
       ]
     );

@@ -1,4 +1,16 @@
+import { NodeGraph, type INodeGraphDefine } from "@/Core/Graph/NodeGraph";
 import { EditorHistoryAction } from "../History/Action";
+import type { EditorHistoryNodeInfo } from "../History/InfoStorage";
+import { printWarning } from "@/Common/Logger/DevLog";
+import BaseNodes, { type IGraphCallNodeOptions } from "@/Nodes/Lib/BaseNodes";
+import { Vector2 } from "@/Common/Base/Vector2";
+import type { NodeConnector } from "@/Core/Node/NodeConnector";
+import type { INodePortDefine, NodePort } from "@/Core/Node/NodePort";
+import { NodeConnectorEditor } from "@/Core/Editor/NodeConnectorEditor";
+import { AddNodeAction } from "./AddNodeAction";
+import type { NodeEditor } from "@/Core/Editor/NodeEditor";
+import type { NodePortEditor } from "@/Core/Editor/NodePortEditor";
+import { DeleteSelectedNodesAction } from "./DeleteSelectedNodesAction";
 
 export type CollapseSelectedNodesType = 'function'|'subgraph';
 export type CollapseSelectedNodesParam = {
@@ -7,34 +19,34 @@ export type CollapseSelectedNodesParam = {
 };
 
 //TODO: 完成
-export class CollapseSelectedNodesAction extends EditorHistoryAction<EditorHistoryNodeInfo[], void, void> {
+export class CollapseSelectedNodesAction extends EditorHistoryAction<CollapseSelectedNodesParam, void, void> {
   constructor(to: CollapseSelectedNodesType) {
     super("展开子图表", (actionContext) => ({
       to,
-      actionContext.toNodesInfoAndCancelIfEmpty(actionContext.context.selectionManager.getSelectNodes())
+      nodes: actionContext.toNodesInfoAndCancelIfEmpty(actionContext.context.selectionManager.getSelectNodes())
     }));
   }
 
-  override onStepExecute(inputParams: EditorHistoryNodeInfo[]) {
-    const selectedNodes = context.selectionManager.getSelectNodes();
+  override async onStepExecute(inputParams: CollapseSelectedNodesParam) {
+    const selectedNodes = this.context.selectionManager.getSelectNodes();
     if (selectedNodes.length < 0)
       return;
 
     for (const node of selectedNodes) {
       if (node.define.canNotDelete) {
-        context.interfaceUtiles.userActionAlert('warning', '不能将基础节点折叠为子图表');
+        this.context.interfaceUtiles.userActionAlert('warning', '不能将基础节点折叠为子图表');
         return;
       }
     }
 
-    const currentGraph = context.graphManager.getCurrentGraph();
-    const region = context.viewPortManager.calcNodesRegion(selectedNodes);
+    const currentGraph = this.context.graphManager.getCurrentGraph();
+    const region = this.context.viewPortManager.calcNodesRegion(selectedNodes);
 
     //创建子图表
     let childGraphDefine : INodeGraphDefine|null = null;
     let childGraphParent : NodeGraph|null = null;
 
-    switch (to) {
+    switch (inputParams.to) {
       case 'function': {
         //在顶级创建函数
         const mainGraph = currentGraph.getParentDocunment()?.mainGraph;
@@ -56,8 +68,7 @@ export class CollapseSelectedNodesAction extends EditorHistoryAction<EditorHisto
         childGraphParent = currentGraph;
         break;
       default:
-        printWarning(TAG, null, `Unknow option ${to}`);
-        return;
+        throw new Error(`Unknow option ${inputParams.to}`);
     }
 
     const childGraph = new NodeGraph(childGraphDefine, childGraphParent, true);
@@ -100,11 +111,11 @@ export class CollapseSelectedNodesAction extends EditorHistoryAction<EditorHisto
     //连接线处理：
     //如果连接线另外一个节点位于子图表中，则可以直接连接
     //否则需要创建子图表输入输出端口并连接
-    const innerConnectors = new Set<NodeConnector>();
-    const inputConnectors = new Set<NodeConnector>();
-    const outputConnectors = new Set<NodeConnector>();
+    const innerConnectors = new Set<NodeConnectorEditor>();
+    const inputConnectors = new Set<NodeConnectorEditor>();
+    const outputConnectors = new Set<NodeConnectorEditor>();
 
-    const solveConnector = (connector: NodeConnector, input: boolean) => {
+    const solveConnector = (connector: NodeConnectorEditor, input: boolean) => {
       const otherSidePort = input ? connector.startPort : connector.endPort;
       if (otherSidePort && childGraph?.nodes.get(otherSidePort.parent.uid)) 
         innerConnectors.add(connector);
@@ -185,13 +196,13 @@ export class CollapseSelectedNodesAction extends EditorHistoryAction<EditorHisto
     }
 
     //创建外部调用节点
-    const callNode = await context.userActionsManager.addNode<IGraphCallNodeOptions>(BaseNodes.getScriptBaseGraphCall(), {
+    const callNode = await this.context.runAction<NodeEditor>(new AddNodeAction<IGraphCallNodeOptions>(BaseNodes.getScriptBaseGraphCall(), {
       addNodeInPos: region.getPoint(),
       intitalOptions: {
         callGraphName: childGraph.name,
-        callGraphType: to,
+        callGraphType: inputParams.to,
       },
-    });
+    }));
     if (!callNode)
       throw new Error('!callNode');
 
@@ -213,21 +224,21 @@ export class CollapseSelectedNodesAction extends EditorHistoryAction<EditorHisto
     for (const connector of inputConnectors) {
       const portGuid = outerPortMapping.get(connector.uid);
       if (portGuid)
-        context.connectorManager.connectConnector(
-          connector.startPort as NodePortEditor, 
+        this.context.connectorManager.connectConnector(
+          connector.startPort, 
           callNode!.getPortByGUID(portGuid) as NodePortEditor
         );
     }
     for (const connector of outputConnectors) {
       const portGuid = outerPortMapping.get(connector.uid);
       if (portGuid)
-        context.connectorManager.connectConnector(
+        this.context.connectorManager.connectConnector(
           callNode!.getPortByGUID(portGuid) as NodePortEditor,
-          connector.endPort as NodePortEditor
+          connector.endPort
         );
     }
 
     //删除当前图表中的节点
-    context.userActionsManager.deleteSelectedNodes();
+    await this.context.runAction(new DeleteSelectedNodesAction());
   }
 }

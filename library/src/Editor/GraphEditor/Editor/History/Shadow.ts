@@ -1,8 +1,8 @@
 import type { NodeGraphEditorInternalContext } from "../../NodeGraphEditor";
-import { EditorHistoryStep, type NodeEditorHistoryControllerContext } from "../EditorHistortyController";
-import { EditorHistoryAction } from "./Action";
-import type { EditorHistoryActionContext } from "./ActionContext";
 import type { EditorHistoryStepStackManager } from "./StackManager";
+import type { NodeEditorHistoryControllerContext } from "../EditorHistortyController";
+import { EditorHistoryAction } from "./Action";
+import { EditorHistoryStep } from "./Step";
 
 export interface EditorHistoryLinkingContext {
   linkStepId: string;
@@ -60,12 +60,12 @@ class EditorHistoryShadowAction extends EditorHistoryAction {
 
   private shadowController: EditorHistoryShadowController;
 
-  override async onStepExecute(inputParams: any, actionContext: EditorHistoryActionContext, isRedo: boolean, linkingContext: EditorHistoryLinkingContext): Promise<any> {    
+  override async onStepExecute(inputParams: any, isRedo: boolean) {    
     if (isRedo)
       this.shadowController?.redoFromShadow();
     return undefined;
   }
-  override async onStepUndo(lastParams: any, inputParams: any, actionContext: EditorHistoryActionContext) {
+  override async onStepUndo() {
     if (this.shadowController)
       this.shadowController.undoFromShadow();
   }
@@ -82,6 +82,6 @@ export class EditorHistoryShadowStep extends EditorHistoryStep {
   ) {
     super({} as any, context, stack);
     this.shadowController = new EditorHistoryShadowController(context, linkingContext);
-    this.action = new EditorHistoryShadowAction('Shadow', this.shadowController);
+    this._action = new EditorHistoryShadowAction('Shadow', this.shadowController);
   }
 }
