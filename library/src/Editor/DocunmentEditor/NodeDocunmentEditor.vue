@@ -93,6 +93,7 @@ import type { NodeDocunmentEditor } from '@/Core/Editor/NodeDocunmentEditor';
 import { SplitLayout } from 'vue-code-layout';
 import { useGraphOpenStack, type GraphOpenStackData } from './Editor/GraphOpenStack';
 import { NodeGraphEditorInternalMessages } from '../GraphEditor/Editor/Messages/EditorInternalMessages';
+import { DeleteAction } from '../GraphEditor/Editor/Actions/DeleteAction';
 
 interface OpenedGraphsData {
   graph: NodeGraph,
@@ -155,7 +156,7 @@ function onActiveTabChange(old: CodeLayoutPanelInternal, currentActive: CodeLayo
   if (data) {
     currentGraph.value = data.graph;
     pushStack(data.graph.uid, '');
-    emit('activeGraphEditorChange', data.graph);
+    emit('activeGraphEditorChange', data.graph, data.context);
   }
 }
 function setActiveGraphPanel(graph: NodeGraph) {
@@ -183,11 +184,10 @@ const context = {
     setActiveGraphPanel(graph);
     if (!noStackHistory)
       pushStack(graph.uid, '');
-    emit('activeGraphEditorChange', graph);
+    emit('activeGraphEditorChange', graph, graph.getHolderContext());
   },
   async openGraph(graph, noStackHistory = false) {
     currentGraph.value = graph;
-    emit('activeGraphEditorChange', graph);
     if (openedGraphs.value.find((g) => g.graph === graph)) {
       this.switchActiveGraph(graph, noStackHistory);
       return;
@@ -196,6 +196,7 @@ const context = {
       graph,
       context: {} as NodeGraphEditorInternalContext,
     };
+    emit('activeGraphEditorChange', graph, data.context);
     const panel = splitLayoutRef.value?.getRootGrid().addPanel({
       name: graph.uid,
       title: graph.name,
@@ -219,7 +220,7 @@ const context = {
     clearStack();
     splitLayoutRef.value?.clearLayout();
     currentGraph.value = undefined;
-    emit('activeGraphEditorChange', currentGraph.value);
+    emit('activeGraphEditorChange', currentGraph.value, undefined);
   },
   dispstchMessage(m, d) {
     openedGraphs.value.map(p => p.context.dispstchMessage(m, d));
@@ -231,7 +232,7 @@ function onAdd() {
   context.getActiveGraphEditor()?.dialogManager.showAddNodePanel(buttonPos, undefined, undefined, undefined, true);
 }
 function onDelete() {
-  context.getActiveGraphEditor()?.userActionsManager.delete();
+  context.getActiveGraphEditor()?.runAction(new DeleteAction());
 }
 function onSelectNodeChanged(graphUid: string, nodes: NodeEditor[], connectors: NodeConnectorEditor[]) {
   emit('activeGraphSelectionChange', graphUid, nodes, connectors);

@@ -30,7 +30,8 @@ export class EditorHistoryStep {
     context: NodeGraphEditorInternalContext,
     stack: EditorHistoryStepStackManager
   ) {
-    this.id = genNonDuplicateIDHEX(16);
+    this.key = genNonDuplicateIDHEX(16);
+    this.id = this.key;
     this._action = action;
     this.context = context;
     this.stack = stack;
@@ -39,6 +40,7 @@ export class EditorHistoryStep {
     this.linkingContext = this.createLinkingContext();
   }
 
+  readonly key: string;
   readonly id: string;
   protected _action: EditorHistoryAction;
 
@@ -65,7 +67,7 @@ export class EditorHistoryStep {
   private createLinkingContext() : EditorHistoryLinkingContext {
     return {
       linkStepCursor: this.context.historyManager.stack.getCurrentCursor() + 1,
-      linkStepId: this.id,
+      linkStepId: this.key,
       linkContext: this.context,
     }
   }
@@ -80,12 +82,11 @@ export class EditorHistoryStep {
   }
   private async _undoLoop(topStep: EditorHistoryStep) {
     //递归还原子步骤
-    for (let index = this.childSteps.length - 1; index >= 0; index--) {
+    for (let index = this.childSteps.length - 1; index >= 0; index--) 
       await this.childSteps[index]._undoLoop(topStep);
-      if (this.lastParams)
-        await this.action.onStepUndo?.(this.lastParams, this.lastInput);
-      this.state = 'restored';
-    }
+    if (this.lastParams)
+      await this.action.onStepUndo?.(this.lastParams, this.lastInput);
+    this.state = 'restored';
   }
   async _execute(isRedo: boolean) {
     if (this.parent)
@@ -122,7 +123,7 @@ export class EditorHistoryStep {
     if (this.currentPosition)
       this.context.viewPortManager.moveViewportToPosition(this.currentPosition);
 
-    await this._undo();
+    await this._undoLoop(this);
 
     this.events.onUndo.invoke();
   }

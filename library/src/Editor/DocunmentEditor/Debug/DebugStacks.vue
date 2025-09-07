@@ -2,7 +2,7 @@
   <TreeList
     v-if="debugController.currentExecutePauseInfo.value"
     :items="debugController.currentExecutePauseInfo.value.contexts"
-    :dsec="stackListDesc"
+    :desc="stackListDesc"
     :defaultOpen="true"
     @itemClick="onShowStack"
   >

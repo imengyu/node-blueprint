@@ -4,6 +4,7 @@ import type { EditorHistoryNodeInfo } from "../History/InfoStorage";
 import { NodeRegistry } from "@/Core/Registry/NodeRegistry";
 import { AddNodeAction } from "./AddNodeAction";
 import { printWarning } from "@/Common/Logger/DevLog";
+import { UnConnectNodeConnectorsAction } from "./UnConnectNodeConnectorsAction";
 
 const TAG = 'DeleteSelectedNodesAction';
 
@@ -16,10 +17,16 @@ export class DeleteSelectedNodesAction extends EditorHistoryAction<EditorHistory
   protected override async onStepExecute(info: EditorHistoryNodeInfo[]) { 
     const nodes = this.actionContext.fromNodesInfo(info);
     const deletedNodes : INodeSaveData[] = [];
+
+    //先断开所有连接线
+    for (const node of nodes) {
+      await this.context.runAction(new UnConnectNodeConnectorsAction(node));
+    }
     //删除选中单元
     for (const node of nodes) {
       if (node.define.canNotDelete) 
         continue;
+
       if (this.context.graphManager.removeNode(node, true))
         deletedNodes.push({
           uid: node.uid,

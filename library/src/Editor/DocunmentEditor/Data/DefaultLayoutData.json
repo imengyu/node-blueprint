@@ -5,7 +5,7 @@
     "resizeable": false,
     "visible": true,
     "showBadge": true,
-    "size": 0,
+    "size": 20,
     "children": [
       {
         "name": "ExplorerGroup",
@@ -14,7 +14,26 @@
         "visible": true,
         "showBadge": true,
         "size": 0,
-        "children": []
+        "children": [
+          {
+            "name": "ExplorerList",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          },
+          {
+            "name": "EditorHistory",
+            "open": true,
+            "resizeable": true,
+            "visible": true,
+            "showBadge": true,
+            "size": 0,
+            "children": []
+          }
+        ]
       },
       {
         "name": "DebugGroup",
@@ -61,7 +80,7 @@
     "resizeable": false,
     "visible": true,
     "showBadge": true,
-    "size": 0,
+    "size": 20,
     "children": [
       {
         "name": "GraphVariableChildrenGroup",
@@ -117,7 +136,7 @@
     "resizeable": false,
     "visible": true,
     "showBadge": true,
-    "size": 0,
+    "size": 10,
     "children": [
       {
         "name": "Console",

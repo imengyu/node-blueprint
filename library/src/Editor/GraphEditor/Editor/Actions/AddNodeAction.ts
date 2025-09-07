@@ -132,9 +132,11 @@ export class AddNodeAction<T = CustomStorageObject> extends EditorHistoryAction<
         newNode.updateRegion();
       }
       context.graphManager.addNode(newNode)
-    } else { //在屏幕中央位置添加单元
-      const center = context.viewPortManager.getViewPort().rect().calcCenter();
-      newNode.position.set(center);
+    } else { //在屏幕中央位置添加单元。有初始shadow时，不设置位置
+      if (!options.intitalShadow) {
+        const center = context.viewPortManager.getViewPort().rect().calcCenter();
+        newNode.position.set(center);
+      }
       context.graphManager.addNode(newNode);
     }
 

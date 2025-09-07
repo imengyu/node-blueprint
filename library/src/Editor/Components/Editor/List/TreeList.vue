@@ -1,5 +1,5 @@
 <template>
-  <CodeLayoutScrollbar 
+  <ScrollRect 
     class="tree-list"
     scroll="vertical"
     @keypress="onKeyPress"
@@ -9,33 +9,38 @@
       v-for="child in items"
       :key="child.key"
       :item="child"
-      :dsec="dsec"
+      :desc="desc"
       :defaultOpen="defaultOpen"
       :itemClass="itemClass"
     >
       <template #itemLeft="values : any">
-        <slot name="itemLeft" v-bind="values" />
+        <slot name="itemLeft" v-bind="(values as ITreeSlotProps<T>)" />
       </template>
       <template #itemRight="values : any">
-        <slot name="itemRight" v-bind="values" />
+        <slot name="itemRight" v-bind="(values as ITreeSlotProps<T>)" />
       </template>
     </TreeListItem>
     <slot />
-  </CodeLayoutScrollBar>
+    <slot v-if="!items || items.length === 0" name="empty">
+      <div class="tree-list-empty">
+        暂无数据
+      </div>
+    </slot>
+  </ScrollRect>
 </template>
 
-<script setup lang="ts">
-import { CodeLayoutScrollbar } from 'vue-code-layout';
-import TreeListItem from './TreeListItem.vue';
-import { provide, type PropType } from 'vue';
+<script setup lang="ts" generic="T extends ITreeListItem">
+import TreeListItem, { type ITreeSlotProps } from './TreeListItem.vue';
 import { type ITreeListItem, type TreeListContext, TreeListContextKey, type ITreeListDescItem } from './TreeList';
+import { provide, type PropType } from 'vue';
+import { ScrollRect } from '@imengyu/vue-scroll-rect';
 
 defineProps({
   items: {
-    type: Object as PropType<ITreeListItem[]>,
+    type: Object as PropType<T[]>,
     default: null,
   },
-  dsec: {
+  desc: {
     type: Object as PropType<ITreeListDescItem[]>,
     default: null,
   },
@@ -49,25 +54,25 @@ defineProps({
   },
 });
 
-const emit = defineEmits([ 
+const emit = defineEmits([
   "itemClick",
   "itemContextMenu",
   "itemOpen",
   "itemClose",
-])
+]);
 
 provide<TreeListContext>(TreeListContextKey, {
   itemClick(row: ITreeListItem) {
-    emit('itemClick', row);
+    emit('itemClick', row as ITreeListItem);
   },
   itemContextMenu(row: ITreeListItem, e: MouseEvent) {
-    emit('itemContextMenu', row, e);
+    emit('itemContextMenu', row as ITreeListItem, e);
   },
   itemOpen(row: ITreeListItem) {
-    emit('itemOpen', row);
+    emit('itemOpen', row as ITreeListItem);
   },
   itemClose(row: ITreeListItem) {
-    emit('itemClose', row);
+    emit('itemClose', row as ITreeListItem);
   },
 });
 
@@ -86,6 +91,11 @@ function onKeyPress(e: KeyboardEvent) {
 
   &:hover .tree-list-item > .line {
     opacity: 1;
+  }
+
+  .tree-list-empty {
+    text-align: center;
+    padding: 10px 0;
   }
 }
 .tree-list-item {

@@ -34,23 +34,23 @@
     <TreeListItem
       v-for="child in children"
       :key="child.key"
-      :dsec="dsec"
+      :dsec="desc"
       :item="child"
       :level="level+1"
       :defaultOpen="defaultOpen"
       :itemClass="itemClass"
     >
-      <template #itemLeft="values : any">
-        <slot name="itemLeft" v-bind="values" />
+      <template #itemLeft="values">
+        <slot name="itemLeft" v-bind="(values as ITreeSlotProps<T>)" />
       </template>
-      <template #itemRight="values : any">
-        <slot name="itemRight" v-bind="values" />
+      <template #itemRight="values">
+        <slot name="itemRight" v-bind="(values as ITreeSlotProps<T>)" />
       </template>
     </TreeListItem>
   </template>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends ITreeListItem">
 import { computed, inject, onMounted, ref, watch, type PropType } from 'vue';
 import { 
   type TreeListContext, type ITreeListItem,type ITreeListDescItem,
@@ -58,35 +58,34 @@ import {
 } from './TreeList';
 import Icon from '../../Shared/Icon.vue';
 
-const props = defineProps({
-  item: {
-    type: Object as PropType<ITreeListItem>,
-    default: null,
-  },
-  level: {
-    type: Number,
-    default: 0,
-  },
-  dsec: {
-    type: Object as PropType<ITreeListDescItem[]>,
-    default: null,
-  },
-  defaultOpen: {
-    type: Boolean,
-    default: false,
-  },
-  itemClass: {
-    type: String,
-    default: '',
-  },
+export interface ITreeSlotProps<T extends ITreeListItem> {
+  level: number,
+  item: T,
+}
+
+const props = withDefaults(defineProps<{
+  item?: T,
+  level?: number,
+  desc?: ITreeListDescItem[],
+  defaultOpen?: boolean,
+  itemClass?: string,
+}>(), {
+  level: 0,
+  itemClass: '',
 });
 
 const open = ref(props.defaultOpen);
 
 const descMap = computed(() => {
-  return props.dsec?.[props.level] ?? TreeListDefaultDesc;
+  if (!props.desc)
+    return TreeListDefaultDesc;
+  if (props.desc.length === 1)
+    return props.desc[0];
+  return props.desc[props.level] ?? TreeListDefaultDesc;
 });
 const children = computed(() => {
+  if (!props.item)
+    return [];
   return props.item[descMap.value.childrenKey] || [];
 });
 
@@ -99,7 +98,7 @@ function loadOpenState() {
 }
 
 function onClick() {
-  const item = props.item;
+  const item = props.item as ITreeListItem;
   if (children.value.length > 0) {
     open.value = !open.value;
     if (open.value)
@@ -111,11 +110,11 @@ function onClick() {
   context.itemClick(item);
 }
 function onContextMenu(e: MouseEvent) {
-  context.itemContextMenu(props.item, e);
+  context.itemContextMenu(props.item as ITreeListItem, e);
 }
 
 watch(open, (v) => {
-  const item = props.item;
+  const item = props.item as ITreeListItem;
   if (descMap.value.openKey && item)
     item[descMap.value.openKey] = v;
 })

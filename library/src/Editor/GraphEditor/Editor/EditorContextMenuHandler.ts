@@ -20,6 +20,8 @@ import { ExpandSubgraphAction } from "./Actions/ExpandSubgraphAction";
 import { ExpandSubgraphNodeAction } from "./Actions/ExpandSubgraphNodeAction";
 import { CollapseSelectedNodesAction } from "./Actions/CollapseSelectedNodesAction";
 import { GenCommentForSelectedNodeAction } from "./Actions/GenCommentForSelectedNodeAction";
+import { DeleteDynamicPortAction } from "./Actions/DeleteDynamicPortAction";
+import { PromotePortToVariableAction } from "./Actions/PromotePortToVariableAction";
 
 export interface NodeEditorContextMenuContext {
   contextMenuManager: {
@@ -308,7 +310,7 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
             }
           },
           { label: '断开连接', onClick: () => context.connectorManager.unConnectConnector(connector as NodeConnectorEditor) },
-          { label: '拉直连接', onClick: () => context.userActionsManager.straightenConnector(port, connector) }
+          { label: '拉直连接', onClick: () => context.runAction(new StraightenConnectorAction(port, connector as NodeConnectorEditor)) }
         ] 
       });
     };
@@ -320,12 +322,12 @@ export function useEditorContextMenuHandler(context: NodeGraphEditorInternalCont
 
     let menuItems : Array<MenuItem> = [
       { 
-        label: "删除参数", onClick: () => context.userActionsManager.deletePort(port), 
+        label: "删除参数", onClick: () => context.runAction(new DeleteDynamicPortAction(port)), 
         disabled: !port.dyamicAdd, 
         divided: true 
       },
       { label: "断开所有连接", onClick: () => context.connectorManager.unConnectPortConnectors(port) },
-      { label: "提升为变量", onClick: () => context.userActionsManager.promotePortToVariable(port), divided: true },
+      { label: "提升为变量", onClick: () => context.runAction(new PromotePortToVariableAction(port)), divided: true },
     ];
     menuItems = menuItems.concat(menuJumpItems);
 

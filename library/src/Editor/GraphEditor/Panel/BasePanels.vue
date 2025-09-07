@@ -65,6 +65,7 @@ import TooltipContent from '@/Editor/Components/Shared/Tooltip/TooltipContent.vu
 import AddNodePanel from './AddNode/AddNodePanel.vue';
 import SelectTypePanel from './SelectType/SelectTypePanel.vue';
 import Alert, { type AlertProps } from '@/Editor/Components/Shared/Modal/Alert';
+import { AddNodeAction } from '../Editor/Actions/AddNodeAction';
 
 const context = inject<NodeGraphEditorInternalContext>('NodeGraphEditorContext');
 const teleport = inject<string>('NodeGraphUIModalTeleport', 'body');
@@ -157,7 +158,7 @@ function closeAddNodePanel() {
 
 function onAddNode(node: INodeDefine) {
   isShowAddNodePanel.value = false;
-  context?.userActionsManager.addNode(node, { addNodeInPos: addNodePos.value });
+  context?.runAction(new AddNodeAction(node, { addNodeInPos: addNodePos.value }));
 }
 
 watch(isShowAddNodePanel, (show) => {

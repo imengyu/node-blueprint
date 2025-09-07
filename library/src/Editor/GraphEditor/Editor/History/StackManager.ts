@@ -1,5 +1,6 @@
+import { reactive } from "vue";
 import type { NodeGraphEditorInternalContext } from "../../NodeGraphEditor";
-import type { EditorHistoryStep } from "../EditorHistortyController";
+import type { EditorHistoryStep } from "./Step";
 
 /**
  * 用于管理历史记录栈
@@ -11,7 +12,7 @@ export class EditorHistoryStepStackManager {
   ) {
     this.maxStep = maxStep;
     this.context = context;
-    this.historySteps = context.holdData('historySteps', [] as EditorHistoryStep[]);
+    this.historySteps = context.holdData('historySteps', reactive([]) as EditorHistoryStep[]);
   }
 
   private context: NodeGraphEditorInternalContext;
@@ -46,14 +47,19 @@ export class EditorHistoryStepStackManager {
     this.historyCurrentStepGroupingStack.pop();
   }
   async pushStep(currentStep: EditorHistoryStep, doStep: () => Promise<boolean>) {
-    if (this.historyIsRedoing || this.historyIsDisabled)
+    const historyCurrentStep = this.getCurrentGroupingStep();
+
+    //如果正在重做并且是顶层操作，直接执行步骤，无须保存
+    if (this.historyIsRedoing || this.historyIsDisabled) {
+      if (!historyCurrentStep && !await doStep())
+        return;
       return undefined;
+    }
     //丢弃之后的步骤
     if (this.historyCurrentCursor < this.historySteps.length)
       this.historySteps.splice(this.historyCurrentCursor + 1);
 
     //处理嵌套调用情况下每个步骤的组织
-    const historyCurrentStep = this.getCurrentGroupingStep();
     if (!historyCurrentStep) {
       this.pushGroupingStack(currentStep);
 
@@ -72,9 +78,10 @@ export class EditorHistoryStepStackManager {
     else
     {
       this.pushGroupingStack(currentStep);
-
       currentStep.parent = historyCurrentStep;
+
       if (!await doStep())
+        //TODO: 请仔细思考嵌套调用情况
         return;
 
       this.popGroupingStack();

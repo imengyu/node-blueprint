@@ -18,7 +18,7 @@
             :docunment="(panel.data as NodeDocunmentEditor)"
             :editorSettings="editorSettings"
             :debugController="debugController"
-            @activeGraphEditorChange="(g: NodeGraph) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g)"
+            @activeGraphEditorChange="(g: NodeGraph, c: NodeGraphEditorContext) => onActiveGraphEditorChange((panel.data as NodeDocunmentEditor), g, c)"
             @activeGraphSelectionChange="(p1, p2, p3) => onActiveGraphSelectionChange((panel.data as NodeDocunmentEditor), p1, p2, p3)"
             @compileDoc="() => onCompileDocunment((panel.data as NodeDocunmentEditor))"
           />
@@ -90,6 +90,9 @@
       <template v-else-if="panel.name==='DebugVariables'">
         <DebugVariables :panel="panel" :debugController="debugController" />
       </template>
+      <template v-else-if="panel.name==='EditorHistory'">
+        <EditorHistoryList :panel="panel" :historyManager="currentActiveHistory" />
+      </template>
     </template>
   </CodeLayout>
 </template>
@@ -114,7 +117,7 @@ import { openJsonFile, saveJsFile, saveJsonFile } from './Platform/InOut';
 import { CodeLayout, SplitLayout, defaultCodeLayoutConfig } from 'vue-code-layout';
 import type { CodeLayoutInstance, CodeLayoutConfig, CodeLayoutPanelInternal, CodeLayoutSplitNInstance } from 'vue-code-layout';
 import { NodeGraphCompiler } from '@/Core/Compiler/NodeGraphCompiler';
-import { printError } from '@/Common/Logger/DevLog';
+import { printError, printInfo } from '@/Common/Logger/DevLog';
 import { useEditorDebugController } from './Editor/EditorDebugController';
 import type { MenuOptions } from '@imengyu/vue3-context-menu';
 import type { INodeGraphEditorSettings, NodeGraphEditorContext } from '../GraphEditor/NodeGraphEditor';
@@ -135,9 +138,12 @@ import ConsoleItem from '../Components/Console/ConsoleItem.vue';
 
 import TestScript from '../../../../test-scripts/sub-graph.json';
 import { DeleteAction } from '../GraphEditor/Editor/Actions/DeleteAction';
+import EditorHistoryList from './Views/EditorHistoryList.vue';
+import type { EditorHistoryStepStackManager } from '../GraphEditor/Editor/History/StackManager';
 
 const loadTestScript = true;
- 
+const TAG = 'NodeIde';
+
 const splitLayout = ref<CodeLayoutSplitNInstance>();
 const codeLayout = ref<CodeLayoutInstance>();
 const config = ref<CodeLayoutConfig>({
@@ -441,6 +447,7 @@ const opendDocunment = ref(new Map<string, NodeDocunmentEditor>()) as Ref<Map<st
 const currentActiveDocunment = ref<NodeDocunment|null>(null) as Ref<NodeDocunment|null>;
 const currentActiveGraph = ref<NodeGraph|null>(null);
 const currentActiveNodes = ref<NodeEditor[]>([]) as Ref<NodeEditor[]>;
+const currentActiveHistory = ref<EditorHistoryStepStackManager>();
 const currentActiveConnectors = ref<NodeConnectorEditor[]>([]);
  
 /**
@@ -478,11 +485,14 @@ function onCurrentActiveDocunmentChanged() {
 /**
  * 激活图表更改事件
  */
-function onActiveGraphEditorChange(doc: NodeDocunmentEditor, graph: NodeGraph) {
+function onActiveGraphEditorChange(doc: NodeDocunmentEditor, graph: NodeGraph, context: NodeGraphEditorContext) {
   if (doc.uid === currentActiveDocunment.value?.uid) {
     currentActiveGraph.value = graph;
     currentActiveNodes.value = [];
     currentActiveConnectors.value = [];
+    setTimeout(() => {
+      currentActiveHistory.value = context?.historyManager.stack;
+    }, 200);
   }
 }
 /**
@@ -692,6 +702,13 @@ function initLayout() {
           panel.iconSmall = () => h(Icon, { icon: 'icon-folder-close' });
           panel.iconLarge = () => h(Icon, { icon: 'icon-folder-close', size: 20 });
           break;
+        case 'EditorHistory': {
+          panel.title = '历史记录';
+          panel.tooltip = panel.title;
+          panel.iconSmall = () => h(Icon, { icon: 'icon-clock-' });
+          panel.iconLarge = () => h(Icon, { icon: 'icon-clock-', size: 20 });
+          break;
+        }
       }
       return panel;
     });

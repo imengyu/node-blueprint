@@ -3,8 +3,8 @@ import { useNodeGraphEditorStaticConfig } from "../Config/ConfigManager";
 import { EditorHistoryAction } from "./History/Action";
 import { EditorHistoryStepStackManager } from "./History/StackManager";
 import { EditorHistoryShadowStep, type EditorHistoryLinkingContext } from "./History/Shadow";
-import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 import { EditorHistoryStep } from "./History/Step";
+import type { NodeGraphEditorInternalContext } from "../NodeGraphEditor";
 
 const TAG = "NodeEditorHistoryController";
 
@@ -146,6 +146,7 @@ export function useEditorHistoryController(context: NodeGraphEditorInternalConte
       return stackManager.clearSteps();
     },
   };
+  context.runAction = context.historyManager.runAction;
 
   return {}
 }
